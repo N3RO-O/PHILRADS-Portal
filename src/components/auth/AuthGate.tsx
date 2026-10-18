@@ -5,7 +5,7 @@ import { Emblem } from '../ui/Emblem';
 
 function CenteredMessage({ title, children }: { title: string; children?: ReactNode }) {
   return (
-    <main className="grid min-h-dvh place-items-center bg-cloud p-6">
+    <main className="grid min-h-dvh place-items-center p-6">
       <div className="card flex max-w-md flex-col items-center gap-4 text-center">
         <Emblem className="h-14 w-14" />
         <h1 className="font-display text-xl">{title}</h1>

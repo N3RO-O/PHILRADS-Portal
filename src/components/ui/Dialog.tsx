@@ -26,7 +26,7 @@ export function Dialog({ open, title, onClose, children }: DialogProps) {
       aria-labelledby={titleId}
       onClose={onClose}
       onClick={(e) => e.target === ref.current && onClose()}
-      className="w-[min(28rem,calc(100vw-2rem))] rounded-[1.75rem] bg-white p-0 text-charcoal shadow-2xl backdrop:bg-charcoal/50"
+      className="glass-popover w-[min(28rem,calc(100vw-2rem))] animate-pop-in rounded-[1.75rem] bg-white/90 p-0 text-charcoal backdrop:animate-fade-in backdrop:bg-charcoal/40 backdrop:backdrop-blur-sm"
     >
       <div className="flex flex-col gap-4 p-6">
         <div className="flex items-start justify-between gap-4">

@@ -25,7 +25,7 @@ export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
       aria-label="Navigation"
       onClose={onClose}
       onClick={(e) => e.target === ref.current && onClose()}
-      className="fixed inset-y-0 left-0 m-0 h-dvh max-h-none w-[min(18rem,86vw)] max-w-none rounded-r-[2rem] bg-burgundy p-0 text-white backdrop:bg-charcoal/50"
+      className="gloss-burgundy fixed inset-y-0 left-0 m-0 h-dvh animate-slide-in-left backdrop:animate-fade-in max-h-none w-[min(18rem,86vw)] max-w-none rounded-r-[2rem] p-0 text-white backdrop:bg-charcoal/40 backdrop:backdrop-blur-sm"
     >
       <div className="flex h-full flex-col gap-3 overflow-y-auto px-3 py-4">
         <div className="flex items-center justify-between gap-3 px-1 pb-1">
@@ -43,7 +43,6 @@ export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
         <nav aria-label="Modules" className="flex flex-col gap-2">
           <NavItems expanded onNavigate={onClose} />
         </nav>
-        <p className="mt-auto px-3 pt-4 text-xs font-bold text-uplift">Serving People in Jesus’ Name.</p>
       </div>
     </dialog>
   );

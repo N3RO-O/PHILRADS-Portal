@@ -36,7 +36,7 @@ export function Card({ id, title, note, action, source, className = '', children
 
 export function LoadError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <div role="alert" className="flex flex-col items-center gap-2 rounded-2xl bg-cloud px-4 py-6 text-center text-sm">
+    <div role="alert" className="glass-inset flex flex-col items-center gap-2 rounded-2xl px-4 py-6 text-center text-sm">
       <p className="flex items-center gap-2 text-muted">
         <span className="h-1.5 w-1.5 rounded-full bg-burgundy" aria-hidden />
         {message}

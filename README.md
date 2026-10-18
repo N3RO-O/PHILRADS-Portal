@@ -125,6 +125,12 @@ Dark Burgundy `#640606`, Cloud `#F1F1F1`, Charcoal `#353535`, Uplifting Yellow `
 
 The layout follows the requested “bento” style: a floating burgundy icon rail (expandable to labels), rounded cards, pastel project cards, a deadlines calendar and an inbox-style activity feed.
 
+**Glossy finish:** frosted-glass cards and menus (`.glass`, `.glass-popover`, `.glass-inset` in `src/index.css`), glossy burgundy and charcoal surfaces with a soft top highlight (`.gloss-burgundy`, `.gloss-charcoal`, `.sheen`), and faint brand-coloured glows behind the page.
+
+**Motion:** one smooth easing curve for every transition (`tailwind.config.js`), staggered card entrances, page fades, pop-in menus, a sliding mobile drawer and filling progress bars. Only transform and opacity animate, and all motion is switched off when the device asks for reduced motion.
+
+**Shortcuts:** `Ctrl K` / `⌘K` jumps to search from anywhere.
+
 ## Still needed (credentials or decisions)
 
 | Item | Needs |

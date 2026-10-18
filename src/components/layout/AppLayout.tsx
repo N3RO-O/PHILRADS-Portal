@@ -42,7 +42,7 @@ export function AppLayout() {
   useEffect(() => {
     setMenuOpen(false);
     // New page starts at the top (in-page links like /#my-tasks scroll themselves).
-    if (!location.hash) window.scrollTo({ top: 0 });
+    if (!location.hash) window.scrollTo({ top: 0, behavior: 'instant' });
   }, [location.pathname, location.hash]);
 
   const toggleSidebar = () =>
@@ -67,7 +67,7 @@ export function AppLayout() {
       </a>
       <SidebarRail expanded={expanded} onToggle={toggleSidebar} />
       <MobileDrawer open={menuOpen} onClose={() => setMenuOpen(false)} />
-      <div className={`flex min-h-dvh flex-col transition-[padding] duration-300 ${expanded ? 'lg:pl-[17rem]' : 'lg:pl-28'}`}>
+      <div className={`flex min-h-dvh flex-col transition-[padding] duration-300 ${expanded ? 'lg:pl-[19rem]' : 'lg:pl-28'}`}>
         <TopBar search={search} onSearch={onSearch} menuOpen={menuOpen} onOpenMenu={() => setMenuOpen(true)} />
         <main id="main" className="mx-auto w-full max-w-[100rem] flex-1 px-4 pb-12 sm:px-6">
           <div className="flex flex-wrap items-end justify-between gap-3 pb-5 pt-2">
@@ -82,14 +82,17 @@ export function AppLayout() {
                   <span className="h-2 w-2 rounded-full bg-uplift" aria-hidden /> Sample data
                 </span>
               )}
-              <span className="pill bg-white text-charcoal ring-1 ring-black/[0.06]">
+              <span className="pill bg-white/70 text-charcoal ring-1 ring-black/[0.06] backdrop-blur">
                 <CalendarDays className="h-3.5 w-3.5 text-burgundy" aria-hidden />
                 <time dateTime={new Date().toISOString().slice(0, 10)}>{formatLongDate()}</time>
               </span>
             </div>
           </div>
           <OfflineNotice />
-          <Outlet context={{ search } satisfies LayoutContext} />
+          {/* Keyed by page so each page change fades in smoothly. */}
+          <div key={location.pathname} className="animate-fade-in">
+            <Outlet context={{ search } satisfies LayoutContext} />
+          </div>
         </main>
         <footer className="flex flex-wrap items-center justify-between gap-2 px-4 py-5 text-xs text-muted sm:px-6">
           <span>

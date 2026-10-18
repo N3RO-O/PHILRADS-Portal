@@ -57,7 +57,7 @@ export function MyTasks({ tasks, search }: Props) {
         ) : (
           <ul className="flex flex-col gap-2">
             {rows.map((t) => (
-              <li key={t.id} className="flex items-stretch gap-3 rounded-2xl bg-cloud/70 px-3 py-3">
+              <li key={t.id} className="glass-inset flex animate-fade-in items-stretch gap-3 rounded-2xl px-3 py-3 transition-colors hover:bg-white/80">
                 <span className={`w-1 shrink-0 rounded-full ${PRIORITY_STYLE[t.priority].bar}`} aria-hidden />
                 <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                   <div className="min-w-0 flex-1">
@@ -68,7 +68,7 @@ export function MyTasks({ tasks, search }: Props) {
                   </div>
                   <div className="flex shrink-0 items-center gap-1.5">
                     <span className={`pill py-1 ${PRIORITY_STYLE[t.priority].pill}`}>{PRIORITY_LABEL[t.priority]}</span>
-                    <span className="pill bg-white py-1 text-charcoal">
+                    <span className="pill bg-white/85 py-1 text-charcoal ring-1 ring-black/[0.06]">
                       <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[t.status]}`} aria-hidden />
                       {STATUS_LABEL[t.status]}
                     </span>

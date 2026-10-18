@@ -14,14 +14,15 @@ const ACTIONS = [
 export function QuickActions() {
   return (
     <Card id="quick-actions" title="Quick actions" note="Shortcuts to common work">
-      <ul className="grid grid-cols-2 gap-2 min-[400px]:grid-cols-3">
+      {/* 3 columns only where tiles are wide enough for "documentation"; the narrow xl side column uses 2. */}
+      <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-2">
         {ACTIONS.map(({ to, label, icon: Icon }) => (
           <li key={label}>
             <Link
               to={to}
-              className="flex h-full min-h-[5.5rem] flex-col items-center justify-center gap-2 rounded-2xl bg-cloud px-2 py-3 text-center text-xs font-semibold leading-tight transition-colors hover:bg-burgundy-50"
+              className="glass-inset group flex h-full min-h-[5.5rem] flex-col items-center justify-center gap-2 rounded-2xl px-2 py-3 text-center text-xs font-semibold leading-tight transition duration-200 hover:-translate-y-0.5 hover:bg-white/90"
             >
-              <span className="grid h-10 w-10 place-items-center rounded-full bg-white text-burgundy ring-1 ring-black/5">
+              <span className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-b from-white to-burgundy-50 text-burgundy shadow-[inset_0_1px_0_#fff,0_0_0_1px_rgba(100,6,6,0.1),0_4px_10px_-6px_rgba(100,6,6,0.45)] transition group-hover:scale-105">
                 <Icon className="h-[1.125rem] w-[1.125rem]" aria-hidden />
               </span>
               {label}

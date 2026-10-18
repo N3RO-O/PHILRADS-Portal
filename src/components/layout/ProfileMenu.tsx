@@ -7,7 +7,7 @@ import { InstallDialog, useInstallAvailability } from '../pwa/InstallDialog';
 import { promptInstall } from '../../lib/installPrompt';
 import { Avatar } from '../ui/Avatar';
 
-const itemClass = 'flex min-h-11 w-full items-center gap-3 rounded-2xl px-3 text-left text-sm font-semibold hover:bg-cloud';
+const itemClass = 'flex min-h-11 w-full items-center gap-3 rounded-2xl px-3 text-left text-sm font-semibold hover:bg-black/[0.04]';
 
 export function ProfileMenu() {
   const { profile, state, signOut } = useAuth();
@@ -37,14 +37,14 @@ export function ProfileMenu() {
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((o) => !o)}
-        className="flex h-10 items-center gap-2 rounded-full bg-white pl-1 pr-1 ring-1 ring-black/[0.06] hover:bg-burgundy-50 sm:pr-3"
+        className="flex h-10 items-center gap-2 rounded-full bg-white/70 pl-1 pr-1 backdrop-blur shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_0_0_1px_rgba(53,53,53,0.07),0_4px_12px_-6px_rgba(53,53,53,0.25)] transition-colors hover:bg-white sm:pr-3"
       >
         <Avatar initials={profile.initials} size="sm" />
         <span className="hidden max-w-[9rem] truncate text-sm font-semibold sm:block">{profile.displayName}</span>
         <ChevronDown className="hidden h-4 w-4 text-muted sm:block" aria-hidden />
       </button>
       {open && (
-        <div id={panelId} className="absolute right-0 top-12 z-50 w-72 rounded-3xl bg-white p-3 shadow-2xl ring-1 ring-black/5">
+        <div id={panelId} className="glass-popover absolute right-0 top-12 z-50 w-72 origin-top-right animate-pop-in rounded-3xl p-3">
           <div className="flex items-center gap-3 border-b border-black/5 px-2 pb-3">
             <Avatar initials={profile.initials} />
             <div className="min-w-0">

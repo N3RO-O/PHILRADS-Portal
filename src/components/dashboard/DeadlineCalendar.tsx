@@ -61,7 +61,7 @@ export function DeadlineCalendar({ tasks }: Props) {
       {tasks.status === 'loading' && <Skeleton className="h-56" />}
       {tasks.status === 'success' && (
         <>
-          <div className="grid grid-cols-7 gap-1.5 text-center" role="grid" aria-label={monthLabel}>
+          <div key={`${year}-${month}`} className="grid animate-fade-in grid-cols-7 gap-1.5 text-center" role="grid" aria-label={monthLabel}>
             {WEEKDAYS.map((d) => (
               <span key={d} role="columnheader" className="pb-1 text-[0.6875rem] font-bold text-muted">
                 {d}
@@ -77,7 +77,7 @@ export function DeadlineCalendar({ tasks }: Props) {
               const high = due.some((t) => t.priority === 'high');
               const isToday = key === todayKey;
               const isSelected = key === selected;
-              const tone = high ? 'bg-burgundy text-white' : due.length ? 'bg-charcoal text-white' : 'bg-cloud text-muted hover:bg-burgundy-50';
+              const tone = high ? 'gloss-burgundy text-white' : due.length ? 'gloss-charcoal text-white' : 'glass-inset text-muted hover:bg-white';
               return (
                 <button
                   key={key}
@@ -86,7 +86,7 @@ export function DeadlineCalendar({ tasks }: Props) {
                   aria-selected={isSelected}
                   aria-label={`${day}${isToday ? ', today' : ''}${due.length ? `, ${due.length} due` : ''}`}
                   onClick={() => setSelected(key)}
-                  className={`h-9 rounded-xl text-xs font-semibold tabular-nums transition-transform ${tone} ${
+                  className={`h-9 rounded-xl text-xs font-semibold tabular-nums transition duration-200 ${tone} ${
                     isToday ? 'ring-2 ring-uplift ring-offset-1' : ''
                   } ${isSelected ? 'scale-110 shadow-md' : ''}`}
                 >
@@ -100,7 +100,7 @@ export function DeadlineCalendar({ tasks }: Props) {
             <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded bg-burgundy" /> High priority due</span>
             <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded ring-2 ring-uplift" /> Today</span>
           </div>
-          <div className="rounded-2xl bg-cloud px-4 py-3" aria-live="polite">
+          <div className="glass-inset rounded-2xl px-4 py-3" aria-live="polite">
             <p className="text-xs font-bold">{selectedLabel}</p>
             {selectedTasks.length === 0 ? (
               <p className="text-xs text-muted">Nothing due.</p>

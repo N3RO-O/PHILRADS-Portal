@@ -41,8 +41,13 @@ export function StockLevels() {
                     <span className="text-muted"> / {formatNumber(s.reorderLevel)} {s.unit}</span>
                   </p>
                 </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-cloud" aria-hidden>
-                  <div className={`h-full rounded-full ${isLow ? 'bg-burgundy' : 'bg-emerald-600'}`} style={{ width: `${pct}%` }} />
+                <div className="h-1.5 overflow-hidden rounded-full bg-black/[0.06]" aria-hidden>
+                  <div
+                    className={`h-full origin-left animate-grow-x rounded-full ${
+                      isLow ? 'bg-gradient-to-r from-burgundy to-[#9a1c1b]' : 'bg-gradient-to-r from-emerald-700 to-emerald-500'
+                    }`}
+                    style={{ width: `${pct}%` }}
+                  />
                 </div>
               </li>
             );

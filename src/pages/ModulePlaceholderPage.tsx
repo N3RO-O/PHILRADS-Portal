@@ -20,9 +20,9 @@ export function ModulePlaceholderPage({ moduleId }: { moduleId: ModuleId }) {
 
   return (
     <div className="grid gap-5 xl:grid-cols-12 xl:items-start">
-      <section className={`card flex flex-col gap-5 ${showUpload ? 'xl:col-span-7' : 'xl:col-span-8'}`}>
+      <section className={`card flex animate-fade-up flex-col gap-5 ${showUpload ? 'xl:col-span-7' : 'xl:col-span-8'}`}>
         <div className="flex items-start gap-4">
-          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-burgundy text-white">
+          <span className="gloss-burgundy sheen grid h-14 w-14 shrink-0 place-items-center rounded-2xl text-white">
             <m.icon className="h-7 w-7" aria-hidden />
           </span>
           <div className="min-w-0">
@@ -41,7 +41,7 @@ export function ModulePlaceholderPage({ moduleId }: { moduleId: ModuleId }) {
           </p>
         )}
         <p className="max-w-2xl text-sm leading-relaxed text-muted">{m.summary}</p>
-        <div className="rounded-3xl bg-cloud p-5">
+        <div className="glass-inset rounded-3xl p-5">
           <h3 className="text-sm font-bold">What this module will cover</h3>
           <ul className="mt-2 flex list-disc flex-col gap-1 pl-5 text-sm">
             {m.plannedScope.map((s) => (
@@ -54,7 +54,7 @@ export function ModulePlaceholderPage({ moduleId }: { moduleId: ModuleId }) {
         </Link>
       </section>
       {showUpload && (
-        <div className="xl:col-span-5">
+        <div className="animate-fade-up [animation-delay:90ms] xl:col-span-5">
           <DriveUploadPanel />
         </div>
       )}

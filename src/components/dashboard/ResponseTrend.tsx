@@ -21,8 +21,10 @@ export function ResponseTrend() {
                 <div key={r.weekStart} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5">
                   <span className="text-xs font-bold tabular-nums">{formatNumber(r.count)}</span>
                   <div
-                    className={`w-full max-w-[2rem] rounded-full ${latest ? 'bg-uplift' : 'bg-burgundy'}`}
-                    style={{ height: `${Math.max(4, (r.count / max) * 100)}%`, minHeight: '0.5rem' }}
+                    className={`w-full max-w-[2rem] origin-bottom animate-grow-y rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] ${
+                      latest ? 'bg-gradient-to-t from-[#d27c18] to-uplift' : 'bg-gradient-to-t from-burgundy to-[#981b1a]'
+                    }`}
+                    style={{ height: `${Math.max(4, (r.count / max) * 100)}%`, minHeight: '0.5rem', animationDelay: `${i * 45}ms` }}
                   />
                   <span className={`text-[0.625rem] text-muted ${i % 2 === rows.length % 2 ? 'max-[480px]:invisible' : ''}`}>
                     {formatShortDate(r.weekStart)}

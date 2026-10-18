@@ -34,9 +34,9 @@ export function SignInPage() {
   };
 
   return (
-    <main className="grid min-h-dvh place-items-center bg-cloud p-4">
-      <div className="card w-full max-w-sm gap-0 p-0">
-        <div className="flex flex-col items-center gap-3 rounded-t-[1.75rem] bg-burgundy px-6 py-8 text-center text-white">
+    <main className="grid min-h-dvh place-items-center p-4">
+      <div className="card w-full max-w-sm animate-fade-up gap-0 p-0">
+        <div className="gloss-burgundy sheen flex flex-col items-center gap-3 rounded-t-[1.75rem] px-6 py-8 text-center text-white">
           <Emblem className="h-16 w-16" />
           <div>
             <p className="font-display text-2xl tracking-wide">PHILRADS</p>

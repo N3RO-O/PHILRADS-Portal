@@ -69,7 +69,7 @@ export function DriveUploadPanel() {
       </div>
       <label
         htmlFor={inputId}
-        className="flex cursor-pointer flex-col items-center gap-2 rounded-3xl border-2 border-dashed border-black/10 bg-cloud px-4 py-8 text-center hover:border-burgundy/40"
+        className="flex cursor-pointer flex-col items-center gap-2 rounded-3xl border-2 border-dashed border-black/10 bg-white/45 px-4 py-8 text-center transition-colors hover:border-burgundy/40 hover:bg-white/70"
       >
         <span className="grid h-12 w-12 place-items-center rounded-full bg-white text-burgundy ring-1 ring-black/5">
           <CloudUpload className="h-6 w-6" aria-hidden />
@@ -89,7 +89,7 @@ export function DriveUploadPanel() {
       {files.length > 0 && (
         <ul className="flex flex-col gap-2" aria-label="Selected files">
           {files.map((f) => (
-            <li key={f.key} className="flex items-center gap-3 rounded-2xl bg-cloud px-3 py-2.5">
+            <li key={f.key} className="glass-inset flex items-center gap-3 rounded-2xl px-3 py-2.5">
               <FileText className="h-4 w-4 shrink-0 text-burgundy" aria-hidden />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{f.file.name}</p>

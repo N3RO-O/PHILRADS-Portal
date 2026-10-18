@@ -7,13 +7,25 @@ import type { SummaryKey } from '../../types';
 import { LoadError, Skeleton } from '../ui/Card';
 import { SampleBadge } from '../ui/SampleBadge';
 
-const META: Record<SummaryKey, { label: string; window: string; icon: LucideIcon; to: string; warn?: boolean }> = {
-  active_projects: { label: 'Active projects', window: 'Right now', icon: FolderKanban, to: '/projects' },
-  pending_tasks: { label: 'Pending tasks', window: 'Assigned to your teams', icon: SquareCheckBig, to: '/tasks' },
-  inventory_alerts: { label: 'Inventory alerts', window: 'Items below reorder level', icon: TriangleAlert, to: '/inventory', warn: true },
-  response_activities: { label: 'Response activities', window: 'Last 30 days', icon: LifeBuoy, to: '/response' },
-  documentation_updates: { label: 'Documentation updates', window: 'Last 7 days', icon: FileText, to: '/documentation' },
-  upcoming_deadlines: { label: 'Upcoming deadlines', window: 'Next 14 days', icon: CalendarClock, to: '/tasks', warn: true },
+interface Meta {
+  label: string;
+  window: string;
+  /** Shown instead of `window` when the count is 0. */
+  empty: string;
+  /** Call to action shown when the count is 0. */
+  cta: string;
+  icon: LucideIcon;
+  to: string;
+  warn?: boolean;
+}
+
+const META: Record<SummaryKey, Meta> = {
+  active_projects: { label: 'Active projects', window: 'Right now', empty: 'No active projects right now', cta: 'View projects', icon: FolderKanban, to: '/projects' },
+  pending_tasks: { label: 'Pending tasks', window: 'Assigned to your teams', empty: 'Nothing pending for your teams', cta: 'Create a task', icon: SquareCheckBig, to: '/tasks?action=create-task' },
+  inventory_alerts: { label: 'Inventory alerts', window: 'Items below reorder level', empty: 'All items above reorder level', cta: 'View inventory', icon: TriangleAlert, to: '/inventory', warn: true },
+  response_activities: { label: 'Response activities', window: 'Last 30 days', empty: 'None in the last 30 days', cta: 'Open Response', icon: LifeBuoy, to: '/response' },
+  documentation_updates: { label: 'Documentation updates', window: 'Last 7 days', empty: 'No uploads in the last 7 days', cta: 'Upload a file', icon: FileText, to: '/documentation?action=upload' },
+  upcoming_deadlines: { label: 'Upcoming deadlines', window: 'Next 14 days', empty: 'Nothing due in the next 14 days', cta: 'Open Tasks', icon: CalendarClock, to: '/tasks', warn: true },
 };
 
 export function SummaryStats() {
@@ -32,17 +44,26 @@ export function SummaryStats() {
           {(summary.status === 'success' ? summary.data : Object.keys(META).map((key) => ({ key: key as SummaryKey, value: null }))).map(
             ({ key, value }) => {
               const m = META[key];
+              const isEmpty = value === 0;
               return (
                 <li key={key}>
                   <Link
-                    to={m.to}
-                    className="group flex h-full min-h-[8.5rem] flex-col gap-2 rounded-3xl bg-white p-4 ring-1 ring-black/[0.05] transition-shadow hover:shadow-md"
+                    to={isEmpty ? m.to : m.to.split('?')[0]}
+                    className="glass group flex h-full min-h-[8.5rem] flex-col gap-2 rounded-3xl p-4 transition duration-200 hover:-translate-y-0.5 hover:bg-white/90 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_0_0_1px_rgba(100,6,6,0.2),0_18px_36px_-16px_rgba(100,6,6,0.35)] focus-visible:-translate-y-0.5"
                   >
                     <span className="flex items-start justify-between">
-                      <span className={`grid h-9 w-9 place-items-center rounded-full ${m.warn ? 'bg-uplift-100 text-uplift-700' : 'bg-burgundy-50 text-burgundy'}`}>
+                      <span
+                        className={`grid h-9 w-9 place-items-center rounded-full ${
+                          m.warn
+                            ? 'bg-gradient-to-b from-uplift-50 to-uplift-100 text-uplift-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_0_0_1px_rgba(236,149,42,0.22)]'
+                            : 'bg-gradient-to-b from-burgundy-50 to-burgundy-100 text-burgundy shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_0_0_1px_rgba(100,6,6,0.1)]'
+                        }`}
+                      >
                         <m.icon className="h-[1.125rem] w-[1.125rem]" aria-hidden />
                       </span>
-                      <ArrowUpRight className="h-4 w-4 text-muted transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
+                      <span className="grid h-7 w-7 place-items-center rounded-full text-muted transition group-hover:bg-burgundy group-hover:text-white">
+                        <ArrowUpRight className="h-4 w-4" aria-hidden />
+                      </span>
                     </span>
                     {value === null ? (
                       <Skeleton className="mt-auto h-8 w-14" />
@@ -51,7 +72,8 @@ export function SummaryStats() {
                     )}
                     <span className="flex flex-col">
                       <span className="text-sm font-bold leading-tight">{m.label}</span>
-                      <span className="text-xs text-muted">{m.window}</span>
+                      <span className="text-xs text-muted">{isEmpty ? m.empty : m.window}</span>
+                      {isEmpty && <span className="mt-1 text-xs font-bold text-burgundy">{m.cta} →</span>}
                     </span>
                   </Link>
                 </li>

@@ -9,7 +9,7 @@ export function Avatar({ initials, size = 'md' }: AvatarProps) {
   return (
     <span
       aria-hidden
-      className={`inline-grid shrink-0 place-items-center rounded-full bg-burgundy font-bold tracking-wide text-white ring-2 ring-white ${SIZES[size]}`}
+      className={`inline-grid shrink-0 place-items-center rounded-full gloss-burgundy font-bold tracking-wide text-white ring-2 ring-white ${SIZES[size]}`}
     >
       {initials}
     </span>

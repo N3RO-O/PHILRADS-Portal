@@ -36,7 +36,7 @@ export function VerseOfTheDay() {
   };
 
   return (
-    <section aria-labelledby="verse-title" className="relative flex flex-col gap-4 overflow-hidden rounded-[1.75rem] bg-burgundy p-6 text-white">
+    <section aria-labelledby="verse-title" className="gloss-burgundy sheen relative flex flex-col gap-4 overflow-hidden rounded-[1.75rem] p-6 text-white">
       <Quote className="absolute -right-3 -top-3 h-28 w-28 rotate-180 text-white/[0.06]" aria-hidden />
       <h2 id="verse-title" className="text-[0.6875rem] font-bold uppercase tracking-[0.16em] text-uplift">
         Verse of the day
@@ -46,7 +46,7 @@ export function VerseOfTheDay() {
         <footer className="mt-3 text-sm font-semibold text-white/80">— {VERSE_OF_THE_DAY.reference}</footer>
       </blockquote>
       <div className="flex items-center gap-3">
-        <button type="button" onClick={() => void onCopy()} className="btn min-h-10 bg-white text-burgundy hover:bg-cloud">
+        <button type="button" onClick={() => void onCopy()} className="btn min-h-10 bg-gradient-to-b from-white to-[#f3e9e9] text-burgundy shadow-[inset_0_1px_0_#fff,0_6px_16px_-8px_rgba(0,0,0,0.45)] hover:brightness-105 active:scale-[0.98]">
           {state === 'copied' ? <Check className="h-4 w-4" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />}
           {state === 'copied' ? 'Copied' : 'Copy verse'}
         </button>

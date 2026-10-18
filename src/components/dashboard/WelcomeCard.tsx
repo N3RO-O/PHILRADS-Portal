@@ -6,7 +6,7 @@ import { Emblem } from '../ui/Emblem';
 
 const SHORTCUTS = [
   { to: '/#my-tasks', label: 'My tasks', icon: SquareCheckBig },
-  { to: '/documentation?action=upload', label: 'Upload documentation', icon: Upload },
+  { to: '/documentation?action=upload', label: 'Upload', icon: Upload },
   { to: '/live-map', label: 'Live map', icon: Map },
   { to: '/projects', label: 'Projects', icon: FolderKanban },
 ];
@@ -25,18 +25,22 @@ export function WelcomeCard() {
           <p className="mt-0.5 text-xs text-muted">{[profile.roleName, profile.office].filter(Boolean).join(' · ')}</p>
         </div>
       </div>
-      <ul className="flex gap-2" aria-label="Shortcuts">
+      <ul className="grid grid-cols-4 gap-2" aria-label="Shortcuts">
         {SHORTCUTS.map(({ to, label, icon: Icon }, i) => (
           <li key={to}>
             <Link
               to={to}
-              aria-label={label}
-              title={label}
-              className={`grid h-11 w-11 place-items-center rounded-full transition-colors ${
-                i === 0 ? 'bg-burgundy text-white hover:bg-burgundy-600' : 'bg-cloud text-charcoal hover:bg-burgundy-50'
-              }`}
+              className="group flex flex-col items-center gap-1.5 rounded-2xl py-1 text-center text-[0.6875rem] font-semibold leading-tight text-charcoal"
             >
-              <Icon className="h-[1.125rem] w-[1.125rem]" aria-hidden />
+              <span
+                aria-hidden
+                className={`grid h-11 w-11 place-items-center rounded-full transition group-hover:-translate-y-0.5 ${
+                  i === 0 ? 'gloss-burgundy text-white' : 'glass-inset text-charcoal group-hover:bg-white'
+                }`}
+              >
+                <Icon className="h-[1.125rem] w-[1.125rem]" />
+              </span>
+              {label}
             </Link>
           </li>
         ))}
@@ -48,7 +52,7 @@ export function WelcomeCard() {
       <Link to="/#my-tasks" className="btn-primary self-start">
         View my tasks <ArrowRight className="h-4 w-4" aria-hidden />
       </Link>
-      <div className="flex items-center gap-3 rounded-2xl bg-burgundy px-3 py-2.5">
+      <div className="gloss-burgundy sheen flex items-center gap-3 rounded-2xl px-3 py-2.5">
         <Emblem className="h-9 w-9" decorative />
         <p className="text-xs font-bold text-uplift">Serving People in Jesus’ Name.</p>
       </div>

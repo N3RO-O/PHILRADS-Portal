@@ -32,7 +32,7 @@ export function NotificationsMenu() {
         {unread > 0 && <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-uplift ring-2 ring-white" aria-hidden />}
       </button>
       {open && (
-        <div id={panelId} className="absolute right-0 top-12 z-50 w-[min(22rem,calc(100vw-2rem))] rounded-3xl bg-white p-4 shadow-2xl ring-1 ring-black/5">
+        <div id={panelId} className="absolute right-0 top-12 z-50 origin-top-right animate-pop-in glass-popover w-[min(22rem,calc(100vw-2rem))] rounded-3xl p-4">
           <p className="mb-2 flex items-center gap-2 text-sm font-bold">
             Notifications {dashboardService.source === 'mock' && <SampleBadge />}
           </p>
@@ -44,7 +44,7 @@ export function NotificationsMenu() {
             ) : (
               <ul className="flex flex-col gap-1">
                 {notes.data.map((n) => (
-                  <li key={n.id} className="flex gap-3 rounded-2xl px-2 py-2.5 hover:bg-cloud">
+                  <li key={n.id} className="flex gap-3 rounded-2xl px-2 py-2.5 hover:bg-black/[0.04]">
                     <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${n.read ? 'bg-black/10' : 'bg-uplift'}`} aria-hidden />
                     <span className="min-w-0">
                       <span className="block text-sm font-semibold">
