@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-cloud font-sans text-charcoal antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid #ec952a;
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-[1.75rem] bg-white p-5 shadow-[0_1px_2px_rgba(53,53,53,0.04)] ring-1 ring-black/[0.05];
+  }
+  .card-title {
+    @apply text-[0.95rem] font-bold leading-tight text-charcoal;
+  }
+  .card-note {
+    @apply mt-0.5 text-xs text-muted;
+  }
+  .icon-btn {
+    @apply inline-grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-charcoal ring-1 ring-black/[0.06] transition-colors hover:bg-burgundy-50 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn {
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-burgundy text-white hover:bg-burgundy-600;
+  }
+  .btn-light {
+    @apply btn bg-white text-charcoal ring-1 ring-black/10 hover:bg-burgundy-50;
+  }
+  .pill {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold;
+  }
+  .chip {
+    @apply inline-flex min-h-8 items-center rounded-full px-3 text-xs font-semibold text-muted ring-1 ring-black/10 transition-colors hover:ring-burgundy/40 aria-pressed:bg-charcoal aria-pressed:text-white aria-pressed:ring-charcoal;
+  }
+  .link {
+    @apply inline-flex items-center gap-1 text-xs font-bold text-burgundy hover:underline;
+  }
+  .skeleton {
+    @apply animate-pulse rounded-xl bg-black/[0.06];
+  }
+  .field {
+    @apply block w-full rounded-2xl border-0 bg-cloud px-4 py-3 text-sm text-charcoal ring-1 ring-black/10 placeholder:text-muted/70 focus:outline-none focus:ring-2 focus:ring-burgundy;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
