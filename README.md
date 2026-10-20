@@ -54,6 +54,7 @@ src/
   components/auth/           Sign-in state and access gate
   components/pwa/            Service-worker update prompt, install guidance
   components/ui/             Card, dialog, avatar, badges
+  components/charts/         Area chart, paired bars, gauge (plain SVG/HTML)
   config/                    Environment, module list, verse of the day
   data/                      DEVELOPMENT-ONLY sample data
   hooks/                     Async data, online status, popover dismissal
@@ -70,7 +71,7 @@ The UI reads data only through `DashboardService` (`src/services/dashboard/types
 
 ## Progressive Web App
 
-- **Manifest:** name *PHILRADS Staff Portal*, short name *PHILRADS*, standalone display, Dark Burgundy theme, Cloud background, 192/512 icons plus maskable versions made from the official emblem.
+- **Manifest:** name *PHILRADS Staff Portal*, short name *PHILRADS*, standalone display, dark `#1c1d21` theme and background (matching the interface), 192/512 icons plus maskable versions made from the official emblem.
 - **Install:** Chrome, Edge and Android offer *Install app* in the profile menu. On iPhone/iPad the same menu item shows Safari’s *Share → Add to Home Screen* steps. No pop-ups nag staff to install.
 - **Caching:** the service worker precaches only the built app shell (HTML, JS, CSS, icons) and caches the public Google Fonts files. Supabase, Google Drive and any other API traffic is **not** cached, so private staff records, tokens and documents are never stored in a service-worker cache.
 - **Offline:** the interface still opens offline, including deep links such as `/tasks`. The header shows *Online/Offline*, and a notice explains that loading, saving and uploading need a connection. Nothing is shown as saved unless it really was. There is no offline write queue yet, by design.
@@ -121,11 +122,22 @@ Optionally add the custom domain (e.g. `portal.philrads.org`) under **Settings �
 
 ## Brand
 
-Dark Burgundy `#640606`, Cloud `#F1F1F1`, Charcoal `#353535`, Uplifting Yellow `#EC952A`. Headings use Archivo Black, body text Montserrat, and the verse EB Garamond (Google Fonts, with Arial Black and system fallbacks). The emblem and app icons were cropped from the branding guide image. **Replace `public/brand/philrads-emblem.png` and the icons with the official high-resolution or vector emblem when available.**
+Dark Burgundy `#640606`, Cloud `#F1F1F1`, Charcoal `#353535`, Uplifting Yellow `#EC952A`. The PHILRADS wordmark uses Archivo Black, the interface Montserrat, and the verse EB Garamond (Google Fonts, with system fallbacks). The emblem and app icons were cropped from the branding guide image. **Replace `public/brand/philrads-emblem.png` and the icons with the official high-resolution or vector emblem when available.**
 
-The layout follows the requested “bento” style: a floating burgundy icon rail (expandable to labels), rounded cards, pastel project cards, a deadlines calendar and an inbox-style activity feed.
+**Design:** a clean dark interface modelled on the *Sales Management Dashboard* reference. Tokens live in `tailwind.config.js`:
 
-**Glossy finish:** frosted-glass cards and menus (`.glass`, `.glass-popover`, `.glass-inset` in `src/index.css`), glossy burgundy and charcoal surfaces with a soft top highlight (`.gloss-burgundy`, `.gloss-charcoal`, `.sheen`), and faint brand-coloured glows behind the page.
+| Token | Value | Use |
+| --- | --- | --- |
+| `page` | `#1c1d21` | App background, sidebar, installed-app title bar |
+| `surface` / `surface-sunken` / `surface-raised` | `#26272c` / `#202125` / `#303137` | Cards / tiles inside cards / menus and hovers |
+| `line` | `#36373d` | Borders and dividers |
+| `ink` / `ink-soft` / `muted` | `#F1F1F1` (Cloud) / `#c4c6cd` / `#9a9ca6` | Text |
+| `uplift` | `#EC952A` | The one highlight colour: selected navigation, primary buttons, main chart series |
+| `rose` | `#D97B7B` | Light burgundy for second chart series and alerts (Dark Burgundy is too dark to read on a dark background) |
+
+All text pairs meet WCAG AA (lowest is muted text on menus, 4.74:1). Shared styles are in `src/index.css`: `.card`, `.tile`, `.badge`, `.chip`, `.btn-primary`, `.btn-ghost`, `.popover`, `.field`.
+
+**Layout:** full-height sidebar (expanded with labels by default, collapsible to an icon rail with hover labels; the choice is remembered per device), a top bar with search, status, notifications and account, and cards in aligned 12-column rows. Every module page uses the same card system (`src/pages/ModulePlaceholderPage.tsx`). Charts are plain SVG/HTML in `src/components/charts` (no chart library).
 
 **Motion:** one smooth easing curve for every transition (`tailwind.config.js`), staggered card entrances, page fades, pop-in menus, a sliding mobile drawer and filling progress bars. Only transform and opacity animate, and all motion is switched off when the device asks for reduced motion.
 

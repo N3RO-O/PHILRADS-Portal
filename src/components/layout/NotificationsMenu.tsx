@@ -29,11 +29,11 @@ export function NotificationsMenu() {
         onClick={() => setOpen((o) => !o)}
       >
         <Bell className="h-[1.125rem] w-[1.125rem]" aria-hidden />
-        {unread > 0 && <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-uplift ring-2 ring-white" aria-hidden />}
+        {unread > 0 && <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-rose ring-2 ring-page" aria-hidden />}
       </button>
       {open && (
-        <div id={panelId} className="absolute right-0 top-12 z-50 origin-top-right animate-pop-in glass-popover w-[min(22rem,calc(100vw-2rem))] rounded-3xl p-4">
-          <p className="mb-2 flex items-center gap-2 text-sm font-bold">
+        <div id={panelId} className="popover absolute right-0 top-12 z-50 w-[min(22rem,calc(100vw-2rem))] origin-top-right animate-pop-in p-4">
+          <p className="mb-2 flex items-center gap-2 text-sm font-semibold">
             Notifications {dashboardService.source === 'mock' && <SampleBadge />}
           </p>
           {notes.status === 'loading' && <Skeleton className="h-24" />}
@@ -42,12 +42,12 @@ export function NotificationsMenu() {
             (notes.data.length === 0 ? (
               <p className="py-4 text-center text-sm text-muted">You’re all caught up.</p>
             ) : (
-              <ul className="flex flex-col gap-1">
+              <ul className="flex flex-col">
                 {notes.data.map((n) => (
-                  <li key={n.id} className="flex gap-3 rounded-2xl px-2 py-2.5 hover:bg-black/[0.04]">
-                    <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${n.read ? 'bg-black/10' : 'bg-uplift'}`} aria-hidden />
+                  <li key={n.id} className="flex gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-white/[0.04]">
+                    <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${n.read ? 'bg-line' : 'bg-uplift'}`} aria-hidden />
                     <span className="min-w-0">
-                      <span className="block text-sm font-semibold">
+                      <span className="block text-sm font-medium text-ink">
                         {n.title}
                         {!n.read && <span className="sr-only"> (unread)</span>}
                       </span>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Check, Copy, Quote } from 'lucide-react';
+import { BookOpen, Check, Copy } from 'lucide-react';
 import { VERSE_OF_THE_DAY } from '../../config/verse';
 
 async function copyText(text: string) {
@@ -36,21 +36,20 @@ export function VerseOfTheDay() {
   };
 
   return (
-    <section aria-labelledby="verse-title" className="gloss-burgundy sheen relative flex flex-col gap-4 overflow-hidden rounded-[1.75rem] p-6 text-white">
-      <Quote className="absolute -right-3 -top-3 h-28 w-28 rotate-180 text-white/[0.06]" aria-hidden />
-      <h2 id="verse-title" className="text-[0.6875rem] font-bold uppercase tracking-[0.16em] text-uplift">
-        Verse of the day
+    <section aria-labelledby="verse-title" className="card relative flex h-full flex-col gap-4 overflow-hidden border-l-2 border-l-uplift">
+      <h2 id="verse-title" className="flex items-center gap-2 text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-uplift">
+        <BookOpen className="h-4 w-4" aria-hidden /> Verse of the day
       </h2>
-      <blockquote className="relative">
-        <p className="font-serif text-[1.35rem] leading-snug">“{VERSE_OF_THE_DAY.text}”</p>
-        <footer className="mt-3 text-sm font-semibold text-white/80">— {VERSE_OF_THE_DAY.reference}</footer>
+      <blockquote className="my-auto">
+        <p className="font-serif text-[1.4rem] leading-snug text-ink">“{VERSE_OF_THE_DAY.text}”</p>
+        <footer className="mt-3 text-sm font-medium text-muted">— {VERSE_OF_THE_DAY.reference}</footer>
       </blockquote>
       <div className="flex items-center gap-3">
-        <button type="button" onClick={() => void onCopy()} className="btn min-h-10 bg-gradient-to-b from-white to-[#f3e9e9] text-burgundy shadow-[inset_0_1px_0_#fff,0_6px_16px_-8px_rgba(0,0,0,0.45)] hover:brightness-105 active:scale-[0.98]">
-          {state === 'copied' ? <Check className="h-4 w-4" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />}
+        <button type="button" onClick={() => void onCopy()} className="btn-ghost min-h-10">
+          {state === 'copied' ? <Check className="h-4 w-4 text-uplift" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />}
           {state === 'copied' ? 'Copied' : 'Copy verse'}
         </button>
-        <span role="status" className="text-xs text-white/80">
+        <span role="status" className="text-xs text-muted">
           {state === 'failed' ? 'Couldn’t copy. Select the verse and copy it manually.' : ''}
         </span>
       </div>

@@ -6,9 +6,10 @@ import { dashboardService } from '../../services';
 import { formatLongDate } from '../../lib/format';
 import { useAuth } from '../auth/AuthProvider';
 import { UpdatePrompt } from '../pwa/UpdatePrompt';
+import { SampleBadge } from '../ui/SampleBadge';
 import { MobileDrawer } from './MobileDrawer';
 import { OfflineNotice, OnlinePill } from './OnlineStatus';
-import { SidebarRail } from './SidebarRail';
+import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 
 export interface LayoutContext {
@@ -17,11 +18,12 @@ export interface LayoutContext {
 export const useLayoutContext = () => useOutletContext<LayoutContext>();
 
 const SIDEBAR_KEY = 'philrads.sidebar.expanded';
+/** Expanded by default; remembers the staff member's choice on this device. */
 const readExpanded = () => {
   try {
-    return localStorage.getItem(SIDEBAR_KEY) === '1';
+    return localStorage.getItem(SIDEBAR_KEY) !== '0';
   } catch {
-    return false;
+    return true;
   }
 };
 
@@ -62,28 +64,24 @@ export function AppLayout() {
 
   return (
     <div className="min-h-dvh">
-      <a href="#main" className="sr-only z-50 rounded-full bg-white px-4 py-2 font-semibold focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
+      <a href="#main" className="sr-only z-50 rounded-xl bg-uplift px-4 py-2 font-semibold text-page focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
         Skip to main content
       </a>
-      <SidebarRail expanded={expanded} onToggle={toggleSidebar} />
+      <Sidebar expanded={expanded} onToggle={toggleSidebar} />
       <MobileDrawer open={menuOpen} onClose={() => setMenuOpen(false)} />
-      <div className={`flex min-h-dvh flex-col transition-[padding] duration-300 ${expanded ? 'lg:pl-[19rem]' : 'lg:pl-28'}`}>
+      <div className={`flex min-h-dvh flex-col transition-[padding] duration-300 ${expanded ? 'lg:pl-64' : 'lg:pl-[4.5rem]'}`}>
         <TopBar search={search} onSearch={onSearch} menuOpen={menuOpen} onOpenMenu={() => setMenuOpen(true)} />
-        <main id="main" className="mx-auto w-full max-w-[100rem] flex-1 px-4 pb-12 sm:px-6">
+        <main id="main" className="mx-auto w-full max-w-[100rem] flex-1 px-4 pb-10 sm:px-6">
           <div className="flex flex-wrap items-end justify-between gap-3 pb-5 pt-2">
             <div className="min-w-0">
-              <h1 className="font-display text-2xl leading-tight sm:text-[1.75rem]">{title}</h1>
+              <h1 className="text-xl font-bold leading-tight text-ink sm:text-2xl">{title}</h1>
               {profile && <p className="mt-1 text-sm text-muted">Welcome back, {profile.displayName}</p>}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <OnlinePill className="sm:hidden" />
-              {dashboardService.source === 'mock' && (
-                <span className="pill bg-uplift-100 text-uplift-700" title="Figures on this page are demonstration data">
-                  <span className="h-2 w-2 rounded-full bg-uplift" aria-hidden /> Sample data
-                </span>
-              )}
-              <span className="pill bg-white/70 text-charcoal ring-1 ring-black/[0.06] backdrop-blur">
-                <CalendarDays className="h-3.5 w-3.5 text-burgundy" aria-hidden />
+              {dashboardService.source === 'mock' && <SampleBadge label="Sample data" />}
+              <span className="pill border border-line/70 bg-surface text-ink-soft">
+                <CalendarDays className="h-3.5 w-3.5 text-uplift" aria-hidden />
                 <time dateTime={new Date().toISOString().slice(0, 10)}>{formatLongDate()}</time>
               </span>
             </div>
@@ -94,12 +92,12 @@ export function AppLayout() {
             <Outlet context={{ search } satisfies LayoutContext} />
           </div>
         </main>
-        <footer className="flex flex-wrap items-center justify-between gap-2 px-4 py-5 text-xs text-muted sm:px-6">
+        <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-line/50 px-4 py-4 text-xs text-muted sm:px-6">
           <span>
             Philippine Relief and Development Services, Inc. · Staff Portal v{__APP_VERSION__}{' '}
             <span className="text-muted/70">({__APP_BUILD__})</span>
           </span>
-          <a href="https://philrads.org/" target="_blank" rel="noopener noreferrer" className="font-semibold text-burgundy hover:underline">
+          <a href="https://philrads.org/" target="_blank" rel="noopener noreferrer" className="font-semibold text-uplift hover:underline">
             philrads.org
           </a>
         </footer>

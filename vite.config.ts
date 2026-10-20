@@ -3,8 +3,8 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import pkg from './package.json' with { type: 'json' };
 
-const BRAND_BURGUNDY = '#640606';
-const BRAND_CLOUD = '#F1F1F1';
+// Matches the dark interface so the installed app's title bar blends in.
+const APP_DARK = '#1c1d21';
 
 export default defineConfig({
   define: {
@@ -39,8 +39,8 @@ export default defineConfig({
         start_url: '/',
         scope: '/',
         display: 'standalone',
-        theme_color: BRAND_BURGUNDY,
-        background_color: BRAND_CLOUD,
+        theme_color: APP_DARK,
+        background_color: APP_DARK,
         categories: ['productivity', 'business'],
         icons: [
           { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },

@@ -36,20 +36,20 @@ export function UpdatePrompt() {
   return (
     <div
       role="status"
-      className="fixed inset-x-4 bottom-4 z-50 mx-auto flex max-w-md animate-fade-up items-center gap-3 gloss-charcoal rounded-full py-2 pl-5 pr-2 text-sm text-white sm:left-auto sm:right-6 sm:mx-0"
+      className="popover fixed inset-x-4 bottom-4 z-50 mx-auto flex max-w-md animate-fade-up items-center gap-3 py-2 pl-5 pr-2 text-sm text-ink sm:left-auto sm:right-6 sm:mx-0"
     >
       <span className="h-2 w-2 shrink-0 rounded-full bg-uplift" aria-hidden />
       <span className="min-w-0 flex-1">
         {needRefresh ? 'A new version of the portal is ready. Save any open work, then reload.' : 'The portal is ready to open offline.'}
       </span>
       {needRefresh && (
-        <button type="button" className="btn min-h-9 bg-gradient-to-b from-white to-[#ececec] px-4 text-charcoal hover:brightness-105" onClick={() => void updateServiceWorker(true)}>
+        <button type="button" className="btn-primary min-h-9 px-4" onClick={() => void updateServiceWorker(true)}>
           <RefreshCw className="h-4 w-4" aria-hidden /> Reload
         </button>
       )}
       <button
         type="button"
-        className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/10"
+        className="icon-btn h-9 w-9"
         aria-label={needRefresh ? 'Later' : 'Dismiss'}
         onClick={() => {
           setNeedRefresh(false);

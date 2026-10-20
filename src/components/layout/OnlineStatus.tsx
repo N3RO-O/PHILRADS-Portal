@@ -6,10 +6,10 @@ export function OnlinePill({ className = '' }: { className?: string }) {
   return (
     <span
       role="status"
-      className={`pill ${online ? 'bg-white/70 text-muted ring-1 ring-black/[0.06] backdrop-blur' : 'bg-uplift-100 text-charcoal ring-1 ring-uplift/30'} ${className}`}
+      className={`pill border ${online ? 'border-line/70 bg-surface text-ink-soft' : 'border-uplift/40 bg-uplift/10 text-uplift'} ${className}`}
       title={online ? 'Connected' : 'Offline: saving and uploading need a connection'}
     >
-      <span className={`h-2 w-2 rounded-full ${online ? 'bg-emerald-600' : 'bg-burgundy'}`} aria-hidden />
+      <span className={`h-2 w-2 rounded-full ${online ? 'bg-emerald-400' : 'bg-uplift'}`} aria-hidden />
       {online ? 'Online' : 'Offline'}
     </span>
   );
@@ -20,11 +20,11 @@ export function OfflineNotice() {
   const online = useOnlineStatus();
   if (online) return null;
   return (
-    <div role="alert" className="mb-5 flex animate-fade-up items-start gap-3 rounded-3xl bg-uplift-100/90 px-5 py-4 text-sm ring-1 ring-uplift/30 backdrop-blur">
-      <WifiOff className="mt-0.5 h-5 w-5 shrink-0 text-uplift-700" aria-hidden />
+    <div role="alert" className="mb-5 flex animate-fade-up items-start gap-3 rounded-2xl border border-uplift/30 bg-uplift/10 px-5 py-4 text-sm text-ink">
+      <WifiOff className="mt-0.5 h-5 w-5 shrink-0 text-uplift" aria-hidden />
       <p>
-        <strong>You’re offline.</strong> The portal stays open, but loading new data, saving and uploading files need an
-        internet connection. Nothing will be shown as saved until it really is.
+        <strong className="font-semibold">You’re offline.</strong> The portal stays open, but loading new data, saving and
+        uploading files need an internet connection. Nothing will be shown as saved until it really is.
       </p>
     </div>
   );

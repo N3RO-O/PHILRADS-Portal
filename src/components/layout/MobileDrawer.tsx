@@ -25,22 +25,22 @@ export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
       aria-label="Navigation"
       onClose={onClose}
       onClick={(e) => e.target === ref.current && onClose()}
-      className="gloss-burgundy fixed inset-y-0 left-0 m-0 h-dvh animate-slide-in-left backdrop:animate-fade-in max-h-none w-[min(18rem,86vw)] max-w-none rounded-r-[2rem] p-0 text-white backdrop:bg-charcoal/40 backdrop:backdrop-blur-sm"
+      className="fixed inset-y-0 left-0 m-0 h-dvh max-h-none w-[min(17rem,86vw)] max-w-none animate-slide-in-left border-r border-line bg-page p-0 text-ink backdrop:animate-fade-in backdrop:bg-black/60"
     >
-      <div className="flex h-full flex-col gap-3 overflow-y-auto px-3 py-4">
-        <div className="flex items-center justify-between gap-3 px-1 pb-1">
+      <div className="flex h-full flex-col overflow-y-auto">
+        <div className="flex h-16 shrink-0 items-center justify-between gap-3 px-5">
           <span className="flex items-center gap-3">
-            <Emblem className="h-10 w-10" decorative />
+            <Emblem className="h-9 w-9" decorative />
             <span className="flex flex-col leading-tight">
-              <span className="font-display text-lg tracking-wide">PHILRADS</span>
-              <span className="text-[0.6875rem] uppercase tracking-[0.16em] text-white/70">Staff Portal</span>
+              <span className="font-display text-base tracking-wide">PHILRADS</span>
+              <span className="text-[0.625rem] uppercase tracking-[0.18em] text-muted">Staff Portal</span>
             </span>
           </span>
-          <button type="button" onClick={onClose} aria-label="Close navigation" className="grid h-10 w-10 place-items-center rounded-full ring-1 ring-white/20 hover:bg-white/10">
+          <button type="button" onClick={onClose} aria-label="Close navigation" className="icon-btn">
             <X className="h-5 w-5" aria-hidden />
           </button>
         </div>
-        <nav aria-label="Modules" className="flex flex-col gap-2">
+        <nav aria-label="Modules" className="flex flex-col px-3 py-3">
           <NavItems expanded onNavigate={onClose} />
         </nav>
       </div>

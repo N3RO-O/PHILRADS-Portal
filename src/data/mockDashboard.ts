@@ -35,6 +35,8 @@ export const mockProjects = (): ProjectSummary[] => [
   { id: 'p1', name: 'Community Livelihood Program', programArea: 'Livelihood', progress: 60, endDate: dateIn(24), updatedAt: isoAgo(1 * DAY) },
   { id: 'p2', name: 'Safe Water and Sanitation', programArea: 'WASH', progress: 35, endDate: dateIn(52), updatedAt: isoAgo(4 * DAY) },
   { id: 'p3', name: 'Typhoon Recovery Support', programArea: 'Disaster response', progress: 80, endDate: dateIn(9), updatedAt: isoAgo(2 * HOUR) },
+  { id: 'p4', name: 'Child Nutrition Feeding', programArea: 'Health and nutrition', progress: 48, endDate: dateIn(71), updatedAt: isoAgo(3 * DAY) },
+  { id: 'p5', name: 'Community Health Workers Training', programArea: 'Health', progress: 22, endDate: dateIn(96), updatedAt: isoAgo(5 * DAY) },
 ];
 
 export const mockActivity = (): ActivityItem[] => [

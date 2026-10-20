@@ -60,7 +60,7 @@ export function DriveUploadPanel() {
   };
 
   return (
-    <section aria-labelledby="upload-title" className="card flex flex-col gap-4">
+    <section aria-labelledby="upload-title" className="card flex h-full flex-col gap-4">
       <div>
         <h2 id="upload-title" className="card-title">
           Upload documentation
@@ -69,16 +69,16 @@ export function DriveUploadPanel() {
       </div>
       <label
         htmlFor={inputId}
-        className="flex cursor-pointer flex-col items-center gap-2 rounded-3xl border-2 border-dashed border-black/10 bg-white/45 px-4 py-8 text-center transition-colors hover:border-burgundy/40 hover:bg-white/70"
+        className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-line bg-surface-sunken px-4 py-8 text-center transition-colors hover:border-uplift/50 focus-within:border-uplift"
       >
-        <span className="grid h-12 w-12 place-items-center rounded-full bg-white text-burgundy ring-1 ring-black/5">
+        <span className="grid h-12 w-12 place-items-center rounded-xl bg-uplift/10 text-uplift">
           <CloudUpload className="h-6 w-6" aria-hidden />
         </span>
-        <span className="text-sm font-semibold">Choose files</span>
+        <span className="text-sm font-semibold text-ink">Choose files</span>
         <span className="text-xs text-muted">Up to 2 GB each (limit to be confirmed)</span>
         <input id={inputId} type="file" multiple accept={UPLOAD_RULES.accept} onChange={onPick} className="sr-only" />
       </label>
-      <label className="flex flex-col gap-1.5 text-sm font-semibold">
+      <label className="flex flex-col gap-1.5 text-sm font-medium text-ink-soft">
         Category
         <select className="field" value={category} onChange={(e) => setCategory(e.target.value as DocumentCategory)}>
           {DOCUMENT_CATEGORIES.map((c) => (
@@ -89,11 +89,11 @@ export function DriveUploadPanel() {
       {files.length > 0 && (
         <ul className="flex flex-col gap-2" aria-label="Selected files">
           {files.map((f) => (
-            <li key={f.key} className="glass-inset flex items-center gap-3 rounded-2xl px-3 py-2.5">
-              <FileText className="h-4 w-4 shrink-0 text-burgundy" aria-hidden />
+            <li key={f.key} className="tile flex items-center gap-3 px-3 py-2.5">
+              <FileText className="h-4 w-4 shrink-0 text-uplift" aria-hidden />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold">{f.file.name}</p>
-                <p className={`text-xs ${f.error ? 'text-burgundy' : 'text-muted'}`}>{f.error ?? formatBytes(f.file.size)}</p>
+                <p className="truncate text-sm font-medium text-ink">{f.file.name}</p>
+                <p className={`text-xs ${f.error ? 'text-rose' : 'text-muted'}`}>{f.error ?? formatBytes(f.file.size)}</p>
               </div>
               <button
                 type="button"
@@ -111,7 +111,7 @@ export function DriveUploadPanel() {
         {busy ? 'Uploading…' : `Upload${valid.length ? ` ${valid.length} file${valid.length > 1 ? 's' : ''}` : ''}`}
       </button>
       {(blockedReason || message) && (
-        <p role="status" className="rounded-2xl bg-uplift-50 px-4 py-3 text-sm">
+        <p role="status" className="rounded-xl border border-uplift/30 bg-uplift/10 px-4 py-3 text-sm text-ink">
           {message ?? blockedReason}
         </p>
       )}

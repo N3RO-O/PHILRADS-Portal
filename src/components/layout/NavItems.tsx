@@ -6,17 +6,17 @@ interface NavItemsProps {
   onNavigate?: () => void;
 }
 
-/** Module links grouped as Overview / Field operations / Work. Shared by the desktop rail and the mobile drawer. */
+/**
+ * Module links in three groups (Overview / Field operations / Work), separated by thin dividers.
+ * Expanded: icon + label, active item filled yellow. Collapsed: icons only, active icon yellow
+ * with an indicator bar, and a label on hover or keyboard focus.
+ */
 export function NavItems({ expanded, onNavigate }: NavItemsProps) {
   return (
     <>
       {NAV_GROUPS.map((group, gi) => (
-        <div key={group} className="flex flex-col gap-1">
-          {expanded ? (
-            <p className="animate-fade-in px-3 pb-0.5 pt-1 text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-white/60">{group}</p>
-          ) : (
-            gi > 0 && <hr className="mx-3 my-1 border-white/15" aria-hidden />
-          )}
+        <div key={group} role="group" aria-label={group} className="flex flex-col gap-1">
+          {gi > 0 && <hr className="mx-2 my-2 border-line/70" aria-hidden />}
           {MODULES.filter((m) => m.group === group).map((m) => (
             <NavLink
               key={m.id}
@@ -25,25 +25,34 @@ export function NavItems({ expanded, onNavigate }: NavItemsProps) {
               onClick={onNavigate}
               aria-label={expanded ? undefined : m.label}
               className={({ isActive }) =>
-                `group relative flex h-11 shrink-0 items-center gap-3 rounded-full text-sm font-semibold transition-colors ${
+                `group relative flex h-10 shrink-0 items-center gap-3 rounded-xl text-sm transition-colors ${
                   expanded ? 'px-3' : 'justify-center'
                 } ${
                   isActive
-                    ? 'bg-gradient-to-b from-white to-[#f3e9e9] text-burgundy shadow-[inset_0_-1px_0_rgba(100,6,6,0.08),0_6px_16px_-6px_rgba(0,0,0,0.45)]'
-                    : 'text-white/85 hover:bg-white/10 hover:text-white'
+                    ? expanded
+                      ? 'bg-uplift font-semibold text-page'
+                      : 'bg-uplift/10 text-uplift'
+                    : 'font-medium text-ink-soft hover:bg-surface hover:text-ink'
                 }`
               }
             >
-              <m.icon className="h-5 w-5 shrink-0" aria-hidden />
-              {expanded ? (
-                <span className="animate-fade-in truncate">{m.label}</span>
-              ) : (
-                <span
-                  aria-hidden
-                  className="gloss-charcoal pointer-events-none absolute left-full z-50 ml-3 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
-                >
-                  {m.label}
-                </span>
+              {({ isActive }) => (
+                <>
+                  <m.icon className="h-[1.125rem] w-[1.125rem] shrink-0" aria-hidden />
+                  {expanded ? (
+                    <span className="truncate">{m.label}</span>
+                  ) : (
+                    <>
+                      {isActive && <span aria-hidden className="absolute -right-3 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-l bg-uplift" />}
+                      <span
+                        aria-hidden
+                        className="pointer-events-none absolute left-full z-50 ml-4 whitespace-nowrap rounded-lg border border-line bg-surface-raised px-3 py-1.5 text-xs font-semibold text-ink opacity-0 shadow-xl shadow-black/40 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+                      >
+                        {m.label}
+                      </span>
+                    </>
+                  )}
+                </>
               )}
             </NavLink>
           ))}

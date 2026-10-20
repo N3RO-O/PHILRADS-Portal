@@ -3,39 +3,38 @@ import { useLocation } from 'react-router-dom';
 import { useLayoutContext } from '../components/layout/AppLayout';
 import { DeadlineCalendar } from '../components/dashboard/DeadlineCalendar';
 import { MyTasks } from '../components/dashboard/MyTasks';
-import { OngoingProjects } from '../components/dashboard/OngoingProjects';
-import { QuickActions } from '../components/dashboard/QuickActions';
+import { OverviewKpis } from '../components/dashboard/OverviewKpis';
+import { ProjectsTable } from '../components/dashboard/ProjectsTable';
 import { RecentActivity } from '../components/dashboard/RecentActivity';
 import { ResponseTrend } from '../components/dashboard/ResponseTrend';
-import { StockLevels } from '../components/dashboard/StockLevels';
-import { SummaryStats } from '../components/dashboard/SummaryStats';
+import { StockHealth } from '../components/dashboard/StockHealth';
+import { StockLevelsChart } from '../components/dashboard/StockLevelsChart';
 import { VerseOfTheDay } from '../components/dashboard/VerseOfTheDay';
-import { WelcomeCard } from '../components/dashboard/WelcomeCard';
+import { WelcomeBar } from '../components/dashboard/WelcomeBar';
 import { useAsyncData } from '../hooks/useAsyncData';
 import { dashboardService } from '../services';
 
 /**
- * Layout by width:
- *  - phones/tablets: one column, ordered by what staff need first (`order-*`)
- *  - lg: two balanced columns (CSS multi-column)
- *  - xl: three columns — profile & actions | overview & work | activity & stock
- * Column wrappers use `display: contents` below xl so their children join the outer flow.
+ * Grid by width:
+ *  - phones: one column, ordered by what staff need first (`order-*`)
+ *  - md–lg: two columns; wide cards span both
+ *  - xl: 12 columns in aligned rows, in DOM order:
+ *      welcome (12) | overview (8) + stock levels (4) | projects (8) + response (4)
+ *      | stock health (4) + my tasks (8) | activity (4) + calendar (4) + verse (4)
  */
-function Slot({ order, step, children }: { order: string; step: number; children: ReactNode }) {
-  // Cards rise in one after another (55 ms apart) for a smooth first impression.
+function Cell({ className, step, children }: { className: string; step: number; children: ReactNode }) {
   return (
-    <div className={`${order} animate-fade-up break-inside-avoid lg:mb-5 xl:order-none xl:mb-0`} style={{ animationDelay: `${step * 55}ms` }}>
+    <div className={`${className} animate-fade-up xl:order-none`} style={{ animationDelay: `${step * 45}ms` }}>
       {children}
     </div>
   );
 }
 
-const columnClass = 'contents xl:flex xl:flex-col xl:gap-5';
-
 export function HomePage() {
   const { search } = useLayoutContext();
   const query = search.trim().toLowerCase();
   const tasks = useAsyncData(() => dashboardService.getMyTasks());
+  const stock = useAsyncData(() => dashboardService.getStockLevels());
   const { hash } = useLocation();
 
   useEffect(() => {
@@ -45,43 +44,37 @@ export function HomePage() {
   }, [hash]);
 
   return (
-    <div className="flex flex-col gap-5 lg:block lg:columns-2 lg:gap-5 xl:grid xl:grid-cols-12 xl:items-start">
-      <div className={`${columnClass} xl:col-span-3`}>
-        <Slot order="order-1" step={0}>
-          <WelcomeCard />
-        </Slot>
-        <Slot order="order-3" step={3}>
-          <QuickActions />
-        </Slot>
-        <Slot order="order-8" step={6}>
-          <VerseOfTheDay />
-        </Slot>
-      </div>
-      <div className={`${columnClass} xl:col-span-6`}>
-        <Slot order="order-2" step={1}>
-          <SummaryStats />
-        </Slot>
-        <Slot order="order-6" step={4}>
-          <OngoingProjects />
-        </Slot>
-        <Slot order="order-4" step={5}>
-          <MyTasks tasks={tasks} search={query} />
-        </Slot>
-        <Slot order="order-5" step={7}>
-          <DeadlineCalendar tasks={tasks} />
-        </Slot>
-      </div>
-      <div className={`${columnClass} xl:col-span-3`}>
-        <Slot order="order-7" step={2}>
-          <RecentActivity search={query} />
-        </Slot>
-        <Slot order="order-9" step={5}>
-          <StockLevels />
-        </Slot>
-        <Slot order="order-10" step={8}>
-          <ResponseTrend />
-        </Slot>
-      </div>
+    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-12">
+      <Cell className="order-1 md:col-span-2 xl:col-span-12" step={0}>
+        <WelcomeBar />
+      </Cell>
+      <Cell className="order-2 md:col-span-2 xl:col-span-8" step={1}>
+        <OverviewKpis />
+      </Cell>
+      <Cell className="order-8 xl:col-span-4" step={2}>
+        <StockLevelsChart stock={stock} />
+      </Cell>
+      <Cell className="order-6 md:col-span-2 xl:col-span-8" step={3}>
+        <ProjectsTable />
+      </Cell>
+      <Cell className="order-9 xl:col-span-4" step={4}>
+        <ResponseTrend />
+      </Cell>
+      <Cell className="order-10 xl:col-span-4" step={5}>
+        <StockHealth stock={stock} />
+      </Cell>
+      <Cell className="order-3 md:col-span-2 xl:col-span-8" step={6}>
+        <MyTasks tasks={tasks} search={query} />
+      </Cell>
+      <Cell className="order-4 xl:col-span-4" step={7}>
+        <RecentActivity search={query} />
+      </Cell>
+      <Cell className="order-5 xl:col-span-4" step={8}>
+        <DeadlineCalendar tasks={tasks} />
+      </Cell>
+      <Cell className="order-11 xl:col-span-4" step={9}>
+        <VerseOfTheDay />
+      </Cell>
     </div>
   );
 }

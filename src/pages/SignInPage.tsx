@@ -36,25 +36,25 @@ export function SignInPage() {
   return (
     <main className="grid min-h-dvh place-items-center p-4">
       <div className="card w-full max-w-sm animate-fade-up gap-0 p-0">
-        <div className="gloss-burgundy sheen flex flex-col items-center gap-3 rounded-t-[1.75rem] px-6 py-8 text-center text-white">
+        <div className="flex flex-col items-center gap-3 rounded-t-2xl border-b border-line/70 px-6 py-8 text-center">
           <Emblem className="h-16 w-16" />
           <div>
             <p className="font-display text-2xl tracking-wide">PHILRADS</p>
-            <p className="text-xs uppercase tracking-[0.18em] text-white/75">Staff Portal</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-muted">Staff Portal</p>
           </div>
         </div>
         <form onSubmit={submit} noValidate className="flex flex-col gap-4 p-6">
           <h1 className="text-lg font-bold">Sign in</h1>
-          <label className="flex flex-col gap-1.5 text-sm font-semibold">
+          <label className="flex flex-col gap-1.5 text-sm font-medium text-ink-soft">
             Email
             <input className="field" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </label>
-          <label className="flex flex-col gap-1.5 text-sm font-semibold">
+          <label className="flex flex-col gap-1.5 text-sm font-medium text-ink-soft">
             Password
             <input className="field" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           </label>
           {error && (
-            <p role="alert" className="rounded-2xl bg-burgundy-50 px-4 py-3 text-sm text-burgundy">
+            <p role="alert" className="rounded-xl border border-rose/40 bg-rose/10 px-4 py-3 text-sm text-rose">
               {error}
             </p>
           )}

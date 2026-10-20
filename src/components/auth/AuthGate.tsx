@@ -8,7 +8,7 @@ function CenteredMessage({ title, children }: { title: string; children?: ReactN
     <main className="grid min-h-dvh place-items-center p-6">
       <div className="card flex max-w-md flex-col items-center gap-4 text-center">
         <Emblem className="h-14 w-14" />
-        <h1 className="font-display text-xl">{title}</h1>
+        <h1 className="text-xl font-bold">{title}</h1>
         {children}
       </div>
     </main>
@@ -35,7 +35,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
         <p className="text-sm text-muted">
           {state.profileError ?? 'A PHILRADS administrator needs to activate your staff account before you can use the portal.'}
         </p>
-        <button type="button" className="btn-light" onClick={() => void signOut()}>
+        <button type="button" className="btn-ghost" onClick={() => void signOut()}>
           Sign out
         </button>
       </CenteredMessage>

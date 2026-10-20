@@ -27,7 +27,7 @@ interface SearchBoxProps {
 function SearchBox({ value, onChange, inputRef, showShortcut = false, className = '' }: SearchBoxProps) {
   return (
     <label
-      className={`flex h-11 min-w-0 items-center gap-2 rounded-full bg-white/70 px-4 text-muted ring-1 ring-black/[0.06] backdrop-blur shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_4px_14px_-8px_rgba(53,53,53,0.25)] focus-within:bg-white focus-within:ring-2 focus-within:ring-burgundy ${className}`}
+      className={`flex h-11 min-w-0 items-center gap-2 rounded-xl border border-line/70 bg-surface px-4 text-muted transition-colors focus-within:border-uplift ${className}`}
     >
       <Search className="h-4 w-4 shrink-0" aria-hidden />
       <span className="sr-only">Search tasks and activity</span>
@@ -42,13 +42,10 @@ function SearchBox({ value, onChange, inputRef, showShortcut = false, className 
         placeholder="Search tasks and activity"
         autoComplete="off"
         aria-keyshortcuts="Control+K Meta+K"
-        className="min-w-0 flex-1 bg-transparent text-sm text-charcoal placeholder:text-muted/80 focus:outline-none"
+        className="min-w-0 flex-1 bg-transparent text-sm text-ink placeholder:text-muted focus:outline-none"
       />
       {showShortcut && (
-        <kbd
-          aria-hidden
-          className="shrink-0 rounded-md bg-white px-1.5 py-0.5 font-sans text-[0.6875rem] font-semibold text-muted ring-1 ring-black/10 shadow-[inset_0_-1px_0_rgba(0,0,0,0.08)]"
-        >
+        <kbd aria-hidden className="shrink-0 rounded-md border border-line bg-surface-raised px-1.5 py-0.5 font-sans text-[0.6875rem] font-semibold text-muted">
           {SHORTCUT_LABEL}
         </kbd>
       )}
@@ -75,17 +72,17 @@ export function TopBar({ search, onSearch, menuOpen, onOpenMenu }: TopBarProps) 
   }, []);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-white/60 bg-white/40 backdrop-blur-xl backdrop-saturate-150">
+    <header className="sticky top-0 z-30 bg-page/90 backdrop-blur-md">
       <div className="flex h-16 items-center gap-2 px-4 sm:gap-3 sm:px-6">
         <button type="button" className="icon-btn lg:hidden" onClick={onOpenMenu} aria-label="Open navigation" aria-expanded={menuOpen}>
           <Menu className="h-5 w-5" aria-hidden />
         </button>
         <Link to="/" className="flex items-center gap-2 lg:hidden" aria-label="PHILRADS Staff Portal home">
-          <Emblem className="h-9 w-9" decorative />
-          <span className="hidden font-display text-base tracking-wide min-[380px]:inline">PHILRADS</span>
+          <Emblem className="h-8 w-8" decorative />
+          <span className="hidden font-display text-sm tracking-wide min-[380px]:inline">PHILRADS</span>
         </Link>
-        <SearchBox value={search} onChange={onSearch} inputRef={desktopInput} showShortcut className="mx-auto hidden w-full max-w-md md:flex" />
-        <div className="ml-auto flex items-center gap-2 md:ml-0">
+        <SearchBox value={search} onChange={onSearch} inputRef={desktopInput} showShortcut className="hidden w-full max-w-md md:flex" />
+        <div className="ml-auto flex items-center gap-1 sm:gap-2">
           <OnlinePill className="hidden sm:inline-flex" />
           <NotificationsMenu />
           <ProfileMenu />

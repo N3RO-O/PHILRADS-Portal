@@ -9,20 +9,38 @@ export default {
           DEFAULT: '#640606',
           50: '#fbf2f2',
           100: '#f5e1e1',
-          200: '#e7bdbd',
           600: '#7a0b0b',
           700: '#640606',
           800: '#4d0404',
         },
         cloud: '#F1F1F1',
         charcoal: '#353535',
-        muted: '#5f5f5f',
         uplift: {
-          DEFAULT: '#EC952A',
-          50: '#fdf4e8',
-          100: '#fbe7cd',
+          DEFAULT: '#EC952A', // Uplifting Yellow: the highlight colour of the dark UI
+          soft: '#F3AE57',
           700: '#8f5410',
         },
+        // Light burgundy for data and alerts on dark surfaces (Dark Burgundy itself is too dark to read there).
+        rose: '#D97B7B',
+        // Dark interface surfaces, built on the brand's Charcoal.
+        page: '#1c1d21',
+        surface: {
+          DEFAULT: '#26272c',
+          sunken: '#202125',
+          raised: '#303137',
+        },
+        line: '#36373d',
+        ink: {
+          DEFAULT: '#F1F1F1', // Cloud
+          soft: '#c4c6cd',
+          mute: '#9a9ca6',
+        },
+        muted: '#9a9ca6',
+      },
+      fontFamily: {
+        display: ['"Archivo Black"', '"Arial Black"', 'system-ui', 'sans-serif'],
+        sans: ['Montserrat', 'system-ui', '-apple-system', '"Segoe UI"', 'Roboto', 'sans-serif'],
+        serif: ['"EB Garamond"', 'Georgia', 'Cambria', 'serif'],
       },
       // Smooth motion: one soft "ease-out-quint" curve for every transition and animation.
       // Only transform and opacity are animated; all of it is disabled for prefers-reduced-motion (index.css).
@@ -30,30 +48,24 @@ export default {
         DEFAULT: 'cubic-bezier(0.22, 1, 0.36, 1)',
       },
       transitionDuration: {
-        DEFAULT: '220ms',
+        DEFAULT: '200ms',
       },
       keyframes: {
-        'fade-up': { from: { opacity: '0', transform: 'translateY(10px)' }, to: { opacity: '1', transform: 'translateY(0)' } },
+        'fade-up': { from: { opacity: '0', transform: 'translateY(8px)' }, to: { opacity: '1', transform: 'translateY(0)' } },
         'fade-in': { from: { opacity: '0' }, to: { opacity: '1' } },
-        'pop-in': { from: { opacity: '0', transform: 'translateY(-6px) scale(0.97)' }, to: { opacity: '1', transform: 'translateY(0) scale(1)' } },
+        'pop-in': { from: { opacity: '0', transform: 'translateY(-6px) scale(0.98)' }, to: { opacity: '1', transform: 'translateY(0) scale(1)' } },
         'slide-in-left': { from: { transform: 'translateX(-100%)' }, to: { transform: 'translateX(0)' } },
         'grow-x': { from: { transform: 'scaleX(0)' }, to: { transform: 'scaleX(1)' } },
         'grow-y': { from: { transform: 'scaleY(0)' }, to: { transform: 'scaleY(1)' } },
       },
       animation: {
-        // Entrances use fill-mode "backwards" so the element is hidden during its delay but, once
-        // finished, no longer holds a transform (hover lifts and other transforms keep working).
-        'fade-up': 'fade-up 520ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
-        'fade-in': 'fade-in 260ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
-        'pop-in': 'pop-in 200ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
-        'slide-in-left': 'slide-in-left 340ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
-        'grow-x': 'grow-x 900ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
-        'grow-y': 'grow-y 800ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
-      },
-      fontFamily: {
-        display: ['"Archivo Black"', '"Arial Black"', 'system-ui', 'sans-serif'],
-        sans: ['Montserrat', 'system-ui', '-apple-system', '"Segoe UI"', 'Roboto', 'sans-serif'],
-        serif: ['"EB Garamond"', 'Georgia', 'Cambria', 'serif'],
+        // Entrances use fill-mode "backwards": hidden during their delay, and no transform is held afterwards.
+        'fade-up': 'fade-up 480ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
+        'fade-in': 'fade-in 240ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
+        'pop-in': 'pop-in 180ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
+        'slide-in-left': 'slide-in-left 320ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
+        'grow-x': 'grow-x 800ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
+        'grow-y': 'grow-y 700ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
       },
     },
   },
