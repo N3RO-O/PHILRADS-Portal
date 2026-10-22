@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Pencil } from 'lucide-react';
+import { ArrowDownToLine, ArrowUpFromLine, ExternalLink, Pencil } from 'lucide-react';
 import { expiryStatus, type StockRow } from '../../lib/inventory';
 import { formatDateTime, formatNumber, formatShortInstant } from '../../lib/format';
 import type { InventorySnapshot, Movement, MovementType } from '../../services/inventory/types';
@@ -18,10 +18,12 @@ interface Props {
   onAction: (type: MovementType, row: StockRow, batchId?: string) => void;
   onEditItem: (row: StockRow) => void;
   onOpenRow: (row: StockRow) => void;
+  /** Read-only IMS mirror: actions open PHILRADS IMS instead of portal forms. */
+  imsUrl?: string;
 }
 
 /** Full details for one item at one location: lots, other locations and recent history. */
-export function StockDetailSheet({ row, rows, snapshot, movements, canRecord, canAdjust, canManage, onClose, onAction, onEditItem, onOpenRow }: Props) {
+export function StockDetailSheet({ row, rows, snapshot, movements, canRecord, canAdjust, canManage, onClose, onAction, onEditItem, onOpenRow, imsUrl }: Props) {
   const elsewhere = row ? rows.filter((r) => r.item.id === row.item.id && r.key !== row.key && r.location) : [];
   const history = row
     ? movements.filter((m) => m.itemId === row.item.id && (m.locationId === row.location?.id || m.toLocationId === row.location?.id)).slice(0, 8)
@@ -35,7 +37,22 @@ export function StockDetailSheet({ row, rows, snapshot, movements, canRecord, ca
       title={row?.item.name ?? ''}
       subtitle={row ? `${row.item.sku}${row.item.barcode ? ` · ${row.item.barcode}` : ''} · ${row.item.category}` : undefined}
       footer={
-        row && canRecord ? (
+        row && imsUrl ? (
+          <div className="grid grid-cols-3 gap-2">
+            {(
+              [
+                ['donations.php', 'Receive', ArrowDownToLine, 'text-status-in'],
+                ['transactions.php', 'Release', ArrowUpFromLine, 'text-uplift'],
+                ['inventory.php', 'View in IMS', ExternalLink, 'text-ink-soft'],
+              ] as const
+            ).map(([page, label, Icon, tone]) => (
+              <a key={page} href={`${imsUrl}/${page}`} target="_blank" rel="noopener noreferrer" className="btn-ghost h-14 flex-col gap-0.5 px-1 text-xs">
+                <Icon className={`h-5 w-5 ${tone}`} aria-hidden />
+                {label}
+              </a>
+            ))}
+          </div>
+        ) : row && canRecord ? (
           <div className={`grid gap-2 ${actions.length === 4 ? 'grid-cols-4' : 'grid-cols-3'}`}>
             {actions.map((t) => {
               const M = MOVEMENT_META[t];
@@ -148,8 +165,7 @@ export function StockDetailSheet({ row, rows, snapshot, movements, canRecord, ca
                         <p className="flex flex-wrap items-center gap-2">
                           <span className="font-semibold">{M.label}</span>
                           <span className={`tabular-nums ${incoming ? 'text-status-in' : 'text-ink'}`}>
-                            {incoming ? '+' : '−'}
-                            {formatNumber(Math.abs(m.quantity))}
+                            {m.setTo != null ? `set to ${formatNumber(m.setTo)}` : `${incoming ? '+' : '−'}${formatNumber(Math.abs(m.quantity))}`}
                           </span>
                           <MovementStatusBadge status={m.status} />
                         </p>

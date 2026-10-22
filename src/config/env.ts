@@ -9,6 +9,8 @@ const envSchema = z.object({
   VITE_SUPABASE_URL: z.union([z.literal(''), z.string().url()]).optional(),
   VITE_SUPABASE_ANON_KEY: z.string().optional(),
   VITE_DATA_SOURCE: z.enum(['mock', 'supabase']).optional(),
+  VITE_INVENTORY_SOURCE: z.enum(['portal', 'ims']).optional(),
+  VITE_IMS_URL: z.union([z.literal(''), z.string().url()]).optional(),
 });
 
 const parsed = envSchema.safeParse(import.meta.env);
@@ -29,6 +31,10 @@ export const env = {
   supabaseUrl: values.VITE_SUPABASE_URL ?? '',
   supabaseAnonKey: values.VITE_SUPABASE_ANON_KEY ?? '',
   requestedDataSource: values.VITE_DATA_SOURCE ?? 'mock',
+  /** portal: stock is recorded in the portal. ims: the portal shows stock pushed by PHILRADS IMS (read-only). */
+  inventorySource: values.VITE_INVENTORY_SOURCE ?? 'portal',
+  /** PHILRADS IMS address, for "Open in IMS" links (no trailing slash). */
+  imsUrl: (values.VITE_IMS_URL ?? '').replace(/\/+$/, ''),
 } as const;
 
 export const isSupabaseConfigured = Boolean(env.supabaseUrl && env.supabaseAnonKey);

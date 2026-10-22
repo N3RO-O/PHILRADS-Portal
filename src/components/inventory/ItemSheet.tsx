@@ -40,7 +40,7 @@ export function ItemSheet({ open, item, initialBarcode, items, onClose, onSave, 
     setName(item?.name ?? '');
     setSku(item?.sku ?? '');
     setBarcode(item?.barcode ?? initialBarcode ?? '');
-    setCategory(item?.category ?? 'Food');
+    setCategory(ITEM_CATEGORIES.find((c) => c === item?.category) ?? 'Food');
     setUnit(item?.unit ?? 'pcs');
     setReorder(String(item?.reorderLevel ?? 0));
     setTracksExpiry(item?.tracksExpiry ?? true);

@@ -3,6 +3,8 @@ import { useSearchParams } from 'react-router-dom';
 import {
   ChevronDown,
   CloudOff,
+  Database,
+  ExternalLink,
   Download,
   FileText,
   Loader2,
@@ -14,6 +16,7 @@ import {
   X,
 } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
+import { env } from '../config/env';
 import { ActivityLog } from '../components/inventory/ActivityLog';
 import { ApprovalsPanel } from '../components/inventory/ApprovalsPanel';
 import { STOCK_META } from '../components/inventory/Badges';
@@ -31,6 +34,7 @@ import { downloadCsv, toCsv } from '../lib/csv';
 import { formatDateTime, formatNumber, manilaDayKey } from '../lib/format';
 import {
   buildStockRows,
+  categoriesOf,
   daysUntil,
   EXPIRY_WINDOWS,
   expiryStatus,
@@ -41,7 +45,7 @@ import {
 } from '../lib/inventory';
 import { inventoryStore } from '../services';
 import { outboxAsMovements, useInventoryState } from '../services/inventory/inventoryStore';
-import { ITEM_CATEGORIES, type InventoryItem, type MovementType } from '../services/inventory/types';
+import type { InventoryItem, InventorySnapshot, MovementType } from '../services/inventory/types';
 
 type StatusFilter = 'in' | 'low' | 'out' | 'expiring' | 'expired';
 type Tab = 'stock' | 'log' | 'approvals';
@@ -77,9 +81,12 @@ export function InventoryPage() {
   const [params, setParams] = useSearchParams();
 
   const canRead = can('inventory.read');
-  const canRecord = can('inventory.record');
-  const canManage = can('inventory.manage');
-  const canApprove = can('inventory.approve');
+  // Mirrored from PHILRADS IMS: the portal only displays stock; changes are made in the IMS.
+  const readOnly = snapshot?.source === 'ims';
+  const imsUrl = snapshot?.imsUrl || env.imsUrl;
+  const canRecord = can('inventory.record') && !readOnly;
+  const canManage = can('inventory.manage') && !readOnly;
+  const canApprove = can('inventory.approve') && !readOnly;
 
   // URL-backed filters: shareable links, and they survive a reload.
   const tab = (params.get('tab') as Tab | null) ?? 'stock';
@@ -208,6 +215,7 @@ export function InventoryPage() {
       const item = findItemByCode(snapshot.items, code);
       if (!item) {
         if (canManage) setItemSheet({ item: null, barcode: code });
+        else if (readOnly) setToast({ text: `No IMS item has the code “${code}”.`, tone: 'warn' });
         else setToast({ text: `No item matches “${code}”. Ask an administrator to add it.`, tone: 'warn' });
         return;
       }
@@ -218,7 +226,7 @@ export function InventoryPage() {
         setToast({ text: `${item.name}: stocked at ${matches.length} locations.`, tone: 'ok' });
       }
     },
-    [snapshot, canManage, allRows, loc, setParam],
+    [snapshot, canManage, readOnly, allRows, loc, setParam],
   );
 
   const scopeLabel = [
@@ -294,6 +302,8 @@ export function InventoryPage() {
         </div>
       )}
 
+      {readOnly && snapshot && <ImsSourceBanner snapshot={snapshot} imsUrl={imsUrl} />}
+
       {!snapshot && state.loading && (
         <div className="flex flex-col gap-4" aria-busy="true" aria-label="Loading inventory">
           <Skeleton className="h-28" />
@@ -362,7 +372,7 @@ export function InventoryPage() {
                 ))}
               </div>
               <div className="flex items-center gap-2">
-                {snapshot.source === 'mock' && <SampleBadge />}
+                {(snapshot.source === 'mock' || snapshot.sample) && <SampleBadge />}
                 <button type="button" className="icon-btn" onClick={() => void inventoryStore.refresh()} disabled={!online || state.loading} aria-label="Refresh inventory" title="Refresh">
                   {state.loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <RefreshCw className="h-4 w-4" aria-hidden />}
                 </button>
@@ -376,6 +386,11 @@ export function InventoryPage() {
                   <button type="button" className="btn-primary hidden md:inline-flex" onClick={() => openAction('release')}>
                     <Plus className="h-4 w-4" aria-hidden /> Log movement
                   </button>
+                )}
+                {readOnly && imsUrl && (
+                  <a className="btn-primary hidden md:inline-flex" href={`${imsUrl}/inventory.php`} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4" aria-hidden /> Open IMS
+                  </a>
                 )}
               </div>
             </div>
@@ -414,7 +429,7 @@ export function InventoryPage() {
                   <div className="no-scrollbar -mx-4 flex items-center gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0">
                     <select aria-label="Category" className={`chip shrink-0 bg-transparent pr-7 ${cat ? 'border-uplift text-uplift' : ''}`} value={cat} onChange={(e) => setParam({ cat: e.target.value || null })}>
                       <option value="">All categories</option>
-                      {ITEM_CATEGORIES.map((c) => (
+                      {categoriesOf(snapshot.items).map((c) => (
                         <option key={c}>{c}</option>
                       ))}
                     </select>
@@ -483,6 +498,16 @@ export function InventoryPage() {
           </section>
 
           {/* Thumb-reach primary action on phones */}
+          {readOnly && imsUrl && (
+            <a
+              href={`${imsUrl}/inventory.php`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-4 z-30 flex h-14 items-center gap-2 rounded-full bg-uplift pl-4 pr-5 text-sm font-bold text-page shadow-xl shadow-black/50 transition active:scale-95 md:hidden"
+            >
+              <ExternalLink className="h-5 w-5" aria-hidden /> Open IMS
+            </a>
+          )}
           {canRecord && (
             <button
               type="button"
@@ -508,6 +533,7 @@ export function InventoryPage() {
               setItemSheet({ item: r.item });
             }}
             onOpenRow={(r) => setDetailKey(r.key)}
+            imsUrl={readOnly ? imsUrl : undefined}
           />
           <MovementSheet
             open={Boolean(movement)}
@@ -553,6 +579,39 @@ export function InventoryPage() {
 }
 
 const NO_PRESET: MovementPreset = {};
+
+const ago = (iso: string) => {
+  const mins = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 60_000));
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins} min ago`;
+  const hours = Math.round(mins / 60);
+  return hours < 48 ? `${hours} h ago` : `${Math.round(hours / 24)} days ago`;
+};
+
+/** Where the numbers come from, how fresh they are, and where to change them. */
+function ImsSourceBanner({ snapshot, imsUrl }: { snapshot: InventorySnapshot; imsUrl: string }) {
+  const stale = Date.now() - Date.parse(snapshot.fetchedAt) > 60 * 60_000;
+  return (
+    <div
+      role="status"
+      className={`flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border px-4 py-3 text-sm ${stale ? 'border-status-low/40 bg-status-low/10' : 'border-line/70 bg-surface'}`}
+    >
+      <Database className={`h-5 w-5 shrink-0 ${stale ? 'text-status-low' : 'text-uplift'}`} aria-hidden />
+      <p className="min-w-0 flex-1">
+        <strong className="font-semibold">{snapshot.sample ? 'Sample data in the PHILRADS IMS format' : 'Live from PHILRADS IMS'}</strong>, updated{' '}
+        {ago(snapshot.fetchedAt)} ({formatDateTime(snapshot.fetchedAt)}).{' '}
+        {stale
+          ? 'This may be out of date: the IMS sends an update after every stock change, and at least every 15 minutes while someone is using it.'
+          : 'Receiving, releases and approvals are done in the IMS.'}
+      </p>
+      {imsUrl && (
+        <a className="btn-ghost min-h-10 px-3 text-xs" href={`${imsUrl}/inventory.php`} target="_blank" rel="noopener noreferrer">
+          <ExternalLink className="h-3.5 w-3.5" aria-hidden /> Open IMS
+        </a>
+      )}
+    </div>
+  );
+}
 
 function ExportMenu({ onCsv, onPrint }: { onCsv: () => void; onPrint: () => void }) {
   const [open, setOpen] = useState(false);

@@ -270,3 +270,11 @@ export const newClientId = () =>
 /** Signed change a movement makes to its source location. */
 export const quantityChange = (m: Pick<Movement, 'type' | 'quantity'>) =>
   m.type === 'receipt' ? m.quantity : m.type === 'adjustment' ? m.quantity : -m.quantity;
+
+/** Categories in display order: the portal's standard list first, then any others (e.g. from IMS). */
+export const categoriesOf = (items: Pick<InventoryItem, 'category'>[]) => {
+  const present = new Set(items.map((i) => i.category));
+  const known = ITEM_CATEGORIES.filter((c) => present.has(c));
+  const extra = [...present].filter((c) => !(ITEM_CATEGORIES as readonly string[]).includes(c)).sort();
+  return [...known, ...extra];
+};

@@ -35,6 +35,9 @@ Set these in `.env.local` for local work, and in **Vercel → Project → Settin
 | `VITE_SUPABASE_URL` | For live data | Your Supabase project URL, e.g. `https://abcd1234.supabase.co` |
 | `VITE_SUPABASE_ANON_KEY` | For live data | The project’s **anon** (or publishable) key. Never the service-role key |
 | `VITE_DATA_SOURCE` | No | `mock` (default) for sample data, `supabase` for live data with staff sign-in |
+| `VITE_INVENTORY_SOURCE` | No | `portal` (default) or `ims` to show stock pushed by PHILRADS IMS ([docs/ims-sync.md](docs/ims-sync.md)) |
+| `VITE_IMS_URL` | With `ims` | PHILRADS IMS address for *Open in IMS* links |
+| `IMS_SYNC_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | With `ims` | **Server-only** (no `VITE_` prefix): used by `/api/ims-sync` |
 
 Anything prefixed `VITE_` is bundled into the browser, so it must be public. If a `VITE_` variable named like `SERVICE_ROLE`, `SECRET` or `PRIVATE_KEY` is ever added, the app logs an error in the browser console, but by then the value is already in the bundle, so never add one. Server-only secrets (Supabase service-role key, Google credentials) belong in Vercel server functions; see [docs/google-drive.md](docs/google-drive.md).
 
@@ -105,6 +108,8 @@ Built for warehouse staff, volunteers and field coordinators working fast on pho
 In sample-data mode, the account menu has *Try the portal as…* to switch between these roles.
 
 **Server-side rules.** `supabase/migrations/20261022000000_inventory_operations.sql` adds locations, lots, transfers and the `inventory.approve` permission. All stock changes go through `record_inventory_movement()` and `decide_inventory_transfer()`, which check permissions and re-validate every rule (whole positive quantities, enough stock in the lot net of pending transfers, no expired releases, expiry required for perishables, no future-dated entries) with row locks against simultaneous releases. Clients cannot write the ledger, lots or transfers directly. `npm run test:db` covers these rules.
+
+**Connected to PHILRADS IMS.** With `VITE_INVENTORY_SOURCE=ims`, the page instead shows a read-only mirror of the live PHILRADS IMS: the IMS pushes a signed stock snapshot to `/api/ims-sync` after every change (InfinityFree blocks the portal from fetching it), and *Receive*, *Release* and *Open IMS* link back to the IMS. Setup and security: [docs/ims-sync.md](docs/ims-sync.md).
 
 **Before going live:** add the real warehouses, hubs and field points to `inventory_locations` (SQL editor, as an administrator; there is no locations screen yet), then the item catalogue.
 

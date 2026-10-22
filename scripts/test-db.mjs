@@ -145,6 +145,31 @@ await check('expired lots cannot be released', async () => {
 await check('staff cannot edit the stock ledger', () => as(B, `update public.inventory_movements set quantity_change = 999 returning id`), true);
 await check('staff cannot change item quantity directly', () => as(B, `update public.inventory_items set quantity_on_hand = 9999 returning id`).then(expectRows(0)));
 await check('viewer can read stock', () => as(D, `select id from public.inventory_batches`).then((r) => r.rows.length));
+// PHILRADS IMS snapshot: written only by /api/ims-sync (service role), read by inventory.read
+const asService = async (sql) => {
+  await db.exec(`set role service_role`);
+  try {
+    return await db.query(sql);
+  } finally {
+    await db.exec(`reset role`);
+  }
+};
+const SNAP = (t) => `select public.store_ims_snapshot('${t}'::timestamptz, '{"version":1,"generated_at":"${t}"}'::jsonb) stored`;
+await check('service role stores an IMS snapshot', () => asService(SNAP('2026-10-23T08:00:00Z')).then((r) => r.rows[0].stored));
+await check('a newer IMS snapshot replaces it', async () => {
+  if (!(await asService(SNAP('2026-10-23T09:00:00Z'))).rows[0].stored) throw new Error('not stored');
+  return true;
+});
+await check('an older IMS snapshot is ignored', async () => {
+  const r = (await asService(SNAP('2026-10-23T07:00:00Z'))).rows[0].stored;
+  const kept = (await db.query(`select payload->>'generated_at' g from public.ims_inventory_snapshot`)).rows[0].g;
+  if (r !== false || kept !== '2026-10-23T09:00:00Z') throw new Error(`stored=${r} kept=${kept}`);
+  return kept;
+});
+await check('staff can read the IMS snapshot', () => as(B, `select id from public.ims_inventory_snapshot`).then(expectRows(1)));
+await check('inactive account cannot read the IMS snapshot', () => as(C, `select id from public.ims_inventory_snapshot`).then(expectRows(0)));
+await check('staff cannot store an IMS snapshot', () => as(B, SNAP('2026-10-24T00:00:00Z')), true);
+await check('staff cannot write the IMS snapshot table', () => as(B, `update public.ims_inventory_snapshot set payload = '{}'`), true);
 await check('dashboard summary runs as staff', () => as(B, `select metric, value::int from public.get_dashboard_summary()`).then(expectRows(6)));
 await check('weekly response counts return 8 weeks', () => as(B, `select * from public.get_weekly_response_counts(8)`).then(expectRows(8)).then(() => undefined));
 
@@ -160,6 +185,7 @@ await check('inactive account still sees its own profile', () => as(C, `select i
 await db.exec(`set role anon`);
 await check('signed-out visitors cannot read tasks', () => db.query(`select * from public.tasks`), true);
 await check('signed-out visitors cannot call the dashboard summary', () => db.query(`select * from public.get_dashboard_summary()`), true);
+await check('signed-out visitors cannot read the IMS snapshot', () => db.query(`select * from public.ims_inventory_snapshot`), true);
 await check('signed-out visitors cannot record stock', () => db.query(`select public.record_inventory_movement(gen_random_uuid(), 'receipt', gen_random_uuid(), gen_random_uuid(), 1)`), true);
 await db.exec(`reset role`);
 

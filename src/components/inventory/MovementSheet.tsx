@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState, type FormEvent, type React
 import { CloudOff, Loader2, ScanLine, Sparkles } from 'lucide-react';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import {
+  categoriesOf,
   expiryStatus,
   fefo,
   findItemByCode,
@@ -13,7 +14,7 @@ import {
 } from '../../lib/inventory';
 import { formatNumber, formatShortDate } from '../../lib/format';
 import type { RecordOutcome } from '../../services/inventory/inventoryStore';
-import { ITEM_CATEGORIES, type InventorySnapshot, type Movement, type MovementDraft, type MovementType } from '../../services/inventory/types';
+import { type InventorySnapshot, type Movement, type MovementDraft, type MovementType } from '../../services/inventory/types';
 import { Sheet } from '../ui/Sheet';
 import { MOVEMENT_META } from './Badges';
 import { QuantityStepper } from './QuantityStepper';
@@ -227,7 +228,7 @@ export function MovementSheet({ open, preset, snapshot, pending, canAdjust, onCl
             <div className="flex gap-2">
               <select id={`${uid}-item`} className="field" value={itemId} onChange={(e) => setItemId(e.target.value)} {...field('itemId')}>
                 <option value="">Choose an item…</option>
-                {ITEM_CATEGORIES.map((c) => {
+                {categoriesOf(snapshot.items).map((c) => {
                   const inCat = snapshot.items.filter((i) => i.category === c);
                   return inCat.length ? (
                     <optgroup key={c} label={c}>

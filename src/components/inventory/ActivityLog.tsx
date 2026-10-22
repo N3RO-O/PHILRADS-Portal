@@ -51,6 +51,7 @@ export function ActivityLog({ movements, snapshot, onRetry, onDiscard }: Props) 
       { header: 'Item', value: (m) => items.get(m.itemId)?.name },
       { header: 'SKU', value: (m) => items.get(m.itemId)?.sku },
       { header: 'Quantity', value: (m) => m.quantity },
+      { header: 'Count set to', value: (m) => m.setTo ?? null },
       { header: 'Unit', value: (m) => items.get(m.itemId)?.unit },
       { header: 'From / at', value: (m) => locs.get(m.locationId) },
       { header: 'To', value: (m) => (m.toLocationId ? locs.get(m.toLocationId) : '') },
@@ -124,8 +125,9 @@ export function ActivityLog({ movements, snapshot, onRetry, onDiscard }: Props) 
                     <p className="min-w-0 text-sm">
                       <span className="font-semibold text-ink">{item?.name ?? 'Unknown item'}</span>{' '}
                       <span className={`font-bold tabular-nums ${m.type === 'transfer' ? 'text-ink' : signed > 0 ? 'text-status-in' : 'text-ink'}`}>
-                        {m.type === 'transfer' ? '' : signed > 0 ? '+' : '−'}
-                        {formatNumber(Math.abs(m.quantity))}
+                        {m.setTo != null
+                          ? `set to ${formatNumber(m.setTo)}`
+                          : `${m.type === 'transfer' ? '' : signed > 0 ? '+' : '−'}${formatNumber(Math.abs(m.quantity))}`}
                       </span>{' '}
                       <span className="text-xs text-muted">{item?.unit}</span>
                     </p>

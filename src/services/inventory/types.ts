@@ -20,7 +20,8 @@ export interface InventoryItem {
   /** Printed barcode or QR payload, if the item has one. */
   barcode: string | null;
   name: string;
-  category: ItemCategory;
+  /** One of ITEM_CATEGORIES for portal items; free text for items mirrored from PHILRADS IMS. */
+  category: string;
   unit: string;
   /** Per location: below this, the location needs restocking. */
   reorderLevel: number;
@@ -63,6 +64,8 @@ export interface Movement {
   toLocationId: string | null;
   /** Positive, except adjustments, which are signed. */
   quantity: number;
+  /** IMS count corrections set a lot to a figure instead of adding or removing. */
+  setTo?: number | null;
   reference: string | null;
   notes: string | null;
   occurredAt: string;
@@ -102,9 +105,19 @@ export interface ItemDraft {
   tracksExpiry: boolean;
 }
 
+/** mock / supabase: the portal's own inventory. ims: a read-only mirror pushed by PHILRADS IMS. */
+export type InventorySource = DataSource | 'ims';
+
 export interface InventorySnapshot {
-  source: DataSource;
+  source: InventorySource;
+  /** When the data was produced (for IMS: when the IMS built the snapshot). */
   fetchedAt: string;
+  /** IMS only: when the portal received the snapshot. */
+  receivedAt?: string;
+  /** IMS only: where staff go to change stock. */
+  imsUrl?: string;
+  /** Demonstration data, never real PHILRADS stock. */
+  sample?: boolean;
   items: InventoryItem[];
   locations: InventoryLocation[];
   batches: StockBatch[];
@@ -128,7 +141,9 @@ export class InventoryRuleError extends Error {
 }
 
 export interface InventoryService {
-  readonly source: DataSource;
+  readonly source: InventorySource;
+  /** True when stock is managed elsewhere (PHILRADS IMS) and the portal only displays it. */
+  readonly readOnly?: boolean;
   getSnapshot(): Promise<InventorySnapshot>;
   /** Idempotent by draft.clientId: sending the same draft twice records it once. */
   submitMovement(draft: MovementDraft): Promise<SubmitResult>;

@@ -43,11 +43,14 @@ export function PrintReport({ rows, snapshot, pendingTransfers, filtersLabel, pr
               <th>Data as of</th>
               <td>{formatDateTime(snapshot.fetchedAt)}</td>
               <th>Scope</th>
-              <td>{filtersLabel}</td>
+              <td>
+                {filtersLabel}
+                {snapshot.source === 'ims' && ' · Source: PHILRADS IMS'}
+              </td>
             </tr>
           </tbody>
         </table>
-        {snapshot.source === 'mock' && <p className="warn">SAMPLE DATA: demonstration figures, not real PHILRADS stock.</p>}
+        {(snapshot.source === 'mock' || snapshot.sample) && <p className="warn">SAMPLE DATA: demonstration figures, not real PHILRADS stock.</p>}
       </header>
 
       <h2>Summary</h2>
