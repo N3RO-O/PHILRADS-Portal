@@ -187,6 +187,11 @@ await check('resource changes are logged', async () => {
   return actions;
 });
 await check('inactive account cannot read resources', () => as(C, `select id from public.resources`).then(expectRows(0)));
+await check('beneficiaries.record goes to admins and coordinators', async () => {
+  const r = (await db.query(`select role_key from public.role_permissions where permission_key = 'beneficiaries.record' order by role_key`)).rows.map((x) => x.role_key);
+  if (r.join() !== 'admin,coordinator') throw new Error(r.join());
+  return r;
+});
 await check('dashboard summary runs as staff', () => as(B, `select metric, value::int from public.get_dashboard_summary()`).then(expectRows(6)));
 await check('weekly response counts return 8 weeks', () => as(B, `select * from public.get_weekly_response_counts(8)`).then(expectRows(8)).then(() => undefined));
 

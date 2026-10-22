@@ -178,7 +178,7 @@ export function ResourceSheet({ open, resource, existing, onClose, onSave, onRem
               className="field"
               type="url"
               inputMode="url"
-              autoFocus={!resource}
+              data-autofocus={resource ? undefined : true}
               placeholder="https://drive.google.com/file/d/…"
               value={url}
               onChange={(e) => setUrl(e.target.value)}

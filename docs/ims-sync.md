@@ -17,6 +17,19 @@ PHILRADS IMS  ──after every stock change──▶  POST /api/ims-sync (Verce
 - **Security:** each push is signed (HMAC-SHA256 of timestamp + body) and must arrive within 5 minutes, so it can't be forged or replayed. The portal validates the shape and size before storing, keeps only the newest snapshot, and only signed-in staff with `inventory.read` can read it. The service-role key lives only in the Vercel function.
 - **In the portal:** with `VITE_INVENTORY_SOURCE=ims`, the Inventory page shows the IMS stock with all the same views (cards/table, filters, expiry alerts, details, activity log, CSV and PDF exports, scanning to look items up). Logging movements, approvals and item editing are hidden; *Receive*, *Release* and *Open IMS* buttons open the IMS. A banner shows when the data was last updated and warns if it's over an hour old.
 
+## Approving releases and adding served beneficiaries from the portal
+
+The portal only views IMS data, with two exceptions that still happen **in the IMS**:
+
+- **Approve or reject a release** (Inventory → *Approvals*, for staff with `inventory.approve`): each pending IMS release shows its lines, who requested it and who has approved so far (it needs two different IMS administrators).
+- **Add served beneficiaries** (Response, for staff with `beneficiaries.record`): each relief event shows its target, the total served and the breakdown by area. *Add served* takes an area (barangay, municipality or site), a count and an optional note, added a little at a time until the target is met.
+
+Both open a small **PHILRADS IMS window** (`portal_action.php`). Staff **sign in there with their own IMS account**, so the IMS's login, 2-factor, lockout and roles all apply, and the action runs through the IMS's normal API with its normal rules (two-admin approval, stock deducted on the second approval, audit log, emails). The portal never approves anything by itself and never handles IMS passwords. When the IMS saves, the window tells the portal, closes, and the portal shows the new numbers within seconds (the IMS pushes a fresh snapshot right after).
+
+Why a window: InfinityFree only accepts requests from a real browser on the IMS site, so the portal can't call the IMS directly. The IMS session cookie is `SameSite=Strict`, so the window reloads itself once to pick up an existing IMS sign-in; if there isn't one, the IMS login sends the person straight back to the confirmation afterwards.
+
+The pages also refresh every minute while open, so counts added by colleagues appear without reloading.
+
 ## Setup
 
 Requires the portal connected to Supabase (`VITE_DATA_SOURCE=supabase`), so only signed-in staff can see real stock. Without it the page shows sample data.
@@ -37,8 +50,10 @@ Requires the portal connected to Supabase (`VITE_DATA_SOURCE=supabase`), so only
    define('PORTAL_SYNC_URL',     'https://philrads-portal.vercel.app/api/ims-sync');
    define('PORTAL_SYNC_KEY',     'the shared key');
    ```
-   and upload the changed IMS files (`app/Models/PortalSync.php`, `public/api.php`).
+   and upload the changed IMS files: `app/Models/PortalSync.php`, `app/Controllers/OtherControllers.php`, `api.php`, `index.php` and the new `portal_action.php` (from `public/`, wherever those sit on the live site).
+   Then run `database/migrations/2026_10_23_event_beneficiary_updates.sql` once in the live IMS's phpMyAdmin (database `if0_41765017_prds_ims`). Without it everything else still works, but per-area served counts can't be saved.
 5. Do anything in the IMS (or just open it). Within seconds the portal's Inventory page shows the stock, and the banner shows the update time.
+6. Supabase: also apply `20261025000000_beneficiaries_permission.sql`. Give IMS approvers `inventory.approve` and people who record served counts `beneficiaries.record` in the portal; the IMS still decides (administrators approve releases; administrators and warehouse managers add served counts).
 
 ## Troubleshooting
 

@@ -106,7 +106,7 @@ export function ItemSheet({ open, item, initialBarcode, items, onClose, onSave, 
             </p>
           )}
           <F id={`${uid}-name`} label="Item name" error={errors.name} errId={`${uid}-name-err`}>
-            <input id={`${uid}-name`} autoFocus className="field" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} {...aria('name')} />
+            <input id={`${uid}-name`} data-autofocus={item ? undefined : true} className="field" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} {...aria('name')} />
           </F>
           <div className="grid grid-cols-2 gap-3">
             <F id={`${uid}-sku`} label="SKU" error={errors.sku} errId={`${uid}-sku-err`}>

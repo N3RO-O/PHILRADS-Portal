@@ -1,4 +1,5 @@
 import type { DataSource } from '../../types';
+import type { ImsEvent, ImsPendingRelease } from './imsSnapshot';
 
 /** Inventory domain types shared by the UI, the offline outbox and every data source. */
 
@@ -118,6 +119,10 @@ export interface InventorySnapshot {
   imsUrl?: string;
   /** Demonstration data, never real PHILRADS stock. */
   sample?: boolean;
+  /** IMS only: releases waiting for their two administrator approvals. */
+  imsPendingReleases?: ImsPendingRelease[];
+  /** IMS only: relief events with beneficiary targets and served counts by area. */
+  imsEvents?: ImsEvent[];
   items: InventoryItem[];
   locations: InventoryLocation[];
   batches: StockBatch[];

@@ -26,6 +26,7 @@ Some access applies to everyone, whatever their role: staff always see tasks ass
 | inventory.approve | ✓ | | | |
 | resources.read | ✓ | ✓ | ✓ | ✓ |
 | resources.manage | ✓ | ✓ | | |
+| beneficiaries.record | ✓ | ✓ | | |
 | response.read | ✓ | ✓ | ✓ | ✓ |
 | response.manage | ✓ | ✓ | | |
 | documents.read_all | ✓ | ✓ | | |

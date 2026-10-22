@@ -19,6 +19,7 @@ import { useAuth } from '../components/auth/AuthProvider';
 import { env } from '../config/env';
 import { ActivityLog } from '../components/inventory/ActivityLog';
 import { ApprovalsPanel } from '../components/inventory/ApprovalsPanel';
+import { ImsApprovalsPanel } from '../components/inventory/ImsApprovalsPanel';
 import { STOCK_META } from '../components/inventory/Badges';
 import { ItemSheet } from '../components/inventory/ItemSheet';
 import { MovementSheet, type MovementPreset } from '../components/inventory/MovementSheet';
@@ -31,6 +32,7 @@ import { SampleBadge } from '../components/ui/SampleBadge';
 import { useDismiss } from '../hooks/useDismiss';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { downloadCsv, toCsv } from '../lib/csv';
+import { useImsActionResults, useLiveRefresh } from '../lib/imsActions';
 import { formatDateTime, formatNumber, manilaDayKey } from '../lib/format';
 import {
   buildStockRows,
@@ -87,6 +89,9 @@ export function InventoryPage() {
   const canRecord = can('inventory.record') && !readOnly;
   const canManage = can('inventory.manage') && !readOnly;
   const canApprove = can('inventory.approve') && !readOnly;
+  // IMS releases are approved in the IMS window by IMS administrators; the portal lists them.
+  const canApproveIms = readOnly && can('inventory.approve');
+  const imsPending = snapshot?.imsPendingReleases ?? [];
 
   // URL-backed filters: shareable links, and they survive a reload.
   const tab = (params.get('tab') as Tab | null) ?? 'stock';
@@ -194,6 +199,10 @@ export function InventoryPage() {
       window.removeEventListener('afterprint', done);
     };
   }, [printing]);
+
+  // IMS mirror: refresh when an IMS window reports back, and every minute while open.
+  useImsActionResults(readOnly ? imsUrl : undefined, (text) => setToast({ text, tone: 'ok' }), () => void inventoryStore.refresh());
+  useLiveRefresh(readOnly, () => void inventoryStore.refresh());
 
   // Home's "Add inventory record" quick action lands here: open the receipt form once.
   const quickAction = params.get('action');
@@ -357,6 +366,7 @@ export function InventoryPage() {
                     ['stock', 'Stock'],
                     ['log', 'Activity log'],
                     ...(canApprove ? ([['approvals', `Approvals${pendingTransfers.length ? ` (${pendingTransfers.length})` : ''}`]] as const) : []),
+                    ...(canApproveIms ? ([['approvals', `Approvals${imsPending.length ? ` (${imsPending.length})` : ''}`]] as const) : []),
                   ] as const
                 ).map(([t, label]) => (
                   <button
@@ -487,6 +497,8 @@ export function InventoryPage() {
               />
             )}
 
+            {tab === 'approvals' && canApproveIms && <ImsApprovalsPanel releases={imsPending} imsUrl={imsUrl} sample={Boolean(snapshot.sample)} />}
+
             {tab === 'approvals' && canApprove && (
               <ApprovalsPanel
                 transfers={pendingTransfers}
@@ -497,8 +509,8 @@ export function InventoryPage() {
             )}
           </section>
 
-          {/* Thumb-reach primary action on phones */}
-          {readOnly && imsUrl && (
+          {/* Thumb-reach primary action on phones (not on Approvals, where each card has its own button) */}
+          {readOnly && imsUrl && tab !== 'approvals' && (
             <a
               href={`${imsUrl}/inventory.php`}
               target="_blank"

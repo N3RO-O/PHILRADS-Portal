@@ -10,7 +10,8 @@ export type PermissionKey =
   | 'inventory.approve'
   | 'activity.read'
   | 'resources.read'
-  | 'resources.manage';
+  | 'resources.manage'
+  | 'beneficiaries.record';
 
 export const DEMO_ROLES = [
   { key: 'admin', name: 'Administrator (demo)' },
@@ -20,8 +21,8 @@ export const DEMO_ROLES = [
 ] as const;
 
 export const PLACEHOLDER_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
-  admin: ['inventory.read', 'inventory.record', 'inventory.manage', 'inventory.approve', 'activity.read', 'resources.read', 'resources.manage'],
-  coordinator: ['inventory.read', 'inventory.record', 'activity.read', 'resources.read', 'resources.manage'],
+  admin: ['inventory.read', 'inventory.record', 'inventory.manage', 'inventory.approve', 'activity.read', 'resources.read', 'resources.manage', 'beneficiaries.record'],
+  coordinator: ['inventory.read', 'inventory.record', 'activity.read', 'resources.read', 'resources.manage', 'beneficiaries.record'],
   staff: ['inventory.read', 'inventory.record', 'activity.read', 'resources.read'],
   viewer: ['inventory.read', 'activity.read', 'resources.read'],
 };

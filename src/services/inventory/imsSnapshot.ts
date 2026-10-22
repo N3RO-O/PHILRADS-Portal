@@ -60,9 +60,49 @@ export const imsSnapshotSchema = z.object({
       }),
     )
     .max(2_000),
+  // Added 2026-10-23; optional so older IMS versions still sync.
+  pending_releases: z
+    .array(
+      z.object({
+        id,
+        code: text(40),
+        status: z.enum(['pending', 'partially_approved']),
+        purpose: text(255).nullable(),
+        recipient_org: text(255).nullable(),
+        event_name: text(255).nullable(),
+        requested_by: text(200),
+        requested_at: isoTime.nullable(),
+        lines: z.array(z.object({ item_id: id, name: text(255), qty: z.number().min(0).max(1e9), unit: text(50) })).max(200),
+        approvals: z.array(z.object({ by: text(200), decision: z.enum(['approved', 'rejected']), at: isoTime.nullable() })).max(10),
+      }),
+    )
+    .max(500)
+    .optional(),
+  events: z
+    .array(
+      z.object({
+        id,
+        name: text(255),
+        type: text(40),
+        location: text(255).nullable(),
+        target: z.number().int().nonnegative().max(1e9),
+        served: z.number().int().nonnegative().max(1e9),
+        status: z.enum(['planned', 'upcoming', 'active', 'completed', 'cancelled']),
+        start_date: isoDate.nullable(),
+        end_date: isoDate.nullable(),
+        areas: z.array(z.object({ area: text(150), served: z.number().int().nonnegative(), last_at: isoTime.nullable() })).max(500),
+        updates: z
+          .array(z.object({ area: text(150), served: z.number().int().positive(), note: text(255).nullable(), by: text(200), at: isoTime.nullable() }))
+          .max(100),
+      }),
+    )
+    .max(200)
+    .optional(),
 });
 
 export type ImsSnapshot = z.infer<typeof imsSnapshotSchema>;
+export type ImsPendingRelease = NonNullable<ImsSnapshot['pending_releases']>[number];
+export type ImsEvent = NonNullable<ImsSnapshot['events']>[number];
 
 /** IMS keeps one storage location per batch as free text; each distinct name becomes a portal location. */
 const locationId = (name: string) => `ims-loc:${name.trim().toLowerCase()}`;
@@ -127,5 +167,7 @@ export function mapImsSnapshot(s: ImsSnapshot, receivedAt?: string): InventorySn
     batches,
     movements: movements.sort((a, b) => b.occurredAt.localeCompare(a.occurredAt)),
     imsUrl: s.ims_url || undefined,
+    imsPendingReleases: s.pending_releases ?? [],
+    imsEvents: s.events ?? [],
   };
 }
