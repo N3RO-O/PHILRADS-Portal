@@ -2,6 +2,7 @@ import { useCallback, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, Download, LogOut, SquareCheckBig } from 'lucide-react';
 import { useDismiss } from '../../hooks/useDismiss';
+import { DEMO_ROLES } from '../../config/permissions';
 import { useAuth } from '../auth/AuthProvider';
 import { InstallDialog, useInstallAvailability } from '../pwa/InstallDialog';
 import { promptInstall } from '../../lib/installPrompt';
@@ -10,7 +11,8 @@ import { Avatar } from '../ui/Avatar';
 const itemClass = 'flex min-h-10 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-medium text-ink transition-colors hover:bg-white/[0.05]';
 
 export function ProfileMenu() {
-  const { profile, state, signOut } = useAuth();
+  const { profile, state, signOut, setDemoRole } = useAuth();
+  const roleSelectId = useId();
   const [open, setOpen] = useState(false);
   const [installOpen, setInstallOpen] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
@@ -68,9 +70,28 @@ export function ProfileMenu() {
             )}
           </div>
           {state.status === 'demo' && (
-            <p className="border-t border-line px-2 pt-3 text-xs text-muted">
-              Demo profile. Staff sign-in turns on when the portal is connected to Supabase.
-            </p>
+            <div className="flex flex-col gap-2 border-t border-line px-2 pt-3">
+              {setDemoRole && (
+                <>
+                  <label htmlFor={roleSelectId} className="text-xs font-semibold text-ink-soft">
+                    Try the portal as
+                  </label>
+                  <select
+                    id={roleSelectId}
+                    className="field py-2"
+                    value={profile.roleKey}
+                    onChange={(e) => setDemoRole(e.target.value)}
+                  >
+                    {DEMO_ROLES.map((r) => (
+                      <option key={r.key} value={r.key}>
+                        {r.name}
+                      </option>
+                    ))}
+                  </select>
+                </>
+              )}
+              <p className="text-xs text-muted">Demo profile. Staff sign-in turns on when the portal is connected to Supabase.</p>
+            </div>
           )}
         </div>
       )}

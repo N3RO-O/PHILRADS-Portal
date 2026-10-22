@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Session, SupabaseClient } from '@supabase/supabase-js';
 import { dataSource } from '../../config/env';
+import { DEMO_ROLES, PLACEHOLDER_ROLE_PERMISSIONS, type PermissionKey } from '../../config/permissions';
 import { demoProfile } from '../../data/mockDashboard';
 import { initialsOf } from '../../lib/format';
 import { supabase } from '../../lib/supabase';
@@ -10,12 +11,16 @@ export type AuthState =
   | { status: 'loading' }
   | { status: 'demo'; profile: StaffProfile }
   | { status: 'signed-out' }
-  | { status: 'signed-in'; session: Session; profile: StaffProfile | null; profileError?: string };
+  | { status: 'signed-in'; session: Session; profile: StaffProfile | null; profileError?: string; permissions: string[] };
 
 interface AuthContextValue {
   state: AuthState;
   /** The profile to show in the UI (demo or signed-in), if any. */
   profile: StaffProfile | null;
+  /** UI hint only: the database enforces every permission again through Row Level Security. */
+  can(permission: PermissionKey): boolean;
+  /** Sample-data mode only: try the portal as another placeholder role. */
+  setDemoRole?(roleKey: string): void;
   signIn(email: string, password: string): Promise<string | null>;
   signOut(): Promise<void>;
 }
@@ -49,9 +54,33 @@ async function fetchProfile(client: SupabaseClient, userId: string): Promise<{ p
   };
 }
 
+/** Permissions granted to the caller's role, read through RLS (role_permissions is readable by active staff). */
+async function fetchPermissions(client: SupabaseClient, profile: StaffProfile | null): Promise<string[]> {
+  if (!profile?.isActive) return [];
+  const { data, error } = await client.from('role_permissions').select('permission_key').eq('role_key', profile.roleKey);
+  if (error) {
+    console.error('[auth] permissions', error);
+    return [];
+  }
+  return (data ?? []).map((r) => r.permission_key as string);
+}
+
+const DEMO_ROLE_KEY = 'philrads.demo.role';
+const demoProfileFor = (roleKey: string): StaffProfile => {
+  const role = DEMO_ROLES.find((r) => r.key === roleKey);
+  return role ? { ...demoProfile, roleKey: role.key, roleName: role.name } : demoProfile;
+};
+const readDemoRole = () => {
+  try {
+    return localStorage.getItem(DEMO_ROLE_KEY) ?? demoProfile.roleKey;
+  } catch {
+    return demoProfile.roleKey;
+  }
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>(
-    dataSource === 'supabase' ? { status: 'loading' } : { status: 'demo', profile: demoProfile },
+    dataSource === 'supabase' ? { status: 'loading' } : { status: 'demo', profile: demoProfileFor(readDemoRole()) },
   );
 
   useEffect(() => {
@@ -66,7 +95,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
       const { profile, error } = await fetchProfile(client, session.user.id);
-      if (active) setState({ status: 'signed-in', session, profile, profileError: error });
+      const permissions = await fetchPermissions(client, profile);
+      if (active) setState({ status: 'signed-in', session, profile, profileError: error, permissions });
     };
 
     void client.auth.getSession().then(({ data }) => apply(data.session));
@@ -92,15 +122,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase?.auth.signOut();
   }, []);
 
-  const value = useMemo<AuthContextValue>(
-    () => ({
+  const setDemoRole = useCallback((roleKey: string) => {
+    try {
+      localStorage.setItem(DEMO_ROLE_KEY, roleKey);
+    } catch {
+      /* storage unavailable: keep in memory only */
+    }
+    setState({ status: 'demo', profile: demoProfileFor(roleKey) });
+  }, []);
+
+  const value = useMemo<AuthContextValue>(() => {
+    const granted = new Set<string>(
+      state.status === 'demo'
+        ? PLACEHOLDER_ROLE_PERMISSIONS[state.profile.roleKey] ?? []
+        : state.status === 'signed-in'
+          ? state.permissions
+          : [],
+    );
+    return {
       state,
       profile: state.status === 'demo' || state.status === 'signed-in' ? state.profile : null,
+      can: (permission) => granted.has(permission),
+      setDemoRole: state.status === 'demo' ? setDemoRole : undefined,
       signIn,
       signOut,
-    }),
-    [state, signIn, signOut],
-  );
+    };
+  }, [state, signIn, signOut, setDemoRole]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

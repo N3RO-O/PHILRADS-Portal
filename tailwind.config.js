@@ -36,6 +36,15 @@ export default {
           mute: '#9a9ca6',
         },
         muted: '#9a9ca6',
+        // Inventory status colours. All meet WCAG AA (>= 5:1) as text on dark surfaces,
+        // always paired with an icon and a word so status never relies on colour alone.
+        status: {
+          in: '#4ade80', // In stock: green
+          low: '#fbbf24', // Low / reorder: amber
+          out: '#f87171', // Out of stock / critical: red
+          expiring: '#c4b5fd', // Expiring soon: purple
+          expired: '#fb923c', // Expired: dark orange
+        },
       },
       fontFamily: {
         display: ['"Archivo Black"', '"Arial Black"', 'system-ui', 'sans-serif'],
@@ -57,6 +66,8 @@ export default {
         'slide-in-left': { from: { transform: 'translateX(-100%)' }, to: { transform: 'translateX(0)' } },
         'grow-x': { from: { transform: 'scaleX(0)' }, to: { transform: 'scaleX(1)' } },
         'grow-y': { from: { transform: 'scaleY(0)' }, to: { transform: 'scaleY(1)' } },
+        'sheet-up': { from: { transform: 'translateY(100%)' }, to: { transform: 'translateY(0)' } },
+        'sheet-left': { from: { transform: 'translateX(100%)' }, to: { transform: 'translateX(0)' } },
       },
       animation: {
         // Entrances use fill-mode "backwards": hidden during their delay, and no transform is held afterwards.
@@ -66,6 +77,8 @@ export default {
         'slide-in-left': 'slide-in-left 320ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
         'grow-x': 'grow-x 800ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
         'grow-y': 'grow-y 700ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
+        'sheet-up': 'sheet-up 320ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
+        'sheet-left': 'sheet-left 320ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
       },
     },
   },

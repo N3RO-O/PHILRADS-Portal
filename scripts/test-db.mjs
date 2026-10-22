@@ -47,6 +47,7 @@ await check('migrations apply', () => db.exec(migration).then(() => undefined));
 const A = '00000000-0000-0000-0000-00000000000a'; // admin
 const B = '00000000-0000-0000-0000-00000000000b'; // staff
 const C = '00000000-0000-0000-0000-00000000000c'; // not yet activated
+const D = '00000000-0000-0000-0000-00000000000d'; // viewer
 await db.exec(`insert into auth.users (id, email) values ('${A}', 'admin@example.test'), ('${B}', 'staff@example.test'), ('${C}', 'new@example.test');`);
 await check('new sign-ups get inactive profiles', async () => {
   const row = (await db.query(`select count(*)::int n, bool_or(is_active) any_active from public.profiles`)).rows[0];
@@ -76,16 +77,74 @@ await check('staff cannot see projects they are not on', () => as(B, `select id 
 await check('staff cannot create a project', () => as(B, `insert into public.projects (name) values ('Nope')`), true);
 await check('staff cannot promote themselves', () => as(B, `update public.profiles set role_key = 'admin' where id = '${B}'`), true);
 await check('staff can edit own display name', () => as(B, `update public.profiles set display_name = 'Staff B' where id = '${B}' returning display_name`).then(expectRows(1)));
-await check('staff records a receipt (+100)', () => as(B, `insert into public.inventory_movements (item_id, movement_type, quantity_change, recorded_by) select id, 'receipt', 100, '${B}' from public.inventory_items limit 1 returning quantity_change`).then(expectRows(1)));
-await check('stock on hand updated by the ledger trigger', async () => {
-  const q = (await as(B, `select quantity_on_hand::int q from public.inventory_items`)).rows[0].q;
-  if (q !== 100) throw new Error(`quantity ${q}`);
+// Inventory: every write goes through record_inventory_movement / decide_inventory_transfer
+const rpc = (uid, args) => as(uid, `select public.record_inventory_movement(${args}) r`).then((r) => r.rows[0].r);
+const cid = (n) => `'00000000-0000-4000-8000-${String(n).padStart(12, '0')}'`;
+const ITEM = `(select id from public.inventory_items where name = 'Hygiene kits')`;
+const PERISH = `(select id from public.inventory_items where name = 'Rice 25 kg')`;
+const MNL = `(select id from public.inventory_locations where name = 'Manila')`;
+const CEB = `(select id from public.inventory_locations where name = 'Cebu')`;
+const LOT = (loc) => `(select id from public.inventory_batches where item_id = ${ITEM} and location_id = ${loc} and lot_number = 'L1')`;
+const lotQty = async (loc) => Number((await db.query(`select quantity_on_hand from public.inventory_batches where id = ${LOT(loc)}`)).rows[0]?.quantity_on_hand ?? 0);
+const expectQty = (loc, n) => async () => {
+  const q = await lotQty(loc);
+  if (q !== n) throw new Error(`lot quantity ${q}, expected ${n}`);
   return q;
+};
+await db.exec(`insert into auth.users (id, email) values ('${D}', 'viewer@example.test'); update public.profiles set is_active = true, role_key = 'viewer' where id = '${D}';`);
+await check('admin creates locations', () => as(A, `insert into public.inventory_locations (name, kind) values ('Manila', 'warehouse'), ('Cebu', 'hub') returning name`).then(expectRows(2)));
+await check('admin creates a perishable item', () => as(A, `insert into public.inventory_items (name, sku, category, unit, tracks_expiry) values ('Rice 25 kg', 'FD-001', 'Food', 'sacks', true) returning name`).then(expectRows(1)));
+await check('SKU format is enforced', () => as(A, `insert into public.inventory_items (name, sku) values ('Bad', 'bad sku')`), true);
+await check('duplicate item names are rejected', () => as(A, `insert into public.inventory_items (name) values ('hygiene KITS ')`), true);
+await check('catalogue changes are logged', async () => {
+  const n = (await db.query(`select count(*)::int n from public.activity_logs where module = 'inventory' and action = 'item.created'`)).rows[0].n;
+  if (n < 2) throw new Error(`${n} log rows`);
+  return n;
 });
-await check('release beyond stock is rejected', () => as(B, `insert into public.inventory_movements (item_id, movement_type, quantity_change, recorded_by) select id, 'release', -500, '${B}' from public.inventory_items limit 1`), true);
-await check('receipt with a negative quantity is rejected', () => as(B, `insert into public.inventory_movements (item_id, movement_type, quantity_change, recorded_by) select id, 'receipt', -5, '${B}' from public.inventory_items limit 1`), true);
-await check('staff cannot edit the stock ledger', () => as(B, `update public.inventory_movements set quantity_change = 999 returning id`).then(expectRows(0)));
+await check('staff cannot write the ledger directly', () => as(B, `insert into public.inventory_movements (item_id, movement_type, quantity_change, recorded_by) select id, 'receipt', 100, '${B}' from public.inventory_items limit 1`), true);
+await check('staff receives 100 into lot L1', () => rpc(B, `${cid(1)}, 'receipt', ${ITEM}, ${MNL}, 100, p_lot_number => 'L1'`));
+await check('lot quantity updated by the ledger trigger', expectQty(MNL, 100));
+await check('retrying the same request records it once', async () => {
+  const r = await rpc(B, `${cid(1)}, 'receipt', ${ITEM}, ${MNL}, 100, p_lot_number => 'L1'`);
+  if (!r.duplicate) throw new Error('not flagged as duplicate');
+  return expectQty(MNL, 100)();
+});
+await check('release beyond the lot is rejected', () => rpc(B, `${cid(2)}, 'release', ${ITEM}, ${MNL}, 500, ${LOT(MNL)}, p_reference => 'EC'`), true);
+await check('release without a recipient is rejected', () => rpc(B, `${cid(3)}, 'release', ${ITEM}, ${MNL}, 5, ${LOT(MNL)}`), true);
+await check('decimal quantities are rejected', () => rpc(B, `${cid(4)}, 'release', ${ITEM}, ${MNL}, 1.5, ${LOT(MNL)}, p_reference => 'EC'`), true);
+await check('future-dated movements are rejected', () => rpc(B, `${cid(5)}, 'receipt', ${ITEM}, ${MNL}, 5, p_occurred_at => now() + interval '1 day'`), true);
+await check('staff releases 30', () => rpc(B, `${cid(6)}, 'release', ${ITEM}, ${MNL}, 30, ${LOT(MNL)}, p_reference => 'Brgy. San Roque EC'`));
+await check('lot now holds 70', expectQty(MNL, 70));
+await check('perishable without an expiry date is rejected', () => rpc(B, `${cid(7)}, 'receipt', ${PERISH}, ${MNL}, 10`), true);
+await check('already-expired goods cannot be received', () => rpc(B, `${cid(8)}, 'receipt', ${PERISH}, ${MNL}, 10, p_expiry_date => current_date - 3`), true);
+await check('staff cannot adjust stock', () => rpc(B, `${cid(9)}, 'adjustment', ${ITEM}, ${MNL}, -5, ${LOT(MNL)}, p_notes => 'count'`), true);
+await check('viewer cannot record movements', () => rpc(D, `${cid(10)}, 'receipt', ${ITEM}, ${MNL}, 5, p_lot_number => 'L1'`), true);
+await check('staff transfer waits for approval', async () => {
+  const r = await rpc(B, `${cid(11)}, 'transfer', ${ITEM}, ${MNL}, 20, ${LOT(MNL)}, ${CEB}, p_reference => 'Typhoon response'`);
+  if (r.status !== 'pending') throw new Error(JSON.stringify(r));
+  return expectQty(MNL, 70)();
+});
+await check('pending transfer reserves its stock (only 50 left to release)', () => rpc(B, `${cid(12)}, 'release', ${ITEM}, ${MNL}, 60, ${LOT(MNL)}, p_reference => 'EC'`), true);
+const TRANSFER = `(select id from public.inventory_transfers where client_id = ${cid(11)})`;
+await check('staff cannot approve transfers', () => as(B, `select public.decide_inventory_transfer(${TRANSFER}, true)`), true);
+await check('staff cannot edit lots directly', () => as(B, `update public.inventory_batches set quantity_on_hand = 999`), true);
+await check('rejecting needs a reason', () => as(A, `select public.decide_inventory_transfer(${TRANSFER}, false, '')`), true);
+await check('admin approves the transfer', () => as(A, `select public.decide_inventory_transfer(${TRANSFER}, true)`).then(() => undefined));
+await check('source lot down to 50', expectQty(MNL, 50));
+await check('destination lot holds 20', expectQty(CEB, 20));
+await check('a decided transfer cannot be decided again', () => as(A, `select public.decide_inventory_transfer(${TRANSFER}, false, 'late')`), true);
+await check('admin writes off 5 with a reason', () => rpc(A, `${cid(13)}, 'adjustment', ${ITEM}, ${MNL}, -5, ${LOT(MNL)}, p_notes => 'Water damage'`));
+await check('adjustment cannot go below zero', () => rpc(A, `${cid(14)}, 'adjustment', ${ITEM}, ${MNL}, -500, ${LOT(MNL)}, p_notes => 'x'`), true);
+await check('expired lots cannot be released', async () => {
+  // A lot that has since expired (received earlier, inserted as the database owner).
+  await db.exec(`insert into public.inventory_batches (item_id, location_id, lot_number, expiry_date) values (${PERISH}, ${MNL}, 'OLD', current_date - 1);
+    insert into public.inventory_movements (item_id, batch_id, location_id, movement_type, quantity_change)
+      select item_id, id, location_id, 'receipt', 10 from public.inventory_batches where lot_number = 'OLD';`);
+  return rpc(B, `${cid(15)}, 'release', ${PERISH}, ${MNL}, 1, (select id from public.inventory_batches where lot_number = 'OLD'), p_reference => 'EC'`);
+}, true);
+await check('staff cannot edit the stock ledger', () => as(B, `update public.inventory_movements set quantity_change = 999 returning id`), true);
 await check('staff cannot change item quantity directly', () => as(B, `update public.inventory_items set quantity_on_hand = 9999 returning id`).then(expectRows(0)));
+await check('viewer can read stock', () => as(D, `select id from public.inventory_batches`).then((r) => r.rows.length));
 await check('dashboard summary runs as staff', () => as(B, `select metric, value::int from public.get_dashboard_summary()`).then(expectRows(6)));
 await check('weekly response counts return 8 weeks', () => as(B, `select * from public.get_weekly_response_counts(8)`).then(expectRows(8)).then(() => undefined));
 
@@ -101,6 +160,7 @@ await check('inactive account still sees its own profile', () => as(C, `select i
 await db.exec(`set role anon`);
 await check('signed-out visitors cannot read tasks', () => db.query(`select * from public.tasks`), true);
 await check('signed-out visitors cannot call the dashboard summary', () => db.query(`select * from public.get_dashboard_summary()`), true);
+await check('signed-out visitors cannot record stock', () => db.query(`select public.record_inventory_movement(gen_random_uuid(), 'receipt', gen_random_uuid(), gen_random_uuid(), 1)`), true);
 await db.exec(`reset role`);
 
 console.log(results.join('\n'));

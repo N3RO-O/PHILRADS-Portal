@@ -23,6 +23,7 @@ Some access applies to everyone, whatever their role: staff always see tasks ass
 | inventory.read | ✓ | ✓ | ✓ | ✓ |
 | inventory.record | ✓ | ✓ | ✓ | |
 | inventory.manage | ✓ | | | |
+| inventory.approve | ✓ | | | |
 | response.read | ✓ | ✓ | ✓ | ✓ |
 | response.manage | ✓ | ✓ | | |
 | documents.read_all | ✓ | ✓ | | |
@@ -36,7 +37,7 @@ Some access applies to everyone, whatever their role: staff always see tasks ass
 
 1. What are the real staff roles (e.g. Executive Director, Program Manager, Field Officer, Warehouse, Finance, Communications, Volunteer)?
 2. Should field staff see all projects, or only their own?
-3. Who may record stock movements, and who may create or retire inventory items?
+3. Who may record stock movements, who approves transfers and stock adjustments/write-offs (`inventory.approve`), and who may create or retire inventory items?
 4. Who may create and close response operations?
 5. Who may see all uploaded documents? Are some categories (e.g. contracts, beneficiary lists) restricted further?
 6. Who activates new staff accounts and assigns roles?

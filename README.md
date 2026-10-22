@@ -4,7 +4,7 @@ Internal staff portal for **Philippine Relief and Development Services, Inc. (PH
 
 A responsive, installable Progressive Web App (PWA) built with React, TypeScript, Vite and Tailwind CSS, designed for Supabase (database and staff sign-in), Google Drive (document files) and Vercel (hosting).
 
-**Milestone 1 status:** the Home dashboard, navigation for all nine modules, PWA install/offline/update handling, the Supabase schema with Row Level Security, and the Google Drive upload boundary are in place. The eight other modules are placeholder pages. Until Supabase is connected, the dashboard shows **clearly labelled sample data**, not real PHILRADS figures.
+**Status:** the Home dashboard, the **Inventory Management** module, navigation for all nine modules, PWA install/offline/update handling, the Supabase schema with Row Level Security, and the Google Drive upload boundary are in place. The seven other modules are placeholder pages. Until Supabase is connected, the portal shows **clearly labelled sample data**, not real PHILRADS figures.
 
 ---
 
@@ -51,6 +51,7 @@ src/
   components/layout/         Sidebar rail, mobile drawer, top bar, menus, online status
   components/dashboard/      Home dashboard cards
   components/documents/      Google Drive upload panel (boundary only)
+  components/inventory/      Stock list, sheets (movement, item, details, scanner), activity log, approvals, print report
   components/auth/           Sign-in state and access gate
   components/pwa/            Service-worker update prompt, install guidance
   components/ui/             Card, dialog, avatar, badges
@@ -60,7 +61,7 @@ src/
   hooks/                     Async data, online status, popover dismissal
   lib/                       Supabase client, formatting, install-prompt capture
   pages/                     Home, module placeholders, sign-in, 404
-  services/                  Dashboard data (sample + Supabase) and Google Drive interface
+  services/                  Dashboard and inventory data (sample + Supabase), offline outbox, Google Drive interface
   types/                     Shared domain types
 supabase/migrations/         Database schema, RLS policies, dashboard functions
 scripts/test-db.mjs          Local schema and RLS checks
@@ -69,12 +70,50 @@ docs/                        Google Drive plan, roles and permissions
 
 The UI reads data only through `DashboardService` (`src/services/dashboard/types.ts`). `src/services/index.ts` picks the sample or Supabase implementation, so going live needs no component changes.
 
+## Inventory Management
+
+Built for warehouse staff, volunteers and field coordinators working fast on phones, often with poor connectivity.
+
+**Using it**
+
+- **Stock list.** A dense, sortable table on desktop; on phones (< 768 px) each line becomes a card showing the item, a large quantity badge, stock and expiry status, and location. Tap a line for a details drawer with its lots (in first-expiry-first-out order), the same item at other locations, recent movements and one-tap actions.
+- **Status at a glance.** High-contrast badges, always with an icon and a word as well as a colour: green *In stock*, amber *Low stock*, red *Out of stock*, purple *Expires in N d*, orange *Expired*. Status is based on **usable** stock: expired lots are shown but never counted.
+- **Sticky search and filters.** Search (item, SKU, barcode, lot) and the category, location and sort filters stay pinned while scrolling. Status tiles (in/low/out, expired, expiring within 30/60/90 days) act as one-tap filters. Filters live in the URL, so a filtered view can be shared or bookmarked.
+- **Log movements.** *Receive*, *Release*, *Transfer* and (approvers only) *Adjust*, from the floating button on phones or the header on desktop. Quantity fields have large − / + steppers and the numeric keypad; letters and decimals can't be typed. Errors show inline before anything is saved. Releases pick the lot that expires soonest by default, expired lots can't be released or transferred, and perishables must be received with an expiry date.
+- **Scan.** The camera reads barcodes and QR codes (EAN/UPC, Code 128/39, ITF, QR, Data Matrix) to find an item or fill a form. It uses the browser's built-in detector where available and otherwise a bundled WebAssembly decoder, precached so scanning works offline. Typing the code or using a handheld USB/Bluetooth scanner also works. Scanning an unknown code lets an administrator add the item with that barcode.
+- **Multiple locations.** Warehouses, hubs and field drop-off points, with stock per lot per location and a transfer workflow: transfers by field staff wait for an approver (*Approvals* tab); approvers' own transfers apply at once. Pending transfers reserve their stock.
+- **Audit trail.** The *Activity log* lists every movement with who recorded it, when, how much, from/to, lot, reference and approval. The ledger is append-only: mistakes are corrected with an adjustment, never by editing history. Catalogue changes are written to `activity_logs` automatically.
+- **Export.** *Excel / Sheets (.csv)* exports the list as filtered (UTF-8, formula-injection safe). *PDF report* opens a print-ready A4 summary (stock on hand, expired and expiring lots, pending transfers, who prepared it) for donors and disaster agencies: choose *Save as PDF*. The activity log has its own CSV export.
+
+**Offline and data integrity**
+
+- Every movement is written to an IndexedDB outbox **before** it is sent, so nothing is lost if the network drops, the tab closes or the phone sleeps mid-request. The outbox syncs on reconnect, when the app regains focus and every 30 seconds, one tab at a time (Web Locks).
+- Each movement carries a `client_id` generated on the device; the server records a retried request only once.
+- The last stock list is cached per user, so the page opens offline and says how old it is. Staff only sync their own queued entries, never another account's.
+- If the server rejects a queued movement (e.g. someone else already released that stock), it is marked *Sync failed* with the reason, to fix or discard. It is never silently dropped.
+- Long lists render 40 rows at a time as you scroll (infinite scroll), so phones stay smooth with thousands of lines.
+
+**Roles (placeholders, see [docs/roles-and-permissions.md](docs/roles-and-permissions.md))**
+
+| | Viewer | Staff / volunteer | Coordinator | Administrator |
+| --- | :-: | :-: | :-: | :-: |
+| View stock, activity log, export | ✓ | ✓ | ✓ | ✓ |
+| Scan, receive, release, request transfers | | ✓ | ✓ | ✓ |
+| Approve or reject transfers, adjust and write off stock | | | | ✓ |
+| Add and edit catalogue items | | | | ✓ |
+
+In sample-data mode, the account menu has *Try the portal as…* to switch between these roles.
+
+**Server-side rules.** `supabase/migrations/20261022000000_inventory_operations.sql` adds locations, lots, transfers and the `inventory.approve` permission. All stock changes go through `record_inventory_movement()` and `decide_inventory_transfer()`, which check permissions and re-validate every rule (whole positive quantities, enough stock in the lot net of pending transfers, no expired releases, expiry required for perishables, no future-dated entries) with row locks against simultaneous releases. Clients cannot write the ledger, lots or transfers directly. `npm run test:db` covers these rules.
+
+**Before going live:** add the real warehouses, hubs and field points to `inventory_locations` (SQL editor, as an administrator; there is no locations screen yet), then the item catalogue.
+
 ## Progressive Web App
 
 - **Manifest:** name *PHILRADS Staff Portal*, short name *PHILRADS*, standalone display, dark `#1c1d21` theme and background (matching the interface), 192/512 icons plus maskable versions made from the official emblem.
 - **Install:** Chrome, Edge and Android offer *Install app* in the profile menu. On iPhone/iPad the same menu item shows Safari’s *Share → Add to Home Screen* steps. No pop-ups nag staff to install.
 - **Caching:** the service worker precaches only the built app shell (HTML, JS, CSS, icons) and caches the public Google Fonts files. Supabase, Google Drive and any other API traffic is **not** cached, so private staff records, tokens and documents are never stored in a service-worker cache.
-- **Offline:** the interface still opens offline, including deep links such as `/tasks`. The header shows *Online/Offline*, and a notice explains that loading, saving and uploading need a connection. Nothing is shown as saved unless it really was. There is no offline write queue yet, by design.
+- **Offline:** the interface still opens offline, including deep links such as `/tasks`. The header shows *Online/Offline*. **Inventory stock movements can be logged offline**: they go to an IndexedDB outbox on the device and sync automatically when the connection returns (see *Inventory Management* below). Everything else (other saves, uploads, loading new data) still needs a connection, and nothing is shown as saved unless it really was.
 - **Updates:** when a new version is deployed, staff see *“A new version of the portal is ready… Reload”*. The new version takes over only when they choose to reload. The app also checks for updates hourly while it is open. The footer shows the version and build.
 
 To test locally, run `npm run build && npm run preview` and open http://localhost:4173 in Chrome or Edge. DevTools → Application shows the manifest and service worker. Service workers do not run in `npm run dev`.
@@ -153,4 +192,5 @@ All text pairs meet WCAG AA (lowest is muted text on menus, 4.74:1). Shared styl
 | PDM module | The official meaning and scope of “PDM” |
 | Upload limits and file types | Confirm the proposed 2 GB limit and the accepted formats |
 | Official emblem files | High-resolution or vector logo to replace the cropped raster |
-| The eight other modules | Business rules for Live Map, Inventory, PDM, Documentation, Response, Projects, Tasks and Print Docs |
+| Inventory go-live | Real locations and item catalogue; confirm who approves transfers and adjustments, and the 30/60/90-day expiry windows |
+| The seven other modules | Business rules for Live Map, PDM, Documentation, Response, Projects, Tasks and Print Docs |

@@ -73,8 +73,32 @@
   .field {
     @apply block w-full rounded-xl border border-line bg-surface-sunken px-4 py-3 text-sm text-ink placeholder:text-muted focus:border-uplift focus:outline-none focus:ring-1 focus:ring-uplift;
   }
+  /* Horizontally swipeable rows (filter chips, status tiles) without a visible scrollbar. */
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
   .popover {
     @apply rounded-2xl border border-line bg-surface-raised shadow-2xl shadow-black/50;
+  }
+}
+
+/*
+ * Touch screens get 48 × 48 px targets (WCAG 2.5.5 / Material guidance), so gloved or
+ * hurried taps in the field don't hit the wrong control. Mouse users keep the denser layout.
+ */
+@media (pointer: coarse) {
+  .btn,
+  .chip,
+  .field,
+  .tap {
+    min-height: 3rem;
+  }
+  .icon-btn {
+    min-height: 3rem;
+    min-width: 3rem;
   }
 }
 
@@ -86,5 +110,93 @@
     animation-delay: 0ms !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* Inventory report: hidden on screen, the only thing printed (Print → Save as PDF). */
+.print-report {
+  display: none;
+}
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 12mm;
+  }
+  html {
+    color-scheme: light;
+  }
+  body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+  #root,
+  dialog {
+    display: none !important;
+  }
+  .print-report {
+    display: block;
+    font: 8.5pt/1.35 Montserrat, Arial, sans-serif;
+    color: #111;
+  }
+  .print-report h1 {
+    margin: 0;
+    font: 16pt 'Archivo Black', 'Arial Black', sans-serif;
+    color: #640606;
+  }
+  .print-report h2 {
+    margin: 14pt 0 5pt;
+    font-size: 10.5pt;
+    font-weight: 700;
+    color: #640606;
+    break-after: avoid;
+  }
+  .print-report header > p {
+    margin: 0 0 6pt;
+    color: #555;
+  }
+  .print-report .warn {
+    margin-top: 6pt;
+    padding: 4pt 6pt;
+    border: 1px solid #b45309;
+    color: #b45309;
+    font-weight: 700;
+  }
+  .print-report table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .print-report th,
+  .print-report td {
+    padding: 3pt 5pt;
+    border-bottom: 0.5pt solid #ccc;
+    text-align: left;
+    vertical-align: top;
+  }
+  .print-report thead th {
+    background: #f1f1f1;
+    border-bottom: 1pt solid #353535;
+    font-weight: 700;
+  }
+  .print-report thead {
+    display: table-header-group;
+  }
+  .print-report tr {
+    break-inside: avoid;
+  }
+  .print-report .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .print-report .meta th,
+  .print-report .summary th {
+    width: 1%;
+    white-space: nowrap;
+    color: #555;
+    font-weight: 600;
+  }
+  .print-report footer {
+    margin-top: 12pt;
+    color: #777;
+    font-size: 7.5pt;
   }
 }

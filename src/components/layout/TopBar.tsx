@@ -11,6 +11,8 @@ interface TopBarProps {
   onSearch: (value: string) => void;
   menuOpen: boolean;
   onOpenMenu: () => void;
+  /** Pages with their own sticky search (Inventory) hide the phone search row to save vertical space. */
+  hideMobileSearch?: boolean;
 }
 
 const isApple = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
@@ -53,7 +55,7 @@ function SearchBox({ value, onChange, inputRef, showShortcut = false, className 
   );
 }
 
-export function TopBar({ search, onSearch, menuOpen, onOpenMenu }: TopBarProps) {
+export function TopBar({ search, onSearch, menuOpen, onOpenMenu, hideMobileSearch = false }: TopBarProps) {
   const desktopInput = useRef<HTMLInputElement>(null);
   const mobileInput = useRef<HTMLInputElement>(null);
 
@@ -88,7 +90,7 @@ export function TopBar({ search, onSearch, menuOpen, onOpenMenu }: TopBarProps) 
           <ProfileMenu />
         </div>
       </div>
-      <div className="px-4 pb-3 sm:px-6 md:hidden">
+      <div className={`px-4 pb-3 sm:px-6 md:hidden ${hideMobileSearch ? 'hidden' : ''}`}>
         <SearchBox value={search} onChange={onSearch} inputRef={mobileInput} />
       </div>
     </header>

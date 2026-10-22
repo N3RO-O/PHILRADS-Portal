@@ -70,7 +70,13 @@ export function AppLayout() {
       <Sidebar expanded={expanded} onToggle={toggleSidebar} />
       <MobileDrawer open={menuOpen} onClose={() => setMenuOpen(false)} />
       <div className={`flex min-h-dvh flex-col transition-[padding] duration-300 ${expanded ? 'lg:pl-64' : 'lg:pl-[4.5rem]'}`}>
-        <TopBar search={search} onSearch={onSearch} menuOpen={menuOpen} onOpenMenu={() => setMenuOpen(true)} />
+        <TopBar
+          search={search}
+          onSearch={onSearch}
+          menuOpen={menuOpen}
+          onOpenMenu={() => setMenuOpen(true)}
+          hideMobileSearch={current?.id === 'inventory'}
+        />
         <main id="main" className="mx-auto w-full max-w-[100rem] flex-1 px-4 pb-10 sm:px-6">
           <div className="flex flex-wrap items-end justify-between gap-3 pb-5 pt-2">
             <div className="min-w-0">

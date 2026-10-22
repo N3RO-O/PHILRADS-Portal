@@ -1,0 +1,591 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import {
+  ChevronDown,
+  CloudOff,
+  Download,
+  FileText,
+  Loader2,
+  PackagePlus,
+  Plus,
+  RefreshCw,
+  ScanLine,
+  Search,
+  X,
+} from 'lucide-react';
+import { useAuth } from '../components/auth/AuthProvider';
+import { ActivityLog } from '../components/inventory/ActivityLog';
+import { ApprovalsPanel } from '../components/inventory/ApprovalsPanel';
+import { STOCK_META } from '../components/inventory/Badges';
+import { ItemSheet } from '../components/inventory/ItemSheet';
+import { MovementSheet, type MovementPreset } from '../components/inventory/MovementSheet';
+import { PrintReport } from '../components/inventory/PrintReport';
+import { ScannerSheet } from '../components/inventory/ScannerSheet';
+import { StockDetailSheet } from '../components/inventory/StockDetailSheet';
+import { StockList, type SortKey, type SortState } from '../components/inventory/StockList';
+import { LoadError, Skeleton } from '../components/ui/Card';
+import { SampleBadge } from '../components/ui/SampleBadge';
+import { useDismiss } from '../hooks/useDismiss';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import { downloadCsv, toCsv } from '../lib/csv';
+import { formatDateTime, formatNumber, manilaDayKey } from '../lib/format';
+import {
+  buildStockRows,
+  daysUntil,
+  EXPIRY_WINDOWS,
+  expiryStatus,
+  findItemByCode,
+  todayKey,
+  type ExpiryWindow,
+  type StockRow,
+} from '../lib/inventory';
+import { inventoryStore } from '../services';
+import { outboxAsMovements, useInventoryState } from '../services/inventory/inventoryStore';
+import { ITEM_CATEGORIES, type InventoryItem, type MovementType } from '../services/inventory/types';
+
+type StatusFilter = 'in' | 'low' | 'out' | 'expiring' | 'expired';
+type Tab = 'stock' | 'log' | 'approvals';
+
+const SEVERITY = (r: StockRow) => (r.expiredQty > 0 ? 0 : r.stock === 'out' ? 1 : r.stock === 'low' ? 2 : r.expiry === 'expiring' ? 3 : 4);
+
+function compare(a: StockRow, b: StockRow, key: SortKey) {
+  switch (key) {
+    case 'attention':
+      return SEVERITY(a) - SEVERITY(b) || (a.nearestExpiry ?? '9999').localeCompare(b.nearestExpiry ?? '9999') || a.item.name.localeCompare(b.item.name);
+    case 'item':
+      return a.item.name.localeCompare(b.item.name) || (a.location?.name ?? '').localeCompare(b.location?.name ?? '');
+    case 'location':
+      return (a.location?.name ?? '~').localeCompare(b.location?.name ?? '~') || a.item.name.localeCompare(b.item.name);
+    case 'onHand':
+      return a.usable - b.usable;
+    case 'expiry':
+      return (a.nearestExpiry ?? '9999').localeCompare(b.nearestExpiry ?? '9999');
+    case 'updated':
+      return (a.lastMovementAt ?? '').localeCompare(b.lastMovementAt ?? '');
+  }
+}
+
+/** A row has a usable lot expiring within `days` (and not yet expired). */
+const expiringWithin = (r: StockRow, days: number, today: string) =>
+  r.batches.some((b) => b.expiryDate && expiryStatus(b.expiryDate, today) === 'expiring' && daysUntil(b.expiryDate, today) <= days);
+
+export function InventoryPage() {
+  const { profile, can } = useAuth();
+  const online = useOnlineStatus();
+  const state = useInventoryState(inventoryStore);
+  const { snapshot } = state;
+  const [params, setParams] = useSearchParams();
+
+  const canRead = can('inventory.read');
+  const canRecord = can('inventory.record');
+  const canManage = can('inventory.manage');
+  const canApprove = can('inventory.approve');
+
+  // URL-backed filters: shareable links, and they survive a reload.
+  const tab = (params.get('tab') as Tab | null) ?? 'stock';
+  const q = params.get('q') ?? '';
+  const cat = params.get('cat') ?? '';
+  const loc = params.get('loc') ?? '';
+  const status = (params.get('status') as StatusFilter | null) ?? '';
+  const within = (Number(params.get('within')) || 90) as ExpiryWindow;
+  const [sortKey, sortDir] = (params.get('sort') ?? 'attention:asc').split(':') as [SortKey, 'asc' | 'desc'];
+  const sort: SortState = { key: sortKey, dir: sortDir === 'desc' ? 'desc' : 'asc' };
+
+  const setParam = useCallback(
+    (patch: Record<string, string | null>) =>
+      setParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          for (const [k, v] of Object.entries(patch)) (v ? next.set(k, v) : next.delete(k));
+          return next;
+        },
+        { replace: true },
+      ),
+    [setParams],
+  );
+
+  // Local search box state, so typing stays instant while the URL updates.
+  const [search, setSearch] = useState(q);
+  useEffect(() => setSearch(q), [q]);
+  useEffect(() => {
+    const t = setTimeout(() => search !== q && setParam({ q: search || null }), 150);
+    return () => clearTimeout(t);
+  }, [search, q, setParam]);
+
+  useEffect(() => {
+    if (!profile || !canRead) return;
+    void inventoryStore.start({ id: profile.id, name: profile.displayName });
+    return () => inventoryStore.stop();
+  }, [profile, canRead]);
+
+  const today = todayKey();
+  const allRows = useMemo(() => (snapshot ? buildStockRows(snapshot, today) : []), [snapshot, today]);
+
+  /** Rows in the current category/location/search scope, before the status filter. */
+  const scoped = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return allRows.filter((r) => {
+      if (cat && r.item.category !== cat) return false;
+      if (loc && r.location?.id !== loc) return false;
+      if (!needle) return true;
+      return [r.item.name, r.item.sku, r.item.barcode, r.item.category, r.location?.name, ...r.batches.map((b) => b.lotNumber)]
+        .filter(Boolean)
+        .some((s) => String(s).toLowerCase().includes(needle));
+    });
+  }, [allRows, q, cat, loc]);
+
+  const rows = useMemo(() => {
+    const filtered = scoped.filter((r) => {
+      if (!status) return true;
+      if (status === 'expired') return r.expiredQty > 0;
+      if (status === 'expiring') return expiringWithin(r, within, today);
+      return r.stock === status;
+    });
+    const dir = sort.dir === 'desc' ? -1 : 1;
+    return filtered.sort((a, b) => dir * compare(a, b, sort.key));
+  }, [scoped, status, within, today, sort.key, sort.dir]);
+
+  const counts = useMemo(
+    () => ({
+      in: scoped.filter((r) => r.stock === 'in').length,
+      low: scoped.filter((r) => r.stock === 'low').length,
+      out: scoped.filter((r) => r.stock === 'out').length,
+      expired: scoped.filter((r) => r.expiredQty > 0).length,
+      ...Object.fromEntries(EXPIRY_WINDOWS.map((w) => [`exp${w}`, scoped.filter((r) => expiringWithin(r, w, today)).length])),
+    }),
+    [scoped, today],
+  ) as Record<string, number>;
+
+  const outboxMovements = useMemo(() => outboxAsMovements(state.outbox, snapshot), [state.outbox, snapshot]);
+  const pendingTransfers = useMemo(() => snapshot?.movements.filter((m) => m.status === 'pending_approval') ?? [], [snapshot]);
+  const pending = useMemo(() => [...outboxMovements.filter((m) => m.status === 'pending_sync'), ...pendingTransfers], [outboxMovements, pendingTransfers]);
+  const allMovements = useMemo(() => [...outboxMovements.slice().reverse(), ...(snapshot?.movements ?? [])], [outboxMovements, snapshot]);
+
+  // Sheets
+  const [detailKey, setDetailKey] = useState<string | null>(null);
+  const detail = allRows.find((r) => r.key === detailKey) ?? null;
+  const [movement, setMovement] = useState<MovementPreset | null>(null);
+  const [itemSheet, setItemSheet] = useState<{ item: InventoryItem | null; barcode?: string } | null>(null);
+  const [scanOpen, setScanOpen] = useState(false);
+  const [toast, setToast] = useState<{ text: string; tone: 'ok' | 'warn' } | null>(null);
+  const [printing, setPrinting] = useState(false);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 7000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  useEffect(() => {
+    if (!printing) return;
+    const done = () => setPrinting(false);
+    window.addEventListener('afterprint', done);
+    // Let the report render before opening the print dialog.
+    const t = setTimeout(() => window.print(), 50);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener('afterprint', done);
+    };
+  }, [printing]);
+
+  // Home's "Add inventory record" quick action lands here: open the receipt form once.
+  const quickAction = params.get('action');
+  useEffect(() => {
+    if (quickAction !== 'add-inventory' || !snapshot) return;
+    if (canRecord) setMovement({ type: 'receipt' });
+    setParam({ action: null });
+  }, [quickAction, snapshot, canRecord, setParam]);
+
+  const openAction = (type: MovementType, row?: StockRow, batchId?: string) => {
+    setDetailKey(null);
+    setMovement({ type, itemId: row?.item.id, locationId: row?.location?.id ?? (loc || undefined), batchId });
+  };
+
+  const onScanned = useCallback(
+    (code: string) => {
+      setScanOpen(false);
+      if (!snapshot) return;
+      const item = findItemByCode(snapshot.items, code);
+      if (!item) {
+        if (canManage) setItemSheet({ item: null, barcode: code });
+        else setToast({ text: `No item matches “${code}”. Ask an administrator to add it.`, tone: 'warn' });
+        return;
+      }
+      const matches = allRows.filter((r) => r.item.id === item.id && (!loc || r.location?.id === loc));
+      if (matches.length === 1) setDetailKey(matches[0].key);
+      else {
+        setParam({ tab: null, q: item.sku, status: null, cat: null });
+        setToast({ text: `${item.name}: stocked at ${matches.length} locations.`, tone: 'ok' });
+      }
+    },
+    [snapshot, canManage, allRows, loc, setParam],
+  );
+
+  const scopeLabel = [
+    cat || 'All categories',
+    loc ? snapshot?.locations.find((l) => l.id === loc)?.name : 'All locations',
+    status ? (status === 'expiring' ? `Expiring ≤ ${within} days` : status === 'expired' ? 'Expired lots' : STOCK_META[status].label) : null,
+    q ? `matching “${q}”` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
+  const exportStockCsv = () => {
+    const csv = toCsv(rows, [
+      { header: 'Item', value: (r) => r.item.name },
+      { header: 'SKU', value: (r) => r.item.sku },
+      { header: 'Barcode', value: (r) => r.item.barcode },
+      { header: 'Category', value: (r) => r.item.category },
+      { header: 'Location', value: (r) => r.location?.name ?? 'Not stocked' },
+      { header: 'Region', value: (r) => r.location?.region },
+      { header: 'Usable on hand', value: (r) => r.usable },
+      { header: 'Unit', value: (r) => r.item.unit },
+      { header: 'Reorder level', value: (r) => r.item.reorderLevel },
+      { header: 'Stock status', value: (r) => STOCK_META[r.stock].label },
+      { header: 'Expired quantity', value: (r) => r.expiredQty },
+      { header: 'Nearest expiry', value: (r) => r.nearestExpiry },
+      { header: 'Days to expiry', value: (r) => (r.nearestExpiry ? daysUntil(r.nearestExpiry, today) : null) },
+      { header: 'Lots', value: (r) => r.batches.map((b) => `${b.lotNumber ?? 'no lot'}: ${b.quantity}${b.expiryDate ? ` (exp ${b.expiryDate})` : ''}`).join('; ') },
+      { header: 'Last movement', value: (r) => (r.lastMovementAt ? formatDateTime(r.lastMovementAt) : '') },
+    ]);
+    downloadCsv(`philrads-stock-${manilaDayKey(new Date().toISOString())}.csv`, csv);
+  };
+
+  if (!canRead)
+    return (
+      <p className="card text-sm text-ink-soft" role="alert">
+        Your role doesn’t include access to inventory. Ask an administrator if you need it.
+      </p>
+    );
+
+  const failed = state.outbox.filter((e) => e.status === 'sync_failed').length;
+  const waiting = state.outbox.length - failed;
+
+  return (
+    <div className="flex flex-col gap-4 pb-24 md:pb-0">
+      {/* Sync and freshness status */}
+      {(waiting > 0 || failed > 0 || (state.fromCache && snapshot)) && (
+        <div
+          role="status"
+          className={`flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border px-4 py-3 text-sm ${failed ? 'border-status-out/40 bg-status-out/10' : 'border-sky-300/30 bg-sky-300/[0.07]'}`}
+        >
+          <CloudOff className={`h-5 w-5 shrink-0 ${failed ? 'text-status-out' : 'text-sky-300'}`} aria-hidden />
+          <p className="min-w-0 flex-1">
+            {waiting > 0 && (
+              <>
+                <strong className="font-semibold">
+                  {waiting} {waiting === 1 ? 'movement' : 'movements'} waiting to sync.
+                </strong>{' '}
+                {online ? 'Sending now…' : 'Saved on this device; they’ll send automatically when you’re back online.'}{' '}
+              </>
+            )}
+            {failed > 0 && (
+              <button type="button" className="font-semibold text-status-out underline" onClick={() => setParam({ tab: 'log' })}>
+                {failed} couldn’t sync. Review in the activity log.
+              </button>
+            )}
+            {state.fromCache && snapshot && !waiting && !failed && <>Showing stock saved on this device, as of {formatDateTime(snapshot.fetchedAt)}.</>}
+          </p>
+          {online && waiting > 0 && (
+            <button type="button" className="btn-ghost min-h-10 px-3 text-xs" onClick={() => void inventoryStore.sync()} disabled={state.syncing}>
+              <RefreshCw className={`h-3.5 w-3.5 ${state.syncing ? 'animate-spin' : ''}`} aria-hidden /> Sync now
+            </button>
+          )}
+        </div>
+      )}
+
+      {!snapshot && state.loading && (
+        <div className="flex flex-col gap-4" aria-busy="true" aria-label="Loading inventory">
+          <Skeleton className="h-28" />
+          <Skeleton className="h-96" />
+        </div>
+      )}
+      {!snapshot && !state.loading && state.loadError && (
+        <LoadError
+          message={state.loadError === 'You’re offline.' ? 'You’re offline and no stock list has been saved on this device yet.' : state.loadError}
+          onRetry={() => void inventoryStore.refresh()}
+        />
+      )}
+
+      {snapshot && (
+        <>
+          {/* Status overview: each tile filters the list */}
+          <section aria-label="Stock status" className="no-scrollbar -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+            <div className="grid min-w-[40rem] grid-cols-7 gap-2 lg:min-w-0">
+              {(
+                [
+                  ['in', null, STOCK_META.in.label, counts.in, 'text-status-in'],
+                  ['low', null, STOCK_META.low.label, counts.low, 'text-status-low'],
+                  ['out', null, STOCK_META.out.label, counts.out, 'text-status-out'],
+                  ['expired', null, 'Expired lots', counts.expired, 'text-status-expired'],
+                  ...EXPIRY_WINDOWS.map((w) => ['expiring', String(w), `Expiring ≤ ${w} d`, counts[`exp${w}`], 'text-status-expiring'] as const),
+                ] as const
+              ).map(([s, w, label, n, tone]) => {
+                const active = status === s && (s !== 'expiring' || String(within) === w);
+                return (
+                  <button
+                    key={`${s}${w ?? ''}`}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => setParam(active ? { status: null, within: null } : { status: s, within: w, tab: null })}
+                    className="tap flex min-h-[4.5rem] flex-col items-start justify-between rounded-2xl border border-line/70 bg-surface px-3 py-2.5 text-left transition hover:border-ink-mute aria-pressed:border-uplift aria-pressed:bg-uplift/10"
+                  >
+                    <span className="text-[0.6875rem] font-semibold text-muted">{label}</span>
+                    <span className={`text-xl font-bold tabular-nums ${tone}`}>{formatNumber(n)}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="card flex flex-col gap-4 p-4 sm:p-5">
+            {/* Tabs and primary actions */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div role="tablist" aria-label="Inventory views" className="flex gap-1 rounded-xl bg-surface-sunken p-1">
+                {(
+                  [
+                    ['stock', 'Stock'],
+                    ['log', 'Activity log'],
+                    ...(canApprove ? ([['approvals', `Approvals${pendingTransfers.length ? ` (${pendingTransfers.length})` : ''}`]] as const) : []),
+                  ] as const
+                ).map(([t, label]) => (
+                  <button
+                    key={t}
+                    type="button"
+                    role="tab"
+                    aria-selected={tab === t}
+                    onClick={() => setParam({ tab: t === 'stock' ? null : t })}
+                    className="tap min-h-10 rounded-lg px-3 text-sm font-semibold text-ink-soft transition aria-selected:bg-surface-raised aria-selected:text-ink"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                {snapshot.source === 'mock' && <SampleBadge />}
+                <button type="button" className="icon-btn" onClick={() => void inventoryStore.refresh()} disabled={!online || state.loading} aria-label="Refresh inventory" title="Refresh">
+                  {state.loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <RefreshCw className="h-4 w-4" aria-hidden />}
+                </button>
+                {tab === 'stock' && <ExportMenu onCsv={exportStockCsv} onPrint={() => setPrinting(true)} />}
+                {canManage && (
+                  <button type="button" className="btn-ghost hidden md:inline-flex" onClick={() => setItemSheet({ item: null })}>
+                    <PackagePlus className="h-4 w-4" aria-hidden /> Add item
+                  </button>
+                )}
+                {canRecord && (
+                  <button type="button" className="btn-primary hidden md:inline-flex" onClick={() => openAction('release')}>
+                    <Plus className="h-4 w-4" aria-hidden /> Log movement
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {tab === 'stock' && (
+              <>
+                {/* Sticky search and filters: always reachable while scrolling a long list. */}
+                <div className="sticky top-16 z-20 -mx-4 flex flex-col gap-2 border-b border-line/60 bg-surface/95 px-4 py-3 backdrop-blur-md sm:-mx-5 sm:px-5">
+                  <div className="flex gap-2">
+                    <div className="relative min-w-0 flex-1">
+                      <label htmlFor="inv-search" className="sr-only">
+                        Search stock
+                      </label>
+                      <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
+                      <input
+                        id="inv-search"
+                        type="search"
+                        className="field pl-10 pr-10"
+                        placeholder="Search item, SKU, barcode or lot"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        enterKeyHint="search"
+                        autoComplete="off"
+                      />
+                      {search && (
+                        <button type="button" className="absolute right-1 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center text-muted hover:text-ink" onClick={() => setSearch('')} aria-label="Clear search">
+                          <X className="h-4 w-4" aria-hidden />
+                        </button>
+                      )}
+                    </div>
+                    <button type="button" className="btn-ghost shrink-0 px-3 sm:px-4" onClick={() => setScanOpen(true)}>
+                      <ScanLine className="h-5 w-5" aria-hidden /> <span className="hidden sm:inline">Scan</span>
+                      <span className="sr-only sm:hidden">Scan barcode</span>
+                    </button>
+                  </div>
+                  <div className="no-scrollbar -mx-4 flex items-center gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0">
+                    <select aria-label="Category" className={`chip shrink-0 bg-transparent pr-7 ${cat ? 'border-uplift text-uplift' : ''}`} value={cat} onChange={(e) => setParam({ cat: e.target.value || null })}>
+                      <option value="">All categories</option>
+                      {ITEM_CATEGORIES.map((c) => (
+                        <option key={c}>{c}</option>
+                      ))}
+                    </select>
+                    <select aria-label="Location" className={`chip shrink-0 bg-transparent pr-7 ${loc ? 'border-uplift text-uplift' : ''}`} value={loc} onChange={(e) => setParam({ loc: e.target.value || null })}>
+                      <option value="">All locations</option>
+                      {snapshot.locations.map((l) => (
+                        <option key={l.id} value={l.id}>
+                          {l.name}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      aria-label="Sort by"
+                      className="chip shrink-0 bg-transparent pr-7"
+                      value={`${sort.key}:${sort.dir}`}
+                      onChange={(e) => setParam({ sort: e.target.value === 'attention:asc' ? null : e.target.value })}
+                    >
+                      <option value="attention:asc">Sort: needs attention</option>
+                      <option value="item:asc">Sort: item A–Z</option>
+                      <option value="onHand:asc">Sort: lowest stock</option>
+                      <option value="onHand:desc">Sort: highest stock</option>
+                      <option value="expiry:asc">Sort: expiring first</option>
+                      <option value="updated:desc">Sort: recently moved</option>
+                      <option value="location:asc">Sort: location</option>
+                    </select>
+                    {(cat || loc || status || q) && (
+                      <button type="button" className="chip shrink-0 gap-1" onClick={() => setParam({ cat: null, loc: null, status: null, within: null, q: null })}>
+                        <X className="h-3.5 w-3.5" aria-hidden /> Clear
+                      </button>
+                    )}
+                    <span className="ml-auto hidden shrink-0 text-xs text-muted sm:inline">
+                      {formatNumber(rows.length)} of {formatNumber(allRows.length)} lines
+                    </span>
+                  </div>
+                </div>
+                <StockList
+                  rows={rows}
+                  sort={sort}
+                  onSort={(k) => setParam({ sort: sort.key === k && sort.dir === 'asc' ? `${k}:desc` : `${k}:asc` })}
+                  onOpen={(r) => setDetailKey(r.key)}
+                  resetKey={`${q}|${cat}|${loc}|${status}|${within}`}
+                  onClearFilters={() => setParam({ cat: null, loc: null, status: null, within: null, q: null })}
+                />
+              </>
+            )}
+
+            {tab === 'log' && (
+              <ActivityLog
+                movements={allMovements}
+                snapshot={snapshot}
+                onRetry={(id) => void inventoryStore.retry(id)}
+                onDiscard={(id) => {
+                  if (window.confirm('Discard this movement? It was never recorded, and will be removed from this device.')) void inventoryStore.discard(id);
+                }}
+              />
+            )}
+
+            {tab === 'approvals' && canApprove && (
+              <ApprovalsPanel
+                transfers={pendingTransfers}
+                snapshot={snapshot}
+                onDecide={(id, approve, note) => inventoryStore.decideTransfer(id, approve, note)}
+                onDone={(text) => setToast({ text, tone: 'ok' })}
+              />
+            )}
+          </section>
+
+          {/* Thumb-reach primary action on phones */}
+          {canRecord && (
+            <button
+              type="button"
+              onClick={() => openAction('release')}
+              className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-4 z-30 flex h-14 items-center gap-2 rounded-full bg-uplift pl-4 pr-5 text-sm font-bold text-page shadow-xl shadow-black/50 transition active:scale-95 md:hidden"
+            >
+              <Plus className="h-6 w-6" aria-hidden /> Log movement
+            </button>
+          )}
+
+          <StockDetailSheet
+            row={detail}
+            rows={allRows}
+            snapshot={snapshot}
+            movements={allMovements}
+            canRecord={canRecord}
+            canAdjust={canApprove}
+            canManage={canManage}
+            onClose={() => setDetailKey(null)}
+            onAction={openAction}
+            onEditItem={(r) => {
+              setDetailKey(null);
+              setItemSheet({ item: r.item });
+            }}
+            onOpenRow={(r) => setDetailKey(r.key)}
+          />
+          <MovementSheet
+            open={Boolean(movement)}
+            preset={movement ?? NO_PRESET}
+            snapshot={snapshot}
+            pending={pending}
+            canAdjust={canApprove}
+            onClose={() => setMovement(null)}
+            onSubmit={(d) => inventoryStore.record(d)}
+            onDone={(text) => setToast({ text, tone: text.includes('this device') || text.includes('approver') ? 'warn' : 'ok' })}
+          />
+          <ItemSheet
+            open={Boolean(itemSheet)}
+            item={itemSheet?.item ?? null}
+            initialBarcode={itemSheet?.barcode}
+            items={snapshot.items}
+            onClose={() => setItemSheet(null)}
+            onSave={(d) => inventoryStore.saveItem(d)}
+            onDone={(text) => setToast({ text, tone: 'ok' })}
+          />
+          <ScannerSheet open={scanOpen} onClose={() => setScanOpen(false)} onCode={onScanned} />
+          {printing && (
+            <PrintReport rows={rows} snapshot={snapshot} pendingTransfers={pendingTransfers} filtersLabel={scopeLabel} preparedBy={profile?.displayName ?? 'Staff'} />
+          )}
+        </>
+      )}
+
+      {/* Confirmation messages, announced to screen readers; sits above the action button on phones. */}
+      <div aria-live="polite" className="pointer-events-none fixed inset-x-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 flex justify-center md:bottom-6 md:left-auto md:right-6 md:justify-end">
+        {toast && (
+          <p
+            className={`pointer-events-auto flex max-w-md animate-pop-in items-start gap-3 rounded-2xl border px-4 py-3 text-sm shadow-2xl shadow-black/50 ${toast.tone === 'ok' ? 'border-status-in/40 bg-surface-raised' : 'border-sky-300/40 bg-surface-raised'}`}
+          >
+            <span className="flex-1">{toast.text}</span>
+            <button type="button" className="-m-1 grid h-8 w-8 shrink-0 place-items-center text-muted hover:text-ink" onClick={() => setToast(null)} aria-label="Dismiss">
+              <X className="h-4 w-4" aria-hidden />
+            </button>
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const NO_PRESET: MovementPreset = {};
+
+function ExportMenu({ onCsv, onPrint }: { onCsv: () => void; onPrint: () => void }) {
+  const [open, setOpen] = useState(false);
+  const wrap = useRef<HTMLDivElement>(null);
+  const button = useRef<HTMLButtonElement>(null);
+  const close = useCallback(() => setOpen(false), []);
+  useDismiss(open, wrap, close, button);
+  const item = 'tap flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-medium hover:bg-white/[0.05]';
+  return (
+    <div ref={wrap} className="relative">
+      <button ref={button} type="button" className="btn-ghost px-3" aria-expanded={open} aria-haspopup="menu" onClick={() => setOpen((o) => !o)}>
+        <Download className="h-4 w-4" aria-hidden /> <span className="hidden sm:inline">Export</span>
+        <span className="sr-only sm:hidden">Export</span>
+        <ChevronDown className="h-4 w-4 text-muted" aria-hidden />
+      </button>
+      {open && (
+        <div role="menu" className="popover absolute right-0 top-12 z-40 w-64 origin-top-right animate-pop-in p-2">
+          <button role="menuitem" type="button" className={item} onClick={() => (close(), onCsv())}>
+            <Download className="h-4 w-4 text-uplift" aria-hidden />
+            <span>
+              Excel / Sheets (.csv)
+              <span className="block text-xs text-muted">The list as filtered</span>
+            </span>
+          </button>
+          <button role="menuitem" type="button" className={item} onClick={() => (close(), onPrint())}>
+            <FileText className="h-4 w-4 text-uplift" aria-hidden />
+            <span>
+              PDF report
+              <span className="block text-xs text-muted">Print, or choose “Save as PDF”</span>
+            </span>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

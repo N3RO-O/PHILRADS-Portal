@@ -21,6 +21,13 @@ export const formatDayHeading = (iso: string) =>
 export const manilaDayKey = (iso: string) =>
   new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(iso));
 
+/** Short Manila calendar date for a timestamp, e.g. "Oct 22". */
+export const formatShortInstant = (iso: string) => formatShortDate(manilaDayKey(iso));
+
+/** Date and time in Manila, e.g. "Oct 22, 3:05 PM". */
+export const formatDateTime = (iso: string) =>
+  new Intl.DateTimeFormat('en-PH', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: TZ }).format(new Date(iso));
+
 export const formatBytes = (bytes: number) => {
   if (bytes < 1024) return `${bytes} B`;
   const units = ['KB', 'MB', 'GB'];
