@@ -4,7 +4,7 @@ Internal staff portal for **Philippine Relief and Development Services, Inc. (PH
 
 A responsive, installable Progressive Web App (PWA) built with React, TypeScript, Vite and Tailwind CSS, designed for Supabase (database and staff sign-in), Google Drive (document files) and Vercel (hosting).
 
-**Status:** the Home dashboard, the **Inventory Management** module, navigation for all nine modules, PWA install/offline/update handling, the Supabase schema with Row Level Security, and the Google Drive upload boundary are in place. The seven other modules are placeholder pages. Until Supabase is connected, the portal shows **clearly labelled sample data**, not real PHILRADS figures.
+**Status:** the Home dashboard, the **Inventory Management** and **Resources** modules, navigation for all ten modules, PWA install/offline/update handling, the Supabase schema with Row Level Security, and the Google Drive upload boundary are in place. The seven other modules are placeholder pages. Until Supabase is connected, the portal shows **clearly labelled sample data**, not real PHILRADS figures.
 
 ---
 
@@ -112,6 +112,16 @@ In sample-data mode, the account menu has *Try the portal as…* to switch betwe
 **Connected to PHILRADS IMS.** With `VITE_INVENTORY_SOURCE=ims`, the page instead shows a read-only mirror of the live PHILRADS IMS: the IMS pushes a signed stock snapshot to `/api/ims-sync` after every change (InfinityFree blocks the portal from fetching it), and *Receive*, *Release* and *Open IMS* link back to the IMS. Setup and security: [docs/ims-sync.md](docs/ims-sync.md).
 
 **Before going live:** add the real warehouses, hubs and field points to `inventory_locations` (SQL editor, as an administrator; there is no locations screen yet), then the item catalogue.
+
+## Resources
+
+A library of shared files staff open or download: forms and templates, policies and guidelines, training and manuals, reports, and brand files.
+
+- **Adding one:** paste a link from Google Drive (*Share → Copy link*). The portal recognises Drive files and folders, Google Docs, Sheets and Slides, and ordinary web pages, and fills in the file type. Only `https://` links are accepted, and the same file can't be added twice. *Upload a file* will send files straight to Drive once the Drive integration is connected (see [docs/google-drive.md](docs/google-drive.md)); until then the sheet explains how to upload in Drive and paste the link.
+- **Using it:** each card has *Open*, *Download* (Drive files download directly; Google Docs, Sheets and Slides download as Word, Excel and PowerPoint) and *Copy link*. Pinned resources are shown first. Search, filter by category or by who added it, and group *By category* or *By person*.
+- **Who uploaded what:** every resource shows who added it and when, and every add, edit and removal is written to the activity log. Uploaded files are filed in Drive by uploader name, then category.
+- **Access:** everyone with `resources.read` can open the list; `resources.manage` (placeholder: administrators and coordinators) can add, edit, pin and remove. Removing hides the resource in the portal but never deletes the file in Drive. Files open only if they are shared with the staff member's PHILRADS account or the Shared Drive.
+- Schema: `supabase/migrations/20261024000000_resources.sql`.
 
 ## Progressive Web App
 

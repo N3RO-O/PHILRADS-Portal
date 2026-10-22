@@ -19,8 +19,9 @@ import { dashboardService } from '../services';
  *  - phones: one column, ordered by what staff need first (`order-*`)
  *  - md–lg: two columns; wide cards span both
  *  - xl: 12 columns in aligned rows, in DOM order:
- *      welcome (12) | overview (8) + stock levels (4) | projects (8) + response (4)
- *      | stock health (4) + my tasks (8) | activity (4) + calendar (4) + verse (4)
+ *      verse of the day (12) | welcome (12) | overview (8) + stock levels (4) | projects (8) + response (4)
+ *      | stock health (4) + my tasks (8) | activity (6) + calendar (6)
+ * The verse of the day always comes first, at every width.
  */
 function Cell({ className, step, children }: { className: string; step: number; children: ReactNode }) {
   return (
@@ -45,6 +46,9 @@ export function HomePage() {
 
   return (
     <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-12">
+      <Cell className="order-first md:col-span-2 xl:col-span-12" step={0}>
+        <VerseOfTheDay />
+      </Cell>
       <Cell className="order-1 md:col-span-2 xl:col-span-12" step={0}>
         <WelcomeBar />
       </Cell>
@@ -66,14 +70,11 @@ export function HomePage() {
       <Cell className="order-3 md:col-span-2 xl:col-span-8" step={6}>
         <MyTasks tasks={tasks} search={query} />
       </Cell>
-      <Cell className="order-4 xl:col-span-4" step={7}>
+      <Cell className="order-4 xl:col-span-6" step={7}>
         <RecentActivity search={query} />
       </Cell>
-      <Cell className="order-5 xl:col-span-4" step={8}>
+      <Cell className="order-5 xl:col-span-6" step={8}>
         <DeadlineCalendar tasks={tasks} />
-      </Cell>
-      <Cell className="order-11 xl:col-span-4" step={9}>
-        <VerseOfTheDay />
       </Cell>
     </div>
   );

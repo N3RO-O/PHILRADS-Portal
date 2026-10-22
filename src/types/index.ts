@@ -9,7 +9,8 @@ export type ModuleId =
   | 'response'
   | 'projects'
   | 'tasks'
-  | 'print-docs';
+  | 'print-docs'
+  | 'resources';
 
 /** Where a value came from. The UI labels anything from "mock" as sample data. */
 export type DataSource = 'mock' | 'supabase';

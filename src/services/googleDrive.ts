@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { DOCUMENT_CATEGORIES, type DocumentCategory, type ModuleId } from '../types';
+import { MODULES } from '../config/modules';
+import { DOCUMENT_CATEGORIES, type ModuleId } from '../types';
 
 /**
  * GOOGLE DRIVE INTEGRATION BOUNDARY (stub)
@@ -26,9 +27,29 @@ import { DOCUMENT_CATEGORIES, type DocumentCategory, type ModuleId } from '../ty
 
 export interface DriveDestination {
   module: ModuleId;
-  category: DocumentCategory;
+  category: string;
   projectId?: string;
 }
+
+/**
+ * FOLDER RULE (PHILRADS, 2026-10-22): every upload goes to
+ *
+ *     <Shared Drive root> / <Module> / <Uploader's name> / <Category> / file
+ *     e.g.  Documentation / Maria Santos / Photos / IMG_0042.jpg
+ *
+ * so anyone browsing Google Drive can see who uploaded what, sorted by category.
+ * The server decides the uploader from the signed-in session (never from the browser)
+ * and creates missing folders. It finds a person's folder by their staff id, stored on
+ * the folder as a Drive appProperty, so a renamed account keeps the same folder and two
+ * people with the same name never share one; the folder is renamed to match their name.
+ */
+export function drivePath(destination: Pick<DriveDestination, 'module' | 'category'>, uploaderName: string): string[] {
+  const module = MODULES.find((m) => m.id === destination.module)?.label ?? destination.module;
+  return [module, driveFolderName(uploaderName) || 'Unknown uploader', driveFolderName(destination.category) || 'Other'];
+}
+
+/** Drive allows almost any folder name; keep them tidy and free of path separators. */
+export const driveFolderName = (name: string) => name.replace(/[\\/]+/g, '-').replace(/\s+/g, ' ').trim().slice(0, 80);
 
 export interface DriveUploadRequest {
   file: File;

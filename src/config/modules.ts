@@ -3,6 +3,7 @@ import {
   FileText,
   FolderKanban,
   House,
+  Library,
   LifeBuoy,
   Map,
   Package,
@@ -112,6 +113,15 @@ export const MODULES: ModuleConfig[] = [
     group: 'Work',
     summary: 'Create printable documents, such as forms and acknowledgement receipts, from approved templates.',
     plannedScope: ['Approved document templates', 'Fill from portal records', 'Print-ready layouts'],
+  },
+  {
+    id: 'resources',
+    label: 'Resources',
+    path: '/resources',
+    icon: Library,
+    group: 'Work',
+    summary: 'Forms, policies, manuals, reports and brand files staff can open or download, kept in Google Drive.',
+    plannedScope: [],
   },
 ];
 

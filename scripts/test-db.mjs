@@ -170,6 +170,23 @@ await check('staff can read the IMS snapshot', () => as(B, `select id from publi
 await check('inactive account cannot read the IMS snapshot', () => as(C, `select id from public.ims_inventory_snapshot`).then(expectRows(0)));
 await check('staff cannot store an IMS snapshot', () => as(B, SNAP('2026-10-24T00:00:00Z')), true);
 await check('staff cannot write the IMS snapshot table', () => as(B, `update public.ims_inventory_snapshot set payload = '{}'`), true);
+// Resources
+const RES = (title, url) => `insert into public.resources (title, category, url, kind, created_by) values ('${title}', 'Forms and templates', '${url}', 'drive_file', auth.uid()) returning id`;
+await check('admin adds a resource', () => as(A, RES('Acknowledgement form', 'https://drive.google.com/file/d/abcdefghijk1/view')).then(expectRows(1)));
+await check('the same link cannot be added twice', () => as(A, RES('Copy', 'https://drive.google.com/file/d/abcdefghijk1/view')), true);
+await check('non-https links are rejected', () => as(A, RES('Bad', 'javascript:alert(1)')), true);
+await check('staff can read resources', () => as(B, `select title from public.resources`).then(expectRows(1)));
+await check('staff cannot add resources', () => as(B, RES('Nope', 'https://example.org/x')), true);
+await check('staff cannot edit resources', () => as(B, `update public.resources set title = 'x' returning id`).then(expectRows(0)));
+await check('staff cannot delete resources', () => as(B, `delete from public.resources`), true);
+await check('who added a resource cannot be rewritten', () => as(A, `update public.resources set created_by = '${B}'`), true);
+await check('admin removes a resource (soft)', () => as(A, `update public.resources set is_active = false returning id`).then(expectRows(1)));
+await check('resource changes are logged', async () => {
+  const actions = (await db.query(`select action from public.activity_logs where module = 'resources' order by id`)).rows.map((r) => r.action);
+  if (actions.join() !== 'resource.added,resource.removed') throw new Error(actions.join());
+  return actions;
+});
+await check('inactive account cannot read resources', () => as(C, `select id from public.resources`).then(expectRows(0)));
 await check('dashboard summary runs as staff', () => as(B, `select metric, value::int from public.get_dashboard_summary()`).then(expectRows(6)));
 await check('weekly response counts return 8 weeks', () => as(B, `select * from public.get_weekly_response_counts(8)`).then(expectRows(8)).then(() => undefined));
 
@@ -186,6 +203,7 @@ await db.exec(`set role anon`);
 await check('signed-out visitors cannot read tasks', () => db.query(`select * from public.tasks`), true);
 await check('signed-out visitors cannot call the dashboard summary', () => db.query(`select * from public.get_dashboard_summary()`), true);
 await check('signed-out visitors cannot read the IMS snapshot', () => db.query(`select * from public.ims_inventory_snapshot`), true);
+await check('signed-out visitors cannot read resources', () => db.query(`select * from public.resources`), true);
 await check('signed-out visitors cannot record stock', () => db.query(`select public.record_inventory_movement(gen_random_uuid(), 'receipt', gen_random_uuid(), gen_random_uuid(), 1)`), true);
 await db.exec(`reset role`);
 

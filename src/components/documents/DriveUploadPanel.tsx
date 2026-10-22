@@ -1,9 +1,10 @@
 import { useId, useState, type ChangeEvent } from 'react';
-import { CloudUpload, FileText, X } from 'lucide-react';
+import { ChevronRight, CloudUpload, FileText, FolderTree, X } from 'lucide-react';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { formatBytes } from '../../lib/format';
 import { DriveNotConfiguredError, driveUploadService } from '../../services';
-import { UPLOAD_RULES, uploadMetadataSchema, validateUploadFile } from '../../services/googleDrive';
+import { drivePath, UPLOAD_RULES, uploadMetadataSchema, validateUploadFile } from '../../services/googleDrive';
+import { useAuth } from '../auth/AuthProvider';
 import { DOCUMENT_CATEGORIES, type DocumentCategory } from '../../types';
 
 interface Selected {
@@ -18,6 +19,7 @@ interface Selected {
  */
 export function DriveUploadPanel() {
   const online = useOnlineStatus();
+  const { profile } = useAuth();
   const inputId = useId();
   const [files, setFiles] = useState<Selected[]>([]);
   const [category, setCategory] = useState<DocumentCategory>('Photos');
@@ -65,7 +67,7 @@ export function DriveUploadPanel() {
         <h2 id="upload-title" className="card-title">
           Upload documentation
         </h2>
-        <p className="card-note">Photos, videos, PDFs and office documents go to the Documentation folder in Google Drive.</p>
+        <p className="card-note">Photos, videos, PDFs and office documents go to Google Drive, filed under your name and the category.</p>
       </div>
       <label
         htmlFor={inputId}
@@ -86,6 +88,17 @@ export function DriveUploadPanel() {
           ))}
         </select>
       </label>
+      {/* Where the files will land in Google Drive: by uploader, then category. */}
+      <p className="tile flex flex-wrap items-center gap-1 px-3 py-2.5 text-xs text-ink-soft" aria-label="Saves to Google Drive folder">
+        <FolderTree className="mr-1 h-4 w-4 shrink-0 text-uplift" aria-hidden />
+        <span className="text-muted">Saves to</span>
+        {drivePath({ module: 'documentation', category }, profile?.displayName ?? 'You').map((part, i) => (
+          <span key={i} className="inline-flex items-center gap-1 font-semibold text-ink">
+            {i > 0 && <ChevronRight className="h-3 w-3 text-muted" aria-hidden />}
+            {part}
+          </span>
+        ))}
+      </p>
       {files.length > 0 && (
         <ul className="flex flex-col gap-2" aria-label="Selected files">
           {files.map((f) => (

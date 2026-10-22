@@ -7,6 +7,8 @@ import { createImsInventoryService, createSampleImsService } from './inventory/i
 import { createInventoryStore } from './inventory/inventoryStore';
 import { mockInventoryService } from './inventory/mockInventoryService';
 import { createSupabaseInventoryService } from './inventory/supabaseInventoryService';
+import { createSupabaseResourcesService, mockResourcesService } from './resources/resourcesService';
+import type { ResourcesService } from './resources/types';
 
 export type { DashboardService } from './dashboard/types';
 export { driveUploadService, DriveNotConfiguredError } from './googleDrive';
@@ -26,3 +28,6 @@ export const inventoryStore = createInventoryStore(
       ? createSupabaseInventoryService(live)
       : mockInventoryService,
 );
+
+/** Shared files and links (Resources module). */
+export const resourcesService: ResourcesService = live ? createSupabaseResourcesService(live) : mockResourcesService;

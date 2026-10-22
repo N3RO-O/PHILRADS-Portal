@@ -11,6 +11,7 @@ import { Skeleton } from './components/ui/Card';
 
 // Loaded on demand so Home stays light; the service worker precaches it for offline use.
 const InventoryPage = lazy(() => import('./pages/InventoryPage').then((m) => ({ default: m.InventoryPage })));
+const ResourcesPage = lazy(() => import('./pages/ResourcesPage').then((m) => ({ default: m.ResourcesPage })));
 
 export default function App() {
   return (
@@ -33,7 +34,15 @@ export default function App() {
                 </Suspense>
               }
             />
-            {MODULES.filter((m) => m.id !== 'home' && m.id !== 'inventory').map((m) => (
+            <Route
+              path="resources"
+              element={
+                <Suspense fallback={<Skeleton className="h-96" />}>
+                  <ResourcesPage />
+                </Suspense>
+              }
+            />
+            {MODULES.filter((m) => m.id !== 'home' && m.id !== 'inventory' && m.id !== 'resources').map((m) => (
               <Route key={m.id} path={m.path.slice(1)} element={<ModulePlaceholderPage moduleId={m.id} />} />
             ))}
             <Route path="*" element={<NotFoundPage />} />
