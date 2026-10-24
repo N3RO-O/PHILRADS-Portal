@@ -48,7 +48,8 @@ export function StockList({ rows, sort, onSort, onOpen, resetKey, onClearFilters
         {formatNumber(rows.length)} stock lines
       </p>
       {/* Desktop and tablet: table */}
-      <div className="hidden overflow-x-auto rounded-xl border border-line/70 md:block">
+      {/* `relative` keeps the headers' screen-reader labels inside the scroll area (they would otherwise widen the page). */}
+      <div className="relative hidden overflow-x-auto rounded-xl border border-line/70 md:block">
         <table className="w-full min-w-[44rem] text-sm">
           <thead className="bg-surface-sunken text-left text-xs text-muted">
             <tr>

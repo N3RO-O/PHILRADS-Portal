@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ChevronDown, Database, Download, ExternalLink, FileText, Loader2, RefreshCw, Search, X } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
@@ -32,6 +32,15 @@ import { useInventoryState } from '../services/inventory/inventoryStore';
 import type { InventorySnapshot } from '../services/inventory/types';
 
 type StatusFilter = 'in' | 'low' | 'out' | 'expiring' | 'expired';
+
+/** Faint glow behind each status tile, in that status's colour (tailwind.config.js `status.*`). */
+const STATUS_GLOW: Record<StatusFilter, string> = {
+  in: 'rgba(74, 222, 128, 0.13)',
+  low: 'rgba(251, 191, 36, 0.13)',
+  out: 'rgba(248, 113, 113, 0.14)',
+  expiring: 'rgba(196, 181, 253, 0.14)',
+  expired: 'rgba(251, 146, 60, 0.14)',
+};
 type Tab = 'stock' | 'donations' | 'log' | 'approvals';
 
 const SEVERITY = (r: StockRow) => (r.expiredQty > 0 ? 0 : r.stock === 'out' ? 1 : r.stock === 'low' ? 2 : r.expiry === 'expiring' ? 3 : 4);
@@ -258,9 +267,10 @@ export function InventoryPage() {
                     type="button"
                     aria-pressed={active}
                     onClick={() => setParam(active ? { status: null, within: null } : { status: s, within: w, tab: null })}
-                    className="tap flex min-h-[4.5rem] flex-col items-start justify-between rounded-2xl border border-line/70 bg-surface px-3 py-2.5 text-left transition hover:border-ink-mute aria-pressed:border-uplift aria-pressed:bg-uplift/10"
+                    style={{ '--glow': STATUS_GLOW[s] } as CSSProperties}
+                    className="kpi-tile tap flex min-h-[4.5rem] flex-col items-start justify-between rounded-2xl px-3 py-2.5 text-left transition hover:-translate-y-0.5 hover:border-white/[0.14] aria-pressed:border-uplift aria-pressed:bg-uplift/10"
                   >
-                    <span className="text-[0.6875rem] font-semibold text-muted">{label}</span>
+                    <span className="text-[0.6875rem] font-semibold text-ink-soft">{label}</span>
                     <span className={`text-xl font-bold tabular-nums ${tone}`}>{formatNumber(n)}</span>
                   </button>
                 );

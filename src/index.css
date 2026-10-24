@@ -9,6 +9,12 @@
   }
   body {
     @apply bg-page font-sans text-ink antialiased;
+    /* A faint brand glow at the top of the workspace, so the glass surfaces have something to sit on. */
+    background-image:
+      radial-gradient(56rem 30rem at 88% -12%, rgba(236, 149, 42, 0.075), transparent 65%),
+      radial-gradient(48rem 28rem at 18% -14%, rgba(150, 24, 24, 0.12), transparent 65%);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
   }
   :focus-visible {
     outline: 2px solid #ec952a;
@@ -29,8 +35,39 @@
 }
 
 @layer components {
+  /* Cards: a soft top sheen and layered shadow for depth, without changing the surface colour. */
   .card {
     @apply rounded-2xl border border-line/70 bg-surface p-5;
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.028), rgba(255, 255, 255, 0) 38%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.045),
+      0 1px 2px rgba(0, 0, 0, 0.3),
+      0 12px 32px -18px rgba(0, 0, 0, 0.6);
+  }
+  /*
+   * Glass: translucent, blurred surface with a light-catching edge. Used sparingly:
+   * top bar, menus, sheets and dialogs. Opaque enough that muted text stays WCAG AA.
+   */
+  .glass {
+    @apply border border-white/[0.08] bg-surface/[0.96] backdrop-blur-xl backdrop-saturate-150;
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012) 45%, rgba(255, 255, 255, 0));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 24px 60px -20px rgba(0, 0, 0, 0.7);
+  }
+  /* Key-figure tile: glass with a faint glow in the figure's own colour (set --glow inline). */
+  .kpi-tile {
+    @apply rounded-xl border border-white/[0.06] bg-surface-sunken;
+    background-image:
+      radial-gradient(120% 90% at 0% 0%, var(--glow, rgba(236, 149, 42, 0.12)), transparent 60%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+  /* Small rounded icon holder with a glassy tint in the icon's colour (set --glow inline). */
+  .icon-chip {
+    @apply grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-white/[0.06];
+    background-image: linear-gradient(145deg, var(--glow, rgba(236, 149, 42, 0.18)), rgba(255, 255, 255, 0.02));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
   .card-title {
     @apply text-[0.95rem] font-semibold leading-tight text-ink;
@@ -49,7 +86,11 @@
     @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-primary {
-    @apply btn bg-uplift text-page hover:bg-uplift-soft;
+    @apply btn bg-uplift text-page hover:brightness-105;
+    background-image: linear-gradient(180deg, #f5b562, #ec952a);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.35),
+      0 6px 18px -8px rgba(236, 149, 42, 0.55);
   }
   .btn-ghost {
     @apply btn border border-line bg-surface-raised/60 text-ink hover:bg-surface-raised;
@@ -81,7 +122,7 @@
     display: none;
   }
   .popover {
-    @apply rounded-2xl border border-line bg-surface-raised shadow-2xl shadow-black/50;
+    @apply glass rounded-2xl;
   }
 }
 

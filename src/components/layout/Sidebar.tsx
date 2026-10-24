@@ -17,7 +17,7 @@ export function Sidebar({ expanded, onToggle }: SidebarProps) {
   return (
     <aside
       aria-label="Main navigation"
-      className={`fixed inset-y-0 left-0 z-40 hidden flex-col border-r border-line/70 bg-page transition-[width] duration-300 lg:flex ${
+      className={`fixed inset-y-0 left-0 z-40 hidden flex-col border-r border-line/70 bg-page bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0)_40%)] transition-[width] duration-300 lg:flex ${
         expanded ? 'w-64' : 'w-[4.5rem]'
       }`}
     >

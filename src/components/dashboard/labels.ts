@@ -27,9 +27,9 @@ export const STATUS_DOT: Record<TaskStatus, string> = {
 
 /** The three accent tones used for KPI tiles, table rows and badges, in rotation. */
 export const TONES = [
-  { text: 'text-uplift', bar: 'bg-uplift', badge: 'border-uplift/40 bg-uplift/10 text-uplift', soft: 'bg-uplift/10 text-uplift' },
-  { text: 'text-rose', bar: 'bg-rose', badge: 'border-rose/40 bg-rose/10 text-rose', soft: 'bg-rose/10 text-rose' },
-  { text: 'text-ink-soft', bar: 'bg-ink-soft', badge: 'border-ink-mute/40 bg-white/5 text-ink-soft', soft: 'bg-white/5 text-ink-soft' },
+  { text: 'text-uplift', bar: 'bg-uplift', badge: 'border-uplift/40 bg-uplift/10 text-uplift', soft: 'bg-uplift/10 text-uplift', glow: 'rgba(236, 149, 42, 0.16)' },
+  { text: 'text-rose', bar: 'bg-rose', badge: 'border-rose/40 bg-rose/10 text-rose', soft: 'bg-rose/10 text-rose', glow: 'rgba(217, 123, 123, 0.17)' },
+  { text: 'text-ink-soft', bar: 'bg-ink-soft', badge: 'border-ink-mute/40 bg-white/5 text-ink-soft', soft: 'bg-white/5 text-ink-soft', glow: 'rgba(196, 198, 205, 0.1)' },
 ] as const;
 
 export const moduleLabel = (id: ModuleId | null) => (id ? MODULES.find((m) => m.id === id)?.label ?? '' : '');

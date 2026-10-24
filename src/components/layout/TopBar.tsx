@@ -74,7 +74,7 @@ export function TopBar({ search, onSearch, menuOpen, onOpenMenu, hideMobileSearc
   }, []);
 
   return (
-    <header className="sticky top-0 z-30 bg-page/90 backdrop-blur-md">
+    <header className="sticky top-0 z-30 border-b border-white/[0.05] bg-page/75 backdrop-blur-xl backdrop-saturate-150">
       <div className="flex h-16 items-center gap-2 px-4 sm:gap-3 sm:px-6">
         <button type="button" className="icon-btn lg:hidden" onClick={onOpenMenu} aria-label="Open navigation" aria-expanded={menuOpen}>
           <Menu className="h-5 w-5" aria-hidden />

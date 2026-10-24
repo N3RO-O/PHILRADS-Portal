@@ -32,6 +32,7 @@ export function AppLayout() {
   const navigate = useNavigate();
   const current = moduleForPath(location.pathname);
   const title = current?.label ?? 'Page not found';
+  const subtitle = current?.id === 'home' ? 'Your work, stock and response operations at a glance.' : current?.summary;
 
   useEffect(() => {
     document.title = `${title} · PHILRADS Staff Portal`;
@@ -74,9 +75,16 @@ export function AppLayout() {
           hideMobileSearch={current?.id === 'inventory'}
         />
         <main id="main" className="mx-auto w-full max-w-[100rem] flex-1 px-4 pb-10 sm:px-6">
-          <div className="flex flex-wrap items-end justify-between gap-3 pb-5 pt-2">
+          <div className="flex flex-wrap items-end justify-between gap-3 pb-6 pt-3">
             <div className="min-w-0">
-              <h1 className="text-xl font-bold leading-tight text-ink sm:text-2xl">{title}</h1>
+              {current && (
+                <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-muted">
+                  PHILRADS <span aria-hidden className="mx-1 text-ink-mute/50">/</span> <span className="text-uplift">{current.group}</span>
+                </p>
+              )}
+              <h1 className="mt-1 text-2xl font-bold leading-tight tracking-tight text-ink sm:text-[1.75rem]">{title}</h1>
+              {/* Hidden on phones so the page's own content starts higher. */}
+              {subtitle && <p className="mt-1.5 hidden max-w-3xl text-sm leading-relaxed text-muted sm:block">{subtitle}</p>}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <OnlinePill className="sm:hidden" />

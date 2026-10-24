@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowUpRight, CalendarClock, FileText, FolderKanban, LifeBuoy, SquareCheckBig, TriangleAlert, type LucideIcon } from 'lucide-react';
 import { useAsyncData } from '../../hooks/useAsyncData';
@@ -52,16 +53,19 @@ export function OverviewKpis() {
               <li key={key}>
                 <Link
                   to={isEmpty ? ZERO_LINK[key] ?? m.to : m.to}
-                  className="tile group flex h-full min-h-[8.5rem] flex-col gap-2 p-4 transition-colors hover:bg-surface-raised"
+                  style={{ '--glow': tone.glow } as CSSProperties}
+                  className="kpi-tile group flex h-full min-h-[8.5rem] flex-col gap-2 p-4 transition hover:-translate-y-0.5 hover:border-white/[0.12] hover:bg-surface-raised"
                 >
                   <span className="flex items-start justify-between">
-                    <m.icon className={`h-5 w-5 ${tone.text}`} aria-hidden />
+                    <span className={`icon-chip ${tone.text}`}>
+                      <m.icon className="h-[1.125rem] w-[1.125rem]" aria-hidden />
+                    </span>
                     <ArrowUpRight className="h-4 w-4 text-muted opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" aria-hidden />
                   </span>
                   {value === null ? (
                     <Skeleton className="mt-auto h-7 w-12" />
                   ) : (
-                    <span className="mt-auto text-xl font-bold tabular-nums text-ink">{formatNumber(value)}</span>
+                    <span className="mt-auto text-2xl font-bold tracking-tight tabular-nums text-ink">{formatNumber(value)}</span>
                   )}
                   <span className="flex flex-col gap-0.5">
                     <span className="text-xs font-medium leading-tight text-ink-soft">{m.label}</span>

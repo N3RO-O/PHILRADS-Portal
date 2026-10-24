@@ -29,16 +29,17 @@ export function NavItems({ expanded, onNavigate }: NavItemsProps) {
                   expanded ? 'px-3' : 'justify-center'
                 } ${
                   isActive
-                    ? expanded
-                      ? 'bg-uplift font-semibold text-page'
-                      : 'bg-uplift/10 text-uplift'
-                    : 'font-medium text-ink-soft hover:bg-surface hover:text-ink'
+                    ? // Glassy highlight: a yellow wash fading to the right, with a fine yellow edge.
+                      `font-semibold ring-1 ring-inset ring-uplift/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.07)] ${
+                        expanded ? 'bg-gradient-to-r from-uplift/25 via-uplift/10 to-uplift/[0.03] text-ink' : 'bg-gradient-to-b from-uplift/25 to-uplift/[0.06] text-uplift'
+                      }`
+                    : 'font-medium text-ink-soft hover:bg-white/[0.04] hover:text-ink'
                 }`
               }
             >
               {({ isActive }) => (
                 <>
-                  <m.icon className="h-[1.125rem] w-[1.125rem] shrink-0" aria-hidden />
+                  <m.icon className={`h-[1.125rem] w-[1.125rem] shrink-0 ${isActive ? 'text-uplift' : ''}`} aria-hidden />
                   {expanded ? (
                     <span className="truncate">{m.label}</span>
                   ) : (
