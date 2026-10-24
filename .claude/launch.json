@@ -30,6 +30,21 @@
       "port": 5174
     },
     {
+      "name": "portal-dev-live",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--mode",
+        "live",
+        "--port",
+        "5175",
+        "--strictPort"
+      ],
+      "port": 5175
+    },
+    {
       "name": "portal-preview",
       "runtimeExecutable": "npm",
       "runtimeArgs": [

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { useAuth } from './AuthProvider';
+import { SetPasswordPage } from '../../pages/SetPasswordPage';
 import { SignInPage } from '../../pages/SignInPage';
 import { Emblem } from '../ui/Emblem';
 
@@ -17,7 +18,7 @@ function CenteredMessage({ title, children }: { title: string; children?: ReactN
 
 /** Requires a signed-in, active staff account when live data is enabled. Demo mode passes straight through. */
 export function AuthGate({ children }: { children: ReactNode }) {
-  const { state, signOut } = useAuth();
+  const { state, needsPassword, signOut } = useAuth();
 
   if (state.status === 'loading') {
     return (
@@ -29,6 +30,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     );
   }
   if (state.status === 'signed-out') return <SignInPage />;
+  if (needsPassword) return <SetPasswordPage />;
   if (state.status === 'signed-in' && (!state.profile || !state.profile.isActive)) {
     return (
       <CenteredMessage title="Your account is not active yet">

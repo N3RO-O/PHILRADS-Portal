@@ -4,7 +4,7 @@ import { dataSource } from '../../config/env';
 import { DEMO_ROLES, PLACEHOLDER_ROLE_PERMISSIONS, type PermissionKey } from '../../config/permissions';
 import { demoProfile } from '../../data/mockDashboard';
 import { initialsOf } from '../../lib/format';
-import { supabase } from '../../lib/supabase';
+import { openedFromPasswordLink, supabase } from '../../lib/supabase';
 import type { StaffProfile } from '../../types';
 
 export type AuthState =
@@ -12,6 +12,24 @@ export type AuthState =
   | { status: 'demo'; profile: StaffProfile }
   | { status: 'signed-out' }
   | { status: 'signed-in'; session: Session; profile: StaffProfile | null; profileError?: string; permissions: string[] };
+
+/** Invite and reset links sign the person in without a password; they choose one before going further. */
+const SET_PASSWORD_KEY = 'philrads.auth.set-password';
+const readNeedsPassword = () => {
+  try {
+    if (openedFromPasswordLink) sessionStorage.setItem(SET_PASSWORD_KEY, '1');
+    return sessionStorage.getItem(SET_PASSWORD_KEY) === '1';
+  } catch {
+    return openedFromPasswordLink;
+  }
+};
+const clearNeedsPassword = () => {
+  try {
+    sessionStorage.removeItem(SET_PASSWORD_KEY);
+  } catch {
+    /* storage unavailable: nothing to clear */
+  }
+};
 
 interface AuthContextValue {
   state: AuthState;
@@ -21,7 +39,13 @@ interface AuthContextValue {
   can(permission: PermissionKey): boolean;
   /** Sample-data mode only: try the portal as another placeholder role. */
   setDemoRole?(roleKey: string): void;
+  /** Signed in from an invite or password-reset email and no password chosen yet. */
+  needsPassword: boolean;
   signIn(email: string, password: string): Promise<string | null>;
+  /** Saves a new password for the signed-in account. Returns an error message, or null. */
+  setPassword(password: string): Promise<string | null>;
+  /** Emails a password-reset link. Returns an error message, or null. */
+  requestPasswordReset(email: string): Promise<string | null>;
   signOut(): Promise<void>;
 }
 
@@ -82,6 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>(
     dataSource === 'supabase' ? { status: 'loading' } : { status: 'demo', profile: demoProfileFor(readDemoRole()) },
   );
+  const [needsPassword, setNeedsPassword] = useState(() => dataSource === 'supabase' && readNeedsPassword());
 
   useEffect(() => {
     if (dataSource !== 'supabase' || !supabase) return;
@@ -103,6 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Defer work out of the auth callback: awaiting Supabase calls inside it can deadlock.
     const { data: sub } = client.auth.onAuthStateChange((event, session) => {
       if (event === 'INITIAL_SESSION') return;
+      if (event === 'PASSWORD_RECOVERY') setNeedsPassword(true);
       setTimeout(() => void apply(session), 0);
     });
     return () => {
@@ -118,7 +144,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return error.message === 'Invalid login credentials' ? 'That email and password do not match.' : 'Sign-in failed. Please try again.';
   }, []);
 
+  const setPassword = useCallback(async (password: string) => {
+    if (!supabase) return 'Sign-in is not configured.';
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) {
+      console.error('[auth] set password', error);
+      return error.message.includes('different from the old')
+        ? 'Choose a password you have not used before.'
+        : 'Your password could not be saved. Please try again.';
+    }
+    clearNeedsPassword();
+    setNeedsPassword(false);
+    return null;
+  }, []);
+
+  const requestPasswordReset = useCallback(async (email: string) => {
+    if (!supabase) return 'Sign-in is not configured.';
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+    if (error) {
+      console.error('[auth] reset password', error);
+      return 'The reset email could not be sent. Please try again in a few minutes.';
+    }
+    return null;
+  }, []);
+
   const signOut = useCallback(async () => {
+    clearNeedsPassword();
+    setNeedsPassword(false);
     await supabase?.auth.signOut();
   }, []);
 
@@ -144,10 +196,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile: state.status === 'demo' || state.status === 'signed-in' ? state.profile : null,
       can: (permission) => granted.has(permission),
       setDemoRole: state.status === 'demo' ? setDemoRole : undefined,
+      needsPassword: state.status === 'signed-in' && needsPassword,
       signIn,
+      setPassword,
+      requestPasswordReset,
       signOut,
     };
-  }, [state, signIn, signOut, setDemoRole]);
+  }, [state, needsPassword, signIn, setPassword, requestPasswordReset, signOut, setDemoRole]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
