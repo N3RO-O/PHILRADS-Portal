@@ -22,4 +22,5 @@ export interface DashboardService {
   getStockLevels(): Promise<StockLevel[]>;
   getWeeklyResponse(weeks?: number): Promise<WeeklyCount[]>;
   getNotifications(): Promise<NotificationItem[]>;
+  markNotificationsRead(ids: string[]): Promise<void>;
 }

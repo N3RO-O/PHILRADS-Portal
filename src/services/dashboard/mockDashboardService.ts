@@ -11,6 +11,8 @@ import type { DashboardService } from './types';
 
 /** Small delay so loading states are exercised in development. */
 const later = <T,>(value: T, ms = 180) => new Promise<T>((resolve) => setTimeout(() => resolve(value), ms));
+/** Sample notifications marked read in this tab. */
+const readSample = new Set<string>();
 
 export const mockDashboardService: DashboardService = {
   source: 'mock',
@@ -30,5 +32,9 @@ export const mockDashboardService: DashboardService = {
   getRecentActivity: (limit = 12) => later(mockActivity().slice(0, limit)),
   getStockLevels: () => later(mockStock()),
   getWeeklyResponse: (weeks = 8) => later(mockWeeklyResponse(weeks)),
-  getNotifications: () => later(mockNotifications()),
+  getNotifications: () => later(mockNotifications().map((n) => (readSample.has(n.id) ? { ...n, read: true } : n))),
+  markNotificationsRead: async (ids) => {
+    ids.forEach((id) => readSample.add(id));
+    await later(null, 60);
+  },
 };

@@ -249,8 +249,9 @@ export function InventoryPage() {
       {snapshot && (
         <>
           {/* Status overview: each tile filters the list */}
-          <section aria-label="Stock status" className="no-scrollbar -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-            <div className="grid min-w-[40rem] grid-cols-7 gap-2 lg:min-w-0">
+          {/* Phones: a swipeable row of evenly sized tiles that snaps tile by tile; labels never wrap. */}
+          <section aria-label="Stock status" className="no-scrollbar -mx-4 snap-x snap-mandatory scroll-px-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+            <div className="grid min-w-[54rem] grid-cols-7 gap-2 lg:min-w-0 [&>button]:snap-start">
               {(
                 [
                   ['in', null, STOCK_META.in.label, counts.in, 'text-status-in'],
@@ -270,7 +271,7 @@ export function InventoryPage() {
                     style={{ '--glow': STATUS_GLOW[s] } as CSSProperties}
                     className="kpi-tile tap flex min-h-[4.5rem] flex-col items-start justify-between rounded-2xl px-3 py-2.5 text-left transition hover:-translate-y-0.5 hover:border-white/[0.14] aria-pressed:border-uplift aria-pressed:bg-uplift/10"
                   >
-                    <span className="text-[0.6875rem] font-semibold text-ink-soft">{label}</span>
+                    <span className="whitespace-nowrap text-[0.6875rem] font-semibold text-ink-soft">{label}</span>
                     <span className={`text-xl font-bold tabular-nums ${tone}`}>{formatNumber(n)}</span>
                   </button>
                 );
@@ -281,24 +282,31 @@ export function InventoryPage() {
           <section className="card flex flex-col gap-4 p-4 sm:p-5">
             {/* Tabs and primary actions */}
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div role="tablist" aria-label="Inventory views" className="flex gap-1 rounded-xl bg-surface-sunken p-1">
+              {/* Phones: an even grid (2 × 2 with Approvals, else one row of 3) so every tab shows without sideways scrolling. */}
+              <div
+                role="tablist"
+                aria-label="Inventory views"
+                className={`grid w-full gap-1 rounded-xl bg-surface-sunken p-1 sm:flex sm:w-auto ${canApprove ? 'grid-cols-2' : 'grid-cols-3'}`}
+              >
                 {(
                   [
-                    ['stock', 'Stock'],
-                    ['donations', 'Donations'],
-                    ['log', 'Activity log'],
-                    ...(canApprove ? ([['approvals', `Approvals${imsPending.length ? ` (${imsPending.length})` : ''}`]] as const) : []),
+                    ['stock', 'Stock', 'Stock'],
+                    ['donations', 'Donations', 'Donations'],
+                    ['log', 'Activity log', 'Activity'],
+                    ...(canApprove ? ([['approvals', `Approvals${imsPending.length ? ` (${imsPending.length})` : ''}`, `Approvals${imsPending.length ? ` (${imsPending.length})` : ''}`]] as const) : []),
                   ] as const
-                ).map(([t, label]) => (
+                ).map(([t, label, short]) => (
                   <button
                     key={t}
                     type="button"
                     role="tab"
                     aria-selected={tab === t}
+                    aria-label={label}
                     onClick={() => setParam({ tab: t === 'stock' ? null : t })}
-                    className="tap min-h-10 rounded-lg px-3 text-sm font-semibold text-ink-soft transition aria-selected:bg-surface-raised aria-selected:text-ink"
+                    className="tap min-h-10 min-w-0 truncate whitespace-nowrap rounded-lg px-3 text-sm font-semibold text-ink-soft transition aria-selected:bg-surface-raised aria-selected:text-ink"
                   >
-                    {label}
+                    <span className="sm:hidden">{short}</span>
+                    <span className="hidden sm:inline">{label}</span>
                   </button>
                 ))}
               </div>

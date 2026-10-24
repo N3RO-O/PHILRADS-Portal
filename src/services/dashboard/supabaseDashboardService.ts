@@ -164,5 +164,12 @@ export function createSupabaseDashboardService(client: SupabaseClient): Dashboar
         linkPath: (n.link_path as string | null) ?? undefined,
       }));
     },
+
+    async markNotificationsRead(ids) {
+      if (!ids.length) return;
+      // Only read_at is writable, and only on your own notifications (RLS).
+      const { error } = await client.from('notifications').update({ read_at: new Date().toISOString() }).in('id', ids).is('read_at', null);
+      if (error) fail('mark notifications read', error);
+    },
   };
 }

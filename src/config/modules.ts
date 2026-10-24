@@ -9,11 +9,13 @@ import {
   Package,
   Printer,
   SquareCheckBig,
+  UsersRound,
   type LucideIcon,
 } from 'lucide-react';
 import type { ModuleId } from '../types';
+import type { PermissionKey } from './permissions';
 
-export type NavGroup = 'Overview' | 'Field operations' | 'Work';
+export type NavGroup = 'Overview' | 'Field operations' | 'Work' | 'Admin';
 
 export interface ModuleConfig {
   id: ModuleId;
@@ -25,6 +27,8 @@ export interface ModuleConfig {
   summary: string;
   /** Planned scope for the module, shown until it is built. */
   plannedScope: string[];
+  /** Shown in the navigation only to staff with this permission. */
+  permission?: PermissionKey;
 }
 
 /** The nine portal modules, in the order PHILRADS specified. */
@@ -123,9 +127,19 @@ export const MODULES: ModuleConfig[] = [
     summary: 'Forms, policies, manuals, reports and brand files staff can open or download, kept in Google Drive.',
     plannedScope: [],
   },
+  {
+    id: 'staff',
+    label: 'Staff & volunteers',
+    path: '/staff',
+    icon: UsersRound,
+    group: 'Admin',
+    summary: 'Invite staff and volunteers to the portal, choose what each person can do, and switch accounts on or off.',
+    plannedScope: [],
+    permission: 'staff.manage',
+  },
 ];
 
-export const NAV_GROUPS: NavGroup[] = ['Overview', 'Field operations', 'Work'];
+export const NAV_GROUPS: NavGroup[] = ['Overview', 'Field operations', 'Work', 'Admin'];
 
 export const moduleById = (id: ModuleId) => MODULES.find((m) => m.id === id)!;
 

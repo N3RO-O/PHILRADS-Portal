@@ -13,6 +13,7 @@ import { Skeleton } from './components/ui/Card';
 const InventoryPage = lazy(() => import('./pages/InventoryPage').then((m) => ({ default: m.InventoryPage })));
 const ResponsePage = lazy(() => import('./pages/ResponsePage').then((m) => ({ default: m.ResponsePage })));
 const ResourcesPage = lazy(() => import('./pages/ResourcesPage').then((m) => ({ default: m.ResourcesPage })));
+const StaffPage = lazy(() => import('./pages/StaffPage').then((m) => ({ default: m.StaffPage })));
 
 export default function App() {
   return (
@@ -51,7 +52,15 @@ export default function App() {
                 </Suspense>
               }
             />
-            {MODULES.filter((m) => !['home', 'inventory', 'resources', 'response'].includes(m.id)).map((m) => (
+            <Route
+              path="staff"
+              element={
+                <Suspense fallback={<Skeleton className="h-96" />}>
+                  <StaffPage />
+                </Suspense>
+              }
+            />
+            {MODULES.filter((m) => !['home', 'inventory', 'resources', 'response', 'staff'].includes(m.id)).map((m) => (
               <Route key={m.id} path={m.path.slice(1)} element={<ModulePlaceholderPage moduleId={m.id} />} />
             ))}
             <Route path="*" element={<NotFoundPage />} />

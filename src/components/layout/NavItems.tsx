@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { MODULES, NAV_GROUPS } from '../../config/modules';
+import { useAuth } from '../auth/AuthProvider';
 
 interface NavItemsProps {
   expanded: boolean;
@@ -7,17 +8,19 @@ interface NavItemsProps {
 }
 
 /**
- * Module links in three groups (Overview / Field operations / Work), separated by thin dividers.
- * Expanded: icon + label, active item filled yellow. Collapsed: icons only, active icon yellow
- * with an indicator bar, and a label on hover or keyboard focus.
+ * Module links in groups (Overview / Field operations / Work, plus Admin for administrators),
+ * separated by thin dividers. Expanded: icon + label, active item filled yellow. Collapsed: icons
+ * only, active icon yellow with an indicator bar, and a label on hover or keyboard focus.
  */
 export function NavItems({ expanded, onNavigate }: NavItemsProps) {
+  const { can } = useAuth();
+  const visible = MODULES.filter((m) => !m.permission || can(m.permission));
   return (
     <>
-      {NAV_GROUPS.map((group, gi) => (
+      {NAV_GROUPS.filter((group) => visible.some((m) => m.group === group)).map((group, gi) => (
         <div key={group} role="group" aria-label={group} className="flex flex-col gap-1">
           {gi > 0 && <hr className="mx-2 my-2 border-line/70" aria-hidden />}
-          {MODULES.filter((m) => m.group === group).map((m) => (
+          {visible.filter((m) => m.group === group).map((m) => (
             <NavLink
               key={m.id}
               to={m.path}

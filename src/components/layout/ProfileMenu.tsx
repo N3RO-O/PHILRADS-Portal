@@ -1,6 +1,6 @@
 import { useCallback, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, Download, LogOut, SquareCheckBig } from 'lucide-react';
+import { ChevronDown, Download, LogOut, SquareCheckBig, UsersRound } from 'lucide-react';
 import { useDismiss } from '../../hooks/useDismiss';
 import { DEMO_ROLES } from '../../config/permissions';
 import { useAuth } from '../auth/AuthProvider';
@@ -11,7 +11,7 @@ import { Avatar } from '../ui/Avatar';
 const itemClass = 'flex min-h-10 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-medium text-ink transition-colors hover:bg-white/[0.05]';
 
 export function ProfileMenu() {
-  const { profile, state, signOut, setDemoRole } = useAuth();
+  const { profile, state, signOut, setDemoRole, can } = useAuth();
   const roleSelectId = useId();
   const [open, setOpen] = useState(false);
   const [installOpen, setInstallOpen] = useState(false);
@@ -58,6 +58,11 @@ export function ProfileMenu() {
             <Link to="/#my-tasks" className={itemClass} onClick={() => setOpen(false)}>
               <SquareCheckBig className="h-4 w-4 text-uplift" aria-hidden /> My tasks
             </Link>
+            {can('staff.manage') && (
+              <Link to="/staff" className={itemClass} onClick={() => setOpen(false)}>
+                <UsersRound className="h-4 w-4 text-uplift" aria-hidden /> Manage staff
+              </Link>
+            )}
             {install !== 'installed' && (
               <button type="button" className={itemClass} onClick={() => void onInstall()}>
                 <Download className="h-4 w-4 text-uplift" aria-hidden /> Install app

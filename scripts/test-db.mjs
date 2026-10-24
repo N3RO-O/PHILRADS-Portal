@@ -31,7 +31,8 @@ const expectRows = (n) => (r) => {
 await db.exec(`
   create role anon nologin; create role authenticated nologin; create role service_role nologin;
   create schema auth;
-  create table auth.users (id uuid primary key, email text, raw_user_meta_data jsonb default '{}'::jsonb);
+  create table auth.users (id uuid primary key, email text, raw_user_meta_data jsonb default '{}'::jsonb,
+    invited_at timestamptz, email_confirmed_at timestamptz default now(), last_sign_in_at timestamptz);
   create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
   create function auth.role() returns text language sql stable as $$ select nullif(current_setting('request.jwt.claim.role', true), '') $$;
   grant usage on schema auth to anon, authenticated, service_role;
@@ -170,6 +171,47 @@ await check('staff can read the IMS snapshot', () => as(B, `select id from publi
 await check('inactive account cannot read the IMS snapshot', () => as(C, `select id from public.ims_inventory_snapshot`).then(expectRows(0)));
 await check('staff cannot store an IMS snapshot', () => as(B, SNAP('2026-10-24T00:00:00Z')), true);
 await check('staff cannot write the IMS snapshot table', () => as(B, `update public.ims_inventory_snapshot set payload = '{}'`), true);
+
+// Bell notifications for what's new in each IMS snapshot (portal only, no email)
+const imsPayload = (t, { items = [], releases = [], moves = [] }) =>
+  JSON.stringify({
+    version: 1,
+    generated_at: t,
+    items: items.map((i) => ({ id: i, code: `IT-${i}`, name: `Item ${i}`, category: 'Food', unit: 'packs' })),
+    pending_releases: releases.map((r) => ({ id: r, code: `REL-${r}`, purpose: 'Typhoon relief', recipient_org: null, requested_by: 'Larry' })),
+    movements: moves.map(([id, kind]) => ({ id, kind, item_id: '1', qty: kind === 'release' ? -5 : 20, status: 'applied', location: 'Stockroom', reference: null, recorded_by: 'Kim' })),
+  });
+const SNAP2 = (t, parts) => `select public.store_ims_snapshot('${t}'::timestamptz, '${imsPayload(t, parts)}'::jsonb) stored`;
+const notes = async () => (await db.query(`select recipient_id, title from public.notifications order by title`)).rows;
+await check('IMS changes notify the right people', async () => {
+  await asService(SNAP2('2026-10-23T10:00:00Z', { items: ['1'], moves: [['m1', 'receipt']] }));
+  await db.exec(`delete from public.notifications`); // only what changes from here on counts
+  await asService(SNAP2('2026-10-23T11:00:00Z', { items: ['1', '2'], releases: ['r1'], moves: [['m1', 'receipt'], ['m2', 'receipt'], ['m3', 'release']] }));
+  const n = await notes();
+  const byTitle = (t) => n.filter((x) => x.title === t).map((x) => x.recipient_id).sort().join();
+  const expect = {
+    'Release waiting for approval: REL-r1': A, // inventory.approve: admin only
+    'New item in the IMS: Item 2': [A, B].join(), // inventory.record: admin and staff
+    'Stock received: 20 packs Item 1': [A, B].join(),
+    'Stock released: 5 packs Item 1': [A, B].join(),
+  };
+  for (const [title, who] of Object.entries(expect)) if (byTitle(title) !== who) throw new Error(`${title}: ${byTitle(title)}`);
+  if (n.length !== 7) throw new Error(`expected 7 notifications, got ${n.length}: ${n.map((x) => x.title).join(' | ')}`);
+  return n.length;
+});
+await check('an unchanged IMS snapshot notifies nobody', async () => {
+  await db.exec(`delete from public.notifications`);
+  await asService(SNAP2('2026-10-23T12:00:00Z', { items: ['1', '2'], releases: ['r1'], moves: [['m1', 'receipt'], ['m2', 'receipt'], ['m3', 'release']] }));
+  return (await notes()).length === 0 ? 0 : Promise.reject(new Error(JSON.stringify(await notes())));
+});
+await check('a busy IMS push becomes one summary', async () => {
+  const moves = Array.from({ length: 8 }, (_, i) => [`b${i}`, i % 2 ? 'release' : 'receipt']);
+  await asService(SNAP2('2026-10-23T13:00:00Z', { items: ['1', '2'], moves }));
+  const titles = [...new Set((await notes()).map((x) => x.title))];
+  if (titles.join() !== '8 stock changes in the IMS') throw new Error(titles.join(' | '));
+  await db.exec(`delete from public.notifications`);
+  return titles;
+});
 // Resources
 const RES = (title, url) => `insert into public.resources (title, category, url, kind, created_by) values ('${title}', 'Forms and templates', '${url}', 'drive_file', auth.uid()) returning id`;
 await check('admin adds a resource', () => as(A, RES('Acknowledgement form', 'https://drive.google.com/file/d/abcdefghijk1/view')).then(expectRows(1)));
@@ -194,6 +236,56 @@ await check('beneficiaries.record goes to admins and coordinators', async () => 
 });
 await check('dashboard summary runs as staff', () => as(B, `select metric, value::int from public.get_dashboard_summary()`).then(expectRows(6)));
 await check('weekly response counts return 8 weeks', () => as(B, `select * from public.get_weekly_response_counts(8)`).then(expectRows(8)).then(() => undefined));
+
+// Staff page: administrators manage accounts; nobody locks themselves (or everyone) out
+const E = '00000000-0000-0000-0000-00000000000e'; // invited, not yet accepted
+await db.exec(`insert into auth.users (id, email, invited_at, email_confirmed_at) values ('${E}', 'invited@example.test', now(), null);`);
+await check('admin lists staff with emails', () => as(A, `select email, invite_pending from public.list_staff()`).then(expectRows(5)));
+await check('invited account shows as pending', async () => {
+  const r = (await as(A, `select invite_pending from public.list_staff() where email = 'invited@example.test'`)).rows[0];
+  if (!r?.invite_pending) throw new Error(JSON.stringify(r));
+});
+await check('staff cannot list staff', () => as(B, `select * from public.list_staff()`), true);
+await check('admin cannot switch off own account', () => as(A, `update public.profiles set is_active = false where id = '${A}'`), true);
+await check('admin cannot change own role', () => as(A, `update public.profiles set role_key = 'staff' where id = '${A}'`), true);
+await check('staff cannot change another role', () => as(B, `update public.profiles set role_key = 'admin' where id = '${E}'`).then(expectRows(0)));
+await check('admin switches on an invited account as coordinator', () =>
+  as(A, `update public.profiles set is_active = true, role_key = 'coordinator' where id = '${E}' returning role_key`).then(expectRows(1)));
+await check('role and on/off changes are logged', async () => {
+  const r = (await db.query(`select action from public.activity_logs where entity_id = '${E}' order by id`)).rows.map((x) => x.action);
+  if (r.join() !== 'staff.activated,staff.role_changed') throw new Error(r.join());
+  return r;
+});
+await check('the last administrator cannot be removed', () => db.query(`update public.profiles set role_key = 'staff' where id = '${A}'`), true);
+await check('the last administrator cannot be switched off', () => db.query(`update public.profiles set is_active = false where id = '${A}'`), true);
+await check('volunteers can read stock and upload, but not record stock', async () => {
+  const r = (await db.query(`select permission_key from public.role_permissions where role_key = 'volunteer' order by 1`)).rows.map((x) => x.permission_key);
+  if (r.join() !== 'documents.upload,inventory.read,resources.read,response.read') throw new Error(r.join());
+  return r;
+});
+await check('admin makes someone a volunteer', () => as(A, `update public.profiles set role_key = 'volunteer' where id = '${E}' returning role_key`).then(expectRows(1)));
+await check('admin archives a volunteer (switched off too)', async () => {
+  const r = (await as(A, `update public.profiles set archived_at = now() where id = '${E}' returning is_active, archived_at is not null archived`)).rows[0];
+  if (r.is_active !== false || !r.archived) throw new Error(JSON.stringify(r));
+  return r;
+});
+await check('archive is logged', async () => {
+  const r = (await db.query(`select action from public.activity_logs where entity_id = '${E}' order by id desc limit 1`)).rows[0].action;
+  if (r !== 'staff.archived') throw new Error(r);
+  return r;
+});
+await check('admin restores an archived account', () => as(A, `update public.profiles set archived_at = null where id = '${E}' returning id`).then(expectRows(1)));
+await check('archived accounts are listed with their date', () => as(A, `select archived_at from public.list_staff()`).then((r) => r.rows.length));
+await check('administrators cannot be archived', async () => {
+  await db.exec(`update public.profiles set role_key = 'admin', is_active = true where id = '${E}'`);
+  try {
+    await as(A, `update public.profiles set archived_at = now() where id = '${E}'`);
+  } finally {
+    await db.exec(`update public.profiles set role_key = 'volunteer' where id = '${E}'`);
+  }
+}, true);
+await check('staff cannot archive anyone', () => as(B, `update public.profiles set archived_at = now() where id = '${B}'`), true);
+await check('admin switches an account off', () => as(A, `update public.profiles set is_active = false where id = '${E}' returning is_active`).then(expectRows(1)));
 
 // Notifications: only read_at may change
 await db.exec(`insert into public.notifications (recipient_id, title) values ('${B}', 'Hello')`);
