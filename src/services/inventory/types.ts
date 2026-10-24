@@ -1,7 +1,7 @@
 import type { DataSource } from '../../types';
-import type { ImsEvent, ImsPendingRelease } from './imsSnapshot';
+import type { ImsDonation, ImsEvent, ImsPendingRelease } from './imsSnapshot';
 
-/** Inventory domain types shared by the UI, the offline outbox and every data source. */
+/** Inventory types: stock mirrored from PHILRADS IMS, shaped for the portal's views. */
 
 export const ITEM_CATEGORIES = ['Food', 'Water and sanitation', 'Hygiene', 'Shelter', 'Medical', 'Household', 'Other'] as const;
 export type ItemCategory = (typeof ITEM_CATEGORIES)[number];
@@ -79,34 +79,7 @@ export interface Movement {
   decisionNote?: string | null;
 }
 
-/** What a staff member submits. Validated on the device and again by the data source. */
-export interface MovementDraft {
-  clientId: string;
-  type: MovementType;
-  itemId: string;
-  locationId: string;
-  toLocationId?: string | null;
-  batchId?: string | null;
-  lotNumber?: string | null;
-  expiryDate?: string | null;
-  quantity: number;
-  reference?: string | null;
-  notes?: string | null;
-  occurredAt: string;
-}
-
-export interface ItemDraft {
-  id?: string;
-  sku: string;
-  barcode: string | null;
-  name: string;
-  category: ItemCategory;
-  unit: string;
-  reorderLevel: number;
-  tracksExpiry: boolean;
-}
-
-/** mock / supabase: the portal's own inventory. ims: a read-only mirror pushed by PHILRADS IMS. */
+/** Where stock came from. Today always 'ims' (sample or live); kept as a type for cached data. */
 export type InventorySource = DataSource | 'ims';
 
 export interface InventorySnapshot {
@@ -123,6 +96,8 @@ export interface InventorySnapshot {
   imsPendingReleases?: ImsPendingRelease[];
   /** IMS only: relief events with beneficiary targets and served counts by area. */
   imsEvents?: ImsEvent[];
+  /** IMS only: donations traced to the releases that gave them out. */
+  imsDonations?: ImsDonation[];
   items: InventoryItem[];
   locations: InventoryLocation[];
   batches: StockBatch[];
@@ -130,28 +105,8 @@ export interface InventorySnapshot {
   movements: Movement[];
 }
 
-export interface SubmitResult {
-  movement: Movement;
-}
-
-/**
- * A business rule rejected the request (e.g. not enough stock, expired lot).
- * Retrying will not help, so the outbox marks the entry as failed instead of retrying.
- */
-export class InventoryRuleError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'InventoryRuleError';
-  }
-}
-
+/** Reads the stock snapshot. Stock is changed only in PHILRADS IMS. */
 export interface InventoryService {
   readonly source: InventorySource;
-  /** True when stock is managed elsewhere (PHILRADS IMS) and the portal only displays it. */
-  readonly readOnly?: boolean;
   getSnapshot(): Promise<InventorySnapshot>;
-  /** Idempotent by draft.clientId: sending the same draft twice records it once. */
-  submitMovement(draft: MovementDraft): Promise<SubmitResult>;
-  decideTransfer(movementId: string, approve: boolean, note?: string): Promise<void>;
-  saveItem(draft: ItemDraft): Promise<InventoryItem>;
 }

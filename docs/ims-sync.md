@@ -13,9 +13,9 @@ PHILRADS IMS  ──after every stock change──▶  POST /api/ims-sync (Verce
 ```
 
 - **When it sends:** after any IMS action that can change stock (receiving, editing items, adjustments, releases, approvals, voids, restores), and at least every 15 minutes while someone is using the IMS, so a missed push heals itself. The send runs after the IMS page has been returned, so staff never wait on it, and a failure never affects the IMS.
-- **What it sends:** active items (code, name, category, unit, low-stock threshold, perishable flag), batches with stock (quantity, expiry, storage location), and up to 500 movements from the last 90 days (receipts, releases with their approval state, adjustments) with staff display names. It never sends donor names, beneficiary contacts, user emails or audit logs.
+- **What it sends:** active items (code, name, category, unit, low-stock threshold, perishable flag), batches with stock (quantity, expiry, storage location), and up to 500 movements from the last 90 days (receipts, releases with their approval state, adjustments) with staff display names; releases awaiting approval; relief events with served counts by area; and donation tracking: each donation's donor **name**, items, what is still in stock and every release that gave it out (recipient, event, date, people served). It never sends donor contact details or addresses, beneficiary contacts, user emails or audit logs.
 - **Security:** each push is signed (HMAC-SHA256 of timestamp + body) and must arrive within 5 minutes, so it can't be forged or replayed. The portal validates the shape and size before storing, keeps only the newest snapshot, and only signed-in staff with `inventory.read` can read it. The service-role key lives only in the Vercel function.
-- **In the portal:** with `VITE_INVENTORY_SOURCE=ims`, the Inventory page shows the IMS stock with all the same views (cards/table, filters, expiry alerts, details, activity log, CSV and PDF exports, scanning to look items up). Logging movements, approvals and item editing are hidden; *Receive*, *Release* and *Open IMS* buttons open the IMS. A banner shows when the data was last updated and warns if it's over an hour old.
+- **In the portal:** the Inventory page shows the IMS stock (cards/table, filters, expiry alerts, details, CSV and PDF exports), a **Donations** tab tracing each donation to the releases and people it reached, the activity log, and Approvals. The portal records nothing itself: *Receive*, *Release* and *Open IMS* open the IMS. A banner shows when the data was last updated and warns if it's over an hour old.
 
 ## Approving releases and adding served beneficiaries from the portal
 
@@ -39,7 +39,6 @@ Requires the portal connected to Supabase (`VITE_DATA_SOURCE=supabase`), so only
 3. **Vercel → Settings → Environment Variables** (Production):
    - `IMS_SYNC_KEY` = the shared key
    - `SUPABASE_SERVICE_ROLE_KEY` = Supabase → Project Settings → API → service_role key
-   - `VITE_INVENTORY_SOURCE` = `ims`
    - `VITE_IMS_URL` = the IMS address, e.g. `https://philrads-ims.page.gd` (no trailing slash)
 
    Redeploy. Open `https://<portal>/api/ims-sync`: it should say `"configured": true`.

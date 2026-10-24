@@ -23,9 +23,9 @@ export function OfflineNotice() {
     <div role="alert" className="mb-5 flex animate-fade-up items-start gap-3 rounded-2xl border border-uplift/30 bg-uplift/10 px-5 py-4 text-sm text-ink">
       <WifiOff className="mt-0.5 h-5 w-5 shrink-0 text-uplift" aria-hidden />
       <p>
-        <strong className="font-semibold">You’re offline.</strong> The portal stays open. Stock movements in Inventory are kept on
-        this device and sent automatically when you reconnect; everything else (loading new data, other saves and uploads) needs
-        a connection. Nothing is shown as saved until it really is.
+        <strong className="font-semibold">You’re offline.</strong> The portal stays open and Inventory shows the stock saved on this
+        device, but loading new data, saving and uploading need an internet connection. Nothing will be shown as saved until it
+        really is.
       </p>
     </div>
   );

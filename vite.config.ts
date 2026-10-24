@@ -50,10 +50,8 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // Precache only the built app shell and static assets. The .wasm file is the barcode
-        // decoder used on phones without a built-in scanner, so scanning also works offline.
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,wasm}'],
-        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+        // Precache only the built app shell and static assets.
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
         cleanupOutdatedCaches: true,

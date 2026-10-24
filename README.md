@@ -35,9 +35,8 @@ Set these in `.env.local` for local work, and in **Vercel → Project → Settin
 | `VITE_SUPABASE_URL` | For live data | Your Supabase project URL, e.g. `https://abcd1234.supabase.co` |
 | `VITE_SUPABASE_ANON_KEY` | For live data | The project’s **anon** (or publishable) key. Never the service-role key |
 | `VITE_DATA_SOURCE` | No | `mock` (default) for sample data, `supabase` for live data with staff sign-in |
-| `VITE_INVENTORY_SOURCE` | No | `portal` (default) or `ims` to show stock pushed by PHILRADS IMS ([docs/ims-sync.md](docs/ims-sync.md)) |
-| `VITE_IMS_URL` | With `ims` | PHILRADS IMS address for *Open in IMS* links |
-| `IMS_SYNC_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | With `ims` | **Server-only** (no `VITE_` prefix): used by `/api/ims-sync` |
+| `VITE_IMS_URL` | Yes, for IMS links | PHILRADS IMS address for *Open in IMS* and approval links, e.g. `https://philrads-ims.page.gd` |
+| `IMS_SYNC_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | For live IMS data | **Server-only** (no `VITE_` prefix): used by `/api/ims-sync` |
 
 Anything prefixed `VITE_` is bundled into the browser, so it must be public. If a `VITE_` variable named like `SERVICE_ROLE`, `SECRET` or `PRIVATE_KEY` is ever added, the app logs an error in the browser console, but by then the value is already in the bundle, so never add one. Server-only secrets (Supabase service-role key, Google credentials) belong in Vercel server functions; see [docs/google-drive.md](docs/google-drive.md).
 
@@ -54,7 +53,7 @@ src/
   components/layout/         Sidebar rail, mobile drawer, top bar, menus, online status
   components/dashboard/      Home dashboard cards
   components/documents/      Google Drive upload panel (boundary only)
-  components/inventory/      Stock list, sheets (movement, item, details, scanner), activity log, approvals, print report
+  components/inventory/      Stock list, details drawer, donations tracking, activity log, IMS approvals, print report
   components/auth/           Sign-in state and access gate
   components/pwa/            Service-worker update prompt, install guidance
   components/ui/             Card, dialog, avatar, badges
@@ -64,7 +63,7 @@ src/
   hooks/                     Async data, online status, popover dismissal
   lib/                       Supabase client, formatting, install-prompt capture
   pages/                     Home, module placeholders, sign-in, 404
-  services/                  Dashboard and inventory data (sample + Supabase), offline outbox, Google Drive interface
+  services/                  Dashboard data, IMS stock snapshot (sample + Supabase), resources, Google Drive interface
   types/                     Shared domain types
 supabase/migrations/         Database schema, RLS policies, dashboard functions
 scripts/test-db.mjs          Local schema and RLS checks
@@ -75,43 +74,18 @@ The UI reads data only through `DashboardService` (`src/services/dashboard/types
 
 ## Inventory Management
 
-Built for warehouse staff, volunteers and field coordinators working fast on phones, often with poor connectivity.
+The portal **shows** PHILRADS IMS; it doesn't record stock itself. Receiving donations and releasing goods happen in the IMS, which stays the single record. The IMS pushes a signed snapshot to `/api/ims-sync` after every change (InfinityFree blocks the portal from reading it directly), and the pages refresh every minute while open. Setup and security: [docs/ims-sync.md](docs/ims-sync.md).
 
-**Using it**
+- **Stock.** A sortable table on desktop and scannable cards on phones (< 768 px): item, quantity, stock and expiry status, location. Tap a line for its lots (soonest expiry first), the same item at other locations and recent history, with *Receive*, *Release* and *View in IMS* links. Status uses **usable** stock (expired lots are shown but never counted), with high-contrast badges that always pair a colour with an icon and a word. Search and filters stay pinned while scrolling; status tiles filter by in / low / out of stock, expired lots and expiry within 30/60/90 days.
+- **Donations.** Every donation traced from receipt to the people it reached: donor, record no. and date; for each item how much has been given out and how much is still in stock; and *Where it went*: each release with recipient, event, date and people served. Filter by fully / partly / not yet given out, search by donor, item, recipient or event, and export a donor report (.csv). Donor names are shown (staff-only, behind sign-in); donor contact details and addresses are never sent.
+- **Activity log.** Receipts, releases (with their approval state) and adjustments from the IMS, with who recorded them and when; exportable.
+- **Approvals** (staff with `inventory.approve`). Releases waiting for their two IMS administrator approvals; *Review and approve in IMS* opens a small IMS window where the administrator signs in with their own IMS account.
+- **Export.** The stock list as .csv, or a print-ready PDF summary for donors and agencies.
+- **Offline.** The last snapshot is kept on the device, so the page opens offline and says how old it is.
 
-- **Stock list.** A dense, sortable table on desktop; on phones (< 768 px) each line becomes a card showing the item, a large quantity badge, stock and expiry status, and location. Tap a line for a details drawer with its lots (in first-expiry-first-out order), the same item at other locations, recent movements and one-tap actions.
-- **Status at a glance.** High-contrast badges, always with an icon and a word as well as a colour: green *In stock*, amber *Low stock*, red *Out of stock*, purple *Expires in N d*, orange *Expired*. Status is based on **usable** stock: expired lots are shown but never counted.
-- **Sticky search and filters.** Search (item, SKU, barcode, lot) and the category, location and sort filters stay pinned while scrolling. Status tiles (in/low/out, expired, expiring within 30/60/90 days) act as one-tap filters. Filters live in the URL, so a filtered view can be shared or bookmarked.
-- **Log movements.** *Receive*, *Release*, *Transfer* and (approvers only) *Adjust*, from the floating button on phones or the header on desktop. Quantity fields have large − / + steppers and the numeric keypad; letters and decimals can't be typed. Errors show inline before anything is saved. Releases pick the lot that expires soonest by default, expired lots can't be released or transferred, and perishables must be received with an expiry date.
-- **Scan.** The camera reads barcodes and QR codes (EAN/UPC, Code 128/39, ITF, QR, Data Matrix) to find an item or fill a form. It uses the browser's built-in detector where available and otherwise a bundled WebAssembly decoder, precached so scanning works offline. Typing the code or using a handheld USB/Bluetooth scanner also works. Scanning an unknown code lets an administrator add the item with that barcode.
-- **Multiple locations.** Warehouses, hubs and field drop-off points, with stock per lot per location and a transfer workflow: transfers by field staff wait for an approver (*Approvals* tab); approvers' own transfers apply at once. Pending transfers reserve their stock.
-- **Audit trail.** The *Activity log* lists every movement with who recorded it, when, how much, from/to, lot, reference and approval. The ledger is append-only: mistakes are corrected with an adjustment, never by editing history. Catalogue changes are written to `activity_logs` automatically.
-- **Export.** *Excel / Sheets (.csv)* exports the list as filtered (UTF-8, formula-injection safe). *PDF report* opens a print-ready A4 summary (stock on hand, expired and expiring lots, pending transfers, who prepared it) for donors and disaster agencies: choose *Save as PDF*. The activity log has its own CSV export.
+**Response** (relief events) shows each IMS event's beneficiary target, progress and served counts by area, with *Add served* through the same IMS window (administrators and warehouse managers in the IMS).
 
-**Offline and data integrity**
-
-- Every movement is written to an IndexedDB outbox **before** it is sent, so nothing is lost if the network drops, the tab closes or the phone sleeps mid-request. The outbox syncs on reconnect, when the app regains focus and every 30 seconds, one tab at a time (Web Locks).
-- Each movement carries a `client_id` generated on the device; the server records a retried request only once.
-- The last stock list is cached per user, so the page opens offline and says how old it is. Staff only sync their own queued entries, never another account's.
-- If the server rejects a queued movement (e.g. someone else already released that stock), it is marked *Sync failed* with the reason, to fix or discard. It is never silently dropped.
-- Long lists render 40 rows at a time as you scroll (infinite scroll), so phones stay smooth with thousands of lines.
-
-**Roles (placeholders, see [docs/roles-and-permissions.md](docs/roles-and-permissions.md))**
-
-| | Viewer | Staff / volunteer | Coordinator | Administrator |
-| --- | :-: | :-: | :-: | :-: |
-| View stock, activity log, export | ✓ | ✓ | ✓ | ✓ |
-| Scan, receive, release, request transfers | | ✓ | ✓ | ✓ |
-| Approve or reject transfers, adjust and write off stock | | | | ✓ |
-| Add and edit catalogue items | | | | ✓ |
-
-In sample-data mode, the account menu has *Try the portal as…* to switch between these roles.
-
-**Server-side rules.** `supabase/migrations/20261022000000_inventory_operations.sql` adds locations, lots, transfers and the `inventory.approve` permission. All stock changes go through `record_inventory_movement()` and `decide_inventory_transfer()`, which check permissions and re-validate every rule (whole positive quantities, enough stock in the lot net of pending transfers, no expired releases, expiry required for perishables, no future-dated entries) with row locks against simultaneous releases. Clients cannot write the ledger, lots or transfers directly. `npm run test:db` covers these rules.
-
-**Connected to PHILRADS IMS.** With `VITE_INVENTORY_SOURCE=ims`, the page instead shows a read-only mirror of the live PHILRADS IMS: the IMS pushes a signed stock snapshot to `/api/ims-sync` after every change (InfinityFree blocks the portal from fetching it), and *Receive*, *Release* and *Open IMS* link back to the IMS. IMS administrators can review and approve pending releases from an *Approvals* tab, and the **Response** module shows relief events with their beneficiary targets and served counts by area, with *Add served*. Both open a small IMS window where staff sign in with their own IMS account, so the IMS's rules (two-admin approval, roles, audit log) still apply. Setup and security: [docs/ims-sync.md](docs/ims-sync.md).
-
-**Before going live:** add the real warehouses, hubs and field points to `inventory_locations` (SQL editor, as an administrator; there is no locations screen yet), then the item catalogue.
+The portal's own stock tables from `20261022000000_inventory_operations.sql` (locations, lots, transfers and the ledger functions) are not used while the IMS is the source of record; they can be dropped in a later migration if PHILRADS confirms the IMS stays.
 
 ## Resources
 
@@ -128,7 +102,7 @@ A library of shared files staff open or download: forms and templates, policies 
 - **Manifest:** name *PHILRADS Staff Portal*, short name *PHILRADS*, standalone display, dark `#1c1d21` theme and background (matching the interface), 192/512 icons plus maskable versions made from the official emblem.
 - **Install:** Chrome, Edge and Android offer *Install app* in the profile menu. On iPhone/iPad the same menu item shows Safari’s *Share → Add to Home Screen* steps. No pop-ups nag staff to install.
 - **Caching:** the service worker precaches only the built app shell (HTML, JS, CSS, icons) and caches the public Google Fonts files. Supabase, Google Drive and any other API traffic is **not** cached, so private staff records, tokens and documents are never stored in a service-worker cache.
-- **Offline:** the interface still opens offline, including deep links such as `/tasks`. The header shows *Online/Offline*. **Inventory stock movements can be logged offline**: they go to an IndexedDB outbox on the device and sync automatically when the connection returns (see *Inventory Management* below). Everything else (other saves, uploads, loading new data) still needs a connection, and nothing is shown as saved unless it really was.
+- **Offline:** the interface still opens offline, including deep links such as `/tasks`. The header shows *Online/Offline*. Inventory shows the last IMS stock snapshot saved on the device. Saving, uploading and loading new data need a connection, and nothing is shown as saved unless it really was.
 - **Updates:** when a new version is deployed, staff see *“A new version of the portal is ready… Reload”*. The new version takes over only when they choose to reload. The app also checks for updates hourly while it is open. The footer shows the version and build.
 
 To test locally, run `npm run build && npm run preview` and open http://localhost:4173 in Chrome or Edge. DevTools → Application shows the manifest and service worker. Service workers do not run in `npm run dev`.
@@ -191,6 +165,8 @@ Dark Burgundy `#640606`, Cloud `#F1F1F1`, Charcoal `#353535`, Uplifting Yellow `
 
 All text pairs meet WCAG AA (lowest is muted text on menus, 4.74:1). Shared styles are in `src/index.css`: `.card`, `.tile`, `.badge`, `.chip`, `.btn-primary`, `.btn-ghost`, `.popover`, `.field`.
 
+**Soffit gradient:** the Home welcome card and the sign-in page sit on *Soffit*, an animated red/coral WebGL2 gradient (`src/components/ui/SoffitGradient.tsx`, shader in `soffit.frag.glsl`). One fullscreen triangle and one fragment shader do all the work; each frame the browser only eases the pointer and draws once. Colours and settings live in its `CONFIG` (recolour there, never in the shader). It renders at 1× pixel ratio, pauses when off-screen or the tab is hidden, shows one still frame when reduced motion is on, and falls back to plain `#7a1710` without WebGL2. A dark scrim keeps the welcome card's text at WCAG AA.
+
 **Layout:** full-height sidebar (expanded with labels by default, collapsible to an icon rail with hover labels; the choice is remembered per device), a top bar with search, status, notifications and account, and cards in aligned 12-column rows. Every module page uses the same card system (`src/pages/ModulePlaceholderPage.tsx`). Charts are plain SVG/HTML in `src/components/charts` (no chart library).
 
 **Motion:** one smooth easing curve for every transition (`tailwind.config.js`), staggered card entrances, page fades, pop-in menus, a sliding mobile drawer and filling progress bars. Only transform and opacity animate, and all motion is switched off when the device asks for reduced motion.
@@ -207,5 +183,5 @@ All text pairs meet WCAG AA (lowest is muted text on menus, 4.74:1). Shared styl
 | PDM module | The official meaning and scope of “PDM” |
 | Upload limits and file types | Confirm the proposed 2 GB limit and the accepted formats |
 | Official emblem files | High-resolution or vector logo to replace the cropped raster |
-| Inventory go-live | Real locations and item catalogue; confirm who approves transfers and adjustments, and the 30/60/90-day expiry windows |
+| IMS go-live | Upload the IMS changes to InfinityFree, run its migration, set the sync key (docs/ims-sync.md); confirm the 30/60/90-day expiry windows |
 | The seven other modules | Business rules for Live Map, PDM, Documentation, Response, Projects, Tasks and Print Docs |

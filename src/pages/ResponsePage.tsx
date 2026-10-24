@@ -11,7 +11,6 @@ import { imsActionUrl, openImsAction, useImsActionResults, useLiveRefresh } from
 import { inventoryStore } from '../services';
 import type { ImsEvent } from '../services/inventory/imsSnapshot';
 import { useInventoryState } from '../services/inventory/inventoryStore';
-import { ModulePlaceholderPage } from './ModulePlaceholderPage';
 
 const TYPE_LABEL: Record<string, string> = {
   disaster_relief: 'Disaster relief',
@@ -35,7 +34,6 @@ type Filter = 'open' | 'all' | 'completed';
  * (administrators and warehouse managers), so the IMS stays the single record.
  */
 export function ResponsePage() {
-  if (env.inventorySource !== 'ims') return <ModulePlaceholderPage moduleId="response" />;
   return <ImsEvents />;
 }
 

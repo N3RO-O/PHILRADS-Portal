@@ -1,17 +1,5 @@
-/**
- * Inventory rules shared by the UI, the offline outbox and the sample data source.
- * The Supabase database enforces the same rules again (supabase/migrations/*_inventory_operations.sql),
- * so a modified client cannot bypass them.
- */
-import type {
-  InventoryItem,
-  InventoryLocation,
-  InventorySnapshot,
-  ItemDraft,
-  Movement,
-  MovementDraft,
-  StockBatch,
-} from '../services/inventory/types';
+/** Stock status and expiry rules for the portal's view of PHILRADS IMS stock. */
+import type { InventoryItem, InventoryLocation, InventorySnapshot, StockBatch } from '../services/inventory/types';
 import { ITEM_CATEGORIES } from '../services/inventory/types';
 import { manilaDayKey } from './format';
 
@@ -23,7 +11,6 @@ export const EXPIRY_WINDOWS = [30, 60, 90] as const;
 export type ExpiryWindow = (typeof EXPIRY_WINDOWS)[number];
 
 const DAY = 86_400_000;
-export const MAX_QUANTITY = 1_000_000;
 
 /** Today's date in Manila (YYYY-MM-DD). Stock expiry is judged by the local calendar day. */
 export const todayKey = () => manilaDayKey(new Date().toISOString());
@@ -47,16 +34,6 @@ export function expiryWindow(expiryDate: string | null, today = todayKey()): Exp
   const days = daysUntil(expiryDate, today);
   if (days < 0) return null;
   return EXPIRY_WINDOWS.find((w) => days <= w) ?? null;
-}
-
-/** First-expiry, first-out: usable lots in the order they should leave the shelf. */
-export function fefo(batches: StockBatch[], today = todayKey()): StockBatch[] {
-  return batches
-    .filter((b) => b.quantity > 0 && expiryStatus(b.expiryDate, today) !== 'expired')
-    .sort(
-      (a, b) =>
-        (a.expiryDate ?? '9999-12-31').localeCompare(b.expiryDate ?? '9999-12-31') || a.receivedAt.localeCompare(b.receivedAt),
-    );
 }
 
 /** One row of the stock list: an item at one location, with its lots. */
@@ -139,137 +116,6 @@ export function buildStockRows(snapshot: InventorySnapshot, today = todayKey()):
   }
   return rows;
 }
-
-/** Quantity of a lot already promised by moves on this device or awaiting approval. */
-export function reservedFromBatch(batchId: string, pending: Pick<Movement, 'batchId' | 'type' | 'quantity' | 'status'>[]) {
-  return pending
-    .filter((m) => m.batchId === batchId && (m.status === 'pending_sync' || m.status === 'pending_approval'))
-    .reduce((s, m) => s + (m.type === 'adjustment' ? Math.max(0, -m.quantity) : m.type === 'receipt' ? 0 : m.quantity), 0);
-}
-
-export type FieldErrors = Partial<Record<keyof MovementDraft | keyof ItemDraft | 'form', string>>;
-
-export interface MovementContext {
-  items: InventoryItem[];
-  locations: InventoryLocation[];
-  batches: StockBatch[];
-  /** Moves not yet in the ledger (outbox and transfers awaiting approval). */
-  pending: Pick<Movement, 'batchId' | 'type' | 'quantity' | 'status'>[];
-  canAdjust: boolean;
-  today?: string;
-  now?: number;
-}
-
-const isIsoDate = (v: string) => /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(`${v}T00:00:00Z`));
-const clean = (v: string | null | undefined) => (v ?? '').trim();
-
-/**
- * Every rule a stock movement must pass. Returns field-level messages (empty when valid),
- * so forms can show errors inline before anything is saved.
- */
-export function validateMovement(d: MovementDraft, ctx: MovementContext): FieldErrors {
-  const e: FieldErrors = {};
-  const today = ctx.today ?? todayKey();
-  const now = ctx.now ?? Date.now();
-  const item = ctx.items.find((i) => i.id === d.itemId);
-  if (!item) e.itemId = 'Choose an item.';
-  if (!ctx.locations.some((l) => l.id === d.locationId)) e.locationId = d.type === 'receipt' ? 'Choose where the goods arrived.' : 'Choose the location.';
-
-  if (!Number.isFinite(d.quantity) || !Number.isInteger(d.quantity)) e.quantity = 'Enter a whole number.';
-  else if (d.type === 'adjustment' ? d.quantity === 0 : d.quantity <= 0)
-    e.quantity = d.type === 'adjustment' ? 'An adjustment cannot be zero.' : 'Quantity must be at least 1.';
-  else if (Math.abs(d.quantity) > MAX_QUANTITY) e.quantity = `Quantity cannot exceed ${MAX_QUANTITY.toLocaleString('en-PH')}.`;
-
-  const occurred = Date.parse(d.occurredAt);
-  if (Number.isNaN(occurred)) e.occurredAt = 'Enter when this happened.';
-  else if (occurred > now + 5 * 60_000) e.occurredAt = 'This cannot be in the future.';
-  else if (occurred < now - 60 * 86_400_000) e.occurredAt = 'Older than 60 days: ask an administrator to record it.';
-
-  if (clean(d.reference).length > 80) e.reference = 'Keep this under 80 characters.';
-  if (clean(d.notes).length > 500) e.notes = 'Keep notes under 500 characters.';
-
-  if (d.type === 'receipt') {
-    const lot = clean(d.lotNumber);
-    if (lot.length > 40) e.lotNumber = 'Keep the lot number under 40 characters.';
-    if (item?.tracksExpiry && !d.expiryDate) e.expiryDate = 'Perishable: enter the expiry date printed on the goods.';
-    if (d.expiryDate) {
-      if (!isIsoDate(d.expiryDate)) e.expiryDate = 'Enter a valid date.';
-      else if (daysUntil(d.expiryDate, today) < 0) e.expiryDate = 'These goods have expired. Do not receive them into stock.';
-    }
-    return e;
-  }
-
-  // Release, transfer and adjustment all draw on one lot.
-  const batch = ctx.batches.find((b) => b.id === d.batchId);
-  if (!batch || batch.itemId !== d.itemId || batch.locationId !== d.locationId) {
-    e.batchId = 'Choose the lot the goods come from.';
-    return e;
-  }
-  const available = batch.quantity - reservedFromBatch(batch.id, ctx.pending);
-  const expired = expiryStatus(batch.expiryDate, today) === 'expired';
-
-  if (d.type === 'release' || d.type === 'transfer') {
-    if (expired) e.batchId = 'This lot has expired and cannot be released or transferred. An approver can write it off.';
-    else if (!e.quantity && d.quantity > available)
-      e.quantity = available <= 0 ? 'Nothing left in this lot.' : `Only ${available.toLocaleString('en-PH')} available in this lot.`;
-  }
-  if (d.type === 'release' && !clean(d.reference)) e.reference = 'Say who received the goods or give the DR/RIS number.';
-  if (d.type === 'transfer') {
-    if (!ctx.locations.some((l) => l.id === d.toLocationId)) e.toLocationId = 'Choose the destination.';
-    else if (d.toLocationId === d.locationId) e.toLocationId = 'Destination must differ from the source.';
-  }
-  if (d.type === 'adjustment') {
-    if (!ctx.canAdjust) e.form = 'Only approvers can adjust stock. Ask an administrator.';
-    if (!clean(d.notes)) e.notes = 'Give the reason (count discrepancy, damage, expired write-off…).';
-    if (!e.quantity && d.quantity < 0 && -d.quantity > available)
-      e.quantity = `Cannot remove more than the ${available.toLocaleString('en-PH')} in this lot.`;
-  }
-  return e;
-}
-
-export function validateItem(d: ItemDraft, items: InventoryItem[]): FieldErrors {
-  const e: FieldErrors = {};
-  const others = items.filter((i) => i.id !== d.id);
-  const name = d.name.trim();
-  if (!name) e.name = 'Enter the item name.';
-  else if (name.length > 80) e.name = 'Keep the name under 80 characters.';
-  else if (others.some((i) => i.name.trim().toLowerCase() === name.toLowerCase())) e.name = 'An item with this name already exists.';
-
-  const sku = d.sku.trim().toUpperCase();
-  if (!/^[A-Z0-9][A-Z0-9-]{2,23}$/.test(sku)) e.sku = '3–24 letters, numbers or dashes.';
-  else if (others.some((i) => i.sku.toUpperCase() === sku)) e.sku = 'This SKU is already used by another item.';
-
-  const code = clean(d.barcode);
-  if (code) {
-    if (code.length > 64 || /\s/.test(code)) e.barcode = 'Barcodes have no spaces and at most 64 characters.';
-    else if (others.some((i) => i.barcode === code)) e.barcode = 'This barcode is already linked to another item.';
-  }
-  if (!ITEM_CATEGORIES.includes(d.category)) e.category = 'Choose a category.';
-  if (!d.unit.trim()) e.unit = 'Enter the unit (e.g. packs, kits, pcs).';
-  else if (d.unit.trim().length > 16) e.unit = 'Keep the unit under 16 characters.';
-  if (!Number.isInteger(d.reorderLevel) || d.reorderLevel < 0) e.reorderLevel = 'Enter a whole number, 0 or more.';
-  else if (d.reorderLevel > MAX_QUANTITY) e.reorderLevel = 'That reorder level is too high.';
-  return e;
-}
-
-/** Find an item by scanned or typed code: barcode first, then SKU (case-insensitive). */
-export function findItemByCode(items: InventoryItem[], code: string) {
-  const c = code.trim();
-  if (!c) return undefined;
-  return items.find((i) => i.barcode === c) ?? items.find((i) => i.sku.toUpperCase() === c.toUpperCase());
-}
-
-export const newClientId = () =>
-  typeof crypto !== 'undefined' && 'randomUUID' in crypto
-    ? crypto.randomUUID()
-    : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = (Math.random() * 16) | 0;
-        return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
-      });
-
-/** Signed change a movement makes to its source location. */
-export const quantityChange = (m: Pick<Movement, 'type' | 'quantity'>) =>
-  m.type === 'receipt' ? m.quantity : m.type === 'adjustment' ? m.quantity : -m.quantity;
 
 /** Categories in display order: the portal's standard list first, then any others (e.g. from IMS). */
 export const categoriesOf = (items: Pick<InventoryItem, 'category'>[]) => {

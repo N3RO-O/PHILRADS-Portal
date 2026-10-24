@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
-import { ArrowDownToLine, ArrowUpFromLine, ExternalLink, Pencil } from 'lucide-react';
+import { ArrowDownToLine, ArrowUpFromLine, ExternalLink } from 'lucide-react';
 import { expiryStatus, type StockRow } from '../../lib/inventory';
 import { formatDateTime, formatNumber, formatShortInstant } from '../../lib/format';
-import type { InventorySnapshot, Movement, MovementType } from '../../services/inventory/types';
+import type { InventorySnapshot, Movement } from '../../services/inventory/types';
 import { Sheet } from '../ui/Sheet';
 import { ExpiryBadge, MOVEMENT_META, MovementStatusBadge, StockBadge } from './Badges';
 
@@ -11,24 +11,18 @@ interface Props {
   rows: StockRow[];
   snapshot: InventorySnapshot;
   movements: Movement[];
-  canRecord: boolean;
-  canAdjust: boolean;
-  canManage: boolean;
   onClose: () => void;
-  onAction: (type: MovementType, row: StockRow, batchId?: string) => void;
-  onEditItem: (row: StockRow) => void;
   onOpenRow: (row: StockRow) => void;
-  /** Read-only IMS mirror: actions open PHILRADS IMS instead of portal forms. */
+  /** Receiving and releasing are done in PHILRADS IMS; the footer opens it. */
   imsUrl?: string;
 }
 
 /** Full details for one item at one location: lots, other locations and recent history. */
-export function StockDetailSheet({ row, rows, snapshot, movements, canRecord, canAdjust, canManage, onClose, onAction, onEditItem, onOpenRow, imsUrl }: Props) {
+export function StockDetailSheet({ row, rows, snapshot, movements, onClose, onOpenRow, imsUrl }: Props) {
   const elsewhere = row ? rows.filter((r) => r.item.id === row.item.id && r.key !== row.key && r.location) : [];
   const history = row
     ? movements.filter((m) => m.itemId === row.item.id && (m.locationId === row.location?.id || m.toLocationId === row.location?.id)).slice(0, 8)
     : [];
-  const actions: MovementType[] = canAdjust ? ['receipt', 'release', 'transfer', 'adjustment'] : ['receipt', 'release', 'transfer'];
 
   return (
     <Sheet
@@ -52,25 +46,6 @@ export function StockDetailSheet({ row, rows, snapshot, movements, canRecord, ca
               </a>
             ))}
           </div>
-        ) : row && canRecord ? (
-          <div className={`grid gap-2 ${actions.length === 4 ? 'grid-cols-4' : 'grid-cols-3'}`}>
-            {actions.map((t) => {
-              const M = MOVEMENT_META[t];
-              const disabled = t !== 'receipt' && (t === 'adjustment' ? row.onHand <= 0 : row.usable <= 0);
-              return (
-                <button
-                  key={t}
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => onAction(t, row)}
-                  className="btn-ghost h-14 flex-col gap-0.5 px-1 text-xs"
-                >
-                  <M.icon className={`h-5 w-5 ${M.cls}`} aria-hidden />
-                  {M.verb}
-                </button>
-              );
-            })}
-          </div>
         ) : undefined
       }
     >
@@ -84,12 +59,6 @@ export function StockDetailSheet({ row, rows, snapshot, movements, canRecord, ca
               {row.expiredQty > 0 && <span className="text-xs text-status-expired">{formatNumber(row.expiredQty)} expired, not usable</span>}
             </Stat>
           </div>
-
-          {canManage && (
-            <button type="button" className="link self-start" onClick={() => onEditItem(row)}>
-              <Pencil className="h-3.5 w-3.5" aria-hidden /> Edit item details
-            </button>
-          )}
 
           <section aria-labelledby="lots-h">
             <h3 id="lots-h" className="mb-2 text-sm font-semibold">
@@ -112,11 +81,6 @@ export function StockDetailSheet({ row, rows, snapshot, movements, canRecord, ca
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-1">
                         <span className="text-sm font-bold tabular-nums">{formatNumber(b.quantity)}</span>
-                        {exp === 'expired' && canAdjust && (
-                          <button type="button" className="link" onClick={() => onAction('adjustment', row, b.id)}>
-                            Write off
-                          </button>
-                        )}
                       </div>
                     </li>
                   );

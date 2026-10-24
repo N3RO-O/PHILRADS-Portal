@@ -1,30 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import {
-  ChevronDown,
-  CloudOff,
-  Database,
-  ExternalLink,
-  Download,
-  FileText,
-  Loader2,
-  PackagePlus,
-  Plus,
-  RefreshCw,
-  ScanLine,
-  Search,
-  X,
-} from 'lucide-react';
+import { ChevronDown, Database, Download, ExternalLink, FileText, Loader2, RefreshCw, Search, X } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
 import { env } from '../config/env';
 import { ActivityLog } from '../components/inventory/ActivityLog';
-import { ApprovalsPanel } from '../components/inventory/ApprovalsPanel';
 import { ImsApprovalsPanel } from '../components/inventory/ImsApprovalsPanel';
 import { STOCK_META } from '../components/inventory/Badges';
-import { ItemSheet } from '../components/inventory/ItemSheet';
-import { MovementSheet, type MovementPreset } from '../components/inventory/MovementSheet';
+import { DonationsPanel } from '../components/inventory/DonationsPanel';
 import { PrintReport } from '../components/inventory/PrintReport';
-import { ScannerSheet } from '../components/inventory/ScannerSheet';
 import { StockDetailSheet } from '../components/inventory/StockDetailSheet';
 import { StockList, type SortKey, type SortState } from '../components/inventory/StockList';
 import { LoadError, Skeleton } from '../components/ui/Card';
@@ -40,17 +23,16 @@ import {
   daysUntil,
   EXPIRY_WINDOWS,
   expiryStatus,
-  findItemByCode,
   todayKey,
   type ExpiryWindow,
   type StockRow,
 } from '../lib/inventory';
 import { inventoryStore } from '../services';
-import { outboxAsMovements, useInventoryState } from '../services/inventory/inventoryStore';
-import type { InventoryItem, InventorySnapshot, MovementType } from '../services/inventory/types';
+import { useInventoryState } from '../services/inventory/inventoryStore';
+import type { InventorySnapshot } from '../services/inventory/types';
 
 type StatusFilter = 'in' | 'low' | 'out' | 'expiring' | 'expired';
-type Tab = 'stock' | 'log' | 'approvals';
+type Tab = 'stock' | 'donations' | 'log' | 'approvals';
 
 const SEVERITY = (r: StockRow) => (r.expiredQty > 0 ? 0 : r.stock === 'out' ? 1 : r.stock === 'low' ? 2 : r.expiry === 'expiring' ? 3 : 4);
 
@@ -83,14 +65,10 @@ export function InventoryPage() {
   const [params, setParams] = useSearchParams();
 
   const canRead = can('inventory.read');
-  // Mirrored from PHILRADS IMS: the portal only displays stock; changes are made in the IMS.
-  const readOnly = snapshot?.source === 'ims';
+  // Stock lives in PHILRADS IMS: the portal shows it. Receiving and releasing happen in the IMS;
+  // IMS administrators approve releases through the IMS window (Approvals tab).
   const imsUrl = snapshot?.imsUrl || env.imsUrl;
-  const canRecord = can('inventory.record') && !readOnly;
-  const canManage = can('inventory.manage') && !readOnly;
-  const canApprove = can('inventory.approve') && !readOnly;
-  // IMS releases are approved in the IMS window by IMS administrators; the portal lists them.
-  const canApproveIms = readOnly && can('inventory.approve');
+  const canApprove = can('inventory.approve');
   const imsPending = snapshot?.imsPendingReleases ?? [];
 
   // URL-backed filters: shareable links, and they survive a reload.
@@ -168,17 +146,11 @@ export function InventoryPage() {
     [scoped, today],
   ) as Record<string, number>;
 
-  const outboxMovements = useMemo(() => outboxAsMovements(state.outbox, snapshot), [state.outbox, snapshot]);
-  const pendingTransfers = useMemo(() => snapshot?.movements.filter((m) => m.status === 'pending_approval') ?? [], [snapshot]);
-  const pending = useMemo(() => [...outboxMovements.filter((m) => m.status === 'pending_sync'), ...pendingTransfers], [outboxMovements, pendingTransfers]);
-  const allMovements = useMemo(() => [...outboxMovements.slice().reverse(), ...(snapshot?.movements ?? [])], [outboxMovements, snapshot]);
+  const pendingReleases = useMemo(() => snapshot?.movements.filter((m) => m.status === 'pending_approval') ?? [], [snapshot]);
+  const allMovements = snapshot?.movements ?? [];
 
-  // Sheets
   const [detailKey, setDetailKey] = useState<string | null>(null);
   const detail = allRows.find((r) => r.key === detailKey) ?? null;
-  const [movement, setMovement] = useState<MovementPreset | null>(null);
-  const [itemSheet, setItemSheet] = useState<{ item: InventoryItem | null; barcode?: string } | null>(null);
-  const [scanOpen, setScanOpen] = useState(false);
   const [toast, setToast] = useState<{ text: string; tone: 'ok' | 'warn' } | null>(null);
   const [printing, setPrinting] = useState(false);
 
@@ -200,43 +172,16 @@ export function InventoryPage() {
     };
   }, [printing]);
 
-  // IMS mirror: refresh when an IMS window reports back, and every minute while open.
-  useImsActionResults(readOnly ? imsUrl : undefined, (text) => setToast({ text, tone: 'ok' }), () => void inventoryStore.refresh());
-  useLiveRefresh(readOnly, () => void inventoryStore.refresh());
+  // Refresh when an IMS window reports back, and every minute while open.
+  useImsActionResults(imsUrl, (text) => setToast({ text, tone: 'ok' }), () => void inventoryStore.refresh());
+  useLiveRefresh(true, () => void inventoryStore.refresh());
 
-  // Home's "Add inventory record" quick action lands here: open the receipt form once.
+  // Older links (Home's quick action) asked to record a receipt; receiving is done in the IMS now.
   const quickAction = params.get('action');
   useEffect(() => {
-    if (quickAction !== 'add-inventory' || !snapshot) return;
-    if (canRecord) setMovement({ type: 'receipt' });
-    setParam({ action: null });
-  }, [quickAction, snapshot, canRecord, setParam]);
-
-  const openAction = (type: MovementType, row?: StockRow, batchId?: string) => {
-    setDetailKey(null);
-    setMovement({ type, itemId: row?.item.id, locationId: row?.location?.id ?? (loc || undefined), batchId });
-  };
-
-  const onScanned = useCallback(
-    (code: string) => {
-      setScanOpen(false);
-      if (!snapshot) return;
-      const item = findItemByCode(snapshot.items, code);
-      if (!item) {
-        if (canManage) setItemSheet({ item: null, barcode: code });
-        else if (readOnly) setToast({ text: `No IMS item has the code “${code}”.`, tone: 'warn' });
-        else setToast({ text: `No item matches “${code}”. Ask an administrator to add it.`, tone: 'warn' });
-        return;
-      }
-      const matches = allRows.filter((r) => r.item.id === item.id && (!loc || r.location?.id === loc));
-      if (matches.length === 1) setDetailKey(matches[0].key);
-      else {
-        setParam({ tab: null, q: item.sku, status: null, cat: null });
-        setToast({ text: `${item.name}: stocked at ${matches.length} locations.`, tone: 'ok' });
-      }
-    },
-    [snapshot, canManage, readOnly, allRows, loc, setParam],
-  );
+    if (quickAction !== 'add-inventory') return;
+    setParam({ action: null, tab: 'donations' });
+  }, [quickAction, setParam]);
 
   const scopeLabel = [
     cat || 'All categories',
@@ -275,43 +220,9 @@ export function InventoryPage() {
       </p>
     );
 
-  const failed = state.outbox.filter((e) => e.status === 'sync_failed').length;
-  const waiting = state.outbox.length - failed;
-
   return (
     <div className="flex flex-col gap-4 pb-24 md:pb-0">
-      {/* Sync and freshness status */}
-      {(waiting > 0 || failed > 0 || (state.fromCache && snapshot)) && (
-        <div
-          role="status"
-          className={`flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border px-4 py-3 text-sm ${failed ? 'border-status-out/40 bg-status-out/10' : 'border-sky-300/30 bg-sky-300/[0.07]'}`}
-        >
-          <CloudOff className={`h-5 w-5 shrink-0 ${failed ? 'text-status-out' : 'text-sky-300'}`} aria-hidden />
-          <p className="min-w-0 flex-1">
-            {waiting > 0 && (
-              <>
-                <strong className="font-semibold">
-                  {waiting} {waiting === 1 ? 'movement' : 'movements'} waiting to sync.
-                </strong>{' '}
-                {online ? 'Sending now…' : 'Saved on this device; they’ll send automatically when you’re back online.'}{' '}
-              </>
-            )}
-            {failed > 0 && (
-              <button type="button" className="font-semibold text-status-out underline" onClick={() => setParam({ tab: 'log' })}>
-                {failed} couldn’t sync. Review in the activity log.
-              </button>
-            )}
-            {state.fromCache && snapshot && !waiting && !failed && <>Showing stock saved on this device, as of {formatDateTime(snapshot.fetchedAt)}.</>}
-          </p>
-          {online && waiting > 0 && (
-            <button type="button" className="btn-ghost min-h-10 px-3 text-xs" onClick={() => void inventoryStore.sync()} disabled={state.syncing}>
-              <RefreshCw className={`h-3.5 w-3.5 ${state.syncing ? 'animate-spin' : ''}`} aria-hidden /> Sync now
-            </button>
-          )}
-        </div>
-      )}
-
-      {readOnly && snapshot && <ImsSourceBanner snapshot={snapshot} imsUrl={imsUrl} />}
+      {snapshot && <ImsSourceBanner snapshot={snapshot} imsUrl={imsUrl} fromCache={state.fromCache} />}
 
       {!snapshot && state.loading && (
         <div className="flex flex-col gap-4" aria-busy="true" aria-label="Loading inventory">
@@ -364,9 +275,9 @@ export function InventoryPage() {
                 {(
                   [
                     ['stock', 'Stock'],
+                    ['donations', 'Donations'],
                     ['log', 'Activity log'],
-                    ...(canApprove ? ([['approvals', `Approvals${pendingTransfers.length ? ` (${pendingTransfers.length})` : ''}`]] as const) : []),
-                    ...(canApproveIms ? ([['approvals', `Approvals${imsPending.length ? ` (${imsPending.length})` : ''}`]] as const) : []),
+                    ...(canApprove ? ([['approvals', `Approvals${imsPending.length ? ` (${imsPending.length})` : ''}`]] as const) : []),
                   ] as const
                 ).map(([t, label]) => (
                   <button
@@ -387,17 +298,7 @@ export function InventoryPage() {
                   {state.loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <RefreshCw className="h-4 w-4" aria-hidden />}
                 </button>
                 {tab === 'stock' && <ExportMenu onCsv={exportStockCsv} onPrint={() => setPrinting(true)} />}
-                {canManage && (
-                  <button type="button" className="btn-ghost hidden md:inline-flex" onClick={() => setItemSheet({ item: null })}>
-                    <PackagePlus className="h-4 w-4" aria-hidden /> Add item
-                  </button>
-                )}
-                {canRecord && (
-                  <button type="button" className="btn-primary hidden md:inline-flex" onClick={() => openAction('release')}>
-                    <Plus className="h-4 w-4" aria-hidden /> Log movement
-                  </button>
-                )}
-                {readOnly && imsUrl && (
+                {imsUrl && (
                   <a className="btn-primary hidden md:inline-flex" href={`${imsUrl}/inventory.php`} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="h-4 w-4" aria-hidden /> Open IMS
                   </a>
@@ -419,7 +320,7 @@ export function InventoryPage() {
                         id="inv-search"
                         type="search"
                         className="field pl-10 pr-10"
-                        placeholder="Search item, SKU, barcode or lot"
+                        placeholder="Search item, code or lot"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         enterKeyHint="search"
@@ -431,10 +332,6 @@ export function InventoryPage() {
                         </button>
                       )}
                     </div>
-                    <button type="button" className="btn-ghost shrink-0 px-3 sm:px-4" onClick={() => setScanOpen(true)}>
-                      <ScanLine className="h-5 w-5" aria-hidden /> <span className="hidden sm:inline">Scan</span>
-                      <span className="sr-only sm:hidden">Scan barcode</span>
-                    </button>
                   </div>
                   <div className="no-scrollbar -mx-4 flex items-center gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0">
                     <select aria-label="Category" className={`chip shrink-0 bg-transparent pr-7 ${cat ? 'border-uplift text-uplift' : ''}`} value={cat} onChange={(e) => setParam({ cat: e.target.value || null })}>
@@ -486,31 +383,15 @@ export function InventoryPage() {
               </>
             )}
 
-            {tab === 'log' && (
-              <ActivityLog
-                movements={allMovements}
-                snapshot={snapshot}
-                onRetry={(id) => void inventoryStore.retry(id)}
-                onDiscard={(id) => {
-                  if (window.confirm('Discard this movement? It was never recorded, and will be removed from this device.')) void inventoryStore.discard(id);
-                }}
-              />
-            )}
+            {tab === 'donations' && <DonationsPanel donations={snapshot.imsDonations ?? []} sample={Boolean(snapshot.sample)} />}
 
-            {tab === 'approvals' && canApproveIms && <ImsApprovalsPanel releases={imsPending} imsUrl={imsUrl} sample={Boolean(snapshot.sample)} />}
+            {tab === 'log' && <ActivityLog movements={allMovements} snapshot={snapshot} />}
 
-            {tab === 'approvals' && canApprove && (
-              <ApprovalsPanel
-                transfers={pendingTransfers}
-                snapshot={snapshot}
-                onDecide={(id, approve, note) => inventoryStore.decideTransfer(id, approve, note)}
-                onDone={(text) => setToast({ text, tone: 'ok' })}
-              />
-            )}
+            {tab === 'approvals' && canApprove && <ImsApprovalsPanel releases={imsPending} imsUrl={imsUrl} sample={Boolean(snapshot.sample)} />}
           </section>
 
           {/* Thumb-reach primary action on phones (not on Approvals, where each card has its own button) */}
-          {readOnly && imsUrl && tab !== 'approvals' && (
+          {imsUrl && tab !== 'approvals' && (
             <a
               href={`${imsUrl}/inventory.php`}
               target="_blank"
@@ -520,55 +401,18 @@ export function InventoryPage() {
               <ExternalLink className="h-5 w-5" aria-hidden /> Open IMS
             </a>
           )}
-          {canRecord && (
-            <button
-              type="button"
-              onClick={() => openAction('release')}
-              className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-4 z-30 flex h-14 items-center gap-2 rounded-full bg-uplift pl-4 pr-5 text-sm font-bold text-page shadow-xl shadow-black/50 transition active:scale-95 md:hidden"
-            >
-              <Plus className="h-6 w-6" aria-hidden /> Log movement
-            </button>
-          )}
 
           <StockDetailSheet
             row={detail}
             rows={allRows}
             snapshot={snapshot}
             movements={allMovements}
-            canRecord={canRecord}
-            canAdjust={canApprove}
-            canManage={canManage}
             onClose={() => setDetailKey(null)}
-            onAction={openAction}
-            onEditItem={(r) => {
-              setDetailKey(null);
-              setItemSheet({ item: r.item });
-            }}
             onOpenRow={(r) => setDetailKey(r.key)}
-            imsUrl={readOnly ? imsUrl : undefined}
+            imsUrl={imsUrl}
           />
-          <MovementSheet
-            open={Boolean(movement)}
-            preset={movement ?? NO_PRESET}
-            snapshot={snapshot}
-            pending={pending}
-            canAdjust={canApprove}
-            onClose={() => setMovement(null)}
-            onSubmit={(d) => inventoryStore.record(d)}
-            onDone={(text) => setToast({ text, tone: text.includes('this device') || text.includes('approver') ? 'warn' : 'ok' })}
-          />
-          <ItemSheet
-            open={Boolean(itemSheet)}
-            item={itemSheet?.item ?? null}
-            initialBarcode={itemSheet?.barcode}
-            items={snapshot.items}
-            onClose={() => setItemSheet(null)}
-            onSave={(d) => inventoryStore.saveItem(d)}
-            onDone={(text) => setToast({ text, tone: 'ok' })}
-          />
-          <ScannerSheet open={scanOpen} onClose={() => setScanOpen(false)} onCode={onScanned} />
           {printing && (
-            <PrintReport rows={rows} snapshot={snapshot} pendingTransfers={pendingTransfers} filtersLabel={scopeLabel} preparedBy={profile?.displayName ?? 'Staff'} />
+            <PrintReport rows={rows} snapshot={snapshot} pendingTransfers={pendingReleases} filtersLabel={scopeLabel} preparedBy={profile?.displayName ?? 'Staff'} />
           )}
         </>
       )}
@@ -590,8 +434,6 @@ export function InventoryPage() {
   );
 }
 
-const NO_PRESET: MovementPreset = {};
-
 const ago = (iso: string) => {
   const mins = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 60_000));
   if (mins < 1) return 'just now';
@@ -601,7 +443,7 @@ const ago = (iso: string) => {
 };
 
 /** Where the numbers come from, how fresh they are, and where to change them. */
-function ImsSourceBanner({ snapshot, imsUrl }: { snapshot: InventorySnapshot; imsUrl: string }) {
+function ImsSourceBanner({ snapshot, imsUrl, fromCache }: { snapshot: InventorySnapshot; imsUrl: string; fromCache: boolean }) {
   const stale = Date.now() - Date.parse(snapshot.fetchedAt) > 60 * 60_000;
   return (
     <div
@@ -614,7 +456,8 @@ function ImsSourceBanner({ snapshot, imsUrl }: { snapshot: InventorySnapshot; im
         {ago(snapshot.fetchedAt)} ({formatDateTime(snapshot.fetchedAt)}).{' '}
         {stale
           ? 'This may be out of date: the IMS sends an update after every stock change, and at least every 15 minutes while someone is using it.'
-          : 'Receiving, releases and approvals are done in the IMS.'}
+          : 'Receiving and releasing are done in the IMS.'}
+        {fromCache && !navigator.onLine && ' You’re offline: this is the copy saved on this device.'}
       </p>
       {imsUrl && (
         <a className="btn-ghost min-h-10 px-3 text-xs" href={`${imsUrl}/inventory.php`} target="_blank" rel="noopener noreferrer">

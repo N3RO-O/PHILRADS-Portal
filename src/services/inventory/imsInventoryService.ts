@@ -1,35 +1,27 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createInventorySeed } from '../../data/mockInventory';
 import { imsSnapshotSchema, mapImsSnapshot, type ImsSnapshot } from './imsSnapshot';
-import { InventoryRuleError, type InventoryService } from './types';
+import type { InventoryService } from './types';
 
 /**
- * Read-only inventory mirrored from PHILRADS IMS. The IMS pushes a snapshot after every
- * stock change (api/ims-sync.ts stores it); the portal only displays it. Receiving,
- * releasing and approvals happen in the IMS, so every write method refuses.
+ * Inventory mirrored from PHILRADS IMS. The IMS pushes a snapshot after every stock change
+ * (api/ims-sync.ts stores it); the portal only displays it. Receiving and releasing happen in the IMS.
  */
-const readOnly = (): never => {
-  throw new InventoryRuleError('Stock is managed in PHILRADS IMS. Open the IMS to make changes.');
-};
 
 export function createImsInventoryService(client: SupabaseClient): InventoryService {
   return {
     source: 'ims',
-    readOnly: true,
     async getSnapshot() {
       const { data, error } = await client.from('ims_inventory_snapshot').select('payload, received_at').eq('id', 1).maybeSingle();
       if (error) {
         console.error('[inventory] IMS snapshot', error);
         throw new Error('Could not load stock from PHILRADS IMS.');
       }
-      if (!data) throw new InventoryRuleError('PHILRADS IMS has not sent any stock data yet.');
+      if (!data) throw new Error('PHILRADS IMS has not sent any stock data yet.');
       const parsed = imsSnapshotSchema.safeParse(data.payload);
-      if (!parsed.success) throw new InventoryRuleError('The stock data from PHILRADS IMS is in an unexpected format.');
+      if (!parsed.success) throw new Error('The stock data from PHILRADS IMS is in an unexpected format.');
       return mapImsSnapshot(parsed.data, data.received_at as string);
     },
-    submitMovement: readOnly,
-    decideTransfer: readOnly,
-    saveItem: readOnly,
   };
 }
 
@@ -37,7 +29,6 @@ export function createImsInventoryService(client: SupabaseClient): InventoryServ
 export function createSampleImsService(imsUrl: string): InventoryService {
   return {
     source: 'ims',
-    readOnly: true,
     async getSnapshot() {
       if (!navigator.onLine) throw new TypeError('Failed to fetch (offline)');
       await new Promise((r) => setTimeout(r, 250));
@@ -45,9 +36,6 @@ export function createSampleImsService(imsUrl: string): InventoryService {
       // Sample data is never presented as live IMS data.
       return { ...snapshot, source: 'ims', sample: true };
     },
-    submitMovement: readOnly,
-    decideTransfer: readOnly,
-    saveItem: readOnly,
   };
 }
 
@@ -109,7 +97,52 @@ function sampleImsPayload(imsUrl: string): ImsSnapshot {
         approvals: i === 0 ? [{ by: 'Grace Villanueva (sample admin)', decision: 'approved' as const, at: m.occurredAt }] : [],
       })),
     events: SAMPLE_EVENTS(),
+    donations: sampleDonations(seed),
   };
+}
+
+const SAMPLE_DONORS = [
+  'Bayanihan Foods Inc. (sample)',
+  'St. Joseph Parish Outreach (sample)',
+  'Kapwa Relief Foundation (sample)',
+  'Manila Rotary Club (sample)',
+  'Anonymous donor (sample)',
+  'Global Aid Partners (sample)',
+];
+
+/**
+ * Sample donation tracking built from the demo ledger: each donated receipt becomes a donation,
+ * and the releases that later drew on the same lot show where it went (all invented).
+ */
+function sampleDonations(seed: ReturnType<typeof createInventorySeed>): NonNullable<ImsSnapshot['donations']> {
+  const item = (id: string) => seed.items.find((i) => i.id === id);
+  const receipts = seed.movements.filter((m) => m.type === 'receipt' && m.reference?.startsWith('Donation') && m.batchId).slice(0, 24);
+  return receipts.map((r, i) => {
+    const lot = seed.batches.find((b) => b.id === r.batchId);
+    const releases = seed.movements.filter((m) => m.type === 'release' && m.status === 'applied' && m.batchId === r.batchId);
+    const it = item(r.itemId);
+    return {
+      id: `sample-don-${i + 1}`,
+      record_id: `REC-${String(2600 + i).padStart(5, '0')}`,
+      donor: SAMPLE_DONORS[i % SAMPLE_DONORS.length],
+      date_received: r.occurredAt.slice(0, 10),
+      received_by: r.recordedByName,
+      lines: [{ item_id: r.itemId, name: it?.name ?? 'Item', qty: r.quantity, unit: it?.unit ?? 'pcs', remaining: lot?.quantity ?? 0, expiry_date: lot?.expiryDate ?? null }],
+      given: releases.slice(0, 12).map((m, j) => ({
+        release_id: `sample-rel-${m.id}`,
+        release_code: `RLS-${String(1000 + ((i * 13 + j) % 9000)).padStart(5, '0')}`,
+        item_id: m.itemId,
+        name: it?.name ?? 'Item',
+        qty: m.quantity,
+        unit: it?.unit ?? 'pcs',
+        recipient_org: m.reference,
+        purpose: 'Relief distribution',
+        event_name: j % 3 === 0 ? 'Typhoon response: Eastern Visayas (sample)' : null,
+        date_released: m.occurredAt.slice(0, 10),
+        beneficiaries_served: j % 2 === 0 ? 20 + ((i * 7 + j * 11) % 140) : null,
+      })),
+    };
+  });
 }
 
 const hoursAgo = (h: number) => new Date(Date.now() - h * 3_600_000).toISOString();

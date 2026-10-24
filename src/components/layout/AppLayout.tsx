@@ -2,11 +2,8 @@ import { useEffect, useState } from 'react';
 import { Outlet, useLocation, useNavigate, useOutletContext } from 'react-router-dom';
 import { CalendarDays } from 'lucide-react';
 import { moduleForPath } from '../../config/modules';
-import { dashboardService } from '../../services';
 import { formatLongDate } from '../../lib/format';
-import { useAuth } from '../auth/AuthProvider';
 import { UpdatePrompt } from '../pwa/UpdatePrompt';
-import { SampleBadge } from '../ui/SampleBadge';
 import { MobileDrawer } from './MobileDrawer';
 import { OfflineNotice, OnlinePill } from './OnlineStatus';
 import { Sidebar } from './Sidebar';
@@ -31,7 +28,6 @@ export function AppLayout() {
   const [expanded, setExpanded] = useState(readExpanded);
   const [menuOpen, setMenuOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const { profile } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const current = moduleForPath(location.pathname);
@@ -81,11 +77,9 @@ export function AppLayout() {
           <div className="flex flex-wrap items-end justify-between gap-3 pb-5 pt-2">
             <div className="min-w-0">
               <h1 className="text-xl font-bold leading-tight text-ink sm:text-2xl">{title}</h1>
-              {profile && <p className="mt-1 text-sm text-muted">Welcome back, {profile.displayName}</p>}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <OnlinePill className="sm:hidden" />
-              {dashboardService.source === 'mock' && <SampleBadge label="Sample data" />}
               <span className="pill border border-line/70 bg-surface text-ink-soft">
                 <CalendarDays className="h-3.5 w-3.5 text-uplift" aria-hidden />
                 <time dateTime={new Date().toISOString().slice(0, 10)}>{formatLongDate()}</time>

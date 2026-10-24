@@ -1,5 +1,5 @@
 import { useId, useMemo, useState } from 'react';
-import { ArrowRight, Download, History, RotateCcw, Search, Trash2 } from 'lucide-react';
+import { ArrowRight, Download, History, Search } from 'lucide-react';
 import { useIncrementalList } from '../../hooks/useIncrementalList';
 import { downloadCsv, toCsv } from '../../lib/csv';
 import { formatDateTime, formatNumber, manilaDayKey } from '../../lib/format';
@@ -9,17 +9,15 @@ import { MOVEMENT_META, MovementStatusBadge } from './Badges';
 interface Props {
   movements: Movement[];
   snapshot: InventorySnapshot;
-  onRetry: (clientId: string) => void;
-  onDiscard: (clientId: string) => void;
 }
 
 const TYPES: MovementType[] = ['receipt', 'release', 'transfer', 'adjustment'];
 
 /**
- * Audit trail: every stock movement with who recorded it, when, how much and why.
- * Movements are never edited or deleted; corrections are new adjustments, so the history stays intact.
+ * Audit trail from PHILRADS IMS: every receipt, release (with its approval state) and adjustment,
+ * with who recorded it, when, how much and why.
  */
-export function ActivityLog({ movements, snapshot, onRetry, onDiscard }: Props) {
+export function ActivityLog({ movements, snapshot }: Props) {
   const uid = useId();
   const [q, setQ] = useState('');
   const [type, setType] = useState<MovementType | ''>('');
@@ -158,19 +156,6 @@ export function ActivityLog({ movements, snapshot, onRetry, onDiscard }: Props) 
                     <MovementStatusBadge status={m.status} />
                   </div>
                   {m.status === 'rejected' && m.decisionNote && <p className="mt-1 text-xs text-status-out">Reason: {m.decisionNote}</p>}
-                  {m.status === 'sync_failed' && (
-                    <div className="mt-2 flex flex-col gap-2">
-                      <p className="text-xs text-status-out">{m.decisionNote}</p>
-                      <div className="flex gap-2">
-                        <button type="button" className="btn-ghost min-h-10 px-3 text-xs" onClick={() => onRetry(m.clientId)}>
-                          <RotateCcw className="h-3.5 w-3.5" aria-hidden /> Try again
-                        </button>
-                        <button type="button" className="btn-ghost min-h-10 px-3 text-xs" onClick={() => onDiscard(m.clientId)}>
-                          <Trash2 className="h-3.5 w-3.5" aria-hidden /> Discard
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </li>
             );

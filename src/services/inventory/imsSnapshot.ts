@@ -98,11 +98,54 @@ export const imsSnapshotSchema = z.object({
     )
     .max(200)
     .optional(),
+  // Donation tracking (added 2026-10-22): each donation and every released line that drew from it.
+  donations: z
+    .array(
+      z.object({
+        id,
+        record_id: text(40),
+        donor: text(255),
+        date_received: isoDate,
+        received_by: text(100).nullable(),
+        lines: z
+          .array(
+            z.object({
+              item_id: id,
+              name: text(255),
+              qty: z.number().nonnegative().max(1e9),
+              unit: text(50),
+              remaining: z.number().nonnegative().max(1e9),
+              expiry_date: isoDate.nullable(),
+            }),
+          )
+          .max(200),
+        given: z
+          .array(
+            z.object({
+              release_id: id,
+              release_code: text(40),
+              item_id: id,
+              name: text(255),
+              qty: z.number().nonnegative().max(1e9),
+              unit: text(50),
+              recipient_org: text(255).nullable(),
+              purpose: text(255).nullable(),
+              event_name: text(255).nullable(),
+              date_released: isoDate.nullable(),
+              beneficiaries_served: z.number().int().nonnegative().nullable(),
+            }),
+          )
+          .max(500),
+      }),
+    )
+    .max(1000)
+    .optional(),
 });
 
 export type ImsSnapshot = z.infer<typeof imsSnapshotSchema>;
 export type ImsPendingRelease = NonNullable<ImsSnapshot['pending_releases']>[number];
 export type ImsEvent = NonNullable<ImsSnapshot['events']>[number];
+export type ImsDonation = NonNullable<ImsSnapshot['donations']>[number];
 
 /** IMS keeps one storage location per batch as free text; each distinct name becomes a portal location. */
 const locationId = (name: string) => `ims-loc:${name.trim().toLowerCase()}`;
@@ -169,5 +212,6 @@ export function mapImsSnapshot(s: ImsSnapshot, receivedAt?: string): InventorySn
     imsUrl: s.ims_url || undefined,
     imsPendingReleases: s.pending_releases ?? [],
     imsEvents: s.events ?? [],
+    imsDonations: s.donations ?? [],
   };
 }
