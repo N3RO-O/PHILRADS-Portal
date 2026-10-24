@@ -65,7 +65,11 @@ export function NotificationsMenu() {
         )}
       </button>
       {open && (
-        <div id={panelId} className="popover absolute right-0 top-12 z-50 w-[min(22rem,calc(100vw-2rem))] origin-top-right animate-pop-in p-4">
+        // Phones: pinned to the screen with even margins (the bell isn't at the edge, so a right-aligned panel spills off the left).
+        <div
+          id={panelId}
+          className="popover fixed inset-x-4 top-16 z-50 origin-top animate-pop-in p-4 sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-[22rem] sm:origin-top-right"
+        >
           <div className="mb-2 flex items-center justify-between gap-2">
             <p className="flex items-center gap-2 text-sm font-semibold">
               Notifications {dashboardService.source === 'mock' && <SampleBadge />}

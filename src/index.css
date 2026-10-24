@@ -23,6 +23,25 @@
   ::selection {
     background: rgba(236, 149, 42, 0.35);
   }
+  /* Open dropdown lists: Windows browsers draw them white unless told otherwise (chip selects are transparent). */
+  select {
+    background-color: #202125;
+  }
+  select.bg-transparent:not(:focus) {
+    background-color: transparent;
+  }
+  option,
+  optgroup {
+    background-color: #26272c;
+    color: #f1f1f1;
+  }
+  option:checked {
+    background-color: #3a3b42;
+    color: #ffffff;
+  }
+  option:disabled {
+    color: #9a9ca6;
+  }
   * {
     scrollbar-width: thin;
     scrollbar-color: #3e3f46 transparent;

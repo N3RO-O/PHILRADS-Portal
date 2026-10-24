@@ -76,7 +76,7 @@ export function ActivityLog({ movements, snapshot }: Props) {
           <input id={`${uid}-q`} type="search" className="field pl-10" placeholder="Item, lot, reference or person" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
         <div className="flex gap-2">
-          <select aria-label="Location" className="field sm:w-52" value={loc} onChange={(e) => setLoc(e.target.value)}>
+          <select aria-label="Location" className="field min-w-0 flex-1 truncate sm:w-52 sm:flex-none" value={loc} onChange={(e) => setLoc(e.target.value)}>
             <option value="">All locations</option>
             {snapshot.locations.map((l) => (
               <option key={l.id} value={l.id}>

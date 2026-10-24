@@ -249,16 +249,18 @@ export function InventoryPage() {
       {snapshot && (
         <>
           {/* Status overview: each tile filters the list */}
-          {/* Phones: a swipeable row of evenly sized tiles that snaps tile by tile; labels never wrap. */}
-          <section aria-label="Stock status" className="no-scrollbar -mx-4 snap-x snap-mandatory scroll-px-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-            <div className="grid min-w-[54rem] grid-cols-7 gap-2 lg:min-w-0 [&>button]:snap-start">
+          {/* Every tile fully visible, no sideways scrolling: phones show the 4 stock states 2 per row and the
+              3 expiry windows 3 per row; tablets 4 + 3; wide screens all 7 in one row. */}
+          <section aria-label="Stock status">
+            <div className="grid grid-cols-6 gap-2 sm:grid-cols-12 lg:grid-cols-7">
               {(
                 [
                   ['in', null, STOCK_META.in.label, counts.in, 'text-status-in'],
                   ['low', null, STOCK_META.low.label, counts.low, 'text-status-low'],
                   ['out', null, STOCK_META.out.label, counts.out, 'text-status-out'],
                   ['expired', null, 'Expired lots', counts.expired, 'text-status-expired'],
-                  ...EXPIRY_WINDOWS.map((w) => ['expiring', String(w), `Expiring ≤ ${w} d`, counts[`exp${w}`], 'text-status-expiring'] as const),
+                  // Non-breaking spaces keep "≤ 30 d" together, so narrow tiles wrap as "Expiring" / "≤ 30 d".
+                  ...EXPIRY_WINDOWS.map((w) => ['expiring', String(w), `Expiring ≤ ${w} d`, counts[`exp${w}`], 'text-status-expiring'] as const),
                 ] as const
               ).map(([s, w, label, n, tone]) => {
                 const active = status === s && (s !== 'expiring' || String(within) === w);
@@ -269,9 +271,11 @@ export function InventoryPage() {
                     aria-pressed={active}
                     onClick={() => setParam(active ? { status: null, within: null } : { status: s, within: w, tab: null })}
                     style={{ '--glow': STATUS_GLOW[s] } as CSSProperties}
-                    className="kpi-tile tap flex min-h-[4.5rem] flex-col items-start justify-between rounded-2xl px-3 py-2.5 text-left transition hover:-translate-y-0.5 hover:border-white/[0.14] aria-pressed:border-uplift aria-pressed:bg-uplift/10"
+                    className={`kpi-tile tap flex min-h-[4.5rem] min-w-0 flex-col items-start justify-between rounded-2xl px-3 py-2.5 text-left transition hover:-translate-y-0.5 hover:border-white/[0.14] aria-pressed:border-uplift aria-pressed:bg-uplift/10 lg:col-span-1 ${
+                      s === 'expiring' ? 'col-span-2 sm:col-span-4' : 'col-span-3'
+                    }`}
                   >
-                    <span className="whitespace-nowrap text-[0.6875rem] font-semibold text-ink-soft">{label}</span>
+                    <span className="w-full text-[0.6875rem] font-semibold leading-tight text-ink-soft">{label}</span>
                     <span className={`text-xl font-bold tabular-nums ${tone}`}>{formatNumber(n)}</span>
                   </button>
                 );
@@ -351,7 +355,8 @@ export function InventoryPage() {
                       )}
                     </div>
                   </div>
-                  <div className="no-scrollbar -mx-4 flex items-center gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0">
+                  {/* Phones: category and location side by side, sort below, all inside the card; wider screens: one row. */}
+                  <div className="grid grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap [&>select]:w-full [&>select]:min-w-0 [&>select]:truncate sm:[&>select]:w-auto">
                     <select aria-label="Category" className={`chip shrink-0 bg-transparent pr-7 ${cat ? 'border-uplift text-uplift' : ''}`} value={cat} onChange={(e) => setParam({ cat: e.target.value || null })}>
                       <option value="">All categories</option>
                       {categoriesOf(snapshot.items).map((c) => (
@@ -368,7 +373,7 @@ export function InventoryPage() {
                     </select>
                     <select
                       aria-label="Sort by"
-                      className="chip shrink-0 bg-transparent pr-7"
+                      className={`chip shrink-0 bg-transparent pr-7 ${cat || loc || status || q ? '' : 'col-span-2'}`}
                       value={`${sort.key}:${sort.dir}`}
                       onChange={(e) => setParam({ sort: e.target.value === 'attention:asc' ? null : e.target.value })}
                     >
@@ -381,7 +386,7 @@ export function InventoryPage() {
                       <option value="location:asc">Sort: location</option>
                     </select>
                     {(cat || loc || status || q) && (
-                      <button type="button" className="chip shrink-0 gap-1" onClick={() => setParam({ cat: null, loc: null, status: null, within: null, q: null })}>
+                      <button type="button" className="chip shrink-0 justify-center gap-1" onClick={() => setParam({ cat: null, loc: null, status: null, within: null, q: null })}>
                         <X className="h-3.5 w-3.5" aria-hidden /> Clear
                       </button>
                     )}
@@ -501,7 +506,11 @@ function ExportMenu({ onCsv, onPrint }: { onCsv: () => void; onPrint: () => void
         <ChevronDown className="h-4 w-4 text-muted" aria-hidden />
       </button>
       {open && (
-        <div role="menu" className="popover absolute right-0 top-12 z-40 w-64 origin-top-right animate-pop-in p-2">
+        // Phones: pinned to the bottom of the screen with even margins (the button sits mid-row, so a dropdown spills off an edge).
+        <div
+          role="menu"
+          className="popover fixed inset-x-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-50 animate-pop-in p-2 shadow-2xl shadow-black/60 sm:absolute sm:inset-x-auto sm:bottom-auto sm:right-0 sm:top-12 sm:z-40 sm:w-64 sm:origin-top-right"
+        >
           <button role="menuitem" type="button" className={item} onClick={() => (close(), onCsv())}>
             <Download className="h-4 w-4 text-uplift" aria-hidden />
             <span>
