@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Building2, CalendarClock, CheckCheck, ChevronDown, Inbox, Layers, MapPin, Send, Sun, SunMedium, UserRoundCheck, X } from 'lucide-react';
+import { Building2, CalendarClock, CalendarDays, CheckCheck, ChevronDown, Inbox, Layers, MapPin, Send, Sun, SunMedium, UserRoundCheck, X } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
 import { Certificate } from '../components/tasks/Certificate';
 import { LevelUpDialog, ProgressPanel } from '../components/tasks/Progress';
 import { QuickAdd } from '../components/tasks/QuickAdd';
 import { RewardsSheet, type RewardsTab } from '../components/tasks/RewardsSheet';
+import { TaskCalendar } from '../components/tasks/TaskCalendar';
 import { LIST_STYLE } from '../components/tasks/taskMeta';
 import { TaskRow } from '../components/tasks/TaskRow';
 import { TaskSheet } from '../components/tasks/TaskSheet';
@@ -20,13 +21,14 @@ import { computeProgress, LEVELS, type Level } from '../lib/taskProgress';
 import { tasksService } from '../services';
 import { TASK_LISTS, TaskRuleError, type Assignee, type Kudos, type Task, type TaskDraft, type TaskList, type TeamProgress, type XpAward } from '../services/tasks/types';
 
-type View = 'myday' | 'upcoming' | 'assigned' | 'delegated' | 'done' | 'list';
+type View = 'myday' | 'upcoming' | 'calendar' | 'assigned' | 'delegated' | 'done' | 'list';
 type Where = 'all' | 'field' | 'office';
-const VIEWS: View[] = ['myday', 'upcoming', 'assigned', 'delegated', 'done', 'list'];
+const VIEWS: View[] = ['myday', 'upcoming', 'calendar', 'assigned', 'delegated', 'done', 'list'];
 
 const VIEW_META: Record<Exclude<View, 'list'>, { label: string; icon: typeof Sun; note: string }> = {
   myday: { label: 'My Day', icon: Sun, note: 'What you’ve planned for today.' },
   upcoming: { label: 'Upcoming', icon: CalendarClock, note: 'All your open tasks, soonest first.' },
+  calendar: { label: 'Calendar', icon: CalendarDays, note: 'Your tasks on their due dates. Tap a day to see them.' },
   assigned: { label: 'Assigned to me', icon: UserRoundCheck, note: 'Tasks a coordinator gave you.' },
   delegated: { label: 'Given to others', icon: Send, note: 'Tasks you gave to someone else.' },
   done: { label: 'Completed', icon: CheckCheck, note: 'What you’ve finished, with the XP each earned.' },
@@ -45,6 +47,7 @@ export function TasksPage() {
   const rawList = params.get('list') as TaskList | null;
   const listKey: TaskList = rawList && TASK_LISTS.includes(rawList) ? rawList : 'relief';
   const where = (['field', 'office'].includes(params.get('where') ?? '') ? params.get('where') : 'all') as Where;
+  const rawDay = params.get('day');
   const rewardsTab = (['badges', 'levels', 'kudos'].includes(params.get('rewards') ?? '') ? params.get('rewards') : null) as RewardsTab | null;
 
   const setParam = useCallback(
@@ -61,6 +64,8 @@ export function TasksPage() {
   );
 
   const today = todayKey();
+  /** Calendar: the day being looked at (?day=YYYY-MM-DD, default today). */
+  const calDay = rawDay && /^\d{4}-\d{2}-\d{2}$/.test(rawDay) && !Number.isNaN(Date.parse(rawDay)) ? rawDay : today;
   const [me, setMe] = useState<string | null>(null);
   const [tasks, setTasks] = useState<Task[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -98,6 +103,7 @@ export function TasksPage() {
   const counts = {
     myday: openMine.filter((t) => t.myDay === today).length,
     upcoming: openMine.length,
+    calendar: undefined,
     assigned: openMine.filter((t) => t.createdById !== me).length,
     delegated: all.filter((t) => t.createdById === me && t.assigneeId && t.assigneeId !== me && t.status !== 'done' && whereOk(t)).length,
     done: all.filter((t) => isMine(t) && t.status === 'done').length,
@@ -112,6 +118,8 @@ export function TasksPage() {
           return isMine(t) && showOpen(t) && t.myDay === today;
         case 'upcoming':
           return isMine(t) && showOpen(t);
+        case 'calendar':
+          return isMine(t) && t.dueDate !== null;
         case 'assigned':
           return isMine(t) && t.createdById !== me && showOpen(t);
         case 'delegated':
@@ -289,8 +297,9 @@ export function TasksPage() {
     list: view === 'list' ? listKey : where === 'field' ? ('relief' as TaskList) : ('office' as TaskList),
     setting: where !== 'all' ? where : view === 'list' ? LIST_META[listKey].setting : 'office',
     myDay: view === 'myday',
+    dueDate: view === 'calendar' ? calDay : null,
   } as const;
-  const go = (v: View, l?: TaskList) => setParam({ view: v === 'myday' ? null : v, list: v === 'list' ? (l ?? listKey) : null });
+  const go = (v: View, l?: TaskList) => setParam({ view: v === 'myday' ? null : v, list: v === 'list' ? (l ?? listKey) : null, day: null });
   const rowProps = { today, me, onToggle: (t: Task) => void toggle(t), onOpen: (t: Task) => setSheet({ task: t, initial: null }), onMyDay: (t: Task) => void toggleMyDay(t) };
 
   const myDayDone = all.filter((t) => isMine(t) && whereOk(t) && doneToday(t));
@@ -343,7 +352,7 @@ export function TasksPage() {
                 .map((v) => (
                   <button key={v} type="button" className="chip gap-1.5" aria-pressed={view === v} onClick={() => go(v)}>
                     {VIEW_META[v].label}
-                    {v !== 'done' && counts[v] > 0 && <span className="font-normal opacity-80">{counts[v]}</span>}
+                    {v !== 'done' && (counts[v] ?? 0) > 0 && <span className="font-normal opacity-80">{counts[v]}</span>}
                   </button>
                 ))}
             </div>
@@ -431,6 +440,25 @@ export function TasksPage() {
           {tasks &&
             (view === 'done' ? (
               <CompletedList tasks={shown} awardOf={awardOf} rowProps={rowProps} />
+            ) : view === 'calendar' ? (
+              <TaskCalendar tasks={shown} today={today} selected={calDay} onSelect={(d) => setParam({ day: d === today ? null : d })}>
+                {(dayTasks, label) => (
+                  <>
+                    <h3 className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted">
+                      {label} {dayTasks.length > 0 && <span className="font-normal">{dayTasks.length}</span>}
+                    </h3>
+                    {dayTasks.length === 0 ? (
+                      <Empty icon={<CalendarDays className="h-8 w-8 text-muted" aria-hidden />}>Nothing due this day. Add a task above and it will be due on {label}.</Empty>
+                    ) : (
+                      <ul className="-mx-2 flex flex-col">
+                        {dayTasks.map((t) => (
+                          <TaskRow key={t.id} task={t} flash={linger[t.id] || null} {...rowProps} />
+                        ))}
+                      </ul>
+                    )}
+                  </>
+                )}
+              </TaskCalendar>
             ) : view === 'myday' ? (
               <>
                 {shown.length === 0 ? (

@@ -66,7 +66,7 @@ export function createSupabaseDashboardService(client: SupabaseClient): Dashboar
         .eq('assignee_id', uid)
         .in('status', ['todo', 'in_progress', 'review'])
         .order('due_date', { ascending: true, nullsFirst: false })
-        .limit(10);
+        .limit(1000);
       if (error) fail('your tasks', error);
       return (data ?? []).map((t) => ({
         id: t.id as string,

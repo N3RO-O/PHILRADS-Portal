@@ -16,6 +16,7 @@ import type {
 export interface DashboardService {
   readonly source: DataSource;
   getSummary(): Promise<SummaryMetric[]>;
+  /** All open tasks assigned to you (the Home list shows the first few; the calendar shows them all). */
   getMyTasks(): Promise<TaskSummary[]>;
   getOngoingProjects(limit?: number): Promise<ProjectSummary[]>;
   getRecentActivity(limit?: number): Promise<ActivityItem[]>;

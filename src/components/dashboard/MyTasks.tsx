@@ -15,6 +15,9 @@ const FILTERS: { value: TaskStatus | ''; label: string }[] = [
   { value: 'review', label: 'Review' },
 ];
 
+/** The list shows the soonest few; the rest are in Tasks (and all of them are on the deadlines calendar). */
+const SHOWN = 10;
+
 /** Columns on wider screens; on phones each task stacks with its details on one line. */
 const ROW = 'sm:grid sm:grid-cols-[minmax(0,1fr)_5.5rem_5.5rem_7rem] sm:items-center sm:gap-4';
 
@@ -67,7 +70,7 @@ export function MyTasks({ tasks, search }: Props) {
               <span>Status</span>
             </div>
             <ul>
-              {rows.map((t) => (
+              {rows.slice(0, SHOWN).map((t) => (
                 <li key={t.id} className={`flex animate-fade-in flex-col gap-2 border-t border-line/70 py-3 ${ROW}`}>
                   <div className="min-w-0">
                     <p className="text-sm font-medium leading-snug text-ink">{t.title}</p>
@@ -89,6 +92,11 @@ export function MyTasks({ tasks, search }: Props) {
                 </li>
               ))}
             </ul>
+            {rows.length > SHOWN && (
+              <Link to="/tasks?view=upcoming" className="link mt-2 text-sm">
+                {rows.length - SHOWN} more in Tasks <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+              </Link>
+            )}
           </div>
         ))}
     </Card>

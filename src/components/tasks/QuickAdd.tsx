@@ -7,7 +7,7 @@ import { LIST_STYLE } from './taskMeta';
 interface Props {
   today: string;
   /** Defaults from the view being looked at (a list, Field/Office, My Day). */
-  defaults: { list: TaskList; setting: WorkSetting; myDay: boolean };
+  defaults: { list: TaskList; setting: WorkSetting; myDay: boolean; dueDate?: string | null };
   onAdd: (draft: TaskDraft) => Promise<boolean>;
   /** Open the full form with what was typed so far. */
   onMore: (draft: TaskDraft) => void;
@@ -27,10 +27,10 @@ export function QuickAdd({ today, defaults, onAdd, onMore, disabled }: Props) {
     list: parsed.list ?? defaults.list,
     setting: parsed.setting ?? (parsed.list ? LIST_META[parsed.list].setting : defaults.setting),
     priority: parsed.priority ?? 'medium',
-    dueDate: parsed.dueDate ?? (defaults.myDay ? today : null),
+    dueDate: parsed.dueDate ?? defaults.dueDate ?? (defaults.myDay ? today : null),
     dueTime: parsed.dueTime,
     // Added from My Day: planned for today, unless another day was typed.
-    myDay: (defaults.myDay && !parsed.dueDate) || parsed.dueDate === today ? today : null,
+    myDay: (defaults.myDay && !parsed.dueDate) || (parsed.dueDate ?? defaults.dueDate) === today ? today : null,
     subtasks: [],
     recurrence: 'none',
     location: '',
