@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { z } from 'zod';
 import { useAuth } from '../components/auth/AuthProvider';
 import { Emblem } from '../components/ui/Emblem';
-import { SoffitGradient } from '../components/ui/SoffitGradient';
+import { SignInBackground } from '../components/auth/SignInBackground';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 const schema = z.object({
@@ -64,7 +64,7 @@ export function SignInPage() {
 
   return (
     <main className="relative isolate grid min-h-dvh place-items-center overflow-hidden p-4">
-      <SoffitGradient className="-z-10" />
+      <SignInBackground />
       <div className="card w-full max-w-sm animate-fade-up gap-0 p-0 shadow-2xl shadow-black/40">
         <div className="flex flex-col items-center gap-3 rounded-t-2xl border-b border-line/70 px-6 py-8 text-center">
           <Emblem className="h-16 w-16" />
