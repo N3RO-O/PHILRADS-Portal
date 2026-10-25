@@ -114,24 +114,24 @@ export function ResourcesPage() {
           )}
         </div>
 
-        {/* Search and filters: sticky from tablets up. On phones they scroll away with the page and
-            categories are one dropdown, so they never cover the list. */}
-        <div className="-mx-4 flex flex-col gap-2 border-b border-line/60 bg-surface/95 px-4 py-3 backdrop-blur-md sm:-mx-5 sm:px-5 md:sticky md:top-16 md:z-20">
-          <div className="relative">
-            <label htmlFor="res-search" className="sr-only">
-              Search resources
-            </label>
-            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
-            <input
-              id="res-search"
-              type="search"
-              className="field pl-10"
-              placeholder="Search title, description or who added it"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              enterKeyHint="search"
-            />
-          </div>
+        {/* Only the search box stays at the top while scrolling (from tablets up; phones have the top bar's
+            search). The filters below scroll away with the page, so they never cover the list. */}
+        <div className="relative -mx-4 bg-surface/95 px-4 py-2 backdrop-blur-md sm:-mx-5 sm:px-5 md:sticky md:top-16 md:z-20">
+          <label htmlFor="res-search" className="sr-only">
+            Search resources
+          </label>
+          <Search className="pointer-events-none absolute left-[1.875rem] top-1/2 h-4 w-4 -translate-y-1/2 text-muted sm:left-[2.125rem]" aria-hidden />
+          <input
+            id="res-search"
+            type="search"
+            className="field pl-10"
+            placeholder="Search title, description or who added it"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            enterKeyHint="search"
+          />
+        </div>
+        <div className="-mx-4 -mt-2 flex flex-col gap-2 border-b border-line/60 px-4 pb-3 sm:-mx-5 sm:px-5">
           <label htmlFor="res-cat" className="sr-only">
             Category
           </label>
