@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import { CloudUpload, Link2, Loader2, Trash2 } from 'lucide-react';
+import { CloudUpload, History, Link2, Loader2, Trash2 } from 'lucide-react';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { LINK_KIND_LABEL, parseResourceLink, type LinkKind } from '../../lib/resourceLinks';
 import { validateResource, type ResourceErrors } from '../../lib/resources';
@@ -34,6 +34,27 @@ const TYPE_FOR_KIND: Partial<Record<LinkKind, ResourceFileType>> = {
   web: 'Web page',
 };
 
+/** What the form holds; kept per resource ('new' for Add) when the sheet closes without saving. */
+interface FormFields {
+  title: string;
+  url: string;
+  category: ResourceCategory;
+  fileType: ResourceFileType | '';
+  description: string;
+  pinned: boolean;
+}
+
+const fieldsOf = (r: Resource | null): FormFields => ({
+  title: r?.title ?? '',
+  url: r?.url ?? '',
+  category: r?.category ?? 'Forms and templates',
+  fileType: r?.fileType ?? '',
+  description: r?.description ?? '',
+  pinned: r?.pinned ?? false,
+});
+
+const sameFields = (a: FormFields, b: FormFields) => (Object.keys(a) as (keyof FormFields)[]).every((k) => a[k] === b[k]);
+
 /** Add or edit a resource by pasting a Google Drive (or web) link. */
 export function ResourceSheet({ open, resource, existing, onClose, onSave, onRemove, onDone }: Props) {
   const uid = useId();
@@ -49,19 +70,49 @@ export function ResourceSheet({ open, resource, existing, onClose, onSave, onRem
   const [attempted, setAttempted] = useState(false);
   const [busy, setBusy] = useState<'save' | 'remove' | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
+  /** Unsaved input from earlier openings, so closing the sheet by accident loses nothing. */
+  const drafts = useRef(new Map<string, FormFields>());
+  const [restored, setRestored] = useState(false);
+  const draftKey = resource?.id ?? 'new';
+
+  const fill = (f: FormFields) => {
+    setTitle(f.title);
+    setUrl(f.url);
+    setCategory(f.category);
+    setFileType(f.fileType);
+    setDescription(f.description);
+    setPinned(f.pinned);
+  };
 
   useEffect(() => {
     if (!open) return;
+    const kept = drafts.current.get(resource?.id ?? 'new');
     setMode('link');
-    setTitle(resource?.title ?? '');
-    setUrl(resource?.url ?? '');
-    setCategory(resource?.category ?? 'Forms and templates');
-    setFileType(resource?.fileType ?? '');
-    setDescription(resource?.description ?? '');
-    setPinned(resource?.pinned ?? false);
+    fill(kept ?? fieldsOf(resource));
+    setRestored(Boolean(kept));
     setAttempted(false);
     setServerError(null);
   }, [open, resource]);
+
+  const fields: FormFields = { title, url, category, fileType, description, pinned };
+  const dirty = !sameFields(fields, fieldsOf(resource));
+
+  /** Closed without saving (×, Escape, backdrop): keep what was typed for next time. */
+  const close = () => {
+    // The sheet also reports "closed" after a save, once `open` is already false: nothing to keep then.
+    if (open) {
+      if (dirty) drafts.current.set(draftKey, fields);
+      else drafts.current.delete(draftKey);
+    }
+    onClose();
+  };
+
+  const startOver = () => {
+    drafts.current.delete(draftKey);
+    fill(fieldsOf(resource));
+    setRestored(false);
+    setAttempted(false);
+  };
 
   const link = parseResourceLink(url);
   // Fill the file type from the link until the staff member picks one themselves.
@@ -85,6 +136,7 @@ export function ResourceSheet({ open, resource, existing, onClose, onSave, onRem
     setBusy('save');
     try {
       const saved = await onSave(draft);
+      drafts.current.delete(draftKey);
       onDone(`${resource ? 'Updated' : 'Added'} “${saved.title}”.`);
       onClose();
     } catch (err) {
@@ -99,6 +151,7 @@ export function ResourceSheet({ open, resource, existing, onClose, onSave, onRem
     setBusy('remove');
     try {
       await onRemove(resource);
+      drafts.current.delete(draftKey);
       onDone(`Removed “${resource.title}” from Resources.`);
       onClose();
     } catch (err) {
@@ -111,7 +164,8 @@ export function ResourceSheet({ open, resource, existing, onClose, onSave, onRem
   return (
     <Sheet
       open={open}
-      onClose={onClose}
+      onClose={close}
+      dirty={dirty}
       title={resource ? 'Edit resource' : 'Add a resource'}
       subtitle="Staff open or download it from Google Drive with their PHILRADS account."
       footer={
@@ -167,6 +221,16 @@ export function ResourceSheet({ open, resource, existing, onClose, onSave, onRem
         </div>
       ) : (
         <form id={`${uid}-form`} ref={formRef} noValidate onSubmit={(e) => void submit(e)} className="flex flex-col gap-5">
+          {restored && dirty && (
+            <p className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-xl border border-line/70 bg-surface-sunken px-4 py-2.5 text-sm text-ink-soft">
+              <span className="flex items-center gap-2">
+                <History className="h-4 w-4 shrink-0 text-uplift" aria-hidden /> Kept what you typed before.
+              </span>
+              <button type="button" className="link text-sm" onClick={startOver}>
+                Start over
+              </button>
+            </p>
+          )}
           {serverError && (
             <p role="alert" className="rounded-xl border border-status-out/40 bg-status-out/10 px-4 py-3 text-sm">
               <strong className="font-semibold text-status-out">Not saved.</strong> {serverError}

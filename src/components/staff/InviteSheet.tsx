@@ -27,14 +27,13 @@ export function InviteSheet({ open, existing, onClose, onInvite, onDone }: Props
   const [busy, setBusy] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
+  // What was typed stays if the sheet is closed without sending; it is cleared once the invitation goes out.
   useEffect(() => {
     if (!open) return;
-    setEmail('');
-    setFullName('');
-    setRoleKey('staff');
     setAttempted(false);
     setServerError(null);
   }, [open]);
+  const dirty = Boolean(email.trim() || fullName.trim()) || roleKey !== 'staff';
 
   const address = email.trim().toLowerCase();
   const already = existing.find((m) => m.email.toLowerCase() === address);
@@ -59,6 +58,9 @@ export function InviteSheet({ open, existing, onClose, onInvite, onDone }: Props
     try {
       await onInvite({ email: address, fullName: fullName.trim(), roleKey });
       onDone(already ? `Sent the invitation to ${address} again.` : `Invitation sent to ${address}.`);
+      setEmail('');
+      setFullName('');
+      setRoleKey('staff');
       onClose();
     } catch (err) {
       setServerError(err instanceof StaffRuleError ? err.message : 'Could not reach the server. Check the connection and try again.');
@@ -71,6 +73,7 @@ export function InviteSheet({ open, existing, onClose, onInvite, onDone }: Props
     <Sheet
       open={open}
       onClose={onClose}
+      dirty={dirty}
       title="Invite someone"
       subtitle="They get an email with a link to choose their password. Their account is ready as soon as they do."
       footer={
