@@ -1,4 +1,4 @@
-/** Official PHILRADS emblem (cropped from the branding guide, on Dark Burgundy). */
+/** Official PHILRADS emblem (cropped from the branding guide), on a transparent background. */
 export function Emblem({ className = 'h-10 w-10', decorative = false }: { className?: string; decorative?: boolean }) {
   return (
     <img
