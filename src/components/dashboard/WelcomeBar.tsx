@@ -1,19 +1,10 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, FolderKanban, Map, PackagePlus, Plus, Printer, Upload } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../ui/Avatar';
 import { SoffitGradient } from '../ui/SoffitGradient';
 
-const ACTIONS = [
-  { to: '/tasks?action=create-task', label: 'Create task', icon: Plus },
-  { to: '/inventory?action=add-inventory', label: 'Add inventory record', icon: PackagePlus },
-  { to: '/documentation?action=upload', label: 'Upload documentation', icon: Upload },
-  { to: '/live-map', label: 'View live map', icon: Map },
-  { to: '/projects', label: 'Open projects', icon: FolderKanban },
-  { to: '/print-docs?action=create-print', label: 'Create print document', icon: Printer },
-];
-
-/** Greeting, the "View my tasks" shortcut and the six quick actions. */
+/** Greeting and the "View my tasks" shortcut. */
 export function WelcomeBar() {
   const { profile } = useAuth();
   if (!profile) return null;
@@ -37,24 +28,6 @@ export function WelcomeBar() {
         <Link to="/#my-tasks" className="btn-primary shrink-0 self-start md:self-center">
           View my tasks <ArrowRight className="h-4 w-4" aria-hidden />
         </Link>
-      </div>
-      <div>
-        <h3 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-ink-soft">Quick actions</h3>
-        <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-          {ACTIONS.map(({ to, label, icon: Icon }) => (
-            <li key={label}>
-              <Link
-                to={to}
-                className="tile group flex h-full flex-col items-start gap-2.5 px-3.5 py-3 text-xs font-medium leading-snug text-ink-soft transition-colors hover:bg-surface-raised hover:text-ink"
-              >
-                <span className="grid h-8 w-8 place-items-center rounded-lg bg-uplift/10 text-uplift transition-colors group-hover:bg-uplift group-hover:text-page">
-                  <Icon className="h-4 w-4" aria-hidden />
-                </span>
-                {label}
-              </Link>
-            </li>
-          ))}
-        </ul>
       </div>
     </section>
   );
