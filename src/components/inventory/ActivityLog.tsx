@@ -9,6 +9,8 @@ import { MOVEMENT_META, MovementStatusBadge } from './Badges';
 interface Props {
   movements: Movement[];
   snapshot: InventorySnapshot;
+  /** Type filter to start with (the Inventory overview's Releases / Receipts tiles). */
+  initialType?: MovementType | '';
 }
 
 const TYPES: MovementType[] = ['receipt', 'release', 'transfer', 'adjustment'];
@@ -17,10 +19,10 @@ const TYPES: MovementType[] = ['receipt', 'release', 'transfer', 'adjustment'];
  * Audit trail from PHILRADS IMS: every receipt, release (with its approval state) and adjustment,
  * with who recorded it, when, how much and why.
  */
-export function ActivityLog({ movements, snapshot }: Props) {
+export function ActivityLog({ movements, snapshot, initialType = '' }: Props) {
   const uid = useId();
   const [q, setQ] = useState('');
-  const [type, setType] = useState<MovementType | ''>('');
+  const [type, setType] = useState<MovementType | ''>(initialType);
   const [loc, setLoc] = useState('');
   const items = useMemo(() => new Map(snapshot.items.map((i) => [i.id, i])), [snapshot.items]);
   const locs = useMemo(() => new Map(snapshot.locations.map((l) => [l.id, l.name])), [snapshot.locations]);

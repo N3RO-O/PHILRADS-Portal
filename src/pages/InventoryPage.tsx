@@ -21,7 +21,6 @@ import {
   buildStockRows,
   categoriesOf,
   daysUntil,
-  EXPIRY_WINDOWS,
   expiryStatus,
   todayKey,
   type ExpiryWindow,
@@ -29,19 +28,13 @@ import {
 } from '../lib/inventory';
 import { inventoryStore } from '../services';
 import { useInventoryState } from '../services/inventory/inventoryStore';
-import type { InventorySnapshot } from '../services/inventory/types';
+import type { InventorySnapshot, MovementType } from '../services/inventory/types';
 
+/** Set by links from elsewhere (Home's "Inventory alerts" opens `?status=low`); shown as a removable chip. */
 type StatusFilter = 'in' | 'low' | 'out' | 'expiring' | 'expired';
-
-/** Faint glow behind each status tile, in that status's colour (tailwind.config.js `status.*`). */
-const STATUS_GLOW: Record<StatusFilter, string> = {
-  in: 'rgba(74, 222, 128, 0.13)',
-  low: 'rgba(251, 191, 36, 0.13)',
-  out: 'rgba(248, 113, 113, 0.14)',
-  expiring: 'rgba(196, 181, 253, 0.14)',
-  expired: 'rgba(251, 146, 60, 0.14)',
-};
 type Tab = 'stock' | 'donations' | 'log' | 'approvals';
+
+const MONTH_MS = 30 * 24 * 60 * 60_000;
 
 const SEVERITY = (r: StockRow) => (r.expiredQty > 0 ? 0 : r.stock === 'out' ? 1 : r.stock === 'low' ? 2 : r.expiry === 'expiring' ? 3 : 4);
 
@@ -87,6 +80,8 @@ export function InventoryPage() {
   const loc = params.get('loc') ?? '';
   const status = (params.get('status') as StatusFilter | null) ?? '';
   const within = (Number(params.get('within')) || 90) as ExpiryWindow;
+  /** Activity log's starting type filter, set by the Releases / Receipts tiles. */
+  const logType = (params.get('type') as MovementType | null) ?? '';
   const [sortKey, sortDir] = (params.get('sort') ?? 'attention:asc').split(':') as [SortKey, 'asc' | 'desc'];
   const sort: SortState = { key: sortKey, dir: sortDir === 'desc' ? 'desc' : 'asc' };
 
@@ -144,16 +139,23 @@ export function InventoryPage() {
     return filtered.sort((a, b) => dir * compare(a, b, sort.key));
   }, [scoped, status, within, today, sort.key, sort.dir]);
 
-  const counts = useMemo(
-    () => ({
-      in: scoped.filter((r) => r.stock === 'in').length,
-      low: scoped.filter((r) => r.stock === 'low').length,
-      out: scoped.filter((r) => r.stock === 'out').length,
-      expired: scoped.filter((r) => r.expiredQty > 0).length,
-      ...Object.fromEntries(EXPIRY_WINDOWS.map((w) => [`exp${w}`, scoped.filter((r) => expiringWithin(r, w, today)).length])),
-    }),
-    [scoped, today],
-  ) as Record<string, number>;
+  /** Overview tiles: what is on hand and what moved lately, from the whole snapshot (not the list filters). */
+  const overview = useMemo(() => {
+    if (!snapshot) return null;
+    const onHand = new Set(allRows.filter((r) => r.usable > 0).map((r) => r.item.id));
+    const sites = new Set(allRows.filter((r) => r.usable > 0 && r.location).map((r) => r.location!.id));
+    const since = Date.now() - MONTH_MS;
+    // One IMS receipt or release can cover several items; count it once (by its reference).
+    const recent = (type: MovementType) =>
+      new Set(snapshot.movements.filter((m) => m.type === type && m.status === 'applied' && Date.parse(m.occurredAt) >= since).map((m) => m.reference ?? m.id)).size;
+    return {
+      onHand: onHand.size,
+      sites: sites.size,
+      released: recent('release'),
+      received: recent('receipt'),
+      donationsLeft: (snapshot.imsDonations ?? []).filter((d) => d.lines.some((l) => l.remaining > 0)).length,
+    };
+  }, [snapshot, allRows]);
 
   const pendingReleases = useMemo(() => snapshot?.movements.filter((m) => m.status === 'pending_approval') ?? [], [snapshot]);
   const allMovements = snapshot?.movements ?? [];
@@ -192,10 +194,11 @@ export function InventoryPage() {
     setParam({ action: null, tab: 'donations' });
   }, [quickAction, setParam]);
 
+  const statusLabel = status ? (status === 'expiring' ? `Expiring ≤ ${within} days` : status === 'expired' ? 'Expired lots' : STOCK_META[status].label) : null;
   const scopeLabel = [
     cat || 'All categories',
     loc ? snapshot?.locations.find((l) => l.id === loc)?.name : 'All locations',
-    status ? (status === 'expiring' ? `Expiring ≤ ${within} days` : status === 'expired' ? 'Expired lots' : STOCK_META[status].label) : null,
+    statusLabel,
     q ? `matching “${q}”` : null,
   ]
     .filter(Boolean)
@@ -248,40 +251,39 @@ export function InventoryPage() {
 
       {snapshot && (
         <>
-          {/* Status overview: each tile filters the list */}
-          {/* Every tile fully visible, no sideways scrolling: phones show the 4 stock states 2 per row and the
-              3 expiry windows 3 per row; tablets 4 + 3; wide screens all 7 in one row. */}
-          <section aria-label="Stock status">
-            <div className="grid grid-cols-6 gap-2 sm:grid-cols-12 lg:grid-cols-7">
+          {/* Overview: each tile opens the view it counts. Phones: items on hand full width, then 2 per row;
+              tablets 3 + 2; wide screens all 5 in one row. Glows use tailwind.config.js `status.*` colours. */}
+          {overview && (
+            <section aria-label="Inventory overview" className="grid grid-cols-2 gap-2 sm:grid-cols-6 lg:grid-cols-5">
               {(
                 [
-                  ['in', null, STOCK_META.in.label, counts.in, 'text-status-in'],
-                  ['low', null, STOCK_META.low.label, counts.low, 'text-status-low'],
-                  ['out', null, STOCK_META.out.label, counts.out, 'text-status-out'],
-                  ['expired', null, 'Expired lots', counts.expired, 'text-status-expired'],
-                  // Non-breaking spaces keep "≤ 30 d" together, so narrow tiles wrap as "Expiring" / "≤ 30 d".
-                  ...EXPIRY_WINDOWS.map((w) => ['expiring', String(w), `Expiring ≤ ${w} d`, counts[`exp${w}`], 'text-status-expiring'] as const),
+                  ['Items on hand', overview.onHand, `at ${formatNumber(overview.sites)} location${overview.sites === 1 ? '' : 's'}`, 'text-status-in', 'rgba(74, 222, 128, 0.13)', { tab: null, status: null, within: null, type: null }],
+                  ['Releases', overview.released, 'last 30 days', 'text-uplift', undefined, { tab: 'log', type: 'release' }],
+                  ['Receipts', overview.received, 'last 30 days', 'text-sky-300', 'rgba(125, 211, 252, 0.13)', { tab: 'log', type: 'receipt' }],
+                  ['Awaiting approval', imsPending.length, 'releases in the IMS', 'text-status-low', 'rgba(251, 191, 36, 0.13)', canApprove ? { tab: 'approvals' } : null],
+                  ['Donations with stock left', overview.donationsLeft, 'not fully given out', 'text-status-expiring', 'rgba(196, 181, 253, 0.14)', { tab: 'donations' }],
                 ] as const
-              ).map(([s, w, label, n, tone]) => {
-                const active = status === s && (s !== 'expiring' || String(within) === w);
+              ).map(([label, n, note, tone, glow, go], i) => {
+                const Tile = go ? 'button' : 'div';
                 return (
-                  <button
-                    key={`${s}${w ?? ''}`}
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() => setParam(active ? { status: null, within: null } : { status: s, within: w, tab: null })}
-                    style={{ '--glow': STATUS_GLOW[s] } as CSSProperties}
-                    className={`kpi-tile tap flex min-h-[4.5rem] min-w-0 flex-col items-start justify-between rounded-2xl px-3 py-2.5 text-left transition hover:-translate-y-0.5 hover:border-white/[0.14] aria-pressed:border-uplift aria-pressed:bg-uplift/10 lg:col-span-1 ${
-                      s === 'expiring' ? 'col-span-2 sm:col-span-4' : 'col-span-3'
-                    }`}
+                  <Tile
+                    key={label}
+                    {...(go && { type: 'button' as const, onClick: () => setParam(go) })}
+                    style={{ '--glow': glow } as CSSProperties}
+                    className={`kpi-tile flex min-h-[4.5rem] min-w-0 flex-col items-start justify-between gap-1 rounded-2xl px-3 py-2.5 text-left lg:col-span-1 ${
+                      go ? 'tap transition hover:-translate-y-0.5 hover:border-white/[0.14]' : ''
+                    } ${i === 0 ? 'col-span-2' : i < 3 ? 'sm:col-span-2' : 'sm:col-span-3'}`}
                   >
                     <span className="w-full text-[0.6875rem] font-semibold leading-tight text-ink-soft">{label}</span>
-                    <span className={`text-xl font-bold tabular-nums ${tone}`}>{formatNumber(n)}</span>
-                  </button>
+                    <span className="flex flex-wrap items-baseline gap-x-2">
+                      <span className={`text-xl font-bold tabular-nums ${tone}`}>{formatNumber(n)}</span>
+                      <span className="text-[0.6875rem] text-muted">{note}</span>
+                    </span>
+                  </Tile>
                 );
               })}
-            </div>
-          </section>
+            </section>
+          )}
 
           <section className="card flex flex-col gap-4 p-4 sm:p-5">
             {/* Tabs and primary actions */}
@@ -306,7 +308,7 @@ export function InventoryPage() {
                     role="tab"
                     aria-selected={tab === t}
                     aria-label={label}
-                    onClick={() => setParam({ tab: t === 'stock' ? null : t })}
+                    onClick={() => setParam({ tab: t === 'stock' ? null : t, type: null })}
                     className="tap min-h-10 min-w-0 truncate whitespace-nowrap rounded-lg px-3 text-sm font-semibold text-ink-soft transition aria-selected:bg-surface-raised aria-selected:text-ink"
                   >
                     <span className="sm:hidden">{short}</span>
@@ -316,6 +318,10 @@ export function InventoryPage() {
               </div>
               <div className="flex items-center gap-2">
                 {(snapshot.source === 'mock' || snapshot.sample) && <SampleBadge />}
+                {/* Stays after the source banner hides itself. */}
+                <span className={`whitespace-nowrap text-xs ${isStale(snapshot) ? 'text-status-low' : 'text-muted'}`} title={`IMS data from ${formatDateTime(snapshot.fetchedAt)}`}>
+                  Updated {ago(snapshot.fetchedAt)}
+                </span>
                 <button type="button" className="icon-btn" onClick={() => void inventoryStore.refresh()} disabled={!online || state.loading} aria-label="Refresh inventory" title="Refresh">
                   {state.loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <RefreshCw className="h-4 w-4" aria-hidden />}
                 </button>
@@ -385,6 +391,11 @@ export function InventoryPage() {
                       <option value="updated:desc">Sort: recently moved</option>
                       <option value="location:asc">Sort: location</option>
                     </select>
+                    {statusLabel && (
+                      <button type="button" className="chip shrink-0 justify-center gap-1" aria-pressed onClick={() => setParam({ status: null, within: null })} aria-label={`Remove filter: ${statusLabel}`}>
+                        {statusLabel} <X className="h-3.5 w-3.5" aria-hidden />
+                      </button>
+                    )}
                     {(cat || loc || status || q) && (
                       <button type="button" className="chip shrink-0 justify-center gap-1" onClick={() => setParam({ cat: null, loc: null, status: null, within: null, q: null })}>
                         <X className="h-3.5 w-3.5" aria-hidden /> Clear
@@ -408,7 +419,7 @@ export function InventoryPage() {
 
             {tab === 'donations' && <DonationsPanel donations={snapshot.imsDonations ?? []} sample={Boolean(snapshot.sample)} />}
 
-            {tab === 'log' && <ActivityLog movements={allMovements} snapshot={snapshot} />}
+            {tab === 'log' && <ActivityLog key={logType} movements={allMovements} snapshot={snapshot} initialType={logType} />}
 
             {tab === 'approvals' && canApprove && <ImsApprovalsPanel releases={imsPending} imsUrl={imsUrl} sample={Boolean(snapshot.sample)} />}
           </section>
@@ -465,13 +476,30 @@ const ago = (iso: string) => {
   return hours < 48 ? `${hours} h ago` : `${Math.round(hours / 24)} days ago`;
 };
 
-/** Where the numbers come from, how fresh they are, and where to change them. */
+const isStale = (snapshot: InventorySnapshot) => Date.now() - Date.parse(snapshot.fetchedAt) > 60 * 60_000;
+
+/** How long the source banner shows before it fades away; "Updated … ago" by the refresh button stays. */
+const BANNER_MS = 4000;
+
+/** Where the numbers come from, how fresh they are, and where to change them. Shown briefly on arrival. */
 function ImsSourceBanner({ snapshot, imsUrl, fromCache }: { snapshot: InventorySnapshot; imsUrl: string; fromCache: boolean }) {
-  const stale = Date.now() - Date.parse(snapshot.fetchedAt) > 60 * 60_000;
+  const stale = isStale(snapshot);
+  const [phase, setPhase] = useState<'shown' | 'fading' | 'gone'>('shown');
+  useEffect(() => {
+    const fade = setTimeout(() => setPhase('fading'), BANNER_MS);
+    const gone = setTimeout(() => setPhase('gone'), BANNER_MS + 500);
+    return () => {
+      clearTimeout(fade);
+      clearTimeout(gone);
+    };
+  }, []);
+  if (phase === 'gone') return null;
   return (
     <div
       role="status"
-      className={`flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border px-4 py-3 text-sm ${stale ? 'border-status-low/40 bg-status-low/10' : 'border-line/70 bg-surface'}`}
+      className={`flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border px-4 py-3 text-sm transition-opacity duration-500 motion-reduce:transition-none ${
+        phase === 'fading' ? 'opacity-0' : ''
+      } ${stale ? 'border-status-low/40 bg-status-low/10' : 'border-line/70 bg-surface'}`}
     >
       <Database className={`h-5 w-5 shrink-0 ${stale ? 'text-status-low' : 'text-uplift'}`} aria-hidden />
       <p className="min-w-0 flex-1">
