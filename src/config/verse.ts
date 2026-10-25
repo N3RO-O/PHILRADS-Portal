@@ -1,5 +1,6 @@
 /**
- * Verses shown on Home, one picked at random each visit (never the same twice in a row).
+ * Verses shown on Home: one a day, chosen from the date (Manila time), so everyone sees the same
+ * verse all day and it changes at midnight, never repeating the day before's.
  * King James Version texts are public domain. Later this list can come from app_settings in Supabase.
  */
 export interface Verse {
@@ -31,22 +32,32 @@ export const VERSES: Verse[] = [
   { text: 'Come unto me, all ye that labour and are heavy laden, and I will give you rest.', reference: 'Matthew 11:28 (KJV)' },
 ];
 
-const LAST_KEY = 'philrads.verse.last';
+/** Small seeded random generator (mulberry32): the same seed always gives the same sequence. */
+const seeded = (seed: number) => () => {
+  seed = (seed + 0x6d2b79f5) | 0;
+  let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+};
 
-/** A random verse, not the one shown last time. */
-export function pickVerse(): Verse {
-  let last = -1;
-  try {
-    last = Number(sessionStorage.getItem(LAST_KEY) ?? -1);
-  } catch {
-    /* storage unavailable */
+/** The shuffled order for one cycle of VERSES.length days: every verse once, in a random order. */
+function cycleOrder(cycle: number): number[] {
+  const rand = seeded(cycle);
+  const order = VERSES.map((_, i) => i);
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
   }
-  let i = Math.floor(Math.random() * VERSES.length);
-  if (i === last) i = (i + 1) % VERSES.length;
-  try {
-    sessionStorage.setItem(LAST_KEY, String(i));
-  } catch {
-    /* storage unavailable */
-  }
-  return VERSES[i];
+  return order;
+}
+
+/** Today's verse: shuffled, the same all day (Manila time), and never the same two days running. */
+export function verseOfTheDay(now = new Date()): Verse {
+  const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' }).format(now);
+  const dayNumber = Math.floor(Date.parse(`${day}T00:00:00Z`) / 86_400_000);
+  const cycle = Math.floor(dayNumber / VERSES.length);
+  const order = cycleOrder(cycle);
+  // A new cycle could start with the verse the last one ended on: swap its first two.
+  if (order[0] === cycleOrder(cycle - 1)[VERSES.length - 1]) [order[0], order[1]] = [order[1], order[0]];
+  return VERSES[order[dayNumber % VERSES.length]];
 }

@@ -21,7 +21,7 @@ import { dashboardService } from '../services';
  *  - xl: 12 columns in aligned rows, in DOM order:
  *      verse (12) | welcome (12) | overview (8) + stock levels (4) | projects (8) + response (4)
  *      | stock health (4) + my tasks (8) | activity (6) + calendar (6)
- * The verse always comes first, at every width (a random one each visit).
+ * The verse always comes first, at every width (one a day, changing at midnight).
  */
 function Cell({ className, step, children }: { className: string; step: number; children: ReactNode }) {
   return (

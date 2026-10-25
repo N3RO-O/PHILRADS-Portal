@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { BookOpen, Check, Copy } from 'lucide-react';
-import { pickVerse } from '../../config/verse';
+import { verseOfTheDay } from '../../config/verse';
 
 async function copyText(text: string) {
   try {
@@ -23,8 +23,8 @@ async function copyText(text: string) {
 
 export function VerseOfTheDay() {
   const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle');
-  // A different verse each time Home opens.
-  const [verse] = useState(pickVerse);
+  // One verse a day (changes at midnight, Manila time).
+  const verse = verseOfTheDay();
 
   useEffect(() => {
     if (state === 'idle') return;
@@ -45,7 +45,7 @@ export function VerseOfTheDay() {
     >
       <div className="min-w-0 flex-1">
         <h2 id="verse-title" className="flex items-center gap-2 text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-uplift">
-          <BookOpen className="h-4 w-4" aria-hidden /> Verse for today
+          <BookOpen className="h-4 w-4" aria-hidden /> Verse of the day
         </h2>
         <blockquote className="mt-3">
           <p className="max-w-4xl font-serif text-[1.4rem] leading-snug text-ink md:text-[1.6rem]">“{verse.text}”</p>
