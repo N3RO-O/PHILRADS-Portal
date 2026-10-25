@@ -4,6 +4,7 @@ import {
   Copy,
   Download,
   ExternalLink,
+  Eye,
   FileImage,
   FileSpreadsheet,
   FileText,
@@ -58,10 +59,12 @@ interface Props {
   resource: Resource;
   canManage: boolean;
   onEdit: (r: Resource) => void;
+  /** Show the file inside the portal (Drive and Google files only; web pages open in a new tab). */
+  onPreview: (r: Resource) => void;
 }
 
-/** One resource: what it is, where it lives, and one-tap Open / Download / Copy link. */
-export function ResourceCard({ resource: r, canManage, onEdit }: Props) {
+/** One resource: what it is, where it lives, and one-tap Preview (or Open) / Download / Copy link. */
+export function ResourceCard({ resource: r, canManage, onEdit, onPreview }: Props) {
   const link = parseResourceLink(r.url);
   const [copied, setCopied] = useState<'ok' | 'failed' | null>(null);
   useEffect(() => {
@@ -101,9 +104,15 @@ export function ResourceCard({ resource: r, canManage, onEdit }: Props) {
         Updated {formatShortInstant(r.updatedAt)} · added by {r.addedByName}
       </p>
       <div className="mt-auto flex flex-wrap gap-2">
-        <a className={`${action} border-uplift/40 text-uplift`} href={link?.openUrl ?? r.url} target="_blank" rel="noopener noreferrer">
-          <ExternalLink className="h-4 w-4" aria-hidden /> Open
-        </a>
+        {link?.previewUrl ? (
+          <button type="button" className={`${action} border-uplift/40 text-uplift`} onClick={() => onPreview(r)}>
+            <Eye className="h-4 w-4" aria-hidden /> Preview
+          </button>
+        ) : (
+          <a className={`${action} border-uplift/40 text-uplift`} href={link?.openUrl ?? r.url} target="_blank" rel="noopener noreferrer">
+            <ExternalLink className="h-4 w-4" aria-hidden /> Open
+          </a>
+        )}
         {link?.downloadUrl && (
           <a className={action} href={link.downloadUrl} target="_blank" rel="noopener noreferrer">
             <Download className="h-4 w-4" aria-hidden /> Download

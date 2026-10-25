@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { FolderOpen, Library, Plus, Search, User, X } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
 import { ResourceCard } from '../components/resources/ResourceCard';
+import { ResourcePreview } from '../components/resources/ResourcePreview';
 import { ResourceSheet } from '../components/resources/ResourceSheet';
 import { LoadError, Skeleton } from '../components/ui/Card';
 import { SampleBadge } from '../components/ui/SampleBadge';
@@ -15,7 +16,7 @@ type GroupBy = 'category' | 'person';
 
 /** Shared forms, policies, manuals, reports and brand files, opened or downloaded from Google Drive. */
 export function ResourcesPage() {
-  const { can } = useAuth();
+  const { can, state: auth } = useAuth();
   const canRead = can('resources.read');
   const canManage = can('resources.manage');
   const list = useAsyncData(() => resourcesService.list());
@@ -27,6 +28,23 @@ export function ResourcesPage() {
   const [search, setSearch] = useState(q);
   const [sheet, setSheet] = useState<{ resource: Resource | null } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  // The open preview lives in the URL (?view=<id>) as its own history entry: a phone's Back button closes it.
+  const viewId = params.get('view');
+  /** Opened from a card (so Back returns to the list), not from a shared ?view= link. */
+  const pushedPreview = useRef(false);
+  const openPreview = (r: Resource) => {
+    pushedPreview.current = true;
+    setParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('view', r.id);
+      return next;
+    });
+  };
+  const closePreview = () => {
+    if (pushedPreview.current) window.history.back();
+    else setParam({ view: null });
+    pushedPreview.current = false;
+  };
 
   const setParam = useCallback(
     (patch: Record<string, string | null>) =>
@@ -189,14 +207,14 @@ export function ResourcesPage() {
         {pinned.length > 0 && (
           <Group title="Pinned" count={pinned.length}>
             {pinned.map((r) => (
-              <ResourceCard key={r.id} resource={r} canManage={canManage} onEdit={(x) => setSheet({ resource: x })} />
+              <ResourceCard key={r.id} resource={r} canManage={canManage} onEdit={(x) => setSheet({ resource: x })} onPreview={openPreview} />
             ))}
           </Group>
         )}
         {groups.map((g) => (
           <Group key={g.key} title={g.key} count={g.items.length} icon={groupBy === 'person' ? 'person' : 'folder'}>
             {g.items.map((r) => (
-              <ResourceCard key={r.id} resource={r} canManage={canManage} onEdit={(x) => setSheet({ resource: x })} />
+              <ResourceCard key={r.id} resource={r} canManage={canManage} onEdit={(x) => setSheet({ resource: x })} onPreview={openPreview} />
             ))}
           </Group>
         ))}
@@ -211,6 +229,12 @@ export function ResourcesPage() {
           <Plus className="h-6 w-6" aria-hidden /> Add resource
         </button>
       )}
+
+      <ResourcePreview
+        resource={(viewId && all.find((r) => r.id === viewId)) || null}
+        googleAccount={auth.status === 'signed-in' ? auth.session.user.email : null}
+        onClose={closePreview}
+      />
 
       <ResourceSheet
         open={Boolean(sheet)}
