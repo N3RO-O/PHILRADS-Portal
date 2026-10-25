@@ -114,8 +114,9 @@ export function ResourcesPage() {
           )}
         </div>
 
-        {/* Sticky search and filters */}
-        <div className="sticky top-16 z-20 -mx-4 flex flex-col gap-2 border-b border-line/60 bg-surface/95 px-4 py-3 backdrop-blur-md sm:-mx-5 sm:px-5">
+        {/* Search and filters: sticky from tablets up. On phones they scroll away with the page and
+            categories are one dropdown, so they never cover the list. */}
+        <div className="-mx-4 flex flex-col gap-2 border-b border-line/60 bg-surface/95 px-4 py-3 backdrop-blur-md sm:-mx-5 sm:px-5 md:sticky md:top-16 md:z-20">
           <div className="relative">
             <label htmlFor="res-search" className="sr-only">
               Search resources
@@ -131,7 +132,16 @@ export function ResourcesPage() {
               enterKeyHint="search"
             />
           </div>
-          <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Category">
+          <label htmlFor="res-cat" className="sr-only">
+            Category
+          </label>
+          <select id="res-cat" className={`chip w-full bg-transparent pr-7 md:hidden ${cat ? 'border-uplift text-uplift' : ''}`} value={cat} onChange={(e) => setParam({ cat: e.target.value || null })}>
+            <option value="">All categories</option>
+            {RESOURCE_CATEGORIES.map((c) => (
+              <option key={c}>{c}</option>
+            ))}
+          </select>
+          <div className="hidden flex-wrap items-center gap-2 md:flex" role="group" aria-label="Category">
             <button type="button" className="chip" aria-pressed={!cat} onClick={() => setParam({ cat: null })}>
               All
             </button>
