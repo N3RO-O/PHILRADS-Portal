@@ -13,7 +13,7 @@ const ACTIONS = [
   { to: '/print-docs?action=create-print', label: 'Create print document', icon: Printer },
 ];
 
-/** Greeting, the "View my tasks" shortcut, the slogan and the six quick actions. */
+/** Greeting, the "View my tasks" shortcut and the six quick actions. */
 export function WelcomeBar() {
   const { profile } = useAuth();
   if (!profile) return null;
@@ -32,11 +32,6 @@ export function WelcomeBar() {
             <h2 id="welcome-title" className="text-lg font-bold leading-tight sm:text-xl">
               Good day, {profile.displayName}
             </h2>
-            <p className="mt-1 max-w-2xl text-sm leading-relaxed text-ink-soft">
-              Welcome to the PHILRADS Staff Portal. Manage your work, coordinate activities, and stay informed about our
-              ongoing programs and response operations.
-            </p>
-            <p className="mt-1.5 text-xs font-semibold text-uplift">Serving People in Jesus’ Name.</p>
           </div>
         </div>
         <Link to="/#my-tasks" className="btn-primary shrink-0 self-start md:self-center">

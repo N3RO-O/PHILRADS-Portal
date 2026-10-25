@@ -19,9 +19,9 @@ import { dashboardService } from '../services';
  *  - phones: one column, ordered by what staff need first (`order-*`)
  *  - md–lg: two columns; wide cards span both
  *  - xl: 12 columns in aligned rows, in DOM order:
- *      verse of the day (12) | welcome (12) | overview (8) + stock levels (4) | projects (8) + response (4)
+ *      verse (12) | welcome (12) | overview (8) + stock levels (4) | projects (8) + response (4)
  *      | stock health (4) + my tasks (8) | activity (6) + calendar (6)
- * The verse of the day always comes first, at every width.
+ * The verse always comes first, at every width (a random one each visit).
  */
 function Cell({ className, step, children }: { className: string; step: number; children: ReactNode }) {
   return (
