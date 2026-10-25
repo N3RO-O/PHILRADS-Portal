@@ -30,8 +30,8 @@ import { inventoryStore } from '../services';
 import { useInventoryState } from '../services/inventory/inventoryStore';
 import type { InventorySnapshot, MovementType } from '../services/inventory/types';
 
-/** Set by links from elsewhere (Home's "Inventory alerts" opens `?status=low`); shown as a removable chip. */
-type StatusFilter = 'in' | 'low' | 'out' | 'expiring' | 'expired';
+/** Stock tiles set in / expired / expiring ≤ 90 / new; links from elsewhere (Home's "Inventory alerts" opens `?status=low`) set the others, shown as a removable chip. */
+type StatusFilter = 'in' | 'low' | 'out' | 'expiring' | 'expired' | 'new';
 type Tab = 'stock' | 'donations' | 'log' | 'approvals';
 
 const MONTH_MS = 30 * 24 * 60 * 60_000;
@@ -80,7 +80,7 @@ export function InventoryPage() {
   const loc = params.get('loc') ?? '';
   const status = (params.get('status') as StatusFilter | null) ?? '';
   const within = (Number(params.get('within')) || 90) as ExpiryWindow;
-  /** Activity log's starting type filter, set by the Releases / Receipts tiles. */
+  /** Activity log's starting type filter, set by the Releases tile. */
   const logType = (params.get('type') as MovementType | null) ?? '';
   const [sortKey, sortDir] = (params.get('sort') ?? 'attention:asc').split(':') as [SortKey, 'asc' | 'desc'];
   const sort: SortState = { key: sortKey, dir: sortDir === 'desc' ? 'desc' : 'asc' };
@@ -115,6 +115,21 @@ export function InventoryPage() {
   const today = todayKey();
   const allRows = useMemo(() => (snapshot ? buildStockRows(snapshot, today) : []), [snapshot, today]);
 
+  /** Items first received in the last 30 days (earliest lot or receipt in the IMS data). */
+  const newItemIds = useMemo(() => {
+    if (!snapshot) return new Set<string>();
+    const first = new Map<string, string>();
+    const seen = (itemId: string, at: string) => {
+      const prev = first.get(itemId);
+      if (!prev || at < prev) first.set(itemId, at);
+    };
+    // A lot the IMS sent without a received date carries the snapshot's own time (imsSnapshot.ts): unknown, skip it.
+    for (const b of snapshot.batches) if (b.receivedAt !== snapshot.fetchedAt) seen(b.itemId, b.receivedAt);
+    for (const m of snapshot.movements) if (m.type === 'receipt' && m.status === 'applied') seen(m.itemId, m.occurredAt);
+    const since = Date.now() - MONTH_MS;
+    return new Set([...first].filter(([, at]) => Date.parse(at) >= since).map(([id]) => id));
+  }, [snapshot]);
+
   /** Rows in the current category/location/search scope, before the status filter. */
   const scoped = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -132,30 +147,39 @@ export function InventoryPage() {
     const filtered = scoped.filter((r) => {
       if (!status) return true;
       if (status === 'expired') return r.expiredQty > 0;
+      if (status === 'new') return newItemIds.has(r.item.id);
       if (status === 'expiring') return expiringWithin(r, within, today);
       return r.stock === status;
     });
     const dir = sort.dir === 'desc' ? -1 : 1;
     return filtered.sort((a, b) => dir * compare(a, b, sort.key));
-  }, [scoped, status, within, today, sort.key, sort.dir]);
+  }, [scoped, status, within, today, sort.key, sort.dir, newItemIds]);
 
-  /** Overview tiles: what is on hand and what moved lately, from the whole snapshot (not the list filters). */
+  /**
+   * Overview tiles. Stock counts follow the category/location/search scope (they filter the list);
+   * activity counts are for the whole snapshot.
+   */
   const overview = useMemo(() => {
     if (!snapshot) return null;
-    const onHand = new Set(allRows.filter((r) => r.usable > 0).map((r) => r.item.id));
-    const sites = new Set(allRows.filter((r) => r.usable > 0 && r.location).map((r) => r.location!.id));
     const since = Date.now() - MONTH_MS;
     // One IMS receipt or release can cover several items; count it once (by its reference).
     const recent = (type: MovementType) =>
       new Set(snapshot.movements.filter((m) => m.type === type && m.status === 'applied' && Date.parse(m.occurredAt) >= since).map((m) => m.reference ?? m.id)).size;
     return {
-      onHand: onHand.size,
-      sites: sites.size,
+      in: scoped.filter((r) => r.stock === 'in').length,
+      expired: scoped.filter((r) => r.expiredQty > 0).length,
+      expiring: scoped.filter((r) => expiringWithin(r, 90, today)).length,
       released: recent('release'),
-      received: recent('receipt'),
+      newItems: new Set(scoped.filter((r) => newItemIds.has(r.item.id)).map((r) => r.item.id)).size,
       donationsLeft: (snapshot.imsDonations ?? []).filter((d) => d.lines.some((l) => l.remaining > 0)).length,
     };
-  }, [snapshot, allRows]);
+  }, [snapshot, scoped, today, newItemIds]);
+
+  /** A stock tile toggles its status filter on the Stock tab. */
+  const statusFilter = (s: StatusFilter, w: string | null = null): { pressed: boolean; go: Record<string, string | null> } => {
+    const pressed = status === s && (s !== 'expiring' || String(within) === w);
+    return { pressed, go: pressed ? { status: null, within: null } : { status: s, within: w, tab: null, type: null } };
+  };
 
   const pendingReleases = useMemo(() => snapshot?.movements.filter((m) => m.status === 'pending_approval') ?? [], [snapshot]);
   const allMovements = snapshot?.movements ?? [];
@@ -194,7 +218,17 @@ export function InventoryPage() {
     setParam({ action: null, tab: 'donations' });
   }, [quickAction, setParam]);
 
-  const statusLabel = status ? (status === 'expiring' ? `Expiring ≤ ${within} days` : status === 'expired' ? 'Expired lots' : STOCK_META[status].label) : null;
+  /** Statuses with a tile above show as that tile pressed; the rest get a chip in the filter row. */
+  const hasTile = status === 'in' || status === 'expired' || status === 'new' || (status === 'expiring' && within === 90);
+  const statusLabel = !status
+    ? null
+    : status === 'expiring'
+      ? `Expiring ≤ ${within} days`
+      : status === 'expired'
+        ? 'Expired lots'
+        : status === 'new'
+          ? 'New items (last 30 days)'
+          : STOCK_META[status].label;
   const scopeLabel = [
     cat || 'All categories',
     loc ? snapshot?.locations.find((l) => l.id === loc)?.name : 'All locations',
@@ -251,33 +285,37 @@ export function InventoryPage() {
 
       {snapshot && (
         <>
-          {/* Overview: each tile opens the view it counts. Phones: items on hand full width, then 2 per row;
-              tablets 3 + 2; wide screens all 5 in one row. Glows use tailwind.config.js `status.*` colours. */}
+          {/* Overview: stock tiles and New items filter the list below; the others open the view they count.
+              Phones: 3 stock tiles per row, then activity 2 per row; tablets 3 + 4; wide screens all 7 in one row.
+              Glows use tailwind.config.js `status.*` colours. */}
           {overview && (
-            <section aria-label="Inventory overview" className="grid grid-cols-2 gap-2 sm:grid-cols-6 lg:grid-cols-5">
+            <section aria-label="Inventory overview" className="grid grid-cols-6 gap-2 sm:grid-cols-12 lg:grid-cols-7">
               {(
                 [
-                  ['Items on hand', overview.onHand, `at ${formatNumber(overview.sites)} location${overview.sites === 1 ? '' : 's'}`, 'text-status-in', 'rgba(74, 222, 128, 0.13)', { tab: null, status: null, within: null, type: null }],
-                  ['Releases', overview.released, 'last 30 days', 'text-uplift', undefined, { tab: 'log', type: 'release' }],
-                  ['Receipts', overview.received, 'last 30 days', 'text-sky-300', 'rgba(125, 211, 252, 0.13)', { tab: 'log', type: 'receipt' }],
-                  ['Awaiting approval', imsPending.length, 'releases in the IMS', 'text-status-low', 'rgba(251, 191, 36, 0.13)', canApprove ? { tab: 'approvals' } : null],
-                  ['Donations with stock left', overview.donationsLeft, 'not fully given out', 'text-status-expiring', 'rgba(196, 181, 253, 0.14)', { tab: 'donations' }],
+                  ['In stock', overview.in, null, 'text-status-in', 'rgba(74, 222, 128, 0.13)', statusFilter('in')],
+                  ['Expired lots', overview.expired, null, 'text-status-expired', 'rgba(251, 146, 60, 0.14)', statusFilter('expired')],
+                  ['Expiring ≤ 90 d', overview.expiring, null, 'text-status-expiring', 'rgba(196, 181, 253, 0.14)', statusFilter('expiring', '90')],
+                  ['Releases', overview.released, 'last 30 days', 'text-uplift', undefined, { go: { tab: 'log', type: 'release' } }],
+                  ['New items', overview.newItems, 'last 30 days', 'text-sky-300', 'rgba(125, 211, 252, 0.13)', statusFilter('new')],
+                  ['Awaiting approval', imsPending.length, 'releases in the IMS', 'text-status-low', 'rgba(251, 191, 36, 0.13)', canApprove ? { go: { tab: 'approvals' } } : null],
+                  ['Donations with stock left', overview.donationsLeft, 'not fully given out', 'text-pink-300', 'rgba(249, 168, 212, 0.13)', { go: { tab: 'donations' } }],
                 ] as const
-              ).map(([label, n, note, tone, glow, go], i) => {
-                const Tile = go ? 'button' : 'div';
+              ).map(([label, n, note, tone, glow, action], i) => {
+                const Tile = action ? 'button' : 'div';
+                const pressed = action && 'pressed' in action ? action.pressed : undefined;
                 return (
                   <Tile
                     key={label}
-                    {...(go && { type: 'button' as const, onClick: () => setParam(go) })}
+                    {...(action && { type: 'button' as const, 'aria-pressed': pressed, onClick: () => setParam(action.go) })}
                     style={{ '--glow': glow } as CSSProperties}
                     className={`kpi-tile flex min-h-[4.5rem] min-w-0 flex-col items-start justify-between gap-1 rounded-2xl px-3 py-2.5 text-left lg:col-span-1 ${
-                      go ? 'tap transition hover:-translate-y-0.5 hover:border-white/[0.14]' : ''
-                    } ${i === 0 ? 'col-span-2' : i < 3 ? 'sm:col-span-2' : 'sm:col-span-3'}`}
+                      action ? 'tap transition hover:-translate-y-0.5 hover:border-white/[0.14] aria-pressed:border-uplift aria-pressed:bg-uplift/10' : ''
+                    } ${i < 3 ? 'col-span-2 sm:col-span-4' : 'col-span-3'}`}
                   >
                     <span className="w-full text-[0.6875rem] font-semibold leading-tight text-ink-soft">{label}</span>
                     <span className="flex flex-wrap items-baseline gap-x-2">
                       <span className={`text-xl font-bold tabular-nums ${tone}`}>{formatNumber(n)}</span>
-                      <span className="text-[0.6875rem] text-muted">{note}</span>
+                      {note && <span className="text-[0.6875rem] text-muted">{note}</span>}
                     </span>
                   </Tile>
                 );
@@ -391,7 +429,7 @@ export function InventoryPage() {
                       <option value="updated:desc">Sort: recently moved</option>
                       <option value="location:asc">Sort: location</option>
                     </select>
-                    {statusLabel && (
+                    {statusLabel && !hasTile && (
                       <button type="button" className="chip shrink-0 justify-center gap-1" aria-pressed onClick={() => setParam({ status: null, within: null })} aria-label={`Remove filter: ${statusLabel}`}>
                         {statusLabel} <X className="h-3.5 w-3.5" aria-hidden />
                       </button>
@@ -478,8 +516,8 @@ const ago = (iso: string) => {
 
 const isStale = (snapshot: InventorySnapshot) => Date.now() - Date.parse(snapshot.fetchedAt) > 60 * 60_000;
 
-/** How long the source banner shows before it fades away; "Updated … ago" by the refresh button stays. */
-const BANNER_MS = 4000;
+/** How long the source banner shows before it fades (gone by 4 s); "Updated … ago" by the refresh button stays. */
+const BANNER_MS = 3500;
 
 /** Where the numbers come from, how fresh they are, and where to change them. Shown briefly on arrival. */
 function ImsSourceBanner({ snapshot, imsUrl, fromCache }: { snapshot: InventorySnapshot; imsUrl: string; fromCache: boolean }) {

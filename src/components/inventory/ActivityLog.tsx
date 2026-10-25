@@ -9,7 +9,7 @@ import { MOVEMENT_META, MovementStatusBadge } from './Badges';
 interface Props {
   movements: Movement[];
   snapshot: InventorySnapshot;
-  /** Type filter to start with (the Inventory overview's Releases / Receipts tiles). */
+  /** Type filter to start with (the Inventory overview's Releases tile). */
   initialType?: MovementType | '';
 }
 
