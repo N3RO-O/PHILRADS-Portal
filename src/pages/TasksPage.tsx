@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Building2, CalendarClock, CalendarDays, CheckCheck, ChevronDown, Inbox, Layers, MapPin, Send, Sun, SunMedium, UserRoundCheck, X } from 'lucide-react';
+import { Building2, CalendarClock, CalendarDays, CheckCheck, ChevronDown, CloudOff, Inbox, Layers, Loader2, MapPin, RefreshCw, Send, Sun, SunMedium, UserRoundCheck, X } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
 import { Certificate } from '../components/tasks/Certificate';
 import { LevelUpDialog, ProgressPanel } from '../components/tasks/Progress';
@@ -74,6 +74,11 @@ export function TasksPage() {
   const [team, setTeam] = useState<TeamProgress | null>(null);
   const [people, setPeople] = useState<Assignee[]>([]);
 
+  // Changes made on this device that haven't reached the server yet.
+  const [pending, setPending] = useState(() => tasksService.pending());
+  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+
   const load = useCallback(async () => {
     setLoadError(null);
     try {
@@ -82,6 +87,8 @@ export function TasksPage() {
       setTasks(list);
       setAwards(progress.awards);
       setKudos(progress.kudos);
+      setSavedAt(tasksService.savedAt());
+      setPending(tasksService.pending());
     } catch (e) {
       setLoadError(errorText(e));
     }
@@ -89,6 +96,28 @@ export function TasksPage() {
     tasksService.assignees().then(setPeople, () => setPeople([]));
   }, []);
   useEffect(() => void load(), [load]);
+  useEffect(
+    () =>
+      tasksService.subscribe((e) => {
+        setPending(tasksService.pending());
+        if (e.type === 'synced') {
+          void load();
+          setToast({ text: `Back online: ${e.count} change${e.count === 1 ? '' : 's'} synced.`, tone: 'ok' });
+        }
+      }),
+    [load],
+  );
+  // Reconnected: refresh (this also sends anything waiting).
+  useEffect(() => {
+    if (online) void load();
+  }, [online, load]);
+  const syncNow = async () => {
+    setSyncing(true);
+    await tasksService.sync();
+    setSyncing(false);
+  };
+  const waiting = [...pending.values()].filter((p) => !p.error).length;
+  const failed = [...pending.values()].filter((p) => p.error);
 
   // ── What's shown ──
   /** Ticked off a moment ago: stays in place briefly with its "+XP" before moving to Completed. */
@@ -164,8 +193,9 @@ export function TasksPage() {
         return upsert(r.next ? upsert(base, r.next) : base, r.task);
       });
       setAwards((prev) => [...prev.filter((a) => a.taskId !== t.id), ...(r.award ? [r.award] : [])]);
+      const queued = tasksService.pending().has(t.id);
       if (!done) {
-        setToast({ text: `Re-opened “${t.title}”. Its XP was taken back.`, tone: 'ok' });
+        setToast({ text: queued ? `Re-opened “${t.title}”. It will sync when you’re back online.` : `Re-opened “${t.title}”. Its XP was taken back.`, tone: 'ok' });
         return;
       }
       const points = r.award?.points ?? 0;
@@ -198,6 +228,10 @@ export function TasksPage() {
               <>
                 <strong className="text-uplift">+{points} XP</strong> {parts.length > 0 && <span className="text-muted">({parts.join(', ')})</span>}
                 {r.award.capped && <span className="block text-xs text-muted">Daily limit for tasks you set yourself reached. Tasks from others still count.</span>}
+              </>
+            ) : queued ? (
+              <>
+                Done: “{t.title}”. <span className="text-muted">Saved on this device; XP is added when it syncs.</span>
               </>
             ) : (
               <>Done: “{t.title}”.</>
@@ -300,7 +334,8 @@ export function TasksPage() {
     dueDate: view === 'calendar' ? calDay : null,
   } as const;
   const go = (v: View, l?: TaskList) => setParam({ view: v === 'myday' ? null : v, list: v === 'list' ? (l ?? listKey) : null, day: null });
-  const rowProps = { today, me, onToggle: (t: Task) => void toggle(t), onOpen: (t: Task) => setSheet({ task: t, initial: null }), onMyDay: (t: Task) => void toggleMyDay(t) };
+  const syncOf = (t: Task) => (pending.has(t.id) ? (pending.get(t.id)!.error ? ('failed' as const) : ('waiting' as const)) : null);
+  const rowProps = { today, me, syncOf, onToggle: (t: Task) => void toggle(t), onOpen: (t: Task) => setSheet({ task: t, initial: null }), onMyDay: (t: Task) => void toggleMyDay(t) };
 
   const myDayDone = all.filter((t) => isMine(t) && whereOk(t) && doneToday(t));
   const plannedToday = shown.length + myDayDone.length;
@@ -400,7 +435,40 @@ export function TasksPage() {
             )}
           </header>
 
-          {view !== 'done' && view !== 'delegated' && <QuickAdd today={today} defaults={defaults} onAdd={add} onMore={(d) => setSheet({ task: null, initial: d })} disabled={!online || !tasks} />}
+          {(!online || savedAt || waiting > 0 || failed.length > 0) && (
+            <div role="status" className={`flex flex-wrap items-start gap-x-3 gap-y-2 rounded-2xl border px-4 py-3 text-sm ${failed.length ? 'border-rose/40 bg-rose/10' : 'border-sky-300/30 bg-sky-300/[0.07]'}`}>
+              <CloudOff className={`mt-0.5 h-4 w-4 shrink-0 ${failed.length ? 'text-rose' : 'text-sky-300'}`} aria-hidden />
+              <div className="min-w-0 flex-1">
+                <p>
+                  {!online ? (
+                    <strong className="font-semibold">You’re offline.</strong>
+                  ) : savedAt ? (
+                    <strong className="font-semibold">Can’t reach the server.</strong>
+                  ) : (
+                    <strong className="font-semibold">Syncing changes.</strong>
+                  )}{' '}
+                  {!online || savedAt ? 'You can keep working: changes are saved on this device and sync when you’re back online.' : ''}
+                  {waiting > 0 && ` ${waiting} change${waiting === 1 ? '' : 's'} waiting.`}
+                  {savedAt && ` Showing the copy saved ${new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Manila' }).format(new Date(savedAt))}.`}
+                </p>
+                {failed.map((p) => (
+                  <p key={p.taskId} className="mt-1 text-xs">
+                    <span className="font-semibold text-rose">Couldn’t sync</span> “{all.find((t) => t.id === p.taskId)?.title ?? p.create?.title ?? 'a task'}”: {p.error}{' '}
+                    <button type="button" className="link text-xs" onClick={() => void tasksService.discard(p.taskId).then(() => load())}>
+                      Discard this change
+                    </button>
+                  </p>
+                ))}
+              </div>
+              {online && waiting > 0 && (
+                <button type="button" className="btn-ghost min-h-9 shrink-0 px-3 text-xs" onClick={() => void syncNow()} disabled={syncing}>
+                  {syncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> : <RefreshCw className="h-3.5 w-3.5" aria-hidden />} Sync now
+                </button>
+              )}
+            </div>
+          )}
+
+          {view !== 'done' && view !== 'delegated' && <QuickAdd today={today} defaults={defaults} onAdd={add} onMore={(d) => setSheet({ task: null, initial: d })} disabled={!tasks} />}
 
           {suggestions.length > 0 && (
             <div className="rounded-2xl border border-uplift/30 bg-uplift/[0.06] p-3 sm:p-4">

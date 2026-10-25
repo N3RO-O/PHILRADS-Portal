@@ -1,9 +1,11 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Session, SupabaseClient } from '@supabase/supabase-js';
-import { dataSource } from '../../config/env';
+import { dataSource, env } from '../../config/env';
 import { DEMO_ROLES, PLACEHOLDER_ROLE_PERMISSIONS, type PermissionKey } from '../../config/permissions';
 import { demoProfile } from '../../data/mockDashboard';
 import { initialsOf } from '../../lib/format';
+import { clearDeviceCopies } from '../../lib/deviceCopy';
+import { idbDelete } from '../../lib/idb';
 import { openedFromPasswordLink, supabase } from '../../lib/supabase';
 import type { StaffProfile } from '../../types';
 
@@ -51,7 +53,7 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-async function fetchProfile(client: SupabaseClient, userId: string): Promise<{ profile: StaffProfile | null; error?: string }> {
+async function fetchProfile(client: SupabaseClient, userId: string): Promise<{ profile: StaffProfile | null; error?: string; network?: boolean }> {
   const { data, error } = await client
     .from('profiles')
     .select('id, display_name, full_name, office, is_active, role_key, roles(name)')
@@ -59,7 +61,7 @@ async function fetchProfile(client: SupabaseClient, userId: string): Promise<{ p
     .maybeSingle();
   if (error) {
     console.error('[auth] profile', error);
-    return { profile: null, error: 'Your staff profile could not be loaded.' };
+    return { profile: null, error: 'Your staff profile could not be loaded.', network: isNetworkError(error.message) };
   }
   if (!data) return { profile: null, error: 'No staff profile exists for this account yet.' };
   const role = data.roles as unknown as { name?: string } | null;
@@ -78,16 +80,59 @@ async function fetchProfile(client: SupabaseClient, userId: string): Promise<{ p
   };
 }
 
-/** Permissions granted to the caller's role, read through RLS (role_permissions is readable by active staff). */
-async function fetchPermissions(client: SupabaseClient, profile: StaffProfile | null): Promise<string[]> {
+/** Permissions granted to the caller's role, read through RLS (role_permissions is readable by active staff). Null if they couldn't be read. */
+async function fetchPermissions(client: SupabaseClient, profile: StaffProfile | null): Promise<string[] | null> {
   if (!profile?.isActive) return [];
   const { data, error } = await client.from('role_permissions').select('permission_key').eq('role_key', profile.roleKey);
   if (error) {
     console.error('[auth] permissions', error);
-    return [];
+    return null;
   }
   return (data ?? []).map((r) => r.permission_key as string);
 }
+
+const isNetworkError = (message: string) => !navigator.onLine || /failed to fetch|networkerror|load failed|network request failed/i.test(message);
+
+// ── Offline: the last profile and permissions seen on this device, so the portal opens without a connection ──
+const OFFLINE_KEY = 'philrads.offline.profile';
+interface OfflineAuth {
+  userId: string;
+  profile: StaffProfile;
+  permissions: string[];
+}
+const readOffline = (): OfflineAuth | null => {
+  try {
+    return JSON.parse(localStorage.getItem(OFFLINE_KEY) ?? 'null') as OfflineAuth | null;
+  } catch {
+    return null;
+  }
+};
+const writeOffline = (v: OfflineAuth) => {
+  try {
+    localStorage.setItem(OFFLINE_KEY, JSON.stringify(v));
+  } catch {
+    /* storage unavailable: the portal just won't open offline */
+  }
+};
+const clearOffline = () => {
+  try {
+    localStorage.removeItem(OFFLINE_KEY);
+  } catch {
+    /* nothing to clear */
+  }
+  // The tasks saved for offline use (changes still waiting to sync are kept for when they sign in again).
+  void idbDelete('kv', 'tasks:v1').catch(() => undefined);
+  void clearDeviceCopies();
+};
+/** The session Supabase keeps in this browser: used offline when it can't be refreshed (no connection). */
+const storedSession = (): Session | null => {
+  try {
+    const ref = new URL(env.supabaseUrl).hostname.split('.')[0];
+    return JSON.parse(localStorage.getItem(`sb-${ref}-auth-token`) ?? 'null') as Session | null;
+  } catch {
+    return null;
+  }
+};
 
 const DEMO_ROLE_KEY = 'philrads.demo.role';
 const demoProfileFor = (roleKey: string): StaffProfile => {
@@ -115,13 +160,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const apply = async (session: Session | null) => {
       if (!active) return;
+      const saved = readOffline();
       if (!session) {
-        setState({ status: 'signed-out' });
+        // Offline, and the sign-in couldn't be renewed without a connection: keep working with what this
+        // device saved. Supabase renews it (and this runs again) once the connection is back.
+        const stored = !navigator.onLine && saved ? storedSession() : null;
+        if (saved && stored?.user?.id === saved.userId) setState({ status: 'signed-in', session: stored, profile: saved.profile, permissions: saved.permissions });
+        else setState({ status: 'signed-out' });
         return;
       }
-      const { profile, error } = await fetchProfile(client, session.user.id);
+      const { profile, error, network } = await fetchProfile(client, session.user.id);
+      if (network && saved?.userId === session.user.id) {
+        if (active) setState({ status: 'signed-in', session, profile: saved.profile, permissions: saved.permissions });
+        return;
+      }
       const permissions = await fetchPermissions(client, profile);
-      if (active) setState({ status: 'signed-in', session, profile, profileError: error, permissions });
+      if (profile?.isActive && permissions) writeOffline({ userId: session.user.id, profile, permissions });
+      if (active) setState({ status: 'signed-in', session, profile, profileError: error, permissions: permissions ?? (saved?.userId === session.user.id ? saved.permissions : []) });
     };
 
     void client.auth.getSession().then(({ data }) => apply(data.session));
@@ -171,7 +226,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     clearNeedsPassword();
     setNeedsPassword(false);
-    await supabase?.auth.signOut();
+    clearOffline();
+    // Offline: sign out of this device only (signing out everywhere needs the server).
+    await supabase?.auth.signOut(navigator.onLine ? undefined : { scope: 'local' });
+    if (!navigator.onLine) setState({ status: 'signed-out' });
   }, []);
 
   const setDemoRole = useCallback((roleKey: string) => {

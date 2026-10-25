@@ -44,6 +44,11 @@ export interface Task {
 
 export interface TaskDraft {
   id?: string;
+  /**
+   * For a new task: its id, made on this device. Saving the same new task again (a retry after a
+   * dropped connection, or the offline queue syncing twice) finds it instead of adding a second one.
+   */
+  newId?: string;
   title: string;
   notes: string;
   list: TaskList;
@@ -103,8 +108,16 @@ export interface Assignee {
 export interface CompletionResult {
   task: Task;
   award: XpAward | null;
-  /** The next occurrence of a repeating task. */
+  /** The next occurrence of a repeating task (added by the offline layer, once, when it's ticked off). */
   next: Task | null;
+}
+
+/** No connection: the change can wait in the offline queue. */
+export class TaskOfflineError extends Error {
+  constructor(message = 'You’re offline.') {
+    super(message);
+    this.name = 'TaskOfflineError';
+  }
 }
 
 export class TaskRuleError extends Error {

@@ -1,4 +1,4 @@
-import { Building2, Check, Flag, ListChecks, MapPin, Repeat, Sun } from 'lucide-react';
+import { Building2, Check, CloudOff, Flag, ListChecks, MapPin, Repeat, Sun, TriangleAlert } from 'lucide-react';
 import { daysBetween, dueLabel, LIST_META } from '../../lib/tasks';
 import type { Task } from '../../services/tasks/types';
 import { LIST_STYLE } from './taskMeta';
@@ -14,10 +14,13 @@ interface Props {
   flash?: number | null;
   /** Show which list it's in (not needed inside a list's own view). */
   showList?: boolean;
+  /** Changed on this device and not on the server yet (`waiting`), or refused by the server (`failed`). */
+  syncOf?: (t: Task) => 'waiting' | 'failed' | null;
 }
 
 /** One task, Any.do style: a round checkbox in the list's colour, the title, and one line of details. */
-export function TaskRow({ task: t, today, me, onToggle, onOpen, onMyDay, flash, showList = true }: Props) {
+export function TaskRow({ task: t, today, me, onToggle, onOpen, onMyDay, flash, showList = true, syncOf }: Props) {
+  const sync = syncOf?.(t) ?? null;
   const done = t.status === 'done';
   const style = LIST_STYLE[t.list];
   const due = dueLabel(t, today);
@@ -49,6 +52,16 @@ export function TaskRow({ task: t, today, me, onToggle, onOpen, onMyDay, flash, 
       <button type="button" className="min-w-0 flex-1 text-left" onClick={() => onOpen(t)}>
         <span className={`block text-sm font-medium leading-snug ${done ? 'text-muted line-through decoration-ink-mute/60' : 'text-ink'}`}>{t.title}</span>
         <span className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-muted">
+          {sync === 'waiting' && (
+            <span className="inline-flex items-center gap-1 font-semibold text-sky-300">
+              <CloudOff className="h-3 w-3" aria-hidden /> Waiting to sync
+            </span>
+          )}
+          {sync === 'failed' && (
+            <span className="inline-flex items-center gap-1 font-semibold text-rose">
+              <TriangleAlert className="h-3 w-3" aria-hidden /> Couldn’t sync
+            </span>
+          )}
           {due && <span className={overdue ? 'font-semibold text-rose' : t.dueDate === today && !done ? 'text-uplift' : ''}>{due}</span>}
           {showList && (
             <span className={`inline-flex items-center gap-1 ${style.text}`}>

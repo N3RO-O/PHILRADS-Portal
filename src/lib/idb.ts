@@ -47,3 +47,6 @@ export const idbGetAll = <T>(store: StoreName) => run<T[]>(store, 'readonly', (s
 export const idbPut = (store: StoreName, value: unknown, key?: IDBValidKey) =>
   run<IDBValidKey>(store, 'readwrite', (s) => s.put(value, key));
 export const idbDelete = (store: StoreName, key: IDBValidKey) => run<undefined>(store, 'readwrite', (s) => s.delete(key));
+/** Delete every key that starts with `prefix` (e.g. all saved copies of one service). */
+export const idbDeletePrefix = (store: StoreName, prefix: string) =>
+  run<undefined>(store, 'readwrite', (s) => s.delete(IDBKeyRange.bound(prefix, `${prefix}￿`)));

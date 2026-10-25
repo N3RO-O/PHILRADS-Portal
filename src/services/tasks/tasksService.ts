@@ -7,6 +7,7 @@ import { nextOccurrence } from '../../lib/tasks';
 import { scoreCompletion, XP_RULES } from '../../lib/taskProgress';
 import type { TaskPriority, TaskStatus } from '../../types';
 import {
+  TaskOfflineError,
   TaskRuleError,
   type Kudos,
   type Recurrence,
@@ -28,7 +29,7 @@ const validate = (d: TaskDraft) => {
 };
 
 /** The next occurrence of a repeating task: same details, fresh checklist. */
-const nextDraft = (t: Task): TaskDraft | null => {
+export const nextDraft = (t: Task): TaskDraft | null => {
   const due = nextOccurrence(t);
   if (!due) return null;
   return {
@@ -85,6 +86,10 @@ const demoCan = (permission: PermissionKey) => {
   return (PLACEHOLDER_ROLE_PERMISSIONS[role] ?? []).includes(permission);
 };
 const me = demoProfile.id;
+/** Sample mode behaves like the live service with no connection, so the offline queue can be tried. */
+const needOnline = () => {
+  if (!navigator.onLine) throw new TaskOfflineError();
+};
 const visible = (t: Task) => t.status !== 'cancelled' && (demoCan('tasks.read_all') || t.assigneeId === me || t.createdById === me);
 const find = (id: string) => {
   const t = sampleState().tasks.find((x) => x.id === id && visible(x));
@@ -97,12 +102,15 @@ const replace = (t: Task) => {
 
 function sampleSave(d: TaskDraft): Task {
   validate(d);
+  // Saved before (a retry): return it rather than adding a second copy.
+  const already = !d.id && d.newId ? sampleState().tasks.find((t) => t.id === d.newId) : undefined;
+  if (already) return already;
   const assignee = d.assigneeId ?? me;
   if (assignee !== me && !demoCan('tasks.manage')) throw new TaskRuleError('Only coordinators and admins can give a task to someone else.');
   const now = new Date().toISOString();
   const prev = d.id ? find(d.id) : null;
   const saved: Task = {
-    id: prev?.id ?? `task-${crypto.randomUUID?.() ?? Date.now()}`,
+    id: prev?.id ?? d.newId ?? `task-${crypto.randomUUID?.() ?? Date.now()}`,
     title: d.title.trim(),
     notes: d.notes.trim() || null,
     list: d.list,
@@ -135,24 +143,26 @@ export const mockTasksService: TasksService = {
     return me;
   },
   async list() {
-    if (!navigator.onLine) throw new TypeError('Failed to fetch (offline)');
+    needOnline();
     return later(sampleState().tasks.filter(visible));
   },
   async save(d) {
+    needOnline();
     return later(sampleSave(d));
   },
   async patch(id, p) {
+    needOnline();
     const t = { ...find(id), ...p, updatedAt: new Date().toISOString() };
     replace(t);
     persist();
     return later(t);
   },
   async complete(id, done) {
+    needOnline();
     const prev = find(id);
     const s = sampleState();
     const earner = prev.assigneeId ?? prev.createdById ?? me;
     let award: XpAward | null = null;
-    let next: Task | null = null;
     const task: Task = { ...prev, status: done ? 'done' : 'todo', completedAt: done ? prev.completedAt ?? new Date().toISOString() : null, updatedAt: new Date().toISOString() };
     replace(task);
     if (done && prev.status !== 'done') {
@@ -163,23 +173,24 @@ export const mockTasksService: TasksService = {
         award = scoreCompletion(prev, earner, selfToday, today);
         s.awards = [...s.awards.filter((a) => a.taskId !== id), award];
       }
-      const draft = nextDraft(prev);
-      if (draft) next = sampleSave(draft);
     }
     if (!done) s.awards = s.awards.filter((a) => a.taskId !== id);
     persist();
-    return later({ task, award, next });
+    return later({ task, award, next: null });
   },
   async remove(id) {
+    needOnline();
     replace({ ...find(id), status: 'cancelled' });
     persist();
     await later(null);
   },
   async progress() {
+    needOnline();
     const s = sampleState();
     return later({ awards: s.awards, kudos: s.kudos });
   },
   async team() {
+    needOnline();
     const s = sampleState();
     const month = `${todayKey().slice(0, 7)}-01`;
     // The rest of the team's finished tasks are made up; the demo user's are counted.
@@ -211,6 +222,8 @@ export const mockTasksService: TasksService = {
 export function createSupabaseTasksService(client: SupabaseClient): TasksService {
   const fail = (what: string, error: { message: string; code?: string }): never => {
     console.error(`[tasks] ${what}`, error);
+    // No connection (the request never reached Supabase): the offline queue keeps the change.
+    if (!navigator.onLine || /failed to fetch|networkerror|load failed|network request failed/i.test(error.message)) throw new TaskOfflineError();
     if (error.code === '42501') throw new TaskRuleError(error.message.startsWith('Only') || error.message.startsWith('The') ? error.message : 'Your role does not allow this.');
     if (error.code === '22023') throw new TaskRuleError(error.message);
     if (error.code === '23505') throw new TaskRuleError('You already thanked them today. Try again tomorrow.');
@@ -275,8 +288,14 @@ export function createSupabaseTasksService(client: SupabaseClient): TasksService
   const save = async (d: TaskDraft) => {
     validate(d);
     const r = row(d, await uid());
-    const q = d.id ? client.from('tasks').update(r).eq('id', d.id) : client.from('tasks').insert(r);
+    const insert: Record<string, unknown> = d.newId ? { ...r, id: d.newId } : r;
+    const q = d.id ? client.from('tasks').update(r).eq('id', d.id) : client.from('tasks').insert(insert);
     const { data, error } = await q.select(columns).single();
+    if (error && error.code === '23505' && !d.id && d.newId) {
+      // Already saved by an earlier attempt: return that one instead of adding a second task.
+      const again = await client.from('tasks').select(columns).eq('id', d.newId).single();
+      if (!again.error) return map(again.data as Record<string, unknown>);
+    }
     if (error) fail('save this task', error);
     return map(data as Record<string, unknown>);
   };
@@ -307,10 +326,7 @@ export function createSupabaseTasksService(client: SupabaseClient): TasksService
       if (!done) return { task, award: null, next: null };
       // The database awarded the XP (if this person earned it); read back what it gave.
       const { data: a } = await client.from('task_xp_events').select(awardColumns).eq('task_id', id).maybeSingle();
-      const draft = nextDraft(task);
-      // The next occurrence of a repeating task is added by whoever finished this one.
-      const next = draft ? await save({ ...draft, assigneeId: task.assigneeId === (await uid()) ? null : task.assigneeId }).catch(() => null) : null;
-      return { task, award: a ? mapAward(a as Record<string, unknown>) : null, next };
+      return { task, award: a ? mapAward(a as Record<string, unknown>) : null, next: null };
     },
     async remove(id) {
       const { error } = await client.from('tasks').update({ status: 'cancelled' }).eq('id', id);

@@ -8,6 +8,7 @@ import { ResourceSheet } from '../components/resources/ResourceSheet';
 import { LoadError, Skeleton } from '../components/ui/Card';
 import { SampleBadge } from '../components/ui/SampleBadge';
 import { useAsyncData } from '../hooks/useAsyncData';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { formatNumber } from '../lib/format';
 import { resourcesService } from '../services';
 import { RESOURCE_CATEGORIES, type Resource } from '../services/resources/types';
@@ -19,6 +20,7 @@ export function ResourcesPage() {
   const { can, state: auth } = useAuth();
   const canRead = can('resources.read');
   const canManage = can('resources.manage');
+  const online = useOnlineStatus();
   const list = useAsyncData(() => resourcesService.list());
   const [params, setParams] = useSearchParams();
   const q = params.get('q') ?? '';
@@ -106,6 +108,9 @@ export function ResourcesPage() {
               {resourcesService.source === 'mock' && <SampleBadge />}
             </h2>
             <p className="card-note">Open or download from Google Drive with your PHILRADS account.</p>
+            {!online && (
+              <p className="mt-1 text-xs font-semibold text-sky-300">You’re offline: showing the list saved on this device. Opening files and adding resources need a connection.</p>
+            )}
           </div>
           {canManage && (
             <button type="button" className="btn-primary hidden md:inline-flex" onClick={() => setSheet({ resource: null })}>
