@@ -90,12 +90,12 @@ export function ActivityLog({ movements, snapshot }: Props) {
           </button>
         </div>
       </div>
-      <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1" role="group" aria-label="Movement type">
-        <button type="button" className="chip shrink-0" aria-pressed={type === ''} onClick={() => setType('')}>
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Movement type">
+        <button type="button" className="chip" aria-pressed={type === ''} onClick={() => setType('')}>
           All
         </button>
         {TYPES.map((t) => (
-          <button key={t} type="button" className="chip shrink-0 gap-1.5" aria-pressed={type === t} onClick={() => setType(type === t ? '' : t)}>
+          <button key={t} type="button" className="chip gap-1.5" aria-pressed={type === t} onClick={() => setType(type === t ? '' : t)}>
             {MOVEMENT_META[t].label}
           </button>
         ))}

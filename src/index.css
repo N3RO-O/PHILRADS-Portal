@@ -133,13 +133,6 @@
   .field {
     @apply block w-full rounded-xl border border-line bg-surface-sunken px-4 py-3 text-sm text-ink placeholder:text-muted focus:border-uplift focus:outline-none focus:ring-1 focus:ring-uplift;
   }
-  /* Horizontally swipeable rows (filter chips, status tiles) without a visible scrollbar. */
-  .no-scrollbar {
-    scrollbar-width: none;
-  }
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
   .popover {
     @apply glass rounded-2xl;
   }

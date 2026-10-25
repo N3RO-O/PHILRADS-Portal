@@ -107,7 +107,7 @@ export function DonationsPanel({ donations, sample }: { donations: ImsDonation[]
           <Download className="h-4 w-4" aria-hidden /> Donor report (.csv)
         </button>
       </div>
-      <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1" role="group" aria-label="Progress">
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Progress">
         {(
           [
             ['all', 'All'],
@@ -116,7 +116,7 @@ export function DonationsPanel({ donations, sample }: { donations: ImsDonation[]
             ['waiting', 'Not given out yet'],
           ] as const
         ).map(([p, label]) => (
-          <button key={p} type="button" className="chip shrink-0" aria-pressed={progress === p} onClick={() => setProgress(p)}>
+          <button key={p} type="button" className="chip" aria-pressed={progress === p} onClick={() => setProgress(p)}>
             {label}
           </button>
         ))}

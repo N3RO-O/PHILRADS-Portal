@@ -113,12 +113,12 @@ export function ResourcesPage() {
               enterKeyHint="search"
             />
           </div>
-          <div className="no-scrollbar -mx-4 flex items-center gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label="Category">
-            <button type="button" className="chip shrink-0" aria-pressed={!cat} onClick={() => setParam({ cat: null })}>
+          <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Category">
+            <button type="button" className="chip" aria-pressed={!cat} onClick={() => setParam({ cat: null })}>
               All
             </button>
             {RESOURCE_CATEGORIES.map((c) => (
-              <button key={c} type="button" className="chip shrink-0" aria-pressed={cat === c} onClick={() => setParam({ cat: cat === c ? null : c })}>
+              <button key={c} type="button" className="chip" aria-pressed={cat === c} onClick={() => setParam({ cat: cat === c ? null : c })}>
                 {c}
               </button>
             ))}

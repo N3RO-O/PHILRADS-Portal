@@ -180,18 +180,9 @@ export function StaffPage() {
               enterKeyHint="search"
             />
           </div>
-          <div className="no-scrollbar -mx-4 flex items-center gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label="Show">
+          <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Show">
             {FILTERS.map(([f, label]) => (
-              <button
-                key={f}
-                type="button"
-                className="chip shrink-0 gap-1.5"
-                aria-pressed={filter === f}
-                onClick={(e) => {
-                  setFilter(f);
-                  e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
-                }}
-              >
+              <button key={f} type="button" className="chip gap-1.5" aria-pressed={filter === f} onClick={() => setFilter(f)}>
                 {label}
                 {list.status === 'success' && <span className="font-normal opacity-80">{formatNumber(counts[f])}</span>}
               </button>
