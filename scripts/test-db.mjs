@@ -78,6 +78,72 @@ await check('staff cannot see projects they are not on', () => as(B, `select id 
 await check('staff cannot create a project', () => as(B, `insert into public.projects (name) values ('Nope')`), true);
 await check('staff cannot promote themselves', () => as(B, `update public.profiles set role_key = 'admin' where id = '${B}'`), true);
 await check('staff can edit own display name', () => as(B, `update public.profiles set display_name = 'Staff B' where id = '${B}' returning display_name`).then(expectRows(1)));
+
+// Tasks module: anyone adds their own tasks; XP is awarded by the database (20261027000000_tasks_module.sql).
+const TASK = (title) => `(select id from public.tasks where title = '${title}')`;
+const xpOf = async (title) => (await db.query(`select points, base, on_time, subtasks, self_set, capped from public.task_xp_events where task_id = ${TASK(title)}`)).rows;
+await check('staff adds their own field task', () => as(B, `insert into public.tasks (title, list, work_setting, assignee_id, created_by) values ('Pack kits', 'relief', 'field', '${B}', '${B}') returning list, work_setting`).then(expectRows(1)));
+await check('staff cannot give a task to someone else', () => as(B, `insert into public.tasks (title, assignee_id, created_by) values ('For admin', '${A}', '${B}')`), true);
+await check('unknown task lists are rejected', () => as(B, `insert into public.tasks (title, list, created_by) values ('Bad list', 'party', '${B}')`), true);
+await check('finishing a task from someone else earns 35 + 10 on time', async () => {
+  await as(B, `update public.tasks set status = 'done' where id = ${TASK('Assigned to B')}`);
+  const r = await xpOf('Assigned to B');
+  if (r.length !== 1 || r[0].points !== 45 || r[0].self_set) throw new Error(JSON.stringify(r));
+  return r[0].points;
+});
+await check('completed_at is set by the database and cannot be backdated', async () => {
+  await as(B, `update public.tasks set completed_at = '2020-01-01' where id = ${TASK('Assigned to B')}`);
+  const r = (await db.query(`select completed_at > now() - interval '1 hour' recent from public.tasks where id = ${TASK('Assigned to B')}`)).rows[0];
+  if (!r.recent) throw new Error('backdated');
+  return r;
+});
+await check('re-opening takes the XP back; finishing again awards it once', async () => {
+  await as(B, `update public.tasks set status = 'todo' where id = ${TASK('Assigned to B')}`);
+  if ((await xpOf('Assigned to B')).length !== 0) throw new Error('XP kept after re-opening');
+  await as(B, `update public.tasks set status = 'done' where id = ${TASK('Assigned to B')}`);
+  const n = (await db.query(`select count(*)::int n from public.task_xp_events where user_id = '${B}' and task_id = ${TASK('Assigned to B')}`)).rows[0].n;
+  if (n !== 1) throw new Error(`${n} awards`);
+  return n;
+});
+await check('own tasks stop at 60 XP a day (35, then 25 capped, then 0)', async () => {
+  await as(B, `insert into public.tasks (title, priority, assignee_id, created_by) values ('Own 1', 'high', '${B}', '${B}'), ('Own 2', 'high', '${B}', '${B}'), ('Own 3', 'high', '${B}', '${B}')`);
+  for (const t of ['Own 1', 'Own 2', 'Own 3']) await as(B, `update public.tasks set status = 'done' where id = ${TASK(t)}`);
+  const pts = [];
+  for (const t of ['Own 1', 'Own 2', 'Own 3']) pts.push((await xpOf(t))[0]?.points);
+  if (pts.join() !== '35,25,0') throw new Error(pts.join());
+  return pts;
+});
+await check('finished subtasks add 2 XP each', async () => {
+  await as(A, `insert into public.tasks (title, priority, assignee_id, created_by, subtasks) values ('With steps', 'medium', '${B}', '${A}', '[{"id":"1","title":"a","done":true},{"id":"2","title":"b","done":true},{"id":"3","title":"c","done":false}]')`);
+  await as(B, `update public.tasks set status = 'done' where id = ${TASK('With steps')}`);
+  const r = (await xpOf('With steps'))[0];
+  if (r.points !== 24 || r.subtasks !== 4) throw new Error(JSON.stringify(r));
+  return r.points;
+});
+await check('staff cannot write XP directly', () => as(B, `insert into public.task_xp_events (task_id, user_id, points, base, self_set, day) values (${TASK('Pack kits')}, '${B}', 100, 100, false, current_date)`), true);
+await check('staff sees only their own XP', () => as(B, `select distinct user_id from public.task_xp_events`).then(expectRows(1)));
+await check('staff cannot give their own task to someone else later', () => as(B, `update public.tasks set assignee_id = '${A}' where id = ${TASK('Pack kits')}`), true);
+await check('who created a task cannot be rewritten', () => as(A, `update public.tasks set created_by = '${A}' where id = ${TASK('Pack kits')}`), true);
+await check('admin can reassign a task', () => as(A, `update public.tasks set assignee_id = '${A}' where id = ${TASK('Own 3')} returning title`).then(expectRows(1)));
+await check('staff cannot send kudos', () => as(B, `insert into public.task_kudos (to_user, message) values ('${A}', 'Thanks')`), true);
+await check('admin sends kudos: +15 XP and a bell note', async () => {
+  await as(A, `insert into public.task_kudos (to_user, message) values ('${B}', 'Great work at the distribution')`);
+  const n = await as(B, `select title from public.notifications where title like 'Kudos from%'`);
+  if (n.rows.length !== 1) throw new Error(`${n.rows.length} notifications`);
+  return n.rows[0].title;
+});
+await check('one kudos per person a day', () => as(A, `insert into public.task_kudos (to_user, message) values ('${B}', 'Again')`), true);
+await check('nobody can thank themselves', () => as(A, `insert into public.task_kudos (to_user, message) values ('${A}', 'Me')`), true);
+await check('team progress counts everyone’s finished tasks', async () => {
+  const r = (await as(B, `select done::int, goal from public.task_team_progress()`)).rows[0];
+  if (r.done < 5 || r.goal !== 200) throw new Error(JSON.stringify(r));
+  return r;
+});
+await check('staff cannot set the team goal', () => as(B, `select public.set_task_team_goal(10)`), true);
+await check('admin sets the team goal', async () => {
+  await as(A, `select public.set_task_team_goal(300)`);
+  return (await as(B, `select goal from public.task_team_progress()`)).rows[0].goal === 300 || Promise.reject(new Error('goal not saved'));
+});
 // Inventory: every write goes through record_inventory_movement / decide_inventory_transfer
 const rpc = (uid, args) => as(uid, `select public.record_inventory_movement(${args}) r`).then((r) => r.rows[0].r);
 const cid = (n) => `'00000000-0000-4000-8000-${String(n).padStart(12, '0')}'`;

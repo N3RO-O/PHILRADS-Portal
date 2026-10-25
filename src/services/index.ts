@@ -9,6 +9,8 @@ import { createSupabaseResourcesService, mockResourcesService } from './resource
 import type { ResourcesService } from './resources/types';
 import { createSupabaseStaffService, mockStaffService } from './staff/staffService';
 import type { StaffService } from './staff/types';
+import { createSupabaseTasksService, mockTasksService } from './tasks/tasksService';
+import type { TasksService } from './tasks/types';
 
 export type { DashboardService } from './dashboard/types';
 export { driveUploadService, DriveNotConfiguredError } from './googleDrive';
@@ -27,3 +29,6 @@ export const resourcesService: ResourcesService = live ? createSupabaseResources
 
 /** Portal accounts, roles and invitations (Staff page, administrators only). */
 export const staffService: StaffService = live ? createSupabaseStaffService(live) : mockStaffService;
+
+/** Tasks, XP, kudos and the team goal (Tasks module). */
+export const tasksService: TasksService = live ? createSupabaseTasksService(live) : mockTasksService;

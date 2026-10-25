@@ -12,6 +12,8 @@ export type PermissionKey =
   | 'resources.read'
   | 'resources.manage'
   | 'beneficiaries.record'
+  | 'tasks.read_all'
+  | 'tasks.manage'
   | 'staff.manage';
 
 export const DEMO_ROLES = [
@@ -23,8 +25,8 @@ export const DEMO_ROLES = [
 ] as const;
 
 export const PLACEHOLDER_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
-  admin: ['inventory.read', 'inventory.record', 'inventory.manage', 'inventory.approve', 'activity.read', 'resources.read', 'resources.manage', 'beneficiaries.record', 'staff.manage'],
-  coordinator: ['inventory.read', 'inventory.record', 'activity.read', 'resources.read', 'resources.manage', 'beneficiaries.record'],
+  admin: ['inventory.read', 'inventory.record', 'inventory.manage', 'inventory.approve', 'activity.read', 'resources.read', 'resources.manage', 'beneficiaries.record', 'tasks.read_all', 'tasks.manage', 'staff.manage'],
+  coordinator: ['inventory.read', 'inventory.record', 'activity.read', 'resources.read', 'resources.manage', 'beneficiaries.record', 'tasks.read_all', 'tasks.manage'],
   staff: ['inventory.read', 'inventory.record', 'activity.read', 'resources.read'],
   volunteer: ['inventory.read', 'resources.read'],
   viewer: ['inventory.read', 'activity.read', 'resources.read'],

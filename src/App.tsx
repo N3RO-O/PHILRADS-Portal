@@ -14,6 +14,7 @@ const InventoryPage = lazy(() => import('./pages/InventoryPage').then((m) => ({ 
 const ResponsePage = lazy(() => import('./pages/ResponsePage').then((m) => ({ default: m.ResponsePage })));
 const ResourcesPage = lazy(() => import('./pages/ResourcesPage').then((m) => ({ default: m.ResourcesPage })));
 const StaffPage = lazy(() => import('./pages/StaffPage').then((m) => ({ default: m.StaffPage })));
+const TasksPage = lazy(() => import('./pages/TasksPage').then((m) => ({ default: m.TasksPage })));
 
 export default function App() {
   return (
@@ -53,6 +54,14 @@ export default function App() {
               }
             />
             <Route
+              path="tasks"
+              element={
+                <Suspense fallback={<Skeleton className="h-96" />}>
+                  <TasksPage />
+                </Suspense>
+              }
+            />
+            <Route
               path="staff"
               element={
                 <Suspense fallback={<Skeleton className="h-96" />}>
@@ -60,7 +69,7 @@ export default function App() {
                 </Suspense>
               }
             />
-            {MODULES.filter((m) => !['home', 'inventory', 'resources', 'response', 'staff'].includes(m.id)).map((m) => (
+            {MODULES.filter((m) => !['home', 'inventory', 'resources', 'response', 'staff', 'tasks'].includes(m.id)).map((m) => (
               <Route key={m.id} path={m.path.slice(1)} element={<ModulePlaceholderPage moduleId={m.id} />} />
             ))}
             <Route path="*" element={<NotFoundPage />} />

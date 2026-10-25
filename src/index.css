@@ -167,7 +167,8 @@
 }
 
 /* Inventory report: hidden on screen, the only thing printed (Print → Save as PDF). */
-.print-report {
+.print-report,
+.print-certificate {
   display: none;
 }
 @media print {
@@ -251,5 +252,88 @@
     margin-top: 12pt;
     color: #777;
     font-size: 7.5pt;
+  }
+}
+
+/* Tasks: Certificate of Recognition (Badges and rewards → Levels → Certificate). */
+@media print {
+  .print-certificate {
+    display: flex;
+    height: 180mm;
+    font-family: Montserrat, Arial, sans-serif;
+    color: #222;
+  }
+  .print-certificate .frame {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6pt;
+    padding: 18mm 24mm;
+    border: 3pt double #640606;
+    outline: 1pt solid #ec952a;
+    outline-offset: -9pt;
+    text-align: center;
+  }
+  .print-certificate .org {
+    margin: 0;
+    font: 22pt 'Archivo Black', 'Arial Black', sans-serif;
+    letter-spacing: 0.08em;
+    color: #640606;
+  }
+  .print-certificate .org-sub {
+    margin: 0 0 10pt;
+    font-size: 9pt;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #666;
+  }
+  .print-certificate h1 {
+    margin: 0;
+    font: 26pt 'Archivo Black', 'Arial Black', sans-serif;
+    color: #353535;
+  }
+  .print-certificate .lead {
+    margin: 10pt 0 0;
+    font-size: 11pt;
+    color: #555;
+  }
+  .print-certificate .name {
+    margin: 0;
+    padding: 0 24pt 4pt;
+    border-bottom: 1pt solid #ec952a;
+    font-size: 24pt;
+    font-weight: 700;
+    color: #640606;
+  }
+  .print-certificate .body {
+    max-width: 150mm;
+    margin: 8pt 0 0;
+    font-size: 11.5pt;
+    line-height: 1.5;
+  }
+  .print-certificate .date {
+    margin: 6pt 0 0;
+    font-size: 10pt;
+    color: #555;
+  }
+  .print-certificate .signatures {
+    display: flex;
+    gap: 40mm;
+    margin-top: 22pt;
+  }
+  .print-certificate .signatures span {
+    min-width: 55mm;
+    padding-top: 4pt;
+    border-top: 0.75pt solid #353535;
+    font-size: 9pt;
+    color: #444;
+  }
+  .print-certificate .motto {
+    margin: 14pt 0 0;
+    font-size: 9.5pt;
+    font-style: italic;
+    color: #640606;
   }
 }
