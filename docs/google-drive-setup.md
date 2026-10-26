@@ -50,7 +50,7 @@ Do this signed in as **info.philrads@gmail.com**.
      a public home page, and days of review). Without one, the app works right away; you'll just see a
      "Google hasn't verified this app" warning once, when connecting. If you already added one, click **Remove**
      and **Cancel** any "Branding verification issues" panel.
-   - Application home page: `https://philrads-portal.vercel.app`
+   - Application home page: `https://philrads-portal.vercel.app/about.html` (public; explains the app)
    - Application privacy policy link: `https://philrads-portal.vercel.app/privacy.html`
    - Application terms of service link: leave empty.
    - Authorized domains: **+ Add domain** → `philrads-portal.vercel.app`

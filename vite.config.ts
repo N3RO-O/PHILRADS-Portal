@@ -53,8 +53,8 @@ export default defineConfig({
         // Precache only the built app shell and static assets.
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         navigateFallback: '/index.html',
-        // /privacy.html is a plain public page (Google's sign-in screen links to it), not the app.
-        navigateFallbackDenylist: [/^\/api\//, /^\/privacy\.html$/],
+        // /about.html and /privacy.html are plain public pages (Google's sign-in screen links to them), not the app.
+        navigateFallbackDenylist: [/^\/api\//, /^\/(about|privacy)\.html$/],
         cleanupOutdatedCaches: true,
         // Runtime caching is limited to public font files and map tiles. Supabase, Google Drive and any
         // authenticated API traffic is deliberately NOT listed, so it always goes to the network

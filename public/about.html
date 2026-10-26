@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PHILRADS Staff Portal · About</title>
+    <meta
+      name="description"
+      content="The PHILRADS Staff Portal is the internal work tool of Philippine Relief and Development Services, Inc. for coordinating disaster relief: stock, tasks, the Live Map and field documentation."
+    />
+    <link rel="icon" href="/favicon-32x32.png" />
+    <style>
+      :root {
+        color-scheme: dark;
+        --page: #141518;
+        --surface: #1c1d21;
+        --ink: #f1efe9;
+        --soft: #c9c5bb;
+        --muted: #9a9ca6;
+        --line: #2c2e34;
+        --accent: #ec952a;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--page);
+        color: var(--ink);
+        font: 16px/1.65 Montserrat, system-ui, -apple-system, 'Segoe UI', sans-serif;
+      }
+      main { max-width: 52rem; margin: 0 auto; padding: 2.5rem 1rem 4rem; }
+      header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 2.5rem; }
+      header img { width: 48px; height: 48px; }
+      header p { margin: 0; font-weight: 700; letter-spacing: 0.04em; }
+      header span { display: block; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.14em; color: var(--muted); text-transform: uppercase; }
+      h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); line-height: 1.15; margin: 0 0 1rem; }
+      .lead { font-size: 1.1rem; color: var(--soft); margin: 0 0 1.75rem; }
+      h2 { font-size: 1.15rem; margin: 2.25rem 0 0.75rem; color: var(--accent); }
+      p, li { color: var(--soft); }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 0.75rem; }
+      .card { background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; padding: 1rem 1.15rem; }
+      .card h3 { margin: 0 0 0.35rem; font-size: 1rem; color: var(--ink); }
+      .card p { margin: 0; font-size: 0.925rem; }
+      .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.5rem; }
+      .btn { display: inline-block; padding: 0.7rem 1.2rem; border-radius: 0.75rem; font-weight: 700; text-decoration: none; }
+      .primary { background: var(--accent); color: #1c1d21; }
+      .ghost { border: 1px solid var(--line); color: var(--ink); }
+      a { color: var(--accent); }
+      strong { color: var(--ink); }
+      footer { margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--line); font-size: 0.875rem; color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <img src="/brand/philrads-emblem.png" alt="PHILRADS emblem" />
+        <p>PHILRADS <span>Staff Portal</span></p>
+      </header>
+
+      <h1>The work tool of PHILRADS relief staff and volunteers</h1>
+      <p class="lead">
+        The PHILRADS Staff Portal helps <strong>Philippine Relief and Development Services, Inc. (PHILRADS)</strong>, a Philippine relief and
+        development organisation, coordinate disaster response: tracking relief goods, planning the team's work, seeing where people and places
+        are, and keeping a record of what was done in the field. It is for PHILRADS staff and volunteers only; accounts are created by PHILRADS.
+      </p>
+      <div class="actions">
+        <a class="btn primary" href="/">Staff sign-in</a>
+        <a class="btn ghost" href="/privacy.html">Privacy Policy</a>
+      </div>
+
+      <h2>What staff use it for</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Relief stock</h3>
+          <p>See relief goods in each warehouse and field hub, with every receipt, release and transfer recorded.</p>
+        </div>
+        <div class="card">
+          <h3>Tasks</h3>
+          <p>Plan the day's work in the field and at the office, give tasks to teammates and track what's done.</p>
+        </div>
+        <div class="card">
+          <h3>Live Map</h3>
+          <p>Warehouses, response sites and evacuation centres on one map, with weather, and team check-ins.</p>
+        </div>
+        <div class="card">
+          <h3>Documentation</h3>
+          <p>Upload photos, videos and reports from the field as a record of relief work and as evidence for reports to partners.</p>
+        </div>
+        <div class="card">
+          <h3>Resources</h3>
+          <p>Forms, policies, manuals and reports staff can open or download.</p>
+        </div>
+      </div>
+
+      <h2>Why the portal asks for Google Drive access</h2>
+      <p>
+        PHILRADS keeps its field documentation in its own Google Drive. An administrator connects the PHILRADS Google account once, so that
+        photos, videos and reports staff upload in the portal are saved straight into the PHILRADS Documentation folder in Drive (filed by
+        who uploaded them and what they are), and so signed-in staff can view them in the portal. The portal does not use the access for
+        anything else: it does not read, change or delete other files, files are never made public, and nothing is sold or used for
+        advertising. Details are in the <a href="/privacy.html">Privacy Policy</a>.
+      </p>
+
+      <h2>Contact</h2>
+      <p>
+        Philippine Relief and Development Services, Inc. (PHILRADS)<br />
+        1st/F Evangelical Center, 62 Molave St., Project 3, Quezon City 1102, Philippines<br />
+        <a href="mailto:info.philrads@gmail.com">info.philrads@gmail.com</a> · <a href="https://philrads.org/">philrads.org</a>
+      </p>
+
+      <footer>© 2026 Philippine Relief and Development Services, Inc. · <a href="/privacy.html">Privacy Policy</a></footer>
+    </main>
+  </body>
+</html>
