@@ -46,6 +46,10 @@ Do this signed in as **info.philrads@gmail.com**.
    - Click **Update**, then **Save** at the bottom.
 6. Fill in the app's details (Google asks for these before it lets you publish):
    - In the left menu, click **Branding**.
+   - **Don't upload a logo.** A logo makes Google require brand verification (proving you own the website,
+     a public home page, and days of review). Without one, the app works right away; you'll just see a
+     "Google hasn't verified this app" warning once, when connecting. If you already added one, click **Remove**
+     and **Cancel** any "Branding verification issues" panel.
    - Application home page: `https://philrads-portal.vercel.app`
    - Application privacy policy link: `https://philrads-portal.vercel.app/privacy.html`
    - Application terms of service link: leave empty.
