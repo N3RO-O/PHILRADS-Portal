@@ -206,7 +206,8 @@ export function LiveMapPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <section className="card relative overflow-hidden p-0 lg:grid lg:grid-cols-[22rem_minmax(0,1fr)]">
+      {/* "isolate": the map's own layers stay under the top bar's menus. */}
+      <section className="card relative isolate overflow-hidden p-0 lg:grid lg:grid-cols-[24rem_minmax(0,1fr)]">
         {/* Desktop: list and layers beside the map */}
         <aside className="hidden h-[calc(100dvh-13rem)] min-h-[34rem] flex-col border-r border-line/70 lg:flex">
           <div className="flex items-center justify-between gap-2 border-b border-line/70 px-4 py-3">
