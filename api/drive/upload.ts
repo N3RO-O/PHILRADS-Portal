@@ -10,7 +10,6 @@ import { z } from 'zod';
 import { accessToken, caller, can, childFolder, config, connection, DriveConnectionError, folderName, json, noteError, rest, siteOrigin } from '../_drive.js';
 
 const CATEGORIES = ['Photos', 'Videos', 'Reports', 'Assessments', 'Distribution records', 'Contracts and agreements', 'Other'] as const;
-const MAX_BYTES = 2 * 1024 ** 3;
 const OK_TYPES = /^(image\/|video\/|application\/pdf$|application\/msword$|application\/vnd\.openxmlformats-officedocument\.(wordprocessingml\.document|spreadsheetml\.sheet|presentationml\.presentation)$|application\/vnd\.ms-excel$)/;
 
 const body = z.object({
@@ -23,7 +22,8 @@ const body = z.object({
   mapPlaceId: z.string().uuid().optional().nullable(),
   fileName: z.string().trim().min(1).max(255),
   mimeType: z.string().regex(OK_TYPES, 'This file type is not accepted. Use photos, videos, PDF, Word, Excel or PowerPoint files.'),
-  sizeBytes: z.number().int().positive().max(MAX_BYTES, 'This file is larger than the 2 GB limit.'),
+  // No size limit of our own (PHILRADS, 2026-10-26): Google Drive's space is the only limit.
+  sizeBytes: z.number().int().positive(),
 });
 
 export async function POST(request: Request) {

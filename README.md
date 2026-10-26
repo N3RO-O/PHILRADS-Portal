@@ -181,7 +181,7 @@ All text pairs meet WCAG AA (lowest is muted text on menus, 4.74:1). Shared styl
 | Real roles and permissions | PHILRADS to confirm staff roles and who can see or change what ([docs/roles-and-permissions.md](docs/roles-and-permissions.md)) |
 | Google Drive uploads | Google Cloud project, Drive API, credentials, folder IDs and the server function ([docs/google-drive.md](docs/google-drive.md)) |
 | PDM module | The official meaning and scope of “PDM” |
-| Upload limits and file types | Confirm the proposed 2 GB limit and the accepted formats |
+| Upload limits and file types | Decided: no size limit (Google Drive storage is the limit); photos, videos, PDF and Office files |
 | Official emblem files | High-resolution or vector logo to replace the cropped raster |
 | IMS go-live | Upload the IMS changes to InfinityFree, run its migration, set the sync key (docs/ims-sync.md); confirm the 30/60/90-day expiry windows |
 | The seven other modules | Business rules for Live Map, PDM, Documentation, Response, Projects, Tasks and Print Docs |

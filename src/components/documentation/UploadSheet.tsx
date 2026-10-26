@@ -114,7 +114,7 @@ export function UploadSheet({ open, onClose, onUpload, events, places, today }: 
         >
           <ImagePlus className="h-7 w-7 text-uplift" aria-hidden />
           <span className="text-sm font-semibold">{picked.length ? 'Add more files' : 'Choose photos, videos or files'}</span>
-          <span className="text-xs text-muted">From your phone’s gallery or camera, or drag them here. Up to 2 GB each.</span>
+          <span className="text-xs text-muted">From your phone’s gallery or camera, or drag them here. Any size, big videos too.</span>
         </button>
 
         {picked.length > 0 && (

@@ -81,7 +81,6 @@ export class DriveNotConfiguredError extends Error {
 
 /** Upload limits and accepted types. Values are proposals: confirm with PHILRADS. */
 export const UPLOAD_RULES = {
-  maxBytes: 2 * 1024 ** 3, // 2 GB (TBC), resumable uploads make large videos feasible
   acceptedMimePrefixes: ['image/', 'video/'],
   acceptedMimeTypes: [
     'application/pdf',
@@ -105,7 +104,6 @@ export function validateUploadFile(file: File): string | null {
     UPLOAD_RULES.acceptedMimePrefixes.some((p) => file.type.startsWith(p)) ||
     (UPLOAD_RULES.acceptedMimeTypes as readonly string[]).includes(file.type);
   if (!typeOk) return 'This file type is not accepted. Use photos, videos, PDF, Word, Excel or PowerPoint files.';
-  if (file.size > UPLOAD_RULES.maxBytes) return 'This file is larger than the 2 GB limit.';
   if (file.size === 0) return 'This file is empty.';
   return null;
 }

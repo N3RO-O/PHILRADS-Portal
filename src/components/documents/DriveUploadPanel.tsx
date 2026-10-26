@@ -77,7 +77,7 @@ export function DriveUploadPanel() {
           <CloudUpload className="h-6 w-6" aria-hidden />
         </span>
         <span className="text-sm font-semibold text-ink">Choose files</span>
-        <span className="text-xs text-muted">Up to 2 GB each (limit to be confirmed)</span>
+        <span className="text-xs text-muted">Any size</span>
         <input id={inputId} type="file" multiple accept={UPLOAD_RULES.accept} onChange={onPick} className="sr-only" />
       </label>
       <label className="flex flex-col gap-1.5 text-sm font-medium text-ink-soft">
