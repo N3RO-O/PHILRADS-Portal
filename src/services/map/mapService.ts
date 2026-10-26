@@ -5,7 +5,7 @@ import { MapRuleError, type CheckIn, type MapPlace, type MapService, type PlaceD
 
 // ───────────────────────── Sample data (this browser only) ─────────────────────────
 
-const STORE_KEY = 'philrads.sample.map.v1';
+const STORE_KEY = 'philrads.sample.map.v2';
 const minutesAgo = (m: number) => new Date(Date.now() - m * 60_000).toISOString();
 
 /** Real towns, invented sites. Names of stock locations match the sample IMS data. */
@@ -13,7 +13,8 @@ const seedPlaces = (): MapPlace[] =>
   (
     [
       ['p-mnl', 'Main Manila Warehouse', 'warehouse', 14.5869, 120.9772, 'Port Area, Manila', 'Main Manila Warehouse', null],
-      ['p-qc', 'PHILRADS Office', 'office', 14.6507, 121.0494, 'Quezon City', null, null],
+      // Molave St., Project 3 (OpenStreetMap has the street, not the building number).
+      ['p-qc', 'PHILRADS Office', 'office', 14.62925, 121.06675, '1st/F Evangelical Center, 62 Molave St., Project 3, Quezon City 1102', null, null],
       ['p-ceb', 'Cebu Hub', 'hub', 10.3157, 123.8854, 'Cebu City', 'Cebu Hub', null],
       ['p-tac', 'Tacloban Field Hub', 'hub', 11.2444, 125.0039, 'Tacloban City, Leyte', 'Tacloban Field Hub', 'sample-ev-1'],
       ['p-bcl', 'Legazpi Field Drop-off Point', 'distribution_point', 13.1391, 123.7438, 'Legazpi City, Albay', 'Legazpi Field Drop-off Point', null],
