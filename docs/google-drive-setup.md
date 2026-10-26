@@ -44,10 +44,17 @@ Do this signed in as **info.philrads@gmail.com**.
      ("See, edit, create and delete all of your Google Drive files"). Also tick **openid** and **email**
      (`.../auth/userinfo.email`).
    - Click **Update**, then **Save** at the bottom.
-6. Make it last (important: otherwise the connection stops after 7 days):
+6. Fill in the app's details (Google asks for these before it lets you publish):
+   - In the left menu, click **Branding**.
+   - Application home page: `https://philrads-portal.vercel.app`
+   - Application privacy policy link: `https://philrads-portal.vercel.app/privacy.html`
+   - Application terms of service link: leave empty.
+   - Authorized domains: **+ Add domain** → `philrads-portal.vercel.app`
+   - Developer contact: `info.philrads@gmail.com` → **Save**.
+7. Make it last (important: otherwise the connection stops after 7 days):
    - In the left menu, click **Audience** → under "Publishing status", click **Publish app** → **Confirm**.
      It should now say **In production**.
-7. Create the portal's key:
+8. Create the portal's key:
    - In the left menu, click **Clients** → **Create client**.
    - Application type: **Web application**. Name: `PHILRADS Portal`.
    - Under **Authorised redirect URIs**, click **Add URI** and paste exactly:
