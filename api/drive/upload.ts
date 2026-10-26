@@ -13,6 +13,18 @@ import { accessToken, caller, can, config, connection, DriveConnectionError, fol
 const CATEGORIES = ['Photos', 'Videos', 'Reports', 'Assessments', 'Distribution records', 'Contracts and agreements', 'Other'] as const;
 const OK_TYPES = /^(image\/|video\/|application\/pdf$|application\/msword$|application\/vnd\.openxmlformats-officedocument\.(wordprocessingml\.document|spreadsheetml\.sheet|presentationml\.presentation)$|application\/vnd\.ms-excel$)/;
 
+/** What each category may hold (mirrors CATEGORY_FILES in src/services/googleDrive.ts). */
+const kindOf = (mime: string) => (mime.startsWith('image/') ? 'photo' : mime.startsWith('video/') ? 'video' : 'document');
+const CATEGORY_KINDS: Record<(typeof CATEGORIES)[number], string[]> = {
+  Photos: ['photo'],
+  Videos: ['video'],
+  Reports: ['document'],
+  Assessments: ['document'],
+  'Distribution records': ['document', 'photo'],
+  'Contracts and agreements': ['document', 'photo'],
+  Other: ['photo', 'video', 'document'],
+};
+
 const body = z.object({
   title: z.string().trim().min(1, 'Give the file a title.').max(200),
   category: z.enum(CATEGORIES),
@@ -35,6 +47,8 @@ export async function POST(request: Request) {
   const parsed = body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return json(400, { error: parsed.error.issues[0]?.message ?? 'Check the file details.' });
   const m = parsed.data;
+  if (!CATEGORY_KINDS[m.category].includes(kindOf(m.mimeType)))
+    return json(400, { error: `This file doesn’t fit ${m.category}: choose the category that matches it (photo, video or document).` });
 
   const conn = await connection(c);
   if (!conn) return json(503, { error: 'Google Drive isn’t connected yet. An administrator connects it on the Documentation page.' });

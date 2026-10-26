@@ -3,6 +3,7 @@ import { Download, FileText, Loader2, Pencil, Trash2 } from 'lucide-react';
 import { formatBytes, formatDateTime, formatShortDate } from '../../lib/format';
 import type { DocFile, DocLinks, DocPatch } from '../../services/documentation/documentationService';
 import { DOCUMENT_CATEGORIES, type DocumentCategory } from '../../types';
+import { categoryAllows } from '../../services/googleDrive';
 import { Sheet } from '../ui/Sheet';
 import type { TagOption } from './UploadSheet';
 
@@ -131,7 +132,15 @@ export function DocViewer({ doc, links, canEdit, events, places, onClose, onSave
             </label>
             <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="What it is">
               {DOCUMENT_CATEGORIES.map((c) => (
-                <button key={c} type="button" className="chip" aria-pressed={draft.category === c} onClick={() => setDraft((d) => ({ ...d, category: c as DocumentCategory }))}>
+                <button
+                  key={c}
+                  type="button"
+                  className="chip"
+                  aria-pressed={draft.category === c}
+                  // Only categories this kind of file fits (a video can't become a Photo).
+                  disabled={!categoryAllows(c, doc.mimeType)}
+                  onClick={() => setDraft((d) => ({ ...d, category: c as DocumentCategory }))}
+                >
                   {c}
                 </button>
               ))}

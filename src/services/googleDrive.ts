@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { MODULES } from '../config/modules';
-import { DOCUMENT_CATEGORIES, type ModuleId } from '../types';
+import { DOCUMENT_CATEGORIES, type DocumentCategory, type ModuleId } from '../types';
 
 /**
  * GOOGLE DRIVE INTEGRATION BOUNDARY (stub)
@@ -106,6 +106,41 @@ export function validateUploadFile(file: File): string | null {
   if (!typeOk) return 'This file type is not accepted. Use photos, videos, PDF, Word, Excel or PowerPoint files.';
   if (file.size === 0) return 'This file is empty.';
   return null;
+}
+
+// ───────────────────────── What each category may hold (PHILRADS, 2026-10-26) ─────────────────────────
+// Mirrored in api/drive/upload.ts (the server checks it too).
+
+export type FileKind = 'photo' | 'video' | 'document';
+
+export const fileKind = (mime: string): FileKind | null =>
+  mime.startsWith('image/') ? 'photo' : mime.startsWith('video/') ? 'video' : (UPLOAD_RULES.acceptedMimeTypes as readonly string[]).includes(mime) ? 'document' : null;
+
+const DOCS = '.pdf,.doc,.docx,.xls,.xlsx,.pptx';
+
+export const CATEGORY_FILES: Record<DocumentCategory, { kinds: FileKind[]; accept: string; hint: string }> = {
+  Photos: { kinds: ['photo'], accept: 'image/*', hint: 'Photos only (JPG, PNG, HEIC…).' },
+  Videos: { kinds: ['video'], accept: 'video/*', hint: 'Videos only (MP4, MOV…).' },
+  Reports: { kinds: ['document'], accept: DOCS, hint: 'Documents only: PDF, Word, Excel or PowerPoint.' },
+  Assessments: { kinds: ['document'], accept: DOCS, hint: 'Documents only: PDF, Word, Excel or PowerPoint.' },
+  'Distribution records': { kinds: ['document', 'photo'], accept: `${DOCS},image/*`, hint: 'Documents, or photos of the signed paper.' },
+  'Contracts and agreements': { kinds: ['document', 'photo'], accept: `${DOCS},image/*`, hint: 'Documents, or photos of the signed paper.' },
+  Other: { kinds: ['photo', 'video', 'document'], accept: UPLOAD_RULES.accept, hint: 'Photos, videos or documents.' },
+};
+
+const KIND_WORD: Record<FileKind, string> = { photo: 'a photo', video: 'a video', document: 'a document' };
+const KIND_CATEGORY: Record<FileKind, DocumentCategory> = { photo: 'Photos', video: 'Videos', document: 'Reports' };
+
+export const categoryAllows = (category: DocumentCategory, mime: string) => {
+  const kind = fileKind(mime);
+  return Boolean(kind && CATEGORY_FILES[category].kinds.includes(kind));
+};
+
+/** Why this file can't go in this category (null if it can), e.g. "This is a video. Choose Videos for it." */
+export function categoryMismatch(category: DocumentCategory, mime: string): string | null {
+  const kind = fileKind(mime);
+  if (!kind || categoryAllows(category, mime)) return null;
+  return `This is ${KIND_WORD[kind]}, not for ${category}. Choose ${KIND_CATEGORY[kind]} for it.`;
 }
 
 export const driveUploadService: DriveUploadService = {

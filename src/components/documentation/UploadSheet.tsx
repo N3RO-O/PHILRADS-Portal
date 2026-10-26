@@ -2,7 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { FileText, Film, ImagePlus, Upload, X } from 'lucide-react';
 import { formatBytes } from '../../lib/format';
 import { categoryFor, titleFor, type UploadMeta } from '../../services/documentation/documentationService';
-import { UPLOAD_RULES, validateUploadFile } from '../../services/googleDrive';
+import { CATEGORY_FILES, categoryMismatch, validateUploadFile } from '../../services/googleDrive';
 import { DOCUMENT_CATEGORIES, type DocumentCategory } from '../../types';
 import { Sheet } from '../ui/Sheet';
 
@@ -34,6 +34,8 @@ export function UploadSheet({ open, onClose, onUpload, events, places, today }: 
   const input = useRef<HTMLInputElement>(null);
   const [picked, setPicked] = useState<Picked[]>([]);
   const [category, setCategory] = useState<DocumentCategory>('Photos');
+  /** The uploader picked a category themselves (then files don't change it). */
+  const [chosen, setChosen] = useState(false);
   const [takenOn, setTakenOn] = useState(today);
   const [eventId, setEventId] = useState('');
   const [placeId, setPlaceId] = useState('');
@@ -53,6 +55,7 @@ export function UploadSheet({ open, onClose, onUpload, events, places, today }: 
     if (!open) return;
     setPicked([]);
     setCategory('Photos');
+    setChosen(false);
     setTakenOn(today);
     setEventId('');
     setPlaceId('');
@@ -68,12 +71,15 @@ export function UploadSheet({ open, onClose, onUpload, events, places, today }: 
       preview: file.type.startsWith('image/') ? (previews.current[previews.current.push(URL.createObjectURL(file)) - 1] ?? null) : null,
       error: validateUploadFile(file),
     }));
-    // The first pick sets a sensible category (photos, videos, reports).
-    if (!picked.length) setCategory(categoryFor(next[0].file.type));
+    // Nothing chosen yet: the first pick sets a sensible category (photos, videos, reports).
+    if (!picked.length && !chosen) setCategory(categoryFor(next[0].file.type));
     setPicked((p) => [...p, ...next]);
   };
 
-  const ok = picked.filter((p) => !p.error);
+  // A file that doesn't fit the chosen category (a video under Photos…) is shown and left out.
+  const problem = (p: Picked) => p.error ?? categoryMismatch(category, p.file.type);
+  const ok = picked.filter((p) => !problem(p));
+  const leftOut = picked.length - ok.length;
   const total = useMemo(() => ok.reduce((s, p) => s + p.file.size, 0), [ok]);
   const submit = () => {
     if (!ok.length) return;
@@ -96,12 +102,28 @@ export function UploadSheet({ open, onClose, onUpload, events, places, today }: 
       footer={
         <button type="button" className="btn-primary h-12 w-full text-base" onClick={submit} disabled={!ok.length}>
           <Upload className="h-5 w-5" aria-hidden />
-          {ok.length ? `Upload ${ok.length} file${ok.length === 1 ? '' : 's'} (${formatBytes(total)})` : 'Choose files first'}
+          {ok.length
+            ? `Upload ${ok.length} file${ok.length === 1 ? '' : 's'} (${formatBytes(total)})${leftOut ? `, ${leftOut} left out` : ''}`
+            : picked.length
+              ? 'None of these fit this category'
+              : 'Choose files first'}
         </button>
       }
     >
       <div className="flex flex-col gap-5">
-        <input ref={input} type="file" multiple accept={UPLOAD_RULES.accept} className="sr-only" onChange={(e) => (add(e.target.files), (e.target.value = ''))} />
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-1 text-sm font-semibold text-ink-soft">What are they?</legend>
+          <div className="flex flex-wrap gap-2">
+            {DOCUMENT_CATEGORIES.map((c) => (
+              <button key={c} type="button" className="chip" aria-pressed={category === c} onClick={() => (setCategory(c), setChosen(true))}>
+                {c}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-muted">{CATEGORY_FILES[category].hint}</p>
+        </fieldset>
+
+        <input ref={input} type="file" multiple accept={CATEGORY_FILES[category].accept} className="sr-only" onChange={(e) => (add(e.target.files), (e.target.value = ''))} />
         <button
           type="button"
           onClick={() => input.current?.click()}
@@ -113,14 +135,14 @@ export function UploadSheet({ open, onClose, onUpload, events, places, today }: 
           }}
         >
           <ImagePlus className="h-7 w-7 text-uplift" aria-hidden />
-          <span className="text-sm font-semibold">{picked.length ? 'Add more files' : 'Choose photos, videos or files'}</span>
+          <span className="text-sm font-semibold">{picked.length ? 'Add more' : `Choose ${category === 'Photos' ? 'photos' : category === 'Videos' ? 'videos' : 'files'}`}</span>
           <span className="text-xs text-muted">From your phone’s gallery or camera, or drag them here. Any size, big videos too.</span>
         </button>
 
         {picked.length > 0 && (
           <ul className="flex flex-col gap-2">
             {picked.map((p) => (
-              <li key={p.key} className={`flex items-start gap-3 rounded-xl border p-2 ${p.error ? 'border-status-out/50 bg-status-out/5' : 'border-line/70'}`}>
+              <li key={p.key} className={`flex items-start gap-3 rounded-xl border p-2 ${problem(p) ? 'border-status-out/50 bg-status-out/5' : 'border-line/70'}`}>
                 <span className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-lg bg-surface-sunken">
                   {p.preview ? (
                     <img src={p.preview} alt="" className="h-full w-full object-cover" />
@@ -136,10 +158,10 @@ export function UploadSheet({ open, onClose, onUpload, events, places, today }: 
                     aria-label={`Title for ${p.file.name}`}
                     value={p.title}
                     maxLength={200}
-                    disabled={Boolean(p.error)}
+                    disabled={Boolean(problem(p))}
                     onChange={(e) => setPicked((list) => list.map((x) => (x.key === p.key ? { ...x, title: e.target.value } : x)))}
                   />
-                  <span className={`truncate text-[0.6875rem] ${p.error ? 'text-status-out' : 'text-muted'}`}>{p.error ?? `${p.file.name} · ${formatBytes(p.file.size)}`}</span>
+                  <span className={`text-[0.6875rem] ${problem(p) ? 'text-status-out' : 'truncate text-muted'}`}>{problem(p) ?? `${p.file.name} · ${formatBytes(p.file.size)}`}</span>
                 </span>
                 <button type="button" className="icon-btn h-9 w-9 shrink-0" aria-label={`Leave out ${p.file.name}`} onClick={() => setPicked((list) => list.filter((x) => x.key !== p.key))}>
                   <X className="h-4 w-4" aria-hidden />
@@ -148,17 +170,6 @@ export function UploadSheet({ open, onClose, onUpload, events, places, today }: 
             ))}
           </ul>
         )}
-
-        <fieldset className="flex flex-col gap-2">
-          <legend className="mb-1 text-sm font-semibold text-ink-soft">What are they?</legend>
-          <div className="flex flex-wrap gap-2">
-            {DOCUMENT_CATEGORIES.map((c) => (
-              <button key={c} type="button" className="chip" aria-pressed={category === c} onClick={() => setCategory(c)}>
-                {c}
-              </button>
-            ))}
-          </div>
-        </fieldset>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1.5" htmlFor={`${uid}-taken`}>
