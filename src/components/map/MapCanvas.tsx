@@ -169,7 +169,7 @@ interface Props {
   /** Weather drawn under the pins (null: off). */
   weather?: WeatherView | null;
   /** The area in view, after each move. */
-  onView?: (area: GridArea) => void;
+  onView?: (area: GridArea & { zoom: number }) => void;
   /** A tap on the map itself (not a pin). */
   onMapClick?: (at: LatLng) => void;
   /** A marked spot (the forecast being shown). */
@@ -180,7 +180,7 @@ function Controller({ focus, fit, picking, onCenter, onBackground, onView }: Pic
   const map = useMap();
   const reportView = () => {
     const b = map.getBounds();
-    onView?.({ south: b.getSouth(), north: b.getNorth(), west: b.getWest(), east: b.getEast() });
+    onView?.({ south: b.getSouth(), north: b.getNorth(), west: b.getWest(), east: b.getEast(), zoom: map.getZoom() });
   };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(reportView, [map, onView]);

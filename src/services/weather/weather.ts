@@ -345,3 +345,83 @@ export const cssColor = (scale: ColorStop[], value: number) => {
   const [r, g, b, a] = colorAt(scale, value);
   return `rgba(${r | 0},${g | 0},${b | 0},${a})`;
 };
+
+// ---------------------------------------------------------------------------------------------
+// Land outline (temperature is shown on land only): Natural Earth 1:50m, public domain, clipped to
+// the region around the Philippines (public/geo/land-sea-asia.json, ~35 kB gzipped, loaded once).
+
+export interface LandMask {
+  bbox: [number, number, number, number];
+  /** Flat [lng, lat, lng, lat, …] rings; holes (lakes) are cut out with the even-odd rule. */
+  rings: number[][];
+}
+
+let landPromise: Promise<LandMask | null> | null = null;
+export function loadLand(): Promise<LandMask | null> {
+  landPromise ??= fetch('/geo/land-sea-asia.json')
+    .then((r) => (r.ok ? (r.json() as Promise<LandMask>) : null))
+    .catch(() => {
+      landPromise = null;
+      return null;
+    });
+  return landPromise;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Is the radar showing anything here? (Looks at the radar pictures for the area in view.)
+
+export type RadarCheck = 'rain' | 'dry' | 'uncovered';
+
+const lngToX = (lng: number, z: number) => ((lng + 180) / 360) * 256 * 2 ** z;
+const latToY = (lat: number, z: number) => {
+  const r = (Math.max(-85, Math.min(85, lat)) * Math.PI) / 180;
+  return ((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2) * 256 * 2 ** z;
+};
+
+function loadImage(url: string): Promise<HTMLImageElement | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
+/** Any coloured pixel of these radar pictures inside the view? */
+async function anyPixels(template: string, view: GridArea, z: number): Promise<boolean> {
+  const x0 = lngToX(view.west, z);
+  const x1 = lngToX(view.east, z);
+  const y0 = latToY(view.north, z);
+  const y1 = latToY(view.south, z);
+  const tiles: [number, number][] = [];
+  for (let ty = Math.floor(y0 / 256); ty <= Math.floor(y1 / 256); ty++)
+    for (let tx = Math.floor(x0 / 256); tx <= Math.floor(x1 / 256); tx++) tiles.push([tx, ty]);
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 256;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
+  const n = 2 ** z;
+  for (const [tx, ty] of tiles.slice(0, 16)) {
+    const img = await loadImage(template.replace('{z}', String(z)).replace('{x}', String(((tx % n) + n) % n)).replace('{y}', String(ty)));
+    if (!img) continue;
+    ctx.clearRect(0, 0, 256, 256);
+    ctx.drawImage(img, 0, 0);
+    const left = Math.max(0, Math.floor(x0 - tx * 256));
+    const top = Math.max(0, Math.floor(y0 - ty * 256));
+    const right = Math.min(256, Math.ceil(x1 - tx * 256));
+    const bottom = Math.min(256, Math.ceil(y1 - ty * 256));
+    if (right <= left || bottom <= top) continue;
+    const data = ctx.getImageData(left, top, right - left, bottom - top).data;
+    for (let i = 3; i < data.length; i += 4) if (data[i] > 60) return true;
+  }
+  return false;
+}
+
+export const RADAR_COVERAGE = 'https://tilecache.rainviewer.com/v2/coverage/0/256/{z}/{x}/{y}/0/0_0.png';
+
+/** Whether radar reaches the area in view, and if so whether it sees rain there in this frame. */
+export async function checkRadar(frame: RadarFrame, view: GridArea, zoom: number): Promise<RadarCheck> {
+  const z = Math.max(1, Math.min(7, Math.floor(zoom)));
+  if (!(await anyPixels(RADAR_COVERAGE, view, z))) return 'uncovered';
+  return (await anyPixels(frame.url, view, z)) ? 'rain' : 'dry';
+}

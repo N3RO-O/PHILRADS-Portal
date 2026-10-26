@@ -1,7 +1,20 @@
 import { useEffect, useRef } from 'react';
 import { Pane, TileLayer, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { colorAt, edgeFade, RAIN_SCALE, sample, TEMP_SCALE, WIND_SCALE, type RadarFrame, type WeatherGrid, type WeatherMode } from '../../services/weather/weather';
+import {
+  colorAt,
+  edgeFade,
+  loadLand,
+  RADAR_COVERAGE,
+  RAIN_SCALE,
+  sample,
+  TEMP_SCALE,
+  WIND_SCALE,
+  type LandMask,
+  type RadarFrame,
+  type WeatherGrid,
+  type WeatherMode,
+} from '../../services/weather/weather';
 
 export interface WeatherView {
   mode: WeatherMode;
@@ -13,7 +26,6 @@ export interface WeatherView {
 
 const ATTRIBUTION = 'Weather <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a>';
 const RADAR_ATTRIBUTION = 'Radar <a href="https://www.rainviewer.com/" target="_blank" rel="noopener">RainViewer</a>';
-const RADAR_COVERAGE = 'https://tilecache.rainviewer.com/v2/coverage/0/256/{z}/{x}/{y}/0/0_0.png';
 
 /** Weather drawn under the pins: colours, moving wind lines, clouds and rain, or radar. */
 export function WeatherLayer({ view }: { view: WeatherView }) {
@@ -46,7 +58,7 @@ function Radar({ frames, index }: { frames: RadarFrame[]; index: number }) {
   }, [map]);
   return (
     <>
-      <TileLayer url={RADAR_COVERAGE} pane="weather" opacity={0.07} maxNativeZoom={7} maxZoom={19} />
+      <TileLayer url={RADAR_COVERAGE} pane="weather" opacity={0.12} maxNativeZoom={7} maxZoom={19} />
       {frames.map((f, i) => (
         <TileLayer key={f.url} url={f.url} pane="weather" opacity={i === index ? 0.9 : 0} maxNativeZoom={7} maxZoom={19} attribution={RADAR_ATTRIBUTION} />
       ))}
@@ -55,7 +67,7 @@ function Radar({ frames, index }: { frames: RadarFrame[]; index: number }) {
 }
 
 const SCALE = { wind: WIND_SCALE, rain: RAIN_SCALE, temp: TEMP_SCALE } as const;
-const FIELD_OPACITY = { wind: 0.5, rain: 0.7, temp: 0.72 } as const;
+const FIELD_OPACITY = { wind: 0.5, rain: 0.7, temp: 0.8 } as const;
 /** Colours and clouds are drawn every N screen pixels, then smoothed up. */
 const CELL = 4;
 
@@ -156,6 +168,22 @@ function Field({ grid, hour, mode }: { grid: WeatherGrid | null; hour: number; m
     let flashes: Flash[] = [];
     let stormy = false;
     let proj = projector(map);
+    // Temperature is coloured on land only; the outline loads the first time it's needed.
+    let land: LandMask | null = null;
+    loadLand().then((l) => {
+      land = l;
+      if (l && state.current.mode === 'temp') redraw.current(false);
+    });
+    /** The land in view as a canvas path, at 1/scale of screen pixels. */
+    const landPath = (scale: number) => {
+      const path = new Path2D();
+      for (const r of land?.rings ?? []) {
+        path.moveTo(proj.x(r[0]) / scale, proj.y(r[1]) / scale);
+        for (let k = 2; k < r.length; k += 2) path.lineTo(proj.x(r[k]) / scale, proj.y(r[k + 1]) / scale);
+        path.closePath();
+      }
+      return path;
+    };
 
     const hourOf = (g: WeatherGrid) => Math.min(state.current.hour, g.times.length - 1);
 
@@ -219,6 +247,12 @@ function Field({ grid, hour, mode }: { grid: WeatherGrid | null; hour: number; m
       }
       ctx.putImageData(img, 0, 0);
       if (mask) mctx.putImageData(mask, 0, 0);
+      if (m === 'temp' && land) {
+        ctx.globalCompositeOperation = 'destination-in';
+        ctx.fillStyle = '#000';
+        ctx.fill(landPath(CELL), 'evenodd');
+        ctx.globalCompositeOperation = 'source-over';
+      }
       // Clouds drift with the average wind in view.
       let su = 0;
       let sv = 0;
@@ -244,33 +278,33 @@ function Field({ grid, hour, mode }: { grid: WeatherGrid | null; hour: number; m
       cctx.globalCompositeOperation = 'source-over';
     };
 
-    /** Temperatures written on the map, spaced out. */
+    /** Temperatures written on the land, spaced out. */
     const drawLabels = () => {
       const g = state.current.grid;
       if (state.current.mode !== 'temp' || !g) return;
       const t = hourOf(g);
+      const onLand = land ? landPath(1) : null;
+      lctx.setTransform(1, 0, 0, 1, 0, 0);
+      const spots: [number, number, number][] = [];
+      for (let row = 0, y = 30; y < proj.h - 20; y += 40, row++)
+        for (let x = 28 + (row % 2) * 30; x < proj.w - 24; x += 60) {
+          if (onLand && !lctx.isPointInPath(onLand, x, y, 'evenodd')) continue;
+          const v = sample(g, g.temp[t], proj.lat(y), proj.lng(x));
+          if (Number.isFinite(v)) spots.push([x, y, v]);
+        }
       lctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       lctx.font = '700 12px Montserrat, system-ui, sans-serif';
       lctx.textAlign = 'center';
       lctx.textBaseline = 'middle';
       lctx.lineJoin = 'round';
-      const placed: [number, number][] = [];
-      for (let r = 0; r < g.rows; r++)
-        for (let c = 0; c < g.cols; c++) {
-          const x = proj.x(g.west + c * g.step);
-          const y = proj.y(g.south + r * g.step);
-          if (x < 20 || y < 20 || x > proj.w - 20 || y > proj.h - 20) continue;
-          if (placed.some(([px, py]) => Math.abs(px - x) < 54 && Math.abs(py - y) < 36)) continue;
-          const v = g.temp[t][r * g.cols + c];
-          if (!Number.isFinite(v)) continue;
-          placed.push([x, y]);
-          const text = `${Math.round(v)}°`;
-          lctx.lineWidth = 3.5;
-          lctx.strokeStyle = 'rgba(20,21,25,0.85)';
-          lctx.strokeText(text, x, y);
-          lctx.fillStyle = '#fff';
-          lctx.fillText(text, x, y);
-        }
+      for (const [x, y, v] of spots) {
+        const text = `${Math.round(v)}°`;
+        lctx.lineWidth = 3.5;
+        lctx.strokeStyle = 'rgba(20,21,25,0.85)';
+        lctx.strokeText(text, x, y);
+        lctx.fillStyle = '#fff';
+        lctx.fillText(text, x, y);
+      }
     };
 
     const rainAt = (x: number, y: number) => {

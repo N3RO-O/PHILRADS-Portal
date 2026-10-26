@@ -183,12 +183,35 @@ export function WeatherBar({ weather, onClose }: { weather: MapWeather; onClose:
       )}
 
       {isRadar ? (
-        <p className="px-1 text-[0.6875rem] leading-snug text-muted">
-          Rain seen by radar in the last 2 hours; brighter is heavier. Radar reaches Luzon and parts of the Visayas (lightly shaded), not most of Mindanao: use Rain there.
-        </p>
+        <RadarNote check={weather.radarCheck} onRain={() => setMode('rain')} />
       ) : (
         <Legend mode={mode} />
       )}
+    </div>
+  );
+}
+
+/** What the radar shows, and why the map may be empty. */
+function RadarNote({ check, onRain }: { check: MapWeather['radarCheck']; onRain: () => void }) {
+  const what = 'Radar shows rain actually falling (measured, not a forecast) over the last 2 hours.';
+  return (
+    <div className="flex flex-col gap-1.5 px-1 text-[0.6875rem] leading-snug">
+      {check === 'rain' && <p className="font-semibold text-sky-300">Rain on radar in this area now. Press play to see how it moved.</p>}
+      {check === 'dry' && <p className="font-semibold text-ink-soft">No rain on radar in this area right now, so the map stays clear.</p>}
+      {check === 'uncovered' && (
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 font-semibold text-ink-soft">
+          Radar doesn’t reach this area.
+          <button type="button" onClick={onRain} className="link">
+            See the rain forecast instead
+          </button>
+        </p>
+      )}
+      {check === null && (
+        <p className="flex items-center gap-1.5 text-muted">
+          <Loader2 className="h-3 w-3 animate-spin" aria-hidden /> Checking the radar here…
+        </p>
+      )}
+      <p className="text-muted">{what} It reaches Luzon and parts of the Visayas (lightly shaded), not most of Mindanao.</p>
     </div>
   );
 }

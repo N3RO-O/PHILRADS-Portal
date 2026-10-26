@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  checkRadar,
   covers,
   currentHourIndex,
   fetchGrid,
@@ -7,6 +8,7 @@ import {
   gridAreaFor,
   WeatherBusyError,
   type GridArea,
+  type RadarCheck,
   type RadarFrame,
   type WeatherGrid,
   type WeatherMode,
@@ -27,7 +29,7 @@ export type WeatherStatus = { state: 'idle' | 'loading' | 'ready' } | { state: '
 /** The Live Map's weather: which view is on (remembered on this device), its data for the area in view, and the timeline. */
 export function useMapWeather(online: boolean) {
   const [mode, setModeState] = useState<WeatherMode | null>(readMode);
-  const [view, setView] = useState<GridArea | null>(null);
+  const [view, setView] = useState<(GridArea & { zoom: number }) | null>(null);
   const [grid, setGrid] = useState<WeatherGrid | null>(null);
   const gridArea = useRef<(GridArea & { step: number }) | null>(null);
   const [status, setStatus] = useState<WeatherStatus>({ state: 'idle' });
@@ -37,6 +39,8 @@ export function useMapWeather(online: boolean) {
   const [radar, setRadar] = useState<RadarFrame[]>([]);
   const [radarIndex, setRadarIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
+  /** Radar in the area in view right now: rain, nothing, or out of the radars' reach (null: checking). */
+  const [radarCheck, setRadarCheck] = useState<RadarCheck | null>(null);
 
   const setMode = useCallback((m: WeatherMode | null) => {
     setModeState(m);
@@ -97,6 +101,23 @@ export function useMapWeather(online: boolean) {
     };
   }, [mode, online, retry]);
 
+  // Radar: check the latest picture for the area in view, so an empty map can say why.
+  const latest = radar[radar.length - 1];
+  useEffect(() => {
+    if (mode !== 'radar' || !latest || !view) return;
+    let live = true;
+    setRadarCheck(null);
+    const t = setTimeout(() => {
+      checkRadar(latest, view, view.zoom)
+        .then((r) => live && setRadarCheck(r))
+        .catch(() => live && setRadarCheck(null));
+    }, 400);
+    return () => {
+      live = false;
+      clearTimeout(t);
+    };
+  }, [mode, latest, view]);
+
   const times = grid?.times ?? [];
   let hour = currentHourIndex(times);
   if (hourTime != null && times.length) {
@@ -139,6 +160,7 @@ export function useMapWeather(online: boolean) {
     radar,
     radarIndex,
     setRadarIndex,
+    radarCheck,
     playing,
     setPlaying,
     status: online || !mode ? status : ({ state: 'error', message: 'The weather needs an internet connection.' } as WeatherStatus),
