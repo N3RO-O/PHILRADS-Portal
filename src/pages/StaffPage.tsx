@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Archive, ArchiveRestore, Loader2, MailPlus, RotateCw, Search, UsersRound, X } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../components/auth/AuthProvider';
+import { useOnboarding } from '../components/onboarding/OnboardingProvider';
 import { InviteSheet } from '../components/staff/InviteSheet';
 import { Avatar } from '../components/ui/Avatar';
-import { LoadError, Skeleton } from '../components/ui/Card';
+import { EmptyState, LoadError, Skeleton } from '../components/ui/Card';
 import { SampleBadge } from '../components/ui/SampleBadge';
 import { SwipeToArchive } from '../components/ui/SwipeToArchive';
 import { useAsyncData } from '../hooks/useAsyncData';
@@ -43,7 +45,13 @@ export function StaffPage() {
   const list = useAsyncData(() => staffService.list());
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
-  const [inviteOpen, setInviteOpen] = useState(false);
+  const onboarding = useOnboarding();
+  // "Invite a teammate" from Get started lands here with ?invite=1: open the invite form straight away.
+  const [params, setParams] = useSearchParams();
+  const [inviteOpen, setInviteOpen] = useState(() => params.get('invite') === '1');
+  useEffect(() => {
+    if (params.get('invite')) setParams((p) => (p.delete('invite'), p), { replace: true });
+  }, [params, setParams]);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
   // An archive waiting out its undo window: hidden from the list, saved when the timer ends.
@@ -201,10 +209,27 @@ export function StaffPage() {
           <LoadError message={online ? 'Staff accounts could not be loaded.' : 'You’re offline. Staff accounts need a connection.'} onRetry={list.reload} />
         )}
         {list.status === 'success' && shown.length === 0 && (
-          <div className="tile flex flex-col items-center gap-3 px-4 py-12 text-center text-sm text-muted">
-            {filter === 'archived' ? <Archive className="h-8 w-8" aria-hidden /> : <UsersRound className="h-8 w-8" aria-hidden />}
-            {filter === 'archived' ? 'Nobody is archived.' : all.length === 0 ? 'No accounts yet.' : 'Nobody matches.'}
-          </div>
+          <EmptyState
+            icon={filter === 'archived' ? Archive : UsersRound}
+            title={filter === 'archived' ? 'Nobody is archived' : all.length === 0 ? 'No accounts yet' : 'Nobody matches'}
+            action={
+              search || filter !== 'all' ? (
+                <button type="button" className="btn-ghost min-h-10 px-4 text-sm" onClick={() => (setSearch(''), setFilter('all'))}>
+                  Show everyone
+                </button>
+              ) : (
+                <button type="button" className="btn-primary min-h-10 px-4 text-sm" onClick={() => setInviteOpen(true)} disabled={!online}>
+                  <MailPlus className="h-4 w-4" aria-hidden /> Invite someone
+                </button>
+              )
+            }
+          >
+            {filter === 'archived'
+              ? 'Swipe someone to the right in the list to archive them. They can be restored here.'
+              : all.length === 0
+                ? 'Invite staff and volunteers by email. They choose their own password.'
+                : 'Try another name, email or role.'}
+          </EmptyState>
         )}
 
         {shown.length > 0 && (
@@ -308,6 +333,7 @@ export function StaffPage() {
         onClose={() => setInviteOpen(false)}
         onInvite={async (invite) => {
           await staffService.invite(invite);
+          onboarding.complete('invite');
           list.reload();
         }}
         onDone={(text) => setToast({ text })}

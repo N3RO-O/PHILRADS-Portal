@@ -61,6 +61,7 @@ export function QuickAdd({ today, defaults, onAdd, onMore, disabled }: Props) {
           <Plus className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-uplift" aria-hidden />
           <input
             id={`${uid}-q`}
+            data-quick-add
             className="field pl-11"
             placeholder="Add a task…"
             value={text}

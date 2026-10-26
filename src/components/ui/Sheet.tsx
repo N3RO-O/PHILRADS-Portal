@@ -45,7 +45,7 @@ export function Sheet({ open, title, subtitle, onClose, children, footer, dirty 
     >
       <span className="mx-auto mt-2.5 h-1.5 w-10 shrink-0 rounded-full bg-white/15 md:hidden" aria-hidden />
       <header className="flex shrink-0 items-start justify-between gap-3 border-b border-line/70 px-5 pb-4 pt-3 md:pt-5">
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h2 id={titleId} className="text-lg font-semibold leading-tight">
             {title}
           </h2>

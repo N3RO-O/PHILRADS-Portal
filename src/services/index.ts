@@ -6,6 +6,7 @@ import { createSupabaseDashboardService } from './dashboard/supabaseDashboardSer
 import type { DashboardService } from './dashboard/types';
 import { createImsInventoryService, createSampleImsService } from './inventory/imsInventoryService';
 import { createInventoryStore } from './inventory/inventoryStore';
+import { createSupabaseOnboardingService, mockOnboardingService, type OnboardingService } from './onboarding/onboardingService';
 import { createSupabaseResourcesService, mockResourcesService } from './resources/resourcesService';
 import type { ResourcesService } from './resources/types';
 import { createSupabaseStaffService, mockStaffService } from './staff/staffService';
@@ -37,3 +38,6 @@ export const staffService: StaffService = live ? createSupabaseStaffService(live
 
 /** Tasks, XP, kudos and the team goal (Tasks module). Works offline: changes wait on the device and sync later. */
 export const tasksService: OfflineTasksService = createOfflineTasks(live ? createSupabaseTasksService(live) : mockTasksService);
+
+/** First-run progress (Get started), saved to the person's account and kept on the device. */
+export const onboardingService: OnboardingService = live ? createSupabaseOnboardingService(live) : mockOnboardingService;

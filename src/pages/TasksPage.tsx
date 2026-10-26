@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Building2, CalendarClock, CalendarDays, CheckCheck, ChevronDown, CloudOff, Inbox, Layers, Loader2, MapPin, RefreshCw, Send, Sun, SunMedium, UserRoundCheck, X } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Building2, CalendarClock, CalendarDays, CheckCheck, ChevronDown, CloudOff, Inbox, Layers, Loader2, MapPin, Plus, RefreshCw, Send, Sun, SunMedium, UserRoundCheck, X } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
+import { useOnboarding } from '../components/onboarding/OnboardingProvider';
 import { Certificate } from '../components/tasks/Certificate';
 import { LevelUpDialog, ProgressPanel } from '../components/tasks/Progress';
 import { QuickAdd } from '../components/tasks/QuickAdd';
@@ -39,6 +40,7 @@ const errorText = (e: unknown) => (e instanceof TaskRuleError ? e.message : !nav
 /** Tasks, Any.do style, for humanitarian work in the field and at the office, with levels, badges and a team goal. */
 export function TasksPage() {
   const { profile, can } = useAuth();
+  const onboarding = useOnboarding();
   const online = useOnlineStatus();
   const canManage = can('tasks.manage');
   const [params, setParams] = useSearchParams();
@@ -272,6 +274,7 @@ export function TasksPage() {
     try {
       const saved = await tasksService.save(draft);
       setTasks((ts) => upsert(ts ?? [], saved));
+      onboarding.complete('task');
       setToast({ text: `Added “${saved.title}”.`, tone: 'ok' });
       return true;
     } catch (e) {
@@ -284,6 +287,7 @@ export function TasksPage() {
     try {
       const saved = await tasksService.save(draft);
       setTasks((ts) => upsert(ts ?? [], saved));
+      if (!draft.id) onboarding.complete('task');
       setToast({ text: `${draft.id ? 'Saved' : 'Added'} “${saved.title}”.`, tone: 'ok' });
       return null;
     } catch (e) {
@@ -543,7 +547,21 @@ export function TasksPage() {
                 {myDayDone.length > 0 && <Collapsible label={`Completed today (${myDayDone.length})`} tasks={myDayDone} rowProps={rowProps} />}
               </>
             ) : (
-              <Buckets tasks={shown} today={today} linger={linger} rowProps={rowProps} showList={view !== 'list'} empty={view === 'assigned' ? 'No tasks from others right now.' : view === 'delegated' ? 'You haven’t given anyone a task.' : 'No open tasks here. Add one above.'} />
+              <Buckets
+                tasks={shown}
+                today={today}
+                linger={linger}
+                rowProps={rowProps}
+                showList={view !== 'list'}
+                empty={view === 'assigned' ? 'No tasks from others right now. You can still plan your own.' : view === 'delegated' ? 'You haven’t given anyone a task.' : 'No open tasks here.'}
+                emptyAction={
+                  view === 'delegated' ? (
+                    <button type="button" className="btn-primary min-h-10 px-4 text-sm" onClick={() => setSheet({ task: null, initial: null })}>
+                      <Send className="h-4 w-4" aria-hidden /> Give someone a task
+                    </button>
+                  ) : undefined
+                }
+              />
             ))}
         </section>
 
@@ -668,8 +686,13 @@ function WhereToggle({ where, onChange, compact }: { where: Where; onChange: (w:
   );
 }
 
-function Buckets({ tasks, today, linger, rowProps, showList, empty }: { tasks: Task[]; today: string; linger: Record<string, number>; rowProps: RowProps; showList: boolean; empty: string }) {
-  if (tasks.length === 0) return <Empty icon={<Inbox className="h-8 w-8 text-muted" aria-hidden />}>{empty}</Empty>;
+function Buckets({ tasks, today, linger, rowProps, showList, empty, emptyAction }: { tasks: Task[]; today: string; linger: Record<string, number>; rowProps: RowProps; showList: boolean; empty: string; emptyAction?: ReactNode }) {
+  if (tasks.length === 0)
+    return (
+      <Empty icon={<Inbox className="h-8 w-8 text-muted" aria-hidden />} action={emptyAction}>
+        {empty}
+      </Empty>
+    );
   const groups = new Map<Bucket, Task[]>();
   for (const t of tasks) {
     const b = bucketOf(t.dueDate, today);
@@ -694,7 +717,19 @@ function Buckets({ tasks, today, linger, rowProps, showList, empty }: { tasks: T
 }
 
 function CompletedList({ tasks, awardOf, rowProps }: { tasks: Task[]; awardOf: Map<string, XpAward>; rowProps: RowProps }) {
-  if (tasks.length === 0) return <Empty icon={<CheckCheck className="h-8 w-8 text-muted" aria-hidden />}>Nothing finished yet. Your first task earns the “First step” badge.</Empty>;
+  if (tasks.length === 0)
+    return (
+      <Empty
+        icon={<CheckCheck className="h-8 w-8 text-muted" aria-hidden />}
+        action={
+          <Link to="/tasks?view=myday" className="btn-primary min-h-10 px-4 text-sm">
+            <Sun className="h-4 w-4" aria-hidden /> Open My Day
+          </Link>
+        }
+      >
+        Nothing finished yet. Your first task earns the “First step” badge.
+      </Empty>
+    );
   const sorted = [...tasks].sort((a, b) => (b.completedAt ?? '').localeCompare(a.completedAt ?? ''));
   const days = new Map<string, Task[]>();
   for (const t of sorted) {
@@ -741,11 +776,30 @@ function Collapsible({ label, tasks, rowProps }: { label: string; tasks: Task[];
   );
 }
 
-function Empty({ icon, children }: { icon: ReactNode; children: ReactNode }) {
+/** An empty view always offers the next step: by default, typing a task into Quick add. */
+function Empty({ icon, children, action }: { icon: ReactNode; children: ReactNode; action?: ReactNode }) {
   return (
-    <div className="tile flex flex-col items-center gap-2 px-4 py-10 text-center text-sm text-muted">
+    <div className="tile flex flex-col items-center gap-3 px-4 py-10 text-center text-sm text-muted">
       {icon}
       <p className="max-w-sm">{children}</p>
+      {action === undefined ? <AddTaskButton /> : action}
     </div>
+  );
+}
+
+/** Brings Quick add into view and puts the cursor in it. */
+function AddTaskButton({ label = 'Add a task' }: { label?: string }) {
+  return (
+    <button
+      type="button"
+      className="btn-primary min-h-10 px-4 text-sm"
+      onClick={() => {
+        const input = document.querySelector<HTMLInputElement>('[data-quick-add]');
+        input?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        input?.focus({ preventScroll: true });
+      }}
+    >
+      <Plus className="h-4 w-4" aria-hidden /> {label}
+    </button>
   );
 }

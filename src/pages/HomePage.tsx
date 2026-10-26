@@ -1,4 +1,7 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { GettingStartedBar, GettingStartedCard } from '../components/onboarding/GettingStarted';
+import { useOnboarding } from '../components/onboarding/OnboardingProvider';
+import { WelcomeQuestion } from '../components/onboarding/WelcomeQuestion';
 import { useLocation } from 'react-router-dom';
 import { useLayoutContext } from '../components/layout/AppLayout';
 import { DeadlineCalendar } from '../components/dashboard/DeadlineCalendar';
@@ -37,6 +40,9 @@ export function HomePage() {
   const tasks = useAsyncData(() => dashboardService.getMyTasks());
   const stock = useAsyncData(() => dashboardService.getStockLevels());
   const { hash } = useLocation();
+  const onboarding = useOnboarding();
+  // The one first-run question, asked before anything else (and on request after a skip).
+  const [askAgain, setAskAgain] = useState(false);
 
   useEffect(() => {
     if (!hash) return;
@@ -45,10 +51,21 @@ export function HomePage() {
   }, [hash]);
 
   return (
-    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-12">
+    <>
+    <WelcomeQuestion
+      open={onboarding.askQuestion || askAgain}
+      onAnswer={(focus) => (onboarding.answer(focus), setAskAgain(false))}
+      onSkip={() => (onboarding.state.question ? undefined : onboarding.skipQuestion(), setAskAgain(false))}
+    />
+    <div className={`grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-12 ${onboarding.showChecklist ? 'pb-20 sm:pb-0' : ''}`}>
       <Cell className="order-first md:col-span-2 xl:col-span-12" step={0}>
         <VerseOfTheDay />
       </Cell>
+      {onboarding.showChecklist && (
+        <Cell className="order-first hidden sm:block md:col-span-2 xl:col-span-12" step={0}>
+          <GettingStartedCard onPersonalise={onboarding.state.question === 'skipped' ? () => setAskAgain(true) : undefined} />
+        </Cell>
+      )}
       <Cell className="order-1 md:col-span-2 xl:col-span-12" step={0}>
         <WelcomeBar />
       </Cell>
@@ -77,5 +94,7 @@ export function HomePage() {
         <DeadlineCalendar tasks={tasks} />
       </Cell>
     </div>
+    <GettingStartedBar />
+    </>
   );
 }

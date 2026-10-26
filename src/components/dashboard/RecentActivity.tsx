@@ -4,7 +4,8 @@ import { useAsyncData } from '../../hooks/useAsyncData';
 import { formatDayHeading, formatTime, manilaDayKey } from '../../lib/format';
 import { dashboardService } from '../../services';
 import type { ActivityKind } from '../../types';
-import { Card, LoadError, Skeleton } from '../ui/Card';
+import { Link } from 'react-router-dom';
+import { Card, EmptyState, LoadError, Skeleton } from '../ui/Card';
 import { TONES, matchesSearch } from './labels';
 
 const KIND: Record<ActivityKind, { label: string; icon: LucideIcon; tone: string }> = {
@@ -46,7 +47,33 @@ export function RecentActivity({ search }: { search: string }) {
       {activity.status === 'error' && <LoadError message={activity.error.message} onRetry={activity.reload} />}
       {activity.status === 'success' &&
         (items.length === 0 ? (
-          <p className="tile py-8 text-center text-sm text-muted">No activity matches.</p>
+          activity.data.length === 0 ? (
+            <EmptyState
+              icon={Activity}
+              title="Nothing has happened yet"
+              action={
+                <Link to="/tasks?view=myday" className="btn-primary min-h-10 px-4 text-sm">
+                  Add your first task
+                </Link>
+              }
+            >
+              Tasks, stock movements, uploads and response updates will show here as people work.
+            </EmptyState>
+          ) : (
+            <EmptyState
+              icon={Activity}
+              title="No activity matches"
+              action={
+                kind ? (
+                  <button type="button" className="btn-ghost min-h-10 px-4 text-sm" onClick={() => setKind('')}>
+                    Show all activity
+                  </button>
+                ) : undefined
+              }
+            >
+              {search ? `Nothing recent matches “${search}”.` : 'Nothing of this type lately.'}
+            </EmptyState>
+          )
         ) : (
           <ol className="-mr-2 flex max-h-[25rem] flex-col overflow-y-auto pr-2">
             {items.map((a, i) => {

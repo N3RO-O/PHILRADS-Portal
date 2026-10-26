@@ -2,7 +2,7 @@ import { useEffect, useId, useMemo, useState, type FormEvent } from 'react';
 import { CalendarDays, CircleCheck, Database, ExternalLink, MapPin, Plus, Users, X } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
 import { QuantityStepper } from '../components/inventory/QuantityStepper';
-import { LoadError, Skeleton } from '../components/ui/Card';
+import { EmptyState, LoadError, Skeleton } from '../components/ui/Card';
 import { Dialog } from '../components/ui/Dialog';
 import { SampleBadge } from '../components/ui/SampleBadge';
 import { env } from '../config/env';
@@ -132,7 +132,23 @@ function ImsEvents() {
             </div>
 
             {shown.length === 0 ? (
-              <p className="tile px-4 py-10 text-center text-sm text-muted">No events here.</p>
+              <EmptyState
+                icon={Users}
+                title={filter === 'completed' ? 'No completed events yet' : filter === 'open' ? 'No open relief events' : 'No relief events yet'}
+                action={
+                  filter !== 'all' ? (
+                    <button type="button" className="btn-ghost min-h-10 px-4 text-sm" onClick={() => setFilter('all')}>
+                      Show all events
+                    </button>
+                  ) : imsUrl ? (
+                    <a className="btn-primary min-h-10 px-4 text-sm" href={`${imsUrl}/events.php`} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-4 w-4" aria-hidden /> Plan an event in the IMS
+                    </a>
+                  ) : undefined
+                }
+              >
+                Relief events planned in PHILRADS IMS show here with how many people were served.
+              </EmptyState>
             ) : (
               <ul className="grid gap-3 lg:grid-cols-2">
                 {shown.map((e) => (

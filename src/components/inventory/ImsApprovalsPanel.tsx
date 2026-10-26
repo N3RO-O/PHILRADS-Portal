@@ -3,6 +3,7 @@ import { CheckCheck, CircleCheck, ExternalLink, ShieldCheck } from 'lucide-react
 import { formatDateTime, formatNumber } from '../../lib/format';
 import { imsActionUrl, openImsAction } from '../../lib/imsActions';
 import type { ImsPendingRelease } from '../../services/inventory/imsSnapshot';
+import { EmptyState } from '../ui/Card';
 
 interface Props {
   releases: ImsPendingRelease[];
@@ -20,10 +21,20 @@ export function ImsApprovalsPanel({ releases, imsUrl, sample }: Props) {
 
   if (releases.length === 0)
     return (
-      <div className="tile flex flex-col items-center gap-2 px-4 py-12 text-center text-sm text-muted">
-        <CheckCheck className="h-8 w-8 text-status-in" aria-hidden />
-        No releases waiting for approval in PHILRADS IMS.
-      </div>
+      <EmptyState
+        icon={CheckCheck}
+        tone="text-status-in"
+        title="Nothing waiting for approval"
+        action={
+          imsUrl ? (
+            <a className="btn-ghost min-h-10 px-4 text-sm" href={`${imsUrl}/transactions.php`} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="h-4 w-4" aria-hidden /> See all releases in the IMS
+            </a>
+          ) : undefined
+        }
+      >
+        New releases from PHILRADS IMS appear here, and on your bell, as soon as they’re requested.
+      </EmptyState>
     );
 
   return (

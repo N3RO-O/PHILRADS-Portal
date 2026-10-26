@@ -5,7 +5,7 @@ import { useAuth } from '../components/auth/AuthProvider';
 import { ResourceCard } from '../components/resources/ResourceCard';
 import { ResourcePreview } from '../components/resources/ResourcePreview';
 import { ResourceSheet } from '../components/resources/ResourceSheet';
-import { LoadError, Skeleton } from '../components/ui/Card';
+import { EmptyState, LoadError, Skeleton } from '../components/ui/Card';
 import { SampleBadge } from '../components/ui/SampleBadge';
 import { useAsyncData } from '../hooks/useAsyncData';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
@@ -208,15 +208,31 @@ export function ResourcesPage() {
           <LoadError message={navigator.onLine ? 'Resources could not be loaded.' : 'You’re offline. Resources need a connection.'} onRetry={reload} />
         )}
         {list.status === 'success' && filtered.length === 0 && (
-          <div className="tile flex flex-col items-center gap-3 px-4 py-12 text-center text-sm text-muted">
-            <Library className="h-8 w-8" aria-hidden />
-            {all.length === 0 ? 'No resources yet.' : 'Nothing matches these filters.'}
-            {filtersOn && (
-              <button type="button" className="btn-ghost" onClick={() => (setSearch(''), setParam({ q: null, cat: null, by: null }))}>
-                Clear filters
-              </button>
-            )}
-          </div>
+          <EmptyState
+            icon={Library}
+            title={all.length === 0 ? 'No shared files yet' : 'Nothing matches these filters'}
+            action={
+              filtersOn ? (
+                <button type="button" className="btn-ghost min-h-10 px-4 text-sm" onClick={() => (setSearch(''), setParam({ q: null, cat: null, by: null }))}>
+                  Clear filters
+                </button>
+              ) : canManage ? (
+                <button type="button" className="btn-primary min-h-10 px-4 text-sm" onClick={() => setSheet({ resource: null })}>
+                  <Plus className="h-4 w-4" aria-hidden /> Add the first resource
+                </button>
+              ) : (
+                <button type="button" className="btn-ghost min-h-10 px-4 text-sm" onClick={reload}>
+                  Check again
+                </button>
+              )
+            }
+          >
+            {all.length === 0
+              ? canManage
+                ? 'Paste a Google Drive link to a form, policy or manual so staff can find it here.'
+                : 'Forms, policies and manuals will appear here once an administrator adds them.'
+              : 'Try another word or category.'}
+          </EmptyState>
         )}
 
         {pinned.length > 0 && (

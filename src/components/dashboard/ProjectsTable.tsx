@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, FolderKanban } from 'lucide-react';
 import { useAsyncData } from '../../hooks/useAsyncData';
 import { dashboardService } from '../../services';
-import { Card, LoadError, Skeleton } from '../ui/Card';
+import { Card, EmptyState, LoadError, Skeleton } from '../ui/Card';
 import { TONES, timeLeft } from './labels';
 
 /** Active projects with progress, in the style of the reference's Top Products table. */
@@ -25,7 +25,17 @@ export function ProjectsTable() {
       {projects.status === 'error' && <LoadError message={projects.error.message} onRetry={projects.reload} />}
       {projects.status === 'success' &&
         (projects.data.length === 0 ? (
-          <p className="tile py-8 text-center text-sm text-muted">No active projects.</p>
+          <EmptyState
+            icon={FolderKanban}
+            title="No active projects"
+            action={
+              <Link to="/projects" className="btn-ghost min-h-10 px-4 text-sm">
+                Open Projects
+              </Link>
+            }
+          >
+            Projects in progress, with how far along each is, will show here.
+          </EmptyState>
         ) : (
           <table className="w-full text-sm">
             <thead>

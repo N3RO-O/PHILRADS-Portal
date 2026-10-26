@@ -1,6 +1,7 @@
 import { useCallback, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, Download, LogOut, SquareCheckBig, UsersRound } from 'lucide-react';
+import { ChevronDown, Download, LogOut, Rocket, SquareCheckBig, UsersRound } from 'lucide-react';
+import { useOnboarding } from '../onboarding/OnboardingProvider';
 import { useDismiss } from '../../hooks/useDismiss';
 import { DEMO_ROLES } from '../../config/permissions';
 import { useAuth } from '../auth/AuthProvider';
@@ -12,6 +13,7 @@ const itemClass = 'flex min-h-10 w-full items-center gap-3 rounded-xl px-3 text-
 
 export function ProfileMenu() {
   const { profile, state, signOut, setDemoRole, can } = useAuth();
+  const onboarding = useOnboarding();
   const roleSelectId = useId();
   const [open, setOpen] = useState(false);
   const [installOpen, setInstallOpen] = useState(false);
@@ -58,6 +60,22 @@ export function ProfileMenu() {
             <Link to="/#my-tasks" className={itemClass} onClick={() => setOpen(false)}>
               <SquareCheckBig className="h-4 w-4 text-uplift" aria-hidden /> My tasks
             </Link>
+            {/* After "Skip for now": bring the Get started list back, progress intact. */}
+            {onboarding.ready && onboarding.state.hidden && !onboarding.allDone && (
+              <Link
+                to="/"
+                className={itemClass}
+                onClick={() => {
+                  onboarding.show();
+                  setOpen(false);
+                }}
+              >
+                <Rocket className="h-4 w-4 text-uplift" aria-hidden /> Getting started
+                <span className="ml-auto text-xs tabular-nums text-muted">
+                  {onboarding.doneCount} of {onboarding.steps.length}
+                </span>
+              </Link>
+            )}
             {can('staff.manage') && (
               <Link to="/staff" className={itemClass} onClick={() => setOpen(false)}>
                 <UsersRound className="h-4 w-4 text-uplift" aria-hidden /> Manage staff

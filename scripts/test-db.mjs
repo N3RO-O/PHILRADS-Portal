@@ -353,6 +353,27 @@ await check('administrators cannot be archived', async () => {
 await check('staff cannot archive anyone', () => as(B, `update public.profiles set archived_at = now() where id = '${B}'`), true);
 await check('admin switches an account off', () => as(A, `update public.profiles set is_active = false where id = '${E}' returning is_active`).then(expectRows(1)));
 
+// First-run progress: each person updates only their own, and steps merge instead of replacing
+await check('staff saves their first-run answer', () => as(B, `select public.update_onboarding('{"focus":"task","question":"answered","steps":{"signin":"2026-10-26T00:00:00Z"}}') o`).then((r) => r.rows[0].o));
+await check('a later step keeps the earlier ones', async () => {
+  const o = (await as(B, `select public.update_onboarding('{"steps":{"task":"2026-10-26T01:00:00Z"}}') o`)).rows[0].o;
+  if (!o.steps.signin || !o.steps.task || o.focus !== 'task') throw new Error(JSON.stringify(o));
+  return Object.keys(o.steps);
+});
+await check('first-run progress is per person', async () => {
+  const a = (await db.query(`select onboarding from public.profiles where id = '${A}'`)).rows[0].onboarding;
+  if (Object.keys(a).length) throw new Error(JSON.stringify(a));
+});
+await check('signed-out visitors cannot save first-run progress', async () => {
+  await db.exec(`set role anon`);
+  try {
+    await db.query(`select public.update_onboarding('{}')`);
+  } finally {
+    await db.exec(`reset role`);
+  }
+}, true);
+await check('first-run progress must be an object', () => as(B, `select public.update_onboarding('[1]')`), true);
+
 // Notifications: only read_at may change
 await db.exec(`insert into public.notifications (recipient_id, title) values ('${B}', 'Hello')`);
 await check('staff marks a notification read', () => as(B, `update public.notifications set read_at = now() returning title`).then(expectRows(1)));

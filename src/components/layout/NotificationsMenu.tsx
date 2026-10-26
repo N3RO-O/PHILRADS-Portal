@@ -84,7 +84,21 @@ export function NotificationsMenu() {
           {notes.status === 'error' && <LoadError message={notes.error.message} onRetry={notes.reload} />}
           {notes.status === 'success' &&
             (notes.data.length === 0 ? (
-              <p className="py-4 text-center text-sm text-muted">You’re all caught up.</p>
+              <div className="flex flex-col items-center gap-2 py-5 text-center">
+                <CheckCheck className="h-6 w-6 text-status-in" aria-hidden />
+                <p className="text-sm font-semibold text-ink">You’re all caught up</p>
+                <p className="max-w-[16rem] text-xs text-muted">Releases to approve and new stock from the IMS will show here.</p>
+                <button
+                  type="button"
+                  className="btn-ghost mt-1 min-h-9 px-4 text-xs"
+                  onClick={() => {
+                    setOpen(false);
+                    navigate('/tasks?view=myday');
+                  }}
+                >
+                  Open My Day
+                </button>
+              </div>
             ) : (
               <ul className="flex max-h-[min(28rem,70dvh)] flex-col overflow-y-auto">
                 {notes.data.map((n) => (

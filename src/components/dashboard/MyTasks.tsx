@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Plus, SearchX, SquareCheckBig } from 'lucide-react';
 import type { AsyncState } from '../../hooks/useAsyncData';
 import { formatShortDate } from '../../lib/format';
 import { dashboardService } from '../../services';
 import type { TaskStatus, TaskSummary } from '../../types';
-import { Card, LoadError, Skeleton } from '../ui/Card';
+import { Card, EmptyState, LoadError, Skeleton } from '../ui/Card';
 import { PRIORITY_BADGE, PRIORITY_LABEL, STATUS_DOT, STATUS_LABEL, matchesSearch, moduleLabel } from './labels';
 
 const FILTERS: { value: TaskStatus | ''; label: string }[] = [
@@ -60,7 +60,37 @@ export function MyTasks({ tasks, search }: Props) {
       {tasks.status === 'error' && <LoadError message={tasks.error.message} onRetry={tasks.reload} />}
       {tasks.status === 'success' &&
         (rows.length === 0 ? (
-          <p className="tile py-8 text-center text-sm text-muted">No tasks match.</p>
+          tasks.data.length === 0 ? (
+            <EmptyState
+              icon={SquareCheckBig}
+              title="No tasks yet"
+              action={
+                <Link to="/tasks?view=myday" className="btn-primary min-h-10 px-4 text-sm">
+                  <Plus className="h-4 w-4" aria-hidden /> Add a task
+                </Link>
+              }
+            >
+              Plan what you’ll do today. Tasks given to you will show here too.
+            </EmptyState>
+          ) : (
+            <EmptyState
+              icon={SearchX}
+              title="No tasks match"
+              action={
+                status ? (
+                  <button type="button" className="btn-ghost min-h-10 px-4 text-sm" onClick={() => setStatus('')}>
+                    Show all tasks
+                  </button>
+                ) : (
+                  <Link to="/tasks?view=upcoming" className="btn-ghost min-h-10 px-4 text-sm">
+                    Open all tasks
+                  </Link>
+                )
+              }
+            >
+              {search ? `Nothing here matches “${search}”.` : 'Nothing has this status right now.'}
+            </EmptyState>
+          )
         ) : (
           <div>
             <div aria-hidden className={`hidden pb-2 text-xs font-medium text-muted ${ROW}`}>

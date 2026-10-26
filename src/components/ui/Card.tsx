@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, type LucideIcon } from 'lucide-react';
 import type { DataSource } from '../../types';
 import { SampleBadge } from './SampleBadge';
 
@@ -44,6 +44,25 @@ export function LoadError({ message, onRetry }: { message: string; onRetry: () =
       <button type="button" onClick={onRetry} className="link">
         <RefreshCw className="h-3.5 w-3.5" aria-hidden /> Try again
       </button>
+    </div>
+  );
+}
+
+/**
+ * An empty list is never a blank: it says why it's empty and offers the next step.
+ * `action` is the one button (or link) styled as the primary next step.
+ */
+export function EmptyState({ icon: Icon, title, children, action, tone = 'text-muted', className = '' }: { icon: LucideIcon; title: string; children?: ReactNode; action?: ReactNode; tone?: string; className?: string }) {
+  return (
+    <div className={`tile flex flex-col items-center gap-3 px-4 py-10 text-center ${className}`}>
+      <span className="icon-chip h-11 w-11" aria-hidden>
+        <Icon className={`h-5 w-5 ${tone}`} />
+      </span>
+      <div className="max-w-sm">
+        <p className="text-sm font-semibold text-ink">{title}</p>
+        {children && <p className="mt-1 text-xs text-muted">{children}</p>}
+      </div>
+      {action}
     </div>
   );
 }

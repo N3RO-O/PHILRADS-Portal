@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { ArrowRight, Download, Gift, HandHeart, PackageCheck, Search, Users } from 'lucide-react';
+import { env } from '../../config/env';
 import { useIncrementalList } from '../../hooks/useIncrementalList';
+import { EmptyState } from '../ui/Card';
 import { downloadCsv, toCsv } from '../../lib/csv';
 import { formatNumber, formatShortDate, manilaDayKey } from '../../lib/format';
 import type { ImsDonation } from '../../services/inventory/imsSnapshot';
@@ -124,7 +126,33 @@ export function DonationsPanel({ donations, sample }: { donations: ImsDonation[]
       {sample && <p className="text-xs text-muted">Sample data: donors, recipients and quantities are invented.</p>}
 
       {filtered.length === 0 ? (
-        <p className="tile px-4 py-10 text-center text-sm text-muted">No donations match.</p>
+        q || progress !== 'all' ? (
+          <EmptyState
+            icon={Gift}
+            title="No donations match"
+            action={
+              <button type="button" className="btn-ghost min-h-10 px-4 text-sm" onClick={() => (setQ(''), setProgress('all'))}>
+                Clear filters
+              </button>
+            }
+          >
+            Try another donor, record number or item.
+          </EmptyState>
+        ) : (
+          <EmptyState
+            icon={Gift}
+            title="No donations recorded yet"
+            action={
+              env.imsUrl ? (
+                <a className="btn-primary min-h-10 px-4 text-sm" href={`${env.imsUrl}/donations.php`} target="_blank" rel="noopener noreferrer">
+                  Record a donation in the IMS
+                </a>
+              ) : undefined
+            }
+          >
+            Each donation and where its goods went shows here once it’s in PHILRADS IMS.
+          </EmptyState>
+        )
       ) : (
         <ul className="flex flex-col gap-3">
           {visible.map(({ d, t }) => {

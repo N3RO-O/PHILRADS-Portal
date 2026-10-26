@@ -1,6 +1,10 @@
 import { useId, useMemo, useState } from 'react';
 import { ArrowRight, Download, History, Search } from 'lucide-react';
+import { env } from '../../config/env';
 import { useIncrementalList } from '../../hooks/useIncrementalList';
+import { EmptyState } from '../ui/Card';
+
+const imsUrl = env.imsUrl;
 import { downloadCsv, toCsv } from '../../lib/csv';
 import { formatDateTime, formatNumber, manilaDayKey } from '../../lib/format';
 import type { InventorySnapshot, Movement, MovementType } from '../../services/inventory/types';
@@ -104,10 +108,33 @@ export function ActivityLog({ movements, snapshot, initialType = '' }: Props) {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="tile flex flex-col items-center gap-2 px-4 py-12 text-center text-sm text-muted">
-          <History className="h-8 w-8" aria-hidden />
-          No movements match.
-        </div>
+        q || loc || type ? (
+          <EmptyState
+            icon={History}
+            title="No movements match"
+            action={
+              <button type="button" className="btn-ghost min-h-10 px-4 text-sm" onClick={() => (setQ(''), setLoc(''), setType(''))}>
+                Clear filters
+              </button>
+            }
+          >
+            Try another item, place or movement type.
+          </EmptyState>
+        ) : (
+          <EmptyState
+            icon={History}
+            title="No stock movements yet"
+            action={
+              imsUrl ? (
+                <a className="btn-primary min-h-10 px-4 text-sm" href={`${imsUrl}/inventory.php`} target="_blank" rel="noopener noreferrer">
+                  Receive stock in the IMS
+                </a>
+              ) : undefined
+            }
+          >
+            Receipts, releases and adjustments recorded in PHILRADS IMS show here within seconds.
+          </EmptyState>
+        )
       ) : (
         <ol className="flex flex-col divide-y divide-line/60 overflow-hidden rounded-xl border border-line/70">
           {visible.map((m) => {
