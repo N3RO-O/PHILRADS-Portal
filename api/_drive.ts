@@ -180,29 +180,136 @@ const FOLDER = 'application/vnd.google-apps.folder';
 export const folderName = (name: string) => name.replace(/[\\/]+/g, '-').replace(/\s+/g, ' ').trim().slice(0, 80) || 'Other';
 const q = (s: string) => s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
-/**
- * The child folder tagged with this key (a staff id or a category) inside `parent`, created if
- * missing and renamed if its name changed (e.g. a staff member's new display name).
- */
-export async function childFolder(token: string, parent: string, tagKey: string, tagValue: string, name: string): Promise<string> {
+type TagKey = 'philradsStaffId' | 'philradsCategory' | 'philradsDay';
+interface FolderRow {
+  folder_id: string | null;
+  name: string | null;
+  claimed_at: string;
+}
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const rowPath = (parent: string, tagKey: TagKey, tagValue: string) =>
+  `drive_folders?parent_id=eq.${encodeURIComponent(parent)}&tag_key=eq.${tagKey}&tag_value=eq.${encodeURIComponent(tagValue)}`;
+
+/** Every folder in `parent` tagged with this key and value, oldest first (Drive's search; can lag a few seconds). */
+async function findTagged(token: string, parent: string, tagKey: TagKey, tagValue: string) {
   const query = `'${q(parent)}' in parents and mimeType = '${FOLDER}' and trashed = false and appProperties has { key='${tagKey}' and value='${q(tagValue)}' }`;
   const found = await drive<{ files: { id: string; name: string }[] }>(
     token,
-    `/files?q=${encodeURIComponent(query)}&fields=files(id,name)&supportsAllDrives=true&includeItemsFromAllDrives=true&pageSize=1`,
+    `/files?q=${encodeURIComponent(query)}&fields=files(id,name)&orderBy=createdTime&supportsAllDrives=true&includeItemsFromAllDrives=true&pageSize=100`,
   );
-  const hit = found.files[0];
-  if (hit) {
-    if (hit.name !== name)
-      await drive(token, `/files/${hit.id}?supportsAllDrives=true`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) }).catch(() => undefined);
-    return hit.id;
-  }
-  const made = await drive<{ id: string }>(token, '/files?supportsAllDrives=true&fields=id', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, mimeType: FOLDER, parents: [parent], appProperties: { [tagKey]: tagValue } }),
-  });
-  return made.id;
+  return found.files;
 }
+
+/**
+ * Folds `dup` into `keep`: its files move across; a tagged sub-folder that `keep` also has is
+ * folded in the same way, any other moves across whole. Then `dup` goes to Drive's trash. Records
+ * that pointed at `dup` are pointed at `keep`.
+ */
+async function mergeInto(c: Config, token: string, keep: string, dup: string): Promise<void> {
+  const children = await drive<{ files: { id: string; mimeType: string; appProperties?: Record<string, string> }[] }>(
+    token,
+    `/files?q=${encodeURIComponent(`'${q(dup)}' in parents and trashed = false`)}&fields=files(id,mimeType,appProperties)&pageSize=1000&supportsAllDrives=true&includeItemsFromAllDrives=true`,
+  );
+  for (const child of children.files) {
+    const tag = (['philradsStaffId', 'philradsCategory', 'philradsDay'] as TagKey[]).find((k) => child.appProperties?.[k]);
+    if (child.mimeType === FOLDER && tag) {
+      const twin = (await findTagged(token, keep, tag, child.appProperties![tag]))[0];
+      if (twin) {
+        await mergeInto(c, token, twin.id, child.id);
+        continue;
+      }
+    }
+    await drive(token, `/files/${child.id}?addParents=${keep}&removeParents=${dup}&supportsAllDrives=true&fields=id`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    });
+  }
+  await drive(token, `/files/${dup}?supportsAllDrives=true&fields=id`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ trashed: true }) }).catch(() => undefined);
+  await rest(c, `documents?drive_folder_id=eq.${encodeURIComponent(dup)}`, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ drive_folder_id: keep }) }).catch(() => undefined);
+  await rest(c, `drive_folders?parent_id=eq.${encodeURIComponent(dup)}`, { method: 'DELETE', headers: { Prefer: 'return=minimal' } }).catch(() => undefined);
+}
+
+/**
+ * The one folder in `parent` for this person, category or day: from the portal's own list first
+ * (public.drive_folders), so it is never made twice. The first upload to need it claims it in the
+ * list, then adopts the folder if Drive already has it (folding any duplicates from before into
+ * the oldest) or makes it; uploads at the same moment wait for that and use the same folder.
+ */
+export async function folderFor(c: Config, token: string, parent: string, tagKey: TagKey, tagValue: string, name: string): Promise<string> {
+  const path = rowPath(parent, tagKey, tagValue);
+  const [known] = await rest<FolderRow[]>(c, `${path}&select=folder_id,name,claimed_at`);
+  if (known?.folder_id) {
+    if (known.name !== name) {
+      // e.g. a staff member's new display name: rename their folder to match.
+      await drive(token, `/files/${known.folder_id}?supportsAllDrives=true&fields=id`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) }).catch(() => undefined);
+      await rest(c, path, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ name }) }).catch(() => undefined);
+    }
+    return known.folder_id;
+  }
+
+  // Claim it (only one upload can), or take over a claim left behind by an upload that failed.
+  let mine = false;
+  if (!known) {
+    const claimed = await rest<FolderRow[]>(c, 'drive_folders?on_conflict=parent_id,tag_key,tag_value', {
+      method: 'POST',
+      headers: { Prefer: 'resolution=ignore-duplicates,return=representation' },
+      body: JSON.stringify({ parent_id: parent, tag_key: tagKey, tag_value: tagValue, name }),
+    });
+    mine = claimed.length > 0;
+  } else if (Date.now() - Date.parse(known.claimed_at) > 60_000) {
+    const taken = await rest<FolderRow[]>(c, `${path}&folder_id=is.null&claimed_at=eq.${encodeURIComponent(known.claimed_at)}`, {
+      method: 'PATCH',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({ claimed_at: new Date().toISOString() }),
+    });
+    mine = taken.length > 0;
+  }
+
+  if (!mine) {
+    // Someone else is making it right now: wait for it.
+    for (let i = 0; i < 40; i++) {
+      await sleep(500);
+      const [row] = await rest<FolderRow[]>(c, `${path}&select=folder_id`);
+      if (row?.folder_id) return row.folder_id;
+    }
+    throw new Error('Timed out waiting for the Drive folder to be made. Try again.');
+  }
+
+  try {
+    const existing = await findTagged(token, parent, tagKey, tagValue);
+    let id: string;
+    if (existing.length) {
+      id = existing[0].id;
+      for (const dup of existing.slice(1)) await mergeInto(c, token, id, dup.id);
+      if (existing[0].name !== name)
+        await drive(token, `/files/${id}?supportsAllDrives=true&fields=id`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) }).catch(() => undefined);
+    } else {
+      id = (
+        await drive<{ id: string }>(token, '/files?supportsAllDrives=true&fields=id', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, mimeType: FOLDER, parents: [parent], appProperties: { [tagKey]: tagValue } }),
+        })
+      ).id;
+    }
+    await rest(c, path, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ folder_id: id, name }) });
+    return id;
+  } catch (e) {
+    // Let the next upload try again.
+    await rest(c, `${path}&folder_id=is.null`, { method: 'DELETE', headers: { Prefer: 'return=minimal' } }).catch(() => undefined);
+    throw e;
+  }
+}
+
+/** Forget folders the portal made (e.g. someone deleted them in Drive), so they're made again. */
+export async function forgetFolders(c: Config, ids: string[]): Promise<void> {
+  const list = ids.filter(Boolean).map((id) => `"${id}"`).join(',');
+  if (list) await rest(c, `drive_folders?folder_id=in.(${list})`, { method: 'DELETE', headers: { Prefer: 'return=minimal' } }).catch(() => undefined);
+}
+
+/** Today in Manila (YYYY-MM-DD), the day folder an upload goes into. */
+export const manilaDay = (d = new Date()) => new Date(d.getTime() + 8 * 3600_000).toISOString().slice(0, 10);
 
 /** The site's own address (for Google's redirect and for upload CORS). */
 export function siteOrigin(request: Request): string {

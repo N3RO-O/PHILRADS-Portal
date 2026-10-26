@@ -261,6 +261,13 @@ await check('removing keeps the record for admins and hides it from everyone els
 });
 await check('the Drive connection is never readable from a browser', () => as(A, `select refresh_token_enc from public.drive_connection`), true);
 await check('upload sessions are never readable from a browser', () => as(B, `select * from public.drive_upload_sessions`), true);
+await check('the Drive folder list is never readable from a browser', () => as(A, `select * from public.drive_folders`), true);
+await check('a folder can only be claimed once (person / category / day)', async () => {
+  await db.exec(`insert into public.drive_folders (parent_id, tag_key, tag_value) values ('root-folder-id-123', 'philradsStaffId', '${B}')`);
+  const again = await db.query(`insert into public.drive_folders (parent_id, tag_key, tag_value) values ('root-folder-id-123', 'philradsStaffId', '${B}') on conflict do nothing returning tag_value`);
+  if (again.rows.length) throw new Error('claimed twice');
+  return 'once';
+});
 await check('staff can see whether Drive is connected (and nothing secret)', async () => {
   const r = (await as(B, `select connected, google_email from public.drive_status()`)).rows;
   if (r.length !== 1 || r[0].connected !== false) throw new Error(JSON.stringify(r));

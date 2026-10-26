@@ -1,13 +1,14 @@
 /**
  * POST /api/drive/upload: opens an upload for one file (documents.upload).
  * Body: { title, category, notes?, takenOn?, imsEventId?, imsEventName?, mapPlaceId?, fileName, mimeType, sizeBytes }.
- * Files it into <Documentation folder>/<uploader's name>/<category> (folders made as needed; the
- * uploader comes from the session, never from the browser) and returns { sessionId, uploadUrl }:
+ * Files it into <Documentation folder>/<uploader's name>/<category>/<day, Manila> (each folder made
+ * once, the first time it's needed; the uploader comes from the session, never from the browser)
+ * and returns { sessionId, uploadUrl }:
  * a one-time Google address the browser sends the bytes to directly, in pieces, with progress.
  * When Google has the whole file, the browser calls /api/drive/complete.
  */
 import { z } from 'zod';
-import { accessToken, caller, can, childFolder, config, connection, DriveConnectionError, folderName, json, noteError, rest, siteOrigin } from '../_drive.js';
+import { accessToken, caller, can, config, connection, DriveConnectionError, folderFor, folderName, forgetFolders, json, manilaDay, noteError, rest, siteOrigin } from '../_drive.js';
 
 const CATEGORIES = ['Photos', 'Videos', 'Reports', 'Assessments', 'Distribution records', 'Contracts and agreements', 'Other'] as const;
 const OK_TYPES = /^(image\/|video\/|application\/pdf$|application\/msword$|application\/vnd\.openxmlformats-officedocument\.(wordprocessingml\.document|spreadsheetml\.sheet|presentationml\.presentation)$|application\/vnd\.ms-excel$)/;
@@ -39,16 +40,52 @@ export async function POST(request: Request) {
   if (!conn) return json(503, { error: 'Google Drive isn’t connected yet. An administrator connects it on the Documentation page.' });
   try {
     const token = await accessToken(c, conn);
-    // <folder> / <uploader> / <category>: the person's folder is found by their staff id, so a
-    // renamed account keeps (and renames) its folder, and two people with one name never share.
-    const personFolder = await childFolder(token, conn.folder_id, 'philradsStaffId', who.id, folderName(who.name));
-    const categoryFolder = await childFolder(token, personFolder, 'philradsCategory', m.category, folderName(m.category));
-    const drivePath = [conn.folder_name ?? 'Documentation', folderName(who.name), folderName(m.category)].join('/');
+    const day = manilaDay();
+    const sessionId = crypto.randomUUID();
+    // <folder> / <uploader> / <category> / <day>. The person's folder is known by their staff id, so
+    // a renamed account keeps (and renames) its folder, and two people with one name never share.
+    const folders = async () => {
+      const person = await folderFor(c, token, conn.folder_id, 'philradsStaffId', who.id, folderName(who.name));
+      const category = await folderFor(c, token, person, 'philradsCategory', m.category, folderName(m.category));
+      const dayFolder = await folderFor(c, token, category, 'philradsDay', day, day);
+      return [person, category, dayFolder];
+    };
+    // Google lets the browser at this Origin send the bytes to the session address.
+    const open = (parent: string) =>
+      fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&supportsAllDrives=true&fields=id,name,size,mimeType', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json; charset=UTF-8',
+          'X-Upload-Content-Type': m.mimeType,
+          'X-Upload-Content-Length': String(m.sizeBytes),
+          Origin: request.headers.get('origin') ?? siteOrigin(request),
+        },
+        body: JSON.stringify({
+          name: m.fileName,
+          parents: [parent],
+          description: [m.title, m.notes].filter(Boolean).join('\n\n'),
+          appProperties: { philradsSession: sessionId, philradsStaffId: who.id },
+        }),
+      });
+
+    let chain = await folders();
+    let init = await open(chain[2]);
+    if (init.status === 404) {
+      // A folder was deleted in Drive since the portal made it: make them again.
+      await forgetFolders(c, chain);
+      chain = await folders();
+      init = await open(chain[2]);
+    }
+    const uploadUrl = init.headers.get('location');
+    if (!init.ok || !uploadUrl) throw new Error(`Google Drive ${init.status}: ${(await init.text()).slice(0, 200)}`);
+    const drivePath = [conn.folder_name ?? 'Documentation', folderName(who.name), folderName(m.category), day].join('/');
 
     const [session] = await rest<{ id: string }[]>(c, 'drive_upload_sessions', {
       method: 'POST',
       headers: { Prefer: 'return=representation' },
       body: JSON.stringify({
+        id: sessionId,
         user_id: who.id,
         title: m.title,
         category: m.category,
@@ -60,30 +97,10 @@ export async function POST(request: Request) {
         file_name: m.fileName,
         mime_type: m.mimeType,
         size_bytes: m.sizeBytes,
-        folder_id: categoryFolder,
+        folder_id: chain[2],
         drive_path: drivePath,
       }),
     });
-
-    // Google lets the browser at this Origin send the bytes to the session address.
-    const init = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&supportsAllDrives=true&fields=id,name,size,mimeType', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json; charset=UTF-8',
-        'X-Upload-Content-Type': m.mimeType,
-        'X-Upload-Content-Length': String(m.sizeBytes),
-        Origin: request.headers.get('origin') ?? siteOrigin(request),
-      },
-      body: JSON.stringify({
-        name: m.fileName,
-        parents: [categoryFolder],
-        description: [m.title, m.notes].filter(Boolean).join('\n\n'),
-        appProperties: { philradsSession: session.id, philradsStaffId: who.id },
-      }),
-    });
-    const uploadUrl = init.headers.get('location');
-    if (!init.ok || !uploadUrl) throw new Error(`Google Drive ${init.status}: ${(await init.text()).slice(0, 200)}`);
     return json(200, { sessionId: session.id, uploadUrl, drivePath });
   } catch (e) {
     if (e instanceof DriveConnectionError) return json(503, { error: e.message });

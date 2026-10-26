@@ -75,7 +75,7 @@ Alternative: Google OAuth with each staff member’s own account (files owned by
 ## Decisions needed from PHILRADS
 
 1. Shared Drive with a service account, or per-user OAuth?
-2. ~~Folder structure~~ Decided: module › uploader's name › category. Still needed: the root folder id for each module in `drive_destinations`.
+2. ~~Folder structure~~ Decided: Documentation › uploader's name › category › day (YYYY-MM-DD, Manila; day level added 2026-10-26). The server keeps the folders it made in `drive_folders` so each is made once. Still needed: the root folder id for each module in `drive_destinations`.
 3. ~~File size limit~~ Decided 2026-10-26: no limit of the portal's own; the connected Google account's storage is the only limit. Accepted types: photos, videos, PDF, Word, Excel, PowerPoint.
 4. Who may upload, and who may see uploaded files beyond the uploader and project members?
 5. Retention: may files be deleted from the portal, and should that delete them in Drive?
