@@ -1,15 +1,15 @@
 // Open-Meteo request URLs, shared by the browser and the /api/weather cache in front of it.
 // Open-Meteo counts every grid point as one request (600 a minute, 10,000 a day per address),
-// so grids are kept to at most 9 × 9 points on a fixed set of spacings: the same view asks for
+// so grids are kept to at most 11 × 11 points on a fixed set of spacings: the same view asks for
 // exactly the same grid, which the cache then answers for the whole team.
 
 export const OPEN_METEO = 'https://api.open-meteo.com/v1/forecast';
 const TZ = 'Asia%2FManila';
 /** Hours of forecast on the map's timeline. */
 export const GRID_HOURS = 48;
-/** Grid spacings in degrees (about 11 km to 550 km). */
-export const GRID_STEPS = [0.1, 0.2, 0.25, 0.5, 1, 1.5, 2, 3, 4, 5];
-export const GRID_MAX_POINTS = 9;
+/** Grid spacings in degrees (about 11 km to 2,200 km), so even the widest view is covered. */
+export const GRID_STEPS = [0.1, 0.2, 0.25, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 8, 10, 15, 20];
+export const GRID_MAX_POINTS = 11;
 
 export interface GridSpec {
   south: number;
@@ -52,7 +52,7 @@ export function gridUrl(g: GridSpec): string {
     }
   return (
     `${OPEN_METEO}?latitude=${lats.join(',')}&longitude=${lngs.join(',')}` +
-    `&hourly=wind_speed_10m,wind_direction_10m,temperature_2m,precipitation&forecast_hours=${GRID_HOURS}&timeformat=unixtime&timezone=${TZ}`
+    `&hourly=wind_speed_10m,wind_direction_10m,temperature_2m,precipitation,cloud_cover,weather_code&forecast_hours=${GRID_HOURS}&timeformat=unixtime&timezone=${TZ}`
   );
 }
 

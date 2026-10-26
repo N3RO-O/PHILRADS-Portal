@@ -6,6 +6,8 @@ import {
   CloudLightning,
   CloudRain,
   CloudSun,
+  ChevronDown,
+  ChevronUp,
   Loader2,
   Pause,
   Play,
@@ -50,15 +52,40 @@ export const WEATHER_MODES: { key: WeatherMode; label: string; icon: LucideIcon 
   { key: 'radar', label: 'Radar', icon: Radar },
 ];
 
-const LEGENDS: Record<Exclude<WeatherMode, 'radar'>, { scale: ColorStop[]; ticks: number[]; unit: string; note: string }> = {
+const LEGENDS: Record<Exclude<WeatherMode, 'radar'>, { scale: ColorStop[]; ticks: number[]; labels?: string[]; unit: string; note: string }> = {
   wind: { scale: WIND_SCALE, ticks: [0, 20, 39, 62, 89, 118], unit: 'km/h', note: '39 / 62 / 89 / 118 km/h: PAGASA wind signals 1 to 4' },
-  rain: { scale: RAIN_SCALE.slice(1), ticks: [0.1, 1, 2.5, 7.5, 15, 30], unit: 'mm/h', note: '7.5 / 15 / 30 mm/h: PAGASA yellow, orange, red rain' },
-  temp: { scale: TEMP_SCALE, ticks: [18, 23, 27, 30, 33, 37], unit: '°C', note: 'Air temperature 2 m above the ground' },
+  rain: {
+    scale: RAIN_SCALE.slice(1),
+    ticks: [0.5, 2.5, 7.5, 15, 30],
+    labels: ['Light', 'Moderate', 'Heavy', 'Intense', 'Torrential'],
+    unit: 'mm/h',
+    note: 'Clouds drift with the wind; flashes mark thunderstorms. Yellow, orange, red: PAGASA rainfall warning levels',
+  },
+  temp: { scale: TEMP_SCALE, ticks: [20, 24, 27, 29, 31, 34], unit: '°C', note: 'Air temperature 2 m above the ground' },
+};
+
+const PANEL_KEY = 'philrads.map.weather.min';
+const readMinimised = () => {
+  try {
+    return localStorage.getItem(PANEL_KEY) === '1';
+  } catch {
+    return false;
+  }
 };
 
 /** Weather on the map: the view (wind, rain, temperature, radar), the timeline with play, and the colour key. */
 export function WeatherBar({ weather, onClose }: { weather: MapWeather; onClose: () => void }) {
   const { mode, setMode, times, hour, setHour, nowIndex, radar, radarIndex, setRadarIndex, playing, setPlaying, status } = weather;
+  // Minimised: the weather stays on the map, the panel shrinks to one small bar.
+  const [minimised, setMinimisedState] = useState(readMinimised);
+  const setMinimised = (v: boolean) => {
+    setMinimisedState(v);
+    try {
+      localStorage.setItem(PANEL_KEY, v ? '1' : '0');
+    } catch {
+      /* per-device preference only */
+    }
+  };
   if (!mode) return null;
   const isRadar = mode === 'radar';
   const count = isRadar ? radar.length : times.length;
@@ -66,6 +93,22 @@ export function WeatherBar({ weather, onClose }: { weather: MapWeather; onClose:
   const at = isRadar ? radar[radarIndex]?.time : times[hour];
   const timeText = at == null ? '' : isRadar ? clock(at) : hour === nowIndex ? 'Now' : dayHour(at);
   const sub = at == null ? '' : isRadar ? (radarIndex === radar.length - 1 ? 'latest' : `${Math.round((radar[radar.length - 1].time - at) / 60)} min ago`) : hour === nowIndex ? hourLabel(at) : `in ${hour - nowIndex} h`;
+
+  const current = WEATHER_MODES.find((m) => m.key === mode)!;
+  if (minimised)
+    return (
+      <div className="flex items-center gap-1 rounded-full border border-line bg-surface-raised/95 py-1 pl-1 pr-1 shadow-2xl shadow-black/50 backdrop-blur-md lg:w-fit">
+        <button type="button" onClick={() => setMinimised(false)} className="flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-full px-3 text-xs font-semibold hover:bg-white/[0.06]" aria-label="Show weather controls">
+          <current.icon className="h-4 w-4 shrink-0 text-uplift" aria-hidden />
+          {current.label}
+          <span className="truncate font-normal text-muted">{timeText}{sub && timeText !== sub ? ` · ${sub}` : ''}</span>
+          <ChevronUp className="ml-auto h-4 w-4 shrink-0 text-muted" aria-hidden />
+        </button>
+        <button type="button" onClick={onClose} aria-label="Turn weather off" className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-muted hover:bg-white/[0.06] hover:text-ink">
+          <X className="h-4 w-4" aria-hidden />
+        </button>
+      </div>
+    );
 
   return (
     <div className="flex flex-col gap-2.5 rounded-2xl border border-line bg-surface-raised/95 p-2.5 shadow-2xl shadow-black/50 backdrop-blur-md">
@@ -78,15 +121,15 @@ export function WeatherBar({ weather, onClose }: { weather: MapWeather; onClose:
               role="radio"
               aria-checked={mode === key}
               onClick={() => setMode(key)}
-              className={`flex min-h-9 items-center justify-center gap-1.5 rounded-lg px-1 text-xs font-semibold transition ${mode === key ? 'bg-uplift text-page' : 'text-ink-soft hover:bg-white/[0.06]'}`}
+              className={`flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 rounded-lg px-1 text-[0.6875rem] font-semibold leading-none transition ${mode === key ? 'bg-uplift text-page' : 'text-ink-soft hover:bg-white/[0.06]'}`}
             >
-              <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              <Icon className="h-4 w-4 shrink-0" aria-hidden />
               {label}
             </button>
           ))}
         </div>
-        <button type="button" onClick={onClose} aria-label="Hide weather" className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-muted hover:bg-white/[0.06] hover:text-ink">
-          <X className="h-4 w-4" aria-hidden />
+        <button type="button" onClick={() => setMinimised(true)} aria-label="Minimise (weather stays on the map)" title="Minimise" className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-muted hover:bg-white/[0.06] hover:text-ink">
+          <ChevronDown className="h-4 w-4" aria-hidden />
         </button>
       </div>
 
@@ -140,7 +183,9 @@ export function WeatherBar({ weather, onClose }: { weather: MapWeather; onClose:
       )}
 
       {isRadar ? (
-        <p className="px-1 text-[0.6875rem] leading-snug text-muted">Rain seen by radar in the last 2 hours. Brighter is heavier. Detail is coarse when zoomed in close.</p>
+        <p className="px-1 text-[0.6875rem] leading-snug text-muted">
+          Rain seen by radar in the last 2 hours; brighter is heavier. Radar reaches Luzon and parts of the Visayas (lightly shaded), not most of Mindanao: use Rain there.
+        </p>
       ) : (
         <Legend mode={mode} />
       )}
@@ -149,15 +194,15 @@ export function WeatherBar({ weather, onClose }: { weather: MapWeather; onClose:
 }
 
 function Legend({ mode }: { mode: Exclude<WeatherMode, 'radar'> }) {
-  const { scale, ticks, unit, note } = LEGENDS[mode];
+  const { scale, ticks, labels, unit, note } = LEGENDS[mode];
   return (
     <div className="flex flex-col gap-1 px-1">
       <div className="h-2 rounded-full" style={{ background: `linear-gradient(to right, ${ticks.map((t) => cssColor(scale, t).replace(/,[\d.]+\)$/, ',1)')).join(', ')})` }} aria-hidden />
       <div className="flex justify-between text-[0.625rem] font-semibold tabular-nums text-ink-soft" aria-hidden>
         {ticks.map((t, i) => (
           <span key={t}>
-            {t}
-            {i === ticks.length - 1 ? `+ ${unit}` : ''}
+            {labels?.[i] ?? t}
+            {!labels && i === ticks.length - 1 ? `+ ${unit}` : ''}
           </span>
         ))}
       </div>

@@ -29,6 +29,10 @@ export interface WeatherGrid {
   temp: Float32Array[];
   /** mm in the hour */
   rain: Float32Array[];
+  /** Cloud cover, 0–100 % */
+  cloud: Float32Array[];
+  /** 1 where a thunderstorm is forecast */
+  storm: Float32Array[];
 }
 
 export interface GridArea {
@@ -40,7 +44,7 @@ export interface GridArea {
 
 /**
  * The grid for a view: the view widened by a quarter on each side, on the finest fixed spacing
- * that keeps it within 9 × 9 points (never finer than the models, ~0.1°). Lined up on the spacing,
+ * that keeps it within 11 × 11 points (never finer than the models, ~0.1°). Lined up on the spacing,
  * so small pans reuse it and everyone looking at the same area asks for the same grid.
  */
 export function gridAreaFor(view: GridArea): GridArea & { step: number } {
@@ -53,10 +57,10 @@ export function gridAreaFor(view: GridArea): GridArea & { step: number } {
   const points = (lo: number, hi: number, step: number) => Math.round(Math.ceil(hi / step - 1e-9) - Math.floor(lo / step + 1e-9)) + 1;
   const step = GRID_STEPS.find((st) => points(s0, n0, st) <= GRID_MAX_POINTS && points(w0, e0, st) <= GRID_MAX_POINTS) ?? GRID_STEPS[GRID_STEPS.length - 1];
   const snap = (x: number) => Math.round(x * 1000) / 1000;
-  // Zoomed far out the grid can't cover everything: keep it around the middle of the view.
+  // Past the widest spacing (never on this map's zoom range) the grid stays around the middle.
   const start = (lo: number, hi: number) =>
     points(lo, hi, step) <= GRID_MAX_POINTS ? Math.floor(lo / step + 1e-9) * step : Math.round((lo + hi) / 2 / step - (GRID_MAX_POINTS - 1) / 2) * step;
-  const south = snap(Math.max(-84, start(s0, n0)));
+  const south = snap(Math.max(-80, start(s0, n0)));
   const west = snap(start(w0, e0));
   const rows = Math.min(GRID_MAX_POINTS, points(s0, n0, step));
   const cols = Math.min(GRID_MAX_POINTS, points(w0, e0, step));
@@ -72,6 +76,8 @@ interface OmHourly {
   wind_direction_10m: (number | null)[];
   temperature_2m: (number | null)[];
   precipitation: (number | null)[];
+  cloud_cover: (number | null)[];
+  weather_code: (number | null)[];
 }
 
 export class WeatherBusyError extends Error {
@@ -85,7 +91,7 @@ const gridCache = new Map<string, { at: number; grid: WeatherGrid }>();
 /** Through the team's cache first; straight to Open-Meteo if it isn't there or fails. */
 async function getJson(proxyQuery: string, direct: string, signal?: AbortSignal): Promise<unknown> {
   try {
-    const res = await fetch(`/api/weather?${proxyQuery}`, { signal });
+    const res = await fetch(`/api/weather?v=2&${proxyQuery}`, { signal });
     if (res.ok && res.headers.get('content-type')?.includes('application/json')) return await res.json();
   } catch (e) {
     if (signal?.aborted) throw e;
@@ -110,7 +116,7 @@ export async function fetchGrid(area: GridArea & { step: number }, signal?: Abor
   const times = points[0].hourly.time;
   const n = rows * cols;
   const make = () => times.map(() => new Float32Array(n));
-  const grid: WeatherGrid = { south: area.south, west: area.west, step, rows, cols, times, u: make(), v: make(), speed: make(), temp: make(), rain: make() };
+  const grid: WeatherGrid = { south: area.south, west: area.west, step, rows, cols, times, u: make(), v: make(), speed: make(), temp: make(), rain: make(), cloud: make(), storm: make() };
   points.forEach((p, i) => {
     const h = p.hourly;
     for (let t = 0; t < times.length; t++) {
@@ -123,10 +129,20 @@ export async function fetchGrid(area: GridArea & { step: number }, signal?: Abor
       grid.speed[t][i] = kmh;
       grid.temp[t][i] = h.temperature_2m[t] ?? NaN;
       grid.rain[t][i] = h.precipitation[t] ?? 0;
+      grid.cloud[t][i] = h.cloud_cover?.[t] ?? 0;
+      grid.storm[t][i] = (h.weather_code?.[t] ?? 0) >= 95 ? 1 : 0;
     }
   });
   gridCache.set(key, { at: Date.now(), grid });
   return grid;
+}
+
+/** 1 inside the grid, fading to 0 over the last half cell, so the edge is soft (0 outside). */
+export function edgeFade(grid: WeatherGrid, lat: number, lng: number): number {
+  const y = (lat - grid.south) / grid.step;
+  const x = (lng - grid.west) / grid.step;
+  const d = Math.min(y, x, grid.rows - 1 - y, grid.cols - 1 - x);
+  return d <= 0 ? 0 : d >= 0.5 ? 1 : d * 2;
 }
 
 /** Bilinear value of a grid layer at a point (NaN outside the grid). */
@@ -286,24 +302,26 @@ export const WIND_SCALE: ColorStop[] = [
 /** Rain in mm per hour; PAGASA's rainfall warning colours (yellow 7.5, orange 15, red 30). */
 export const RAIN_SCALE: ColorStop[] = [
   { at: 0, rgb: [0, 0, 0], alpha: 0 },
-  { at: 0.1, rgb: [120, 170, 230], alpha: 0.35 },
-  { at: 1, rgb: [60, 120, 230], alpha: 0.6 },
-  { at: 2.5, rgb: [40, 180, 120], alpha: 0.7 },
-  { at: 7.5, rgb: [240, 210, 50], alpha: 0.8 },
-  { at: 15, rgb: [245, 140, 40], alpha: 0.85 },
-  { at: 30, rgb: [220, 40, 40], alpha: 0.9 },
-  { at: 50, rgb: [180, 40, 170], alpha: 0.9 },
+  { at: 0.1, rgb: [110, 175, 240], alpha: 0.45 },
+  { at: 1, rgb: [50, 120, 235], alpha: 0.75 },
+  { at: 2.5, rgb: [30, 185, 110], alpha: 0.85 },
+  { at: 7.5, rgb: [245, 215, 40], alpha: 0.95 },
+  { at: 15, rgb: [250, 135, 30], alpha: 1 },
+  { at: 30, rgb: [225, 35, 40], alpha: 1 },
+  { at: 50, rgb: [190, 40, 190], alpha: 1 },
 ];
 
-/** Temperature in °C. */
+/** Temperature in °C, spread over the range the Philippines actually sees so differences show. */
 export const TEMP_SCALE: ColorStop[] = [
-  { at: 10, rgb: [70, 90, 190] },
-  { at: 18, rgb: [50, 160, 200] },
-  { at: 23, rgb: [70, 180, 110] },
-  { at: 27, rgb: [210, 210, 70] },
-  { at: 30, rgb: [240, 160, 50] },
-  { at: 33, rgb: [230, 90, 50] },
-  { at: 37, rgb: [190, 30, 60] },
+  { at: 16, rgb: [60, 70, 180] },
+  { at: 20, rgb: [45, 130, 215] },
+  { at: 23, rgb: [40, 185, 190] },
+  { at: 25, rgb: [70, 190, 100] },
+  { at: 27, rgb: [190, 210, 60] },
+  { at: 29, rgb: [245, 185, 45] },
+  { at: 31, rgb: [245, 120, 40] },
+  { at: 33, rgb: [225, 55, 45] },
+  { at: 36, rgb: [175, 25, 95] },
 ];
 
 /** [r, g, b, alpha 0–1] for a value on a scale. */
