@@ -326,7 +326,7 @@ await check('the last administrator cannot be removed', () => db.query(`update p
 await check('the last administrator cannot be switched off', () => db.query(`update public.profiles set is_active = false where id = '${A}'`), true);
 await check('volunteers can read stock and upload, but not record stock', async () => {
   const r = (await db.query(`select permission_key from public.role_permissions where role_key = 'volunteer' order by 1`)).rows.map((x) => x.permission_key);
-  if (r.join() !== 'documents.upload,inventory.read,resources.read,response.read') throw new Error(r.join());
+  if (r.join() !== 'documents.upload,inventory.read,map.checkin,map.read,resources.read,response.read') throw new Error(r.join());
   return r;
 });
 await check('admin makes someone a volunteer', () => as(A, `update public.profiles set role_key = 'volunteer' where id = '${E}' returning role_key`).then(expectRows(1)));
@@ -352,6 +352,29 @@ await check('administrators cannot be archived', async () => {
 }, true);
 await check('staff cannot archive anyone', () => as(B, `update public.profiles set archived_at = now() where id = '${B}'`), true);
 await check('admin switches an account off', () => as(A, `update public.profiles set is_active = false where id = '${E}' returning is_active`).then(expectRows(1)));
+
+// Live Map: places managed by map.manage; check-ins shared on purpose, own only, visible 24 h
+const PLACE = `insert into public.map_places (name, kind, lat, lng, ims_location, created_by) values ('Tacloban Field Hub', 'hub', 11.2444, 125.0039, 'Tacloban Field Hub', auth.uid()) returning id`;
+await check('admin pins a place', () => as(A, PLACE).then(expectRows(1)));
+await check('staff can see places', () => as(B, `select name from public.map_places`).then(expectRows(1)));
+await check('staff cannot add places', () => as(B, PLACE), true);
+await check('staff cannot move places', () => as(B, `update public.map_places set lat = 0 returning id`).then(expectRows(0)));
+await check('places are never deleted', () => as(A, `delete from public.map_places`), true);
+await check('place changes are logged', async () => {
+  const r = (await db.query(`select action from public.activity_logs where module = 'live-map'`)).rows.map((x) => x.action);
+  if (r.join() !== 'place.added') throw new Error(r.join());
+  return r;
+});
+await check('inactive account cannot see places', () => as(C, `select id from public.map_places`).then(expectRows(0)));
+await check('staff checks in', () => as(B, `insert into public.field_checkins (lat, lng, accuracy_m, note) values (11.24, 125.0, 12, 'At the hub') returning id`).then(expectRows(1)));
+await check('nobody checks in for someone else', () => as(B, `insert into public.field_checkins (profile_id, lat, lng) values ('${A}', 1, 1)`), true);
+await check('viewers cannot check in', () => as(D, `insert into public.field_checkins (lat, lng) values (1, 1)`), true);
+await check('check-ins older than 24 hours are hidden', async () => {
+  await db.exec(`insert into public.field_checkins (profile_id, lat, lng, created_at) values ('${B}', 10, 120, now() - interval '2 days')`);
+  return (await as(A, `select id from public.field_checkins`)).rows.length === 1 ? 1 : Promise.reject(new Error('old check-in visible'));
+});
+await check('others cannot remove your check-in', () => as(A, `delete from public.field_checkins returning id`).then(expectRows(0)));
+await check('you can remove your own check-in', () => as(B, `delete from public.field_checkins where created_at > now() - interval '1 hour' returning id`).then(expectRows(1)));
 
 // First-run progress: each person updates only their own, and steps merge instead of replacing
 await check('staff saves their first-run answer', () => as(B, `select public.update_onboarding('{"focus":"task","question":"answered","steps":{"signin":"2026-10-26T00:00:00Z"}}') o`).then((r) => r.rows[0].o));

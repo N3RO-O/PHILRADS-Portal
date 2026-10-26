@@ -337,3 +337,62 @@
     color: #640606;
   }
 }
+
+/* ── Live Map (Leaflet), in the portal's dark style ── */
+.leaflet-container {
+  background: #17181b;
+  font-family: inherit;
+  outline: none;
+}
+.leaflet-container a {
+  color: #ec952a;
+}
+.leaflet-bar {
+  border: 1px solid #36373d !important;
+  border-radius: 0.75rem !important;
+  overflow: hidden;
+  box-shadow: 0 10px 25px -12px rgba(0, 0, 0, 0.7) !important;
+}
+.leaflet-bar a,
+.leaflet-bar a:hover {
+  width: 2.5rem !important;
+  height: 2.5rem !important;
+  line-height: 2.5rem !important;
+  background: rgba(38, 39, 44, 0.95) !important;
+  color: #f1f1f1 !important;
+  border-bottom-color: #36373d !important;
+}
+.leaflet-bar a:hover {
+  background: #303137 !important;
+}
+.leaflet-control-attribution {
+  background: rgba(28, 29, 33, 0.75) !important;
+  color: #9a9ca6 !important;
+  font-size: 10px;
+  border-top-left-radius: 0.5rem;
+}
+.map-pin {
+  background: none;
+  border: none;
+}
+.map-pin:focus-visible {
+  outline: none;
+}
+.map-pin:focus-visible > * {
+  outline: 2px solid #ec952a;
+  outline-offset: 3px;
+}
+@keyframes map-pulse {
+  from {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  to {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+/* OpenStreetMap tiles turned dark: roads light on charcoal, water deep blue-grey. */
+.map-tiles-dark {
+  filter: invert(100%) hue-rotate(180deg) brightness(92%) contrast(88%) saturate(55%);
+}

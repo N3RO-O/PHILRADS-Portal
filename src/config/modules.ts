@@ -48,8 +48,8 @@ export const MODULES: ModuleConfig[] = [
     path: '/live-map',
     icon: Map,
     group: 'Field operations',
-    summary: 'See response sites, warehouses and field teams on one map, so coordinators know where people and goods are.',
-    plannedScope: ['Response sites, warehouses and distribution points', 'Field team check-ins', 'Filters by project and response operation'],
+    summary: 'Warehouses, response sites and the team in the field on one map, with live stock and people served.',
+    plannedScope: [],
   },
   {
     id: 'inventory',

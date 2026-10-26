@@ -55,7 +55,7 @@ export default defineConfig({
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
         cleanupOutdatedCaches: true,
-        // Runtime caching is limited to public font files. Supabase, Google Drive and any
+        // Runtime caching is limited to public font files and map tiles. Supabase, Google Drive and any
         // authenticated API traffic is deliberately NOT listed, so it always goes to the network
         // and is never written to a service-worker cache.
         runtimeCaching: [
@@ -63,6 +63,17 @@ export default defineConfig({
             urlPattern: ({ url }) => url.origin === 'https://fonts.googleapis.com',
             handler: 'StaleWhileRevalidate',
             options: { cacheName: 'google-fonts-stylesheets' },
+          },
+          {
+            // Live Map tiles (public map pictures, no personal data): areas already viewed
+            // keep showing with a weak or no signal in the field.
+            urlPattern: ({ url }) => url.origin === 'https://tile.openstreetmap.org',
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'live-map-tiles',
+              expiration: { maxEntries: 800, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
           },
           {
             urlPattern: ({ url }) => url.origin === 'https://fonts.gstatic.com',
