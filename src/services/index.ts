@@ -3,6 +3,7 @@ import { withDeviceCopy } from '../lib/deviceCopy';
 import { supabase } from '../lib/supabase';
 import { createSupabaseAuditService, mockAuditService, type AuditService } from './audit/auditService';
 import { mockDashboardService } from './dashboard/mockDashboardService';
+import { createSupabaseDocumentationService, createUploadQueue, mockDocumentationService, type DocumentationService } from './documentation/documentationService';
 import { createSupabaseDashboardService } from './dashboard/supabaseDashboardService';
 import type { DashboardService } from './dashboard/types';
 import { createImsInventoryService, createSampleImsService } from './inventory/imsInventoryService';
@@ -44,6 +45,11 @@ export const tasksService: OfflineTasksService = createOfflineTasks(live ? creat
 
 /** Live Map: places (offline: the last copy on this device) and today's team check-ins. */
 export const mapService: MapService = withDeviceCopy(live ? createSupabaseMapService(live) : mockMapService, 'map', ['listPlaces']);
+
+/** Documentation: field photos, videos and reports in the PHILRADS Google Drive folder. */
+export const documentationService: DocumentationService = live ? createSupabaseDocumentationService(live) : mockDocumentationService;
+/** Uploads in progress: they carry on while staff move around the portal. */
+export const uploadQueue = createUploadQueue(documentationService);
 
 /** The admin log (Logs page, administrators only). */
 export const auditService: AuditService = live ? createSupabaseAuditService(live) : mockAuditService;

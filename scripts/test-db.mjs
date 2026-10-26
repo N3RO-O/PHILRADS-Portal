@@ -227,6 +227,46 @@ await check('kudos are logged for admins', async () => {
   return l[0].summary;
 });
 
+// Documentation: records only from the upload server; everyone active sees them
+const DOC = `(select id from public.documents where drive_file_id = 'drive-file-1')`;
+await check('browsers cannot add a document record (only the upload server can)', () =>
+  as(B, `insert into public.documents (title, category, module, mime_type, drive_file_id, uploaded_by) values ('Fake', 'Photos', 'documentation', 'image/jpeg', 'fake-1', '${B}')`), true);
+await check('the upload server records a file; it is in the activity feed', async () => {
+  await db.exec(`insert into public.documents (title, category, module, mime_type, size_bytes, drive_file_id, drive_path, uploaded_by, file_name)
+    values ('Distribution at Brgy 12', 'Photos', 'documentation', 'image/jpeg', 2048000, 'drive-file-1', 'Documentation/Staff B/Photos', '${B}', 'IMG_0042.jpg')`);
+  const l = (await db.query(`select summary, audience from public.activity_logs where action = 'document.uploaded'`)).rows;
+  if (l.length !== 1 || l[0].audience !== 'everyone') throw new Error(JSON.stringify(l));
+  return l[0].summary;
+});
+await check('every active staff member sees documentation', async () => {
+  const a = (await as(A, `select title from public.documents where id = ${DOC}`)).rows.length;
+  const b = (await as(B, `select title from public.documents where id = ${DOC}`)).rows.length;
+  if (a !== 1 || b !== 1) throw new Error(JSON.stringify({ a, b }));
+  return { a, b };
+});
+await check('the uploader can correct the title and notes', () => as(B, `update public.documents set title = 'Distribution, Brgy 12', notes = '50 families' where id = ${DOC} returning title`).then(expectRows(1)));
+await check('nobody can repoint a record at another Drive file', () => as(B, `update public.documents set drive_file_id = 'other' where id = ${DOC}`), true);
+await check('nobody can delete a record outright', async () => {
+  const r = await as(A, `delete from public.documents where id = ${DOC} returning id`);
+  if (r.rows.length) throw new Error('deleted');
+}, true);
+await check('unknown document categories are rejected', () => as(B, `update public.documents set category = 'Memes' where id = ${DOC}`), true);
+await check('removing keeps the record for admins and hides it from everyone else', async () => {
+  await as(B, `select public.remove_document(${DOC})`);
+  const b = (await as(B, `select id from public.documents where id = ${DOC}`)).rows.length;
+  const a = (await as(A, `select id from public.documents where id = ${DOC}`)).rows.length;
+  const l = (await db.query(`select count(*)::int n from public.activity_logs where action = 'document.removed'`)).rows[0].n;
+  if (b !== 0 || a !== 1 || l !== 1) throw new Error(JSON.stringify({ b, a, l }));
+  return { staffSees: b, adminSees: a };
+});
+await check('the Drive connection is never readable from a browser', () => as(A, `select refresh_token_enc from public.drive_connection`), true);
+await check('upload sessions are never readable from a browser', () => as(B, `select * from public.drive_upload_sessions`), true);
+await check('staff can see whether Drive is connected (and nothing secret)', async () => {
+  const r = (await as(B, `select connected, google_email from public.drive_status()`)).rows;
+  if (r.length !== 1 || r[0].connected !== false) throw new Error(JSON.stringify(r));
+  return r[0];
+});
+
 // Inventory: every write goes through record_inventory_movement / decide_inventory_transfer
 const rpc = (uid, args) => as(uid, `select public.record_inventory_movement(${args}) r`).then((r) => r.rows[0].r);
 const cid = (n) => `'00000000-0000-4000-8000-${String(n).padStart(12, '0')}'`;
