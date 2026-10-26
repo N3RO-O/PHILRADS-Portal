@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { CloudOff, List, LocateFixed, Loader2, MapPin, Maximize2, Plus, Search, UserRound, X } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
-import { CheckInDetails, PlaceDetails } from '../components/map/MapDetails';
+import { CheckInDetails, LiveDetails, PlaceDetails } from '../components/map/MapDetails';
 import { CheckInSheet, PlaceForm } from '../components/map/MapForms';
-import { MapCanvas, type MapFocus } from '../components/map/MapCanvas';
+import { isFresh, MapCanvas, type MapFocus, type MapSelection } from '../components/map/MapCanvas';
+import { LiveShareCard, useLiveSharing } from '../components/map/LiveSharing';
 import { LoadError } from '../components/ui/Card';
 import { SampleBadge } from '../components/ui/SampleBadge';
 import { Sheet } from '../components/ui/Sheet';
@@ -16,7 +17,7 @@ import { eventAt, stockAt } from '../lib/mapStock';
 import { inventoryStore, mapService } from '../services';
 import { useInventoryState } from '../services/inventory/inventoryStore';
 import type { InventorySnapshot } from '../services/inventory/types';
-import { kindMeta, PLACE_KINDS, type CheckIn, type MapPlace, type PlaceDraft, type PlaceKind } from '../services/map/types';
+import { kindMeta, PLACE_KINDS, type CheckIn, type LivePosition, type MapPlace, type PlaceDraft, type PlaceKind } from '../services/map/types';
 
 type Layer = PlaceKind | 'team';
 const ALL_LAYERS: Layer[] = [...PLACE_KINDS.map((k) => k.key), 'team'];
@@ -31,8 +32,8 @@ const readLayers = (): Set<Layer> => {
   return new Set(ALL_LAYERS);
 };
 
-type Selected = { type: 'place' | 'checkin'; id: string } | null;
-type Panel = { type: 'form'; draft: PlaceDraft } | { type: 'checkin' } | { type: 'list' } | null;
+type Selected = MapSelection;
+type Panel = { type: 'form'; draft: PlaceDraft } | { type: 'checkin' } | { type: 'list' } | { type: 'share' } | null;
 const blankDraft = (): PlaceDraft => ({ name: '', kind: 'response_site', lat: NaN, lng: NaN, address: '', notes: '', imsLocation: null, imsEventId: null });
 
 /** Live Map: PHILRADS places with their live IMS stock and people served, and where the team checked in today. */
@@ -63,6 +64,62 @@ export function LiveMapPage() {
   const [center, setCenter] = useState<LatLng | null>(null);
   const [toast, setToast] = useState<{ text: string; error?: boolean } | null>(null);
   const [removing, setRemoving] = useState(false);
+  const sharing = useLiveSharing();
+
+  // Phones: size the map to end at the bottom of the screen, measured from where it starts.
+  const mapBox = useRef<HTMLDivElement>(null);
+  const [phoneHeight, setPhoneHeight] = useState<number | null>(null);
+  useEffect(() => {
+    const update = () => {
+      const el = mapBox.current;
+      if (!el || window.matchMedia('(min-width: 1024px)').matches) return setPhoneHeight(null);
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      setPhoneHeight(Math.max(320, Math.round(window.innerHeight - top - 16)));
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    const header = document.querySelector('header');
+    if (header) ro.observe(header);
+    window.addEventListener('resize', update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', update);
+    };
+  }, []);
+
+  // Live locations: loaded once, then kept current in real time (with a 30 s refresh as a safety net).
+  const [live, setLive] = useState<LivePosition[]>([]);
+  const [following, setFollowing] = useState<string | null>(null);
+  const followingRef = useRef(following);
+  followingRef.current = following;
+  const loadLive = useCallback(() => void mapService.listLive().then(setLive).catch(() => undefined), []);
+  useEffect(() => {
+    loadLive();
+    return mapService.subscribeLive((e) => {
+      if (e.type === 'remove') return setLive((ls) => ls.filter((p) => p.profileId !== e.profileId));
+      const pos = e.position;
+      setLive((ls) => {
+        const prev = ls.find((p) => p.profileId === pos.profileId);
+        if (!prev && !pos.name) {
+          loadLive(); // someone new: fetch their name
+          return ls;
+        }
+        const next = { ...prev, ...pos, name: pos.name ?? prev?.name ?? 'Team member' } as LivePosition;
+        return prev ? ls.map((p) => (p.profileId === pos.profileId ? next : p)) : [...ls, next];
+      });
+      if (followingRef.current === pos.profileId) setFocus({ lat: pos.lat, lng: pos.lng, key: Date.now() });
+    });
+  }, [loadLive]);
+  useLiveRefresh(true, loadLive, 30_000);
+  // Re-render every 15 s so "live, 20 s ago" and live/paused stay accurate between updates.
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setTick((n) => n + 1), 15_000);
+    return () => clearInterval(t);
+  }, []);
+  useEffect(() => {
+    if (following && !live.some((p) => p.profileId === following)) setFollowing(null);
+  }, [live, following]);
 
   useEffect(() => {
     if (!toast) return;
@@ -78,6 +135,7 @@ export function LiveMapPage() {
     [places, layers, needle],
   );
   const shownCheckIns = useMemo(() => (layers.has('team') ? checkIns.filter((c) => !needle || [c.name, c.note].some((s) => s?.toLowerCase().includes(needle))) : []), [checkIns, layers, needle]);
+  const shownLive = useMemo(() => (layers.has('team') ? live.filter((p) => !needle || p.name.toLowerCase().includes(needle)) : []), [live, layers, needle]);
 
   // First load: fit everything in view.
   const [fitted, setFitted] = useState(false);
@@ -105,9 +163,9 @@ export function LiveMapPage() {
     setSelected(s);
     setPanel(null);
     if (!s || !fly) return;
-    const p = s.type === 'place' ? places.find((x) => x.id === s.id) : checkIns.find((x) => x.id === s.id);
+    const p = s.type === 'place' ? places.find((x) => x.id === s.id) : s.type === 'live' ? live.find((x) => x.profileId === s.id) : checkIns.find((x) => x.id === s.id);
     if (p) setFocus({ lat: p.lat, lng: p.lng, zoom: 15, key: Date.now() });
-  }, [places, checkIns]);
+  }, [places, checkIns, live]);
 
   const locateMe = async () => {
     setLocating(true);
@@ -120,6 +178,7 @@ export function LiveMapPage() {
 
   const selectedPlace = selected?.type === 'place' ? places.find((p) => p.id === selected.id) ?? null : null;
   const selectedCheck = selected?.type === 'checkin' ? checkIns.find((c) => c.id === selected.id) ?? null : null;
+  const selectedLive = selected?.type === 'live' ? live.find((p) => p.profileId === selected.id) ?? null : null;
 
   if (!can('map.read'))
     return (
@@ -137,6 +196,8 @@ export function LiveMapPage() {
     shownPlaces,
     checkIns,
     shownCheckIns,
+    live,
+    shownLive,
     snapshot,
     canManage,
     onAdd: () => setPanel({ type: 'form', draft: blankDraft() }),
@@ -164,8 +225,8 @@ export function LiveMapPage() {
           </div>
         </aside>
 
-        {/* Phones: the map fills the rest of the screen under the page title (top bar ≈ 7.5rem + title ≈ 8rem). */}
-        <div className="relative h-[calc(100dvh-15.5rem)] min-h-[20rem] lg:h-[calc(100dvh-13rem)] lg:min-h-[34rem]">
+        {/* Phones: the map fills the rest of the screen below where it starts (which moves with the sharing banner). */}
+        <div ref={mapBox} style={phoneHeight ? { height: phoneHeight } : undefined} className="relative h-[calc(100dvh-15.5rem)] min-h-[20rem] lg:h-[calc(100dvh-13rem)] lg:min-h-[34rem]">
           {placesQ.status === 'error' ? (
             <div className="grid h-full place-items-center p-6">
               <LoadError message={online ? 'The map could not be loaded.' : 'You’re offline and this device has no saved copy of the map yet.'} onRetry={placesQ.reload} />
@@ -174,6 +235,7 @@ export function LiveMapPage() {
             <MapCanvas
               places={shownPlaces}
               checkIns={shownCheckIns}
+              live={shownLive}
               selected={selected}
               onSelect={(s) => select(s)}
               focus={focus}
@@ -187,7 +249,7 @@ export function LiveMapPage() {
           {/* Top-right: fit and my location */}
           {!picking && (
             <div className="absolute right-3 top-3 z-[600] flex flex-col gap-2">
-              <MapButton label="Show everything" onClick={() => setFit({ points: [...shownPlaces, ...shownCheckIns], key: Date.now() })}>
+              <MapButton label="Show everything" onClick={() => setFit({ points: [...shownPlaces, ...shownCheckIns, ...shownLive], key: Date.now() })}>
                 <Maximize2 className="h-[1.125rem] w-[1.125rem]" aria-hidden />
               </MapButton>
               <MapButton label="Show my location" onClick={() => void locateMe()}>
@@ -249,25 +311,32 @@ export function LiveMapPage() {
             </div>
           )}
 
-          {/* Phones: list and check-in at the bottom, within thumb reach */}
+          {/* Following someone sharing live: the map keeps them in the middle */}
+          {following && !picking && (
+            <div className="absolute left-1/2 top-3 z-[600] flex -translate-x-1/2 items-center gap-2 rounded-full border border-status-in/50 bg-surface-raised/95 py-1.5 pl-3 pr-1.5 text-xs shadow-xl backdrop-blur-md">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-status-in" aria-hidden />
+              <span className="max-w-[10rem] truncate font-semibold">Following {live.find((p) => p.profileId === following)?.name.split(' ')[0] ?? ''}</span>
+              <button type="button" className="rounded-full border border-line px-2.5 py-1 font-semibold hover:bg-surface" onClick={() => setFollowing(null)}>
+                Stop
+              </button>
+            </div>
+          )}
+
+          {/* Phones: list and sharing at the bottom, within thumb reach */}
           {!picking && (
             <div className="absolute inset-x-3 bottom-6 z-[600] flex items-center justify-between gap-2 lg:hidden">
               <button type="button" className="flex min-h-12 items-center gap-2 rounded-full border border-line bg-surface-raised/95 px-4 text-sm font-semibold shadow-xl backdrop-blur-md" onClick={() => setPanel({ type: 'list' })}>
                 <List className="h-4 w-4 text-uplift" aria-hidden /> List
-                <span className="text-xs font-normal text-muted">{formatNumber(shownPlaces.length + shownCheckIns.length)}</span>
+                <span className="text-xs font-normal text-muted">{formatNumber(shownPlaces.length + shownCheckIns.length + shownLive.length)}</span>
               </button>
-              {canCheckIn && (
-                <button type="button" className="flex min-h-12 items-center gap-2 rounded-full bg-uplift px-5 text-sm font-bold text-page shadow-xl shadow-black/50 transition active:scale-95" onClick={() => setPanel({ type: 'checkin' })} disabled={!online}>
-                  <UserRound className="h-4 w-4" aria-hidden /> Check in here
-                </button>
-              )}
+              {canCheckIn && <ShareButton live={sharing.status !== 'off'} onClick={() => setPanel({ type: 'share' })} disabled={!online} />}
             </div>
           )}
-          {/* Desktop: check-in in the corner */}
+          {/* Desktop: sharing in the corner */}
           {!picking && canCheckIn && (
-            <button type="button" className="btn-primary absolute bottom-8 right-3 z-[600] hidden shadow-xl shadow-black/50 lg:inline-flex" onClick={() => setPanel({ type: 'checkin' })} disabled={!online}>
-              <UserRound className="h-4 w-4" aria-hidden /> Check in here
-            </button>
+            <div className="absolute bottom-8 right-3 z-[600] hidden lg:block">
+              <ShareButton live={sharing.status !== 'off'} onClick={() => setPanel({ type: 'share' })} disabled={!online} />
+            </div>
           )}
         </div>
       </section>
@@ -338,6 +407,42 @@ export function LiveMapPage() {
           }}
         />
       )}
+      {selectedLive && !panel && (
+        <LiveDetails
+          person={selectedLive}
+          places={places}
+          onClose={() => setSelected(null)}
+          onFollow={() => {
+            setFollowing(selectedLive.profileId);
+            setFocus({ lat: selectedLive.lat, lng: selectedLive.lng, zoom: 16, key: Date.now() });
+            setSelected(null);
+          }}
+          onStopMine={async () => {
+            await sharing.stop();
+            setSelected(null);
+          }}
+        />
+      )}
+
+      {panel?.type === 'share' && (
+        <Sheet open onClose={() => setPanel(null)} title="Share your location" subtitle="Let the team see where you are.">
+          <div className="flex flex-col gap-5">
+            <LiveShareCard />
+            <div className="flex items-center gap-3 text-xs text-muted" aria-hidden>
+              <span className="h-px flex-1 bg-line" /> or <span className="h-px flex-1 bg-line" />
+            </div>
+            <section className="flex flex-col gap-3 rounded-2xl border border-line/70 bg-white/[0.02] p-4">
+              <div>
+                <h3 className="text-sm font-semibold">Check in once</h3>
+                <p className="text-xs text-muted">One pin where you are now, with a note. Shown for 24 hours.</p>
+              </div>
+              <button type="button" className="btn-ghost min-h-11" onClick={() => setPanel({ type: 'checkin' })}>
+                <MapPin className="h-4 w-4 text-uplift" aria-hidden /> Check in here
+              </button>
+            </section>
+          </div>
+        </Sheet>
+      )}
 
       {panel?.type === 'form' && (
         <PlaceForm
@@ -406,6 +511,34 @@ export function LiveMapPage() {
   );
 }
 
+/** Opens the sharing choices; shows "Live" while your location is being shared. */
+function ShareButton({ live, onClick, disabled }: { live: boolean; onClick: () => void; disabled?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`flex min-h-12 items-center gap-2 rounded-full px-5 text-sm font-bold shadow-xl shadow-black/50 transition active:scale-95 disabled:opacity-60 ${
+        live ? 'border border-status-in/60 bg-surface-raised/95 text-status-in backdrop-blur-md' : 'bg-uplift text-page'
+      }`}
+    >
+      {live ? (
+        <>
+          <span className="relative flex h-2.5 w-2.5" aria-hidden>
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-status-in opacity-75" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-status-in" />
+          </span>
+          Sharing live
+        </>
+      ) : (
+        <>
+          <UserRound className="h-4 w-4" aria-hidden /> Share location
+        </>
+      )}
+    </button>
+  );
+}
+
 function MapButton({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) {
   return (
     <button
@@ -429,6 +562,8 @@ interface PanelProps {
   shownPlaces: MapPlace[];
   checkIns: CheckIn[];
   shownCheckIns: CheckIn[];
+  live: LivePosition[];
+  shownLive: LivePosition[];
   snapshot: InventorySnapshot | null;
   canManage: boolean;
   onAdd: () => void;
@@ -436,8 +571,8 @@ interface PanelProps {
 }
 
 /** Search, layers (with counts) and the lists of team check-ins and places. */
-function PlacesPanel({ search, setSearch, layers, toggleLayer, places, shownPlaces, checkIns, shownCheckIns, snapshot, canManage, onAdd, onSelect }: PanelProps) {
-  const counts = (l: Layer) => (l === 'team' ? checkIns.length : places.filter((p) => p.kind === l).length);
+function PlacesPanel({ search, setSearch, layers, toggleLayer, places, shownPlaces, checkIns, shownCheckIns, live, shownLive, snapshot, canManage, onAdd, onSelect }: PanelProps) {
+  const counts = (l: Layer) => (l === 'team' ? checkIns.length + live.length : places.filter((p) => p.kind === l).length);
   const sorted = [...shownPlaces].sort((a, b) => a.name.localeCompare(b.name));
   return (
     <div className="flex flex-col gap-5">
@@ -452,7 +587,7 @@ function PlacesPanel({ search, setSearch, layers, toggleLayer, places, shownPlac
       <fieldset>
         <legend className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Show on the map</legend>
         <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-1">
-          {[...PLACE_KINDS.map((k) => ({ key: k.key as Layer, label: k.plural, color: k.color })), { key: 'team' as Layer, label: 'Team check-ins today', color: '#7a1f1f' }].map((l) => (
+          {[...PLACE_KINDS.map((k) => ({ key: k.key as Layer, label: k.plural, color: k.color })), { key: 'team' as Layer, label: 'Team: live and check-ins', color: '#7a1f1f' }].map((l) => (
             <label key={l.key} className="tap flex min-h-10 cursor-pointer items-center gap-3 rounded-xl px-2 text-sm hover:bg-white/[0.04]">
               <input type="checkbox" className="h-4 w-4 accent-uplift" checked={layers.has(l.key)} onChange={() => toggleLayer(l.key)} />
               <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: l.color }} aria-hidden />
@@ -462,6 +597,37 @@ function PlacesPanel({ search, setSearch, layers, toggleLayer, places, shownPlac
           ))}
         </div>
       </fieldset>
+
+      {layers.has('team') && shownLive.length > 0 && (
+        <section aria-labelledby="map-live">
+          <h3 id="map-live" className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-status-in" aria-hidden /> Live now <span className="font-normal normal-case tracking-normal">{shownLive.length}</span>
+          </h3>
+          <ul className="flex flex-col">
+            {[...shownLive].sort((a, b) => Number(b.mine) - Number(a.mine) || a.name.localeCompare(b.name)).map((p) => {
+              const fresh = isFresh(p);
+              return (
+                <li key={p.profileId}>
+                  <button type="button" className="tap flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-white/[0.04]" onClick={() => onSelect({ type: 'live', id: p.profileId })}>
+                    <span
+                      className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 text-[0.6875rem] font-bold ${fresh ? 'border-status-in' : 'border-muted'} ${p.mine ? 'bg-uplift text-page' : 'bg-surface-raised text-ink'}`}
+                      aria-hidden
+                    >
+                      {initialsOf(p.name)}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium">{p.mine ? 'You' : p.name}</span>
+                      <span className={`block truncate text-xs ${fresh ? 'text-status-in' : 'text-muted'}`}>
+                        {fresh ? `Live · ${timeAgo(p.updatedAt)}` : `Paused · last seen ${timeAgo(p.updatedAt)}`}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       {layers.has('team') && (
         <section aria-labelledby="map-team">

@@ -59,6 +59,30 @@ export interface CheckInDraft {
   note: string;
 }
 
+/** Opt-in live location: the latest position of someone sharing right now (no trail). */
+export interface LivePosition {
+  profileId: string;
+  name: string;
+  lat: number;
+  lng: number;
+  accuracyM: number | null;
+  heading: number | null;
+  speedMps: number | null;
+  updatedAt: string;
+  sharingUntil: string;
+  mine: boolean;
+}
+
+export interface LiveFix {
+  lat: number;
+  lng: number;
+  accuracyM: number | null;
+  heading: number | null;
+  speedMps: number | null;
+}
+
+export type LiveEvent = { type: 'upsert'; position: Omit<LivePosition, 'name'> & { name?: string } } | { type: 'remove'; profileId: string };
+
 export class MapRuleError extends Error {
   constructor(message: string) {
     super(message);
@@ -76,4 +100,12 @@ export interface MapService {
   listCheckIns(): Promise<CheckIn[]>;
   checkIn(draft: CheckInDraft): Promise<CheckIn>;
   removeCheckIn(id: string): Promise<void>;
+  /** Everyone sharing their live location right now. */
+  listLive(): Promise<LivePosition[]>;
+  /** Start sharing, or send a newer position, until `sharingUntil` (ISO, at most 24 h ahead). */
+  shareLive(fix: LiveFix, sharingUntil: string): Promise<void>;
+  /** Stop sharing: your position is removed from everyone's map. */
+  stopLive(): Promise<void>;
+  /** Positions as they change, within seconds. Returns a function that stops listening. */
+  subscribeLive(onEvent: (e: LiveEvent) => void): () => void;
 }

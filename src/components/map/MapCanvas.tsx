@@ -1,13 +1,14 @@
-import { useEffect, useMemo, useRef, type ReactElement } from 'react';
+import { useEffect, useMemo, useRef, type ReactElement, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
-import { Circle, MapContainer, Marker, TileLayer, Tooltip, useMap, useMapEvents } from 'react-leaflet';
+import { Circle, MapContainer, Marker, TileLayer, Tooltip, useMap, useMapEvents, type MarkerProps } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Building2, Crosshair, HandHeart, House, LifeBuoy, Truck, Warehouse, type LucideIcon } from 'lucide-react';
 import { PH_CENTER, PH_ZOOM, type LatLng } from '../../lib/geo';
 import { initialsOf } from '../../lib/format';
-import { kindMeta, type CheckIn, type MapPlace, type PlaceKind } from '../../services/map/types';
+import { kindMeta, type CheckIn, type LivePosition, type MapPlace, type PlaceKind } from '../../services/map/types';
+import { timeAgo } from '../../lib/geo';
 
 const KIND_ICON: Record<PlaceKind, LucideIcon> = {
   warehouse: Warehouse,
@@ -73,6 +74,27 @@ function personIcon(c: CheckIn, selected: boolean): L.DivIcon {
   });
 }
 
+/** Under 2 minutes since the last position: live. Older: the phone stopped sending (portal closed or no signal). */
+export const isFresh = (p: LivePosition, now = Date.now()) => now - Date.parse(p.updatedAt) < 120_000;
+
+/** Someone sharing live: initials in a green ring with a "LIVE" tag; grey once the position goes stale. */
+function liveIcon(p: LivePosition, selected: boolean): L.DivIcon {
+  const fresh = isFresh(p);
+  const size = selected ? 40 : 34;
+  const ring = fresh ? '#4ade80' : '#9a9ca6';
+  return L.divIcon({
+    className: 'map-pin live-pin',
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    tooltipAnchor: [0, -size / 2],
+    html: `<span style="position:relative;display:grid;place-items:center;width:${size}px;height:${size}px">${
+      fresh ? `<span style="position:absolute;inset:0;border-radius:9999px;background:${ring};animation:map-pulse 1.6s ease-out infinite"></span>` : ''
+    }<span style="position:relative;display:grid;place-items:center;width:${size}px;height:${size}px;border-radius:9999px;background:${p.mine ? '#ec952a' : '#1c1d21'};color:${p.mine ? '#1c1d21' : '#fff'};font:700 ${
+      selected ? 13 : 11
+    }px/1 Montserrat,system-ui,sans-serif;border:3px solid ${ring};box-shadow:0 6px 16px -4px rgba(0,0,0,.7)">${initialsOf(p.name)}</span><span style="position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);padding:1px 4px;border-radius:4px;background:${ring};color:#1c1d21;font:800 8px/1.2 Montserrat,system-ui,sans-serif;letter-spacing:.06em">${fresh ? 'LIVE' : 'PAUSED'}</span></span>`,
+  });
+}
+
 const meIcon = L.divIcon({
   className: 'map-pin',
   iconSize: [20, 20],
@@ -88,11 +110,45 @@ export interface MapFocus {
   key: number;
 }
 
+/** A marker that glides to its new position over about a second when it moves (live sharing). */
+function GlidingMarker({ lat, lng, children, ...rest }: { lat: number; lng: number; children?: ReactNode } & Omit<MarkerProps, 'position'>) {
+  const ref = useRef<L.Marker>(null);
+  const shown = useRef<[number, number]>([lat, lng]);
+  useEffect(() => {
+    const marker = ref.current;
+    if (!marker) return;
+    const [fromLat, fromLng] = shown.current;
+    if (fromLat === lat && fromLng === lng) return;
+    const start = performance.now();
+    let frame = 0;
+    const step = (t: number) => {
+      const k = Math.min(1, (t - start) / 1000);
+      const e = k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2; // ease in-out
+      shown.current = [fromLat + (lat - fromLat) * e, fromLng + (lng - fromLng) * e];
+      marker.setLatLng(shown.current);
+      if (k < 1) frame = requestAnimationFrame(step);
+    };
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, [lat, lng]);
+  // Position is driven by the animation above; React only sets the starting point.
+  const initial = useRef<[number, number]>([lat, lng]);
+  return (
+    <Marker ref={ref} position={initial.current} {...rest}>
+      {children}
+    </Marker>
+  );
+}
+
+export type MapSelection = { type: 'place' | 'checkin' | 'live'; id: string } | null;
+
 interface Props {
   places: MapPlace[];
   checkIns: CheckIn[];
-  selected: { type: 'place' | 'checkin'; id: string } | null;
-  onSelect: (s: { type: 'place' | 'checkin'; id: string } | null) => void;
+  selected: MapSelection;
+  onSelect: (s: MapSelection) => void;
+  /** People sharing their live location right now. */
+  live: LivePosition[];
   focus: MapFocus | null;
   /** Fit these points in view whenever `fitKey` changes. */
   fit: { points: LatLng[]; key: number } | null;
@@ -137,14 +193,16 @@ function Controller({ focus, fit, picking, onCenter, onBackground }: Pick<Props,
   return null;
 }
 
-export function MapCanvas({ places, checkIns, selected, onSelect, focus, fit, me, picking, onCenter }: Props) {
+export function MapCanvas({ places, checkIns, live, selected, onSelect, focus, fit, me, picking, onCenter }: Props) {
   const selectedCheck = selected?.type === 'checkin' ? checkIns.find((c) => c.id === selected.id) : null;
+  const selectedLive = selected?.type === 'live' ? live.find((p) => p.profileId === selected.id) : null;
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
   const handlers = useMemo(
     () => ({
       place: (id: string) => ({ click: () => onSelectRef.current({ type: 'place', id }), keypress: (e: L.LeafletKeyboardEvent) => e.originalEvent.key === 'Enter' && onSelectRef.current({ type: 'place', id }) }),
       person: (id: string) => ({ click: () => onSelectRef.current({ type: 'checkin', id }) }),
+      live: (id: string) => ({ click: () => onSelectRef.current({ type: 'live', id }) }),
     }),
     [],
   );
@@ -185,6 +243,25 @@ export function MapCanvas({ places, checkIns, selected, onSelect, focus, fit, me
               </Tooltip>
             </Marker>
           ))}
+        {!picking &&
+          live.map((p) => (
+            <GlidingMarker
+              key={`live-${p.profileId}`}
+              lat={p.lat}
+              lng={p.lng}
+              icon={liveIcon(p, selected?.type === 'live' && selected.id === p.profileId)}
+              alt={`${p.name}, live`}
+              zIndexOffset={3000}
+              eventHandlers={handlers.live(p.profileId)}
+            >
+              <Tooltip direction="auto" opacity={1} className="!rounded-lg !border-line !bg-surface-raised !px-2 !py-1 !text-xs !font-semibold !text-ink !shadow-xl">
+                {p.mine ? 'You' : p.name} · {isFresh(p) ? `live, ${timeAgo(p.updatedAt)}` : `paused, ${timeAgo(p.updatedAt)}`}
+              </Tooltip>
+            </GlidingMarker>
+          ))}
+        {selectedLive?.accuracyM && (
+          <Circle center={[selectedLive.lat, selectedLive.lng]} radius={selectedLive.accuracyM} pathOptions={{ color: '#4ade80', weight: 1, fillOpacity: 0.08 }} />
+        )}
         {selectedCheck?.accuracyM && (
           <Circle center={[selectedCheck.lat, selectedCheck.lng]} radius={selectedCheck.accuracyM} pathOptions={{ color: '#ec952a', weight: 1, fillOpacity: 0.08 }} />
         )}

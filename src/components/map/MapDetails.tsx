@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Clock, Crosshair, Navigation, Package, Pencil, Trash2, TriangleAlert, Users } from 'lucide-react';
 import { directionsUrl, distanceM, formatDistance, formatLatLng, timeAgo } from '../../lib/geo';
-import { formatNumber } from '../../lib/format';
+import { formatNumber, formatTime } from '../../lib/format';
 import { eventAt, stockAt } from '../../lib/mapStock';
 import type { InventorySnapshot } from '../../services/inventory/types';
-import { kindMeta, type CheckIn, type MapPlace } from '../../services/map/types';
+import { kindMeta, type CheckIn, type LivePosition, type MapPlace } from '../../services/map/types';
 import { Sheet } from '../ui/Sheet';
 
 interface PlaceProps {
@@ -167,6 +167,64 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: str
       <p className={`text-lg font-bold tabular-nums ${tone ?? 'text-ink'}`}>{value}</p>
       <p className="text-[0.6875rem] text-muted">{label}</p>
     </div>
+  );
+}
+
+interface LiveProps {
+  person: LivePosition;
+  places: MapPlace[];
+  onClose: () => void;
+  onFollow: () => void;
+  onStopMine: () => Promise<void>;
+}
+
+/** Someone sharing live: how fresh the position is, how fast they're moving, until when; follow them on the map. */
+export function LiveDetails({ person: p, places, onClose, onFollow, onStopMine }: LiveProps) {
+  const fresh = Date.now() - Date.parse(p.updatedAt) < 120_000;
+  const nearest = places.map((pl) => ({ pl, d: distanceM(pl, p) })).sort((a, b) => a.d - b.d)[0];
+  const kmh = p.speedMps != null ? Math.round(p.speedMps * 3.6) : null;
+  return (
+    <Sheet
+      open
+      onClose={onClose}
+      title={p.mine ? 'You’re sharing live' : p.name}
+      subtitle={
+        <span className={`inline-flex items-center gap-1.5 font-semibold ${fresh ? 'text-status-in' : 'text-muted'}`}>
+          <span className={`h-2 w-2 rounded-full ${fresh ? 'animate-pulse bg-status-in' : 'bg-muted'}`} aria-hidden />
+          {fresh ? `Live, updated ${timeAgo(p.updatedAt)}` : `Paused, last seen ${timeAgo(p.updatedAt)}`}
+        </span>
+      }
+      footer={
+        <div className="grid grid-cols-2 gap-2">
+          <a className="btn-ghost h-12 px-3" href={directionsUrl(p)} target="_blank" rel="noopener noreferrer">
+            <Navigation className="h-4 w-4" aria-hidden /> Directions
+          </a>
+          <button type="button" className="btn-primary h-12 whitespace-nowrap px-3" onClick={onFollow}>
+            <Crosshair className="h-4 w-4" aria-hidden /> Follow on map
+          </button>
+        </div>
+      }
+    >
+      <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <Stat label="Accuracy" value={p.accuracyM ? formatDistance(p.accuracyM) : '–'} />
+          <Stat label="Moving" value={kmh == null ? '–' : kmh < 1 ? 'Still' : `${kmh} km/h`} />
+          <Stat label="Until" value={formatTime(p.sharingUntil)} />
+        </div>
+        {nearest && nearest.d < 50_000 && (
+          <p className="text-sm text-ink-soft">
+            {formatDistance(nearest.d)} from <strong className="font-semibold text-ink">{nearest.pl.name}</strong>
+          </p>
+        )}
+        {!fresh && <p className="text-xs text-muted">Their portal isn’t open right now (or there’s no signal), so the pin shows where they last were. It updates again when they open it.</p>}
+        <p className="text-xs text-muted">{p.mine ? 'You chose to share this.' : `${p.name.split(' ')[0]} chose to share this.`} It stops by itself at {formatTime(p.sharingUntil)}.</p>
+        {p.mine && (
+          <button type="button" className="btn-ghost self-start text-status-out" onClick={() => void onStopMine()}>
+            <Trash2 className="h-4 w-4" aria-hidden /> Stop sharing now
+          </button>
+        )}
+      </div>
+    </Sheet>
   );
 }
 

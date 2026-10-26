@@ -376,6 +376,28 @@ await check('check-ins older than 24 hours are hidden', async () => {
 await check('others cannot remove your check-in', () => as(A, `delete from public.field_checkins returning id`).then(expectRows(0)));
 await check('you can remove your own check-in', () => as(B, `delete from public.field_checkins where created_at > now() - interval '1 hour' returning id`).then(expectRows(1)));
 
+// Live location: opt-in, own row only, at most 24 hours, hidden once it ends
+const SHARE = (until) => `insert into public.live_locations (lat, lng, accuracy_m, sharing_until) values (11.24, 125.0, 10, now() + interval '${until}')
+  on conflict (profile_id) do update set lat = excluded.lat, lng = excluded.lng, sharing_until = excluded.sharing_until returning profile_id`;
+await check('staff starts sharing live for an hour', () => as(B, SHARE('1 hour')).then(expectRows(1)));
+await check('their live position moves (one row, no trail)', async () => {
+  await as(B, `update public.live_locations set lat = 11.25 where profile_id = '${B}'`);
+  const r = (await as(A, `select lat from public.live_locations`)).rows;
+  if (r.length !== 1 || Number(r[0].lat) !== 11.25) throw new Error(JSON.stringify(r));
+  return r;
+});
+await check('sharing for more than 24 hours is refused', () => as(B, SHARE('2 days')), true);
+await check('viewers cannot share live', () => as(D, SHARE('1 hour')), true);
+await check('nobody moves someone else’s position', () => as(A, `update public.live_locations set lat = 0 where profile_id = '${B}' returning lat`).then(expectRows(0)));
+await check('an ended share is hidden at once', async () => {
+  await db.exec(`update public.live_locations set sharing_until = now() - interval '1 minute' where profile_id = '${B}'`);
+  return (await as(A, `select profile_id from public.live_locations`)).rows.length === 0 ? 0 : Promise.reject(new Error('still visible'));
+});
+await check('stopping removes your position', async () => {
+  await as(B, SHARE('1 hour'));
+  return as(B, `delete from public.live_locations returning profile_id`).then(expectRows(1));
+});
+
 // First-run progress: each person updates only their own, and steps merge instead of replacing
 await check('staff saves their first-run answer', () => as(B, `select public.update_onboarding('{"focus":"task","question":"answered","steps":{"signin":"2026-10-26T00:00:00Z"}}') o`).then((r) => r.rows[0].o));
 await check('a later step keeps the earlier ones', async () => {

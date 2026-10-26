@@ -1,6 +1,7 @@
 import { useEffect, useRef, type RefObject } from 'react';
 import { Menu, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { LiveSharingBanner } from '../map/LiveSharing';
 import { Emblem } from '../ui/Emblem';
 import { NotificationsMenu } from './NotificationsMenu';
 import { OnlinePill } from './OnlineStatus';
@@ -93,6 +94,8 @@ export function TopBar({ search, onSearch, menuOpen, onOpenMenu, hideMobileSearc
       <div className={`px-4 pb-3 sm:px-6 md:hidden ${hideMobileSearch ? 'hidden' : ''}`}>
         <SearchBox value={search} onChange={onSearch} inputRef={mobileInput} />
       </div>
+      {/* While sharing a live location: on every page, with Stop. */}
+      <LiveSharingBanner />
     </header>
   );
 }

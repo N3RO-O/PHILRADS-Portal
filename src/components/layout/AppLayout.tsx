@@ -3,6 +3,7 @@ import { Outlet, useLocation, useNavigate, useOutletContext } from 'react-router
 import { CalendarDays } from 'lucide-react';
 import { moduleForPath } from '../../config/modules';
 import { formatLongDate } from '../../lib/format';
+import { LiveSharingProvider } from '../map/LiveSharing';
 import { OnboardingProvider } from '../onboarding/OnboardingProvider';
 import { UpdatePrompt } from '../pwa/UpdatePrompt';
 import { MobileDrawer } from './MobileDrawer';
@@ -62,6 +63,7 @@ export function AppLayout() {
 
   return (
     <OnboardingProvider>
+    <LiveSharingProvider>
     <div className="min-h-dvh">
       <a href="#main" className="sr-only z-50 rounded-xl bg-uplift px-4 py-2 font-semibold text-page focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
         Skip to main content
@@ -114,6 +116,7 @@ export function AppLayout() {
       </div>
       <UpdatePrompt />
     </div>
+    </LiveSharingProvider>
     </OnboardingProvider>
   );
 }
