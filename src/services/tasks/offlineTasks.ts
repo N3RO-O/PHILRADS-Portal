@@ -336,6 +336,12 @@ export function createOfflineTasks(inner: TasksService): OfflineTasksService {
       }
     },
     sendKudos: (toId, message) => inner.sendKudos(toId, message),
+    // Online only: it notifies the person straight away, so it never waits in the queue.
+    async sendBack(id, reason) {
+      const task = await inner.sendBack(id, reason);
+      current.set(id, task);
+      return task;
+    },
     pending: () => new Map(mine().map((e) => [e.taskId, e])),
     savedAt: () => fromDevice,
     subscribe(fn) {

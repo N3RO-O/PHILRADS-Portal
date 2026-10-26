@@ -5,11 +5,14 @@ import { manilaDayKey } from './format';
 
 /**
  * Levels, badges and rewards for the Tasks module.
- * XP rules mirror award_task_xp() in supabase/migrations/20261027000000_tasks_module.sql:
+ * XP rules mirror award_task_xp() in supabase/migrations/20261028000000_task_fairness_and_audit.sql:
  * the database awards XP for real; this copy scores sample mode and explains the rules.
  */
 export const XP_RULES = {
+  /** Tasks someone else gave you, by the priority they set. */
   base: { low: 10, medium: 20, high: 35 },
+  /** Tasks you set for yourself: one flat amount (no priority, on-time or subtask extras). */
+  self: 10,
   onTime: 10,
   perSubtask: 2,
   maxSubtasks: 10,
@@ -20,22 +23,22 @@ export const XP_RULES = {
 
 /** Score a finished task (sample mode). `selfXpToday`: XP already earned today from self-set tasks. */
 export function scoreCompletion(task: Task, earnerId: string, selfXpToday: number, today = todayKey()): XpAward {
-  const base = XP_RULES.base[task.priority];
-  const onTime = task.dueDate && today <= task.dueDate ? XP_RULES.onTime : 0;
-  const subtasks = Math.min(XP_RULES.maxSubtasks, XP_RULES.perSubtask * task.subtasks.filter((s) => s.done).length);
   const selfSet = task.createdById === earnerId;
+  const base = selfSet ? XP_RULES.self : XP_RULES.base[task.priority];
+  const onTime = !selfSet && task.dueDate && today <= task.dueDate ? XP_RULES.onTime : 0;
+  const subtasks = selfSet ? 0 : Math.min(XP_RULES.maxSubtasks, XP_RULES.perSubtask * task.subtasks.filter((s) => s.done).length);
   let points = base + onTime + subtasks;
   let capped = false;
   if (selfSet && points > Math.max(0, XP_RULES.selfDailyCap - selfXpToday)) {
     points = Math.max(0, XP_RULES.selfDailyCap - selfXpToday);
     capped = true;
   }
-  return { taskId: task.id, taskTitle: task.title, points, base, onTime, subtasks, selfSet, capped, day: today, awardedAt: new Date().toISOString() };
+  return { taskId: task.id, taskTitle: task.title, points, base, onTime, subtasks, selfSet, capped, flag: null, day: today, awardedAt: new Date().toISOString() };
 }
 
-/** What finishing a task is worth before any cap: shown on the task. */
-export const taskWorth = (task: Pick<Task, 'priority' | 'dueDate' | 'subtasks'>) =>
-  XP_RULES.base[task.priority] + Math.min(XP_RULES.maxSubtasks, XP_RULES.perSubtask * task.subtasks.filter((s) => s.done).length);
+/** What finishing a task is worth before any cap: shown on the task. Your own tasks are worth a flat amount. */
+export const taskWorth = (task: Pick<Task, 'priority' | 'dueDate' | 'subtasks'>, selfSet = false) =>
+  selfSet ? XP_RULES.self : XP_RULES.base[task.priority] + Math.min(XP_RULES.maxSubtasks, XP_RULES.perSubtask * task.subtasks.filter((s) => s.done).length);
 
 // ───────────────────────── Levels and unlocks ─────────────────────────
 
@@ -153,7 +156,9 @@ function streaks(days: Set<string>, today: string) {
 
 export function computeProgress(input: { awards: XpAward[]; kudos: Kudos[]; tasks: Task[]; userId: string | null; today?: string }) {
   const today = input.today ?? todayKey();
-  const { awards, kudos } = input;
+  const { kudos } = input;
+  // Tasks added already finished don't count toward badges or streaks.
+  const awards = input.awards.filter((a) => !a.flag);
   const byTask = new Map(input.tasks.map((t) => [t.id, t]));
   const done = awards.map((a) => byTask.get(a.taskId)).filter((t): t is Task => Boolean(t));
 

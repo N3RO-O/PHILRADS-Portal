@@ -214,6 +214,18 @@ export const mockTasksService: TasksService = {
     // In sample mode the kudos goes nowhere: the other people are made up.
     await later(null);
   },
+  async sendBack(id, reason) {
+    needOnline();
+    const prev = find(id);
+    if (prev.createdById !== me && !demoCan('tasks.manage')) throw new TaskRuleError('Only the person who gave this task can send it back.');
+    if (prev.status !== 'done') throw new TaskRuleError('Only a finished task can be sent back.');
+    if (!prev.assigneeId || prev.assigneeId === me) throw new TaskRuleError('This task is yours; re-open it instead.');
+    if (reason.trim().length < 3 || reason.trim().length > 280) throw new TaskRuleError('Say in a few words what still needs doing (up to 280 characters).');
+    const task: Task = { ...prev, status: 'todo', completedAt: null, updatedAt: new Date().toISOString() };
+    replace(task);
+    persist();
+    return later(task);
+  },
 };
 
 // ───────────────────────── Supabase ─────────────────────────
@@ -224,7 +236,8 @@ export function createSupabaseTasksService(client: SupabaseClient): TasksService
     console.error(`[tasks] ${what}`, error);
     // No connection (the request never reached Supabase): the offline queue keeps the change.
     if (!navigator.onLine || /failed to fetch|networkerror|load failed|network request failed/i.test(error.message)) throw new TaskOfflineError();
-    if (error.code === '42501') throw new TaskRuleError(error.message.startsWith('Only') || error.message.startsWith('The') ? error.message : 'Your role does not allow this.');
+    // The database's own rules explain themselves; a bare row-level security refusal doesn't.
+    if (error.code === '42501') throw new TaskRuleError(/row-level security|permission denied/i.test(error.message) ? 'Your role does not allow this.' : error.message);
     if (error.code === '22023') throw new TaskRuleError(error.message);
     if (error.code === '23505') throw new TaskRuleError('You already thanked them today. Try again tomorrow.');
     if (error.code && error.code.startsWith('23')) throw new TaskRuleError('The server rejected this task. Check the title and details.');
@@ -280,10 +293,11 @@ export function createSupabaseTasksService(client: SupabaseClient): TasksService
     subtasks: r.subtasks as number,
     selfSet: Boolean(r.self_set),
     capped: Boolean(r.capped),
+    flag: (r.flag as 'added_done' | null) ?? null,
     day: r.day as string,
     awardedAt: r.created_at as string,
   });
-  const awardColumns = 'task_id, points, base, on_time, subtasks, self_set, capped, day, created_at, task:tasks(title)';
+  const awardColumns = 'task_id, points, base, on_time, subtasks, self_set, capped, flag, day, created_at, task:tasks(title)';
 
   const save = async (d: TaskDraft) => {
     validate(d);
@@ -370,6 +384,13 @@ export function createSupabaseTasksService(client: SupabaseClient): TasksService
     async sendKudos(toId, message) {
       const { error } = await client.from('task_kudos').insert({ to_user: toId, message: message.trim() });
       if (error) fail('send kudos', error);
+    },
+    async sendBack(id, reason) {
+      const { error } = await client.rpc('send_back_task', { p_task: id, p_reason: reason.trim() });
+      if (error) fail('send this task back', error);
+      const { data, error: readError } = await client.from('tasks').select(columns).eq('id', id).single();
+      if (readError) fail('load this task', readError);
+      return map(data as Record<string, unknown>);
     },
   };
 }

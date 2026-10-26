@@ -11,7 +11,8 @@ export type ModuleId =
   | 'tasks'
   | 'print-docs'
   | 'resources'
-  | 'staff';
+  | 'staff'
+  | 'logs';
 
 /** Where a value came from. The UI labels anything from "mock" as sample data. */
 export type DataSource = 'mock' | 'supabase';

@@ -8,6 +8,7 @@ import {
   Map,
   Package,
   Printer,
+  ScrollText,
   SquareCheckBig,
   UsersRound,
   type LucideIcon,
@@ -136,6 +137,16 @@ export const MODULES: ModuleConfig[] = [
     summary: 'Invite staff and volunteers to the portal, choose what each person can do, and switch accounts on or off.',
     plannedScope: [],
     permission: 'staff.manage',
+  },
+  {
+    id: 'logs',
+    label: 'Logs',
+    path: '/logs',
+    icon: ScrollText,
+    group: 'Admin',
+    summary: 'Everything that happens in the portal: tasks, stock, staff changes and sign-ins, with flags to look into. Nobody can change or delete it.',
+    plannedScope: [],
+    permission: 'audit.read',
   },
 ];
 

@@ -100,6 +100,8 @@ export function createSupabaseDashboardService(client: SupabaseClient): Dashboar
       const { data, error } = await client
         .from('activity_logs')
         .select('id, module, summary, details, created_at, actor:profiles!activity_logs_actor_id_fkey(display_name)')
+        // The everyday feed; sign-ins and flags are for the admin Logs page.
+        .eq('audience', 'everyone')
         .order('created_at', { ascending: false })
         .limit(limit);
       if (error) fail('recent activity', error);

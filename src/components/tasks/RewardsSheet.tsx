@@ -118,13 +118,16 @@ export function RewardsSheet({ tab, progress, kudos, onTab, onClose, onPrintCert
             </p>
             <ul className="list-disc space-y-0.5 pl-5">
               <li>
-                Finish a task: {XP_RULES.base.low} XP (low), {XP_RULES.base.medium} XP (medium) or {XP_RULES.base.high} XP (high priority).
+                A task someone gave you: {XP_RULES.base.low} XP (low), {XP_RULES.base.medium} XP (medium) or {XP_RULES.base.high} XP (high priority).
               </li>
-              <li>+{XP_RULES.onTime} XP when it’s done on or before its due date.</li>
+              <li>+{XP_RULES.onTime} XP when it’s done on or before the due date they set.</li>
               <li>
                 +{XP_RULES.perSubtask} XP for each finished subtask, up to +{XP_RULES.maxSubtasks}.
               </li>
-              <li>Tasks you set for yourself earn up to {XP_RULES.selfDailyCap} XP a day. Tasks someone gave you have no limit.</li>
+              <li>
+                Tasks you set for yourself: {XP_RULES.self} XP each, up to {XP_RULES.selfDailyCap} XP a day. Tasks someone gave you have no limit, and they can send one
+                back if it isn’t really done (the XP goes with it).
+              </li>
               <li>Kudos from a coordinator: +{XP_RULES.kudos} XP.</li>
               <li>Re-opening a finished task takes its XP back.</li>
             </ul>

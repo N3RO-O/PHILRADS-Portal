@@ -79,6 +79,8 @@ export interface XpAward {
   selfSet: boolean;
   /** Fewer points than earned because the daily cap for self-set tasks was reached. */
   capped: boolean;
+  /** added_done: the task was added already finished (no XP; not counted for badges or streaks). */
+  flag: 'added_done' | null;
   /** YYYY-MM-DD (Manila). */
   day: string;
   awardedAt: string;
@@ -148,4 +150,6 @@ export interface TasksService {
   assignees(): Promise<Assignee[]>;
   /** tasks.manage only: +15 XP and a bell notification for them. */
   sendKudos(toId: string, message: string): Promise<void>;
+  /** The person who gave a finished task (or a coordinator) re-opens it with a reason; its XP is taken back. Online only. */
+  sendBack(id: string, reason: string): Promise<Task>;
 }

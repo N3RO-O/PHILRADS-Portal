@@ -147,6 +147,15 @@ const readDemoRole = () => {
   }
 };
 
+/** "Chrome on Android", "Safari on iPhone"…: enough for an administrator to recognise a device. */
+function deviceLabel(): string {
+  const ua = navigator.userAgent;
+  const os = /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad' : /Android/.test(ua) ? 'Android' : /Windows/.test(ua) ? 'Windows' : /Mac OS X/.test(ua) ? 'Mac' : /Linux/.test(ua) ? 'Linux' : 'another system';
+  const browser = /Edg\//.test(ua) ? 'Edge' : /OPR\/|Opera/.test(ua) ? 'Opera' : /Brave/.test(ua) ? 'Brave' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'a browser';
+  const app = window.matchMedia?.('(display-mode: standalone)').matches ? ' (installed app)' : '';
+  return `${browser} on ${os}${app}`;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>(
     dataSource === 'supabase' ? { status: 'loading' } : { status: 'demo', profile: demoProfileFor(readDemoRole()) },
@@ -185,6 +194,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (event === 'INITIAL_SESSION') return;
       if (event === 'PASSWORD_RECOVERY') setNeedsPassword(true);
       setTimeout(() => void apply(session), 0);
+      // For the admin log. The database takes who it is from the session and counts one sign-in per 20 minutes.
+      if (event === 'SIGNED_IN') setTimeout(() => void client.rpc('log_sign_in', { p_device: deviceLabel() }).then(() => undefined, () => undefined), 0);
     });
     return () => {
       active = false;

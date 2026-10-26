@@ -140,7 +140,12 @@
     animation: shimmer 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   }
   .field {
-    @apply block w-full rounded-xl border border-line bg-surface-sunken px-4 py-3 text-sm text-ink placeholder:text-muted focus:border-uplift focus:outline-none focus:ring-1 focus:ring-uplift;
+    @apply block w-full rounded-xl border border-line bg-surface-sunken px-4 py-3 text-sm text-ink placeholder:text-muted focus:border-uplift focus:outline-none focus:ring-1 focus:ring-uplift disabled:cursor-not-allowed disabled:border-line/50 disabled:text-ink-soft disabled:opacity-70;
+  }
+  /* Locked choices (e.g. a task someone else set): visibly not clickable. */
+  .chip:disabled,
+  [role='radio']:disabled {
+    @apply cursor-not-allowed opacity-50;
   }
   .popover {
     @apply glass rounded-2xl;

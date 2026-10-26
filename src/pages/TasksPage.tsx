@@ -308,6 +308,28 @@ export function TasksPage() {
     }
   };
 
+  // The person who gave a finished task sends it back: it re-opens and the XP is taken back.
+  const sendBack = async (t: Task, reason: string) => {
+    try {
+      const updated = await tasksService.sendBack(t.id, reason);
+      setTasks((ts) => ts && ts.map((x) => (x.id === t.id ? updated : x)));
+      setToast({ text: `Sent “${t.title}” back to ${t.assigneeName ?? 'them'}. They’ll see your note in their bell.`, tone: 'ok' });
+      return null;
+    } catch (e) {
+      return errorText(e);
+    }
+  };
+
+  // A bell note links to one task (?task=…): open it once the tasks are loaded.
+  const linkedTask = params.get('task');
+  useEffect(() => {
+    if (!linkedTask || !tasks) return;
+    const t = tasks.find((x) => x.id === linkedTask);
+    if (t) setSheet({ task: t, initial: null });
+    else setToast({ text: 'That task isn’t in your lists any more.', tone: 'warn' });
+    setParam({ task: null });
+  }, [linkedTask, tasks, setParam]);
+
   // Home's "Create task" quick action.
   const quickAction = params.get('action');
   useEffect(() => {
@@ -587,6 +609,7 @@ export function TasksPage() {
         onSave={saveFromSheet}
         onToggleDone={(t) => void toggle(t)}
         onRemove={remove}
+        onSendBack={sendBack}
       />
       <RewardsSheet tab={rewardsTab} progress={progress} kudos={kudos} onTab={(tab) => setParam({ rewards: tab })} onClose={() => setParam({ rewards: null })} onPrintCertificate={(l) => setPrintLevel(LEVELS.find((x) => x.level === l) ?? null)} />
       <LevelUpDialog level={levelUp} onClose={() => setLevelUp(null)} onViewRewards={() => (setLevelUp(null), setParam({ rewards: 'levels' }))} />

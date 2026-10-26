@@ -1,6 +1,7 @@
 import { dataSource, env } from '../config/env';
 import { withDeviceCopy } from '../lib/deviceCopy';
 import { supabase } from '../lib/supabase';
+import { createSupabaseAuditService, mockAuditService, type AuditService } from './audit/auditService';
 import { mockDashboardService } from './dashboard/mockDashboardService';
 import { createSupabaseDashboardService } from './dashboard/supabaseDashboardService';
 import type { DashboardService } from './dashboard/types';
@@ -43,6 +44,9 @@ export const tasksService: OfflineTasksService = createOfflineTasks(live ? creat
 
 /** Live Map: places (offline: the last copy on this device) and today's team check-ins. */
 export const mapService: MapService = withDeviceCopy(live ? createSupabaseMapService(live) : mockMapService, 'map', ['listPlaces']);
+
+/** The admin log (Logs page, administrators only). */
+export const auditService: AuditService = live ? createSupabaseAuditService(live) : mockAuditService;
 
 /** First-run progress (Get started), saved to the person's account and kept on the device. */
 export const onboardingService: OnboardingService = live ? createSupabaseOnboardingService(live) : mockOnboardingService;

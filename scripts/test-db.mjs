@@ -105,12 +105,15 @@ await check('re-opening takes the XP back; finishing again awards it once', asyn
   if (n !== 1) throw new Error(`${n} awards`);
   return n;
 });
-await check('own tasks stop at 60 XP a day (35, then 25 capped, then 0)', async () => {
-  await as(B, `insert into public.tasks (title, priority, assignee_id, created_by) values ('Own 1', 'high', '${B}', '${B}'), ('Own 2', 'high', '${B}', '${B}'), ('Own 3', 'high', '${B}', '${B}')`);
-  for (const t of ['Own 1', 'Own 2', 'Own 3']) await as(B, `update public.tasks set status = 'done' where id = ${TASK(t)}`);
+await check('own tasks earn a flat 10 XP (even "high", due today, with steps) and stop at 60 a day', async () => {
+  const own = [1, 2, 3, 4, 5, 6, 7].map((n) => `Own ${n}`);
+  await as(B, `insert into public.tasks (title, priority, due_date, subtasks, assignee_id, created_by) values ${own
+    .map((t) => `('${t}', 'high', current_date, '[{"id":"1","title":"a","done":true}]', '${B}', '${B}')`)
+    .join(', ')}`);
+  for (const t of own) await as(B, `update public.tasks set status = 'done' where id = ${TASK(t)}`);
   const pts = [];
-  for (const t of ['Own 1', 'Own 2', 'Own 3']) pts.push((await xpOf(t))[0]?.points);
-  if (pts.join() !== '35,25,0') throw new Error(pts.join());
+  for (const t of own) pts.push((await xpOf(t))[0]?.points);
+  if (pts.join() !== '10,10,10,10,10,10,0') throw new Error(pts.join());
   return pts;
 });
 await check('finished subtasks add 2 XP each', async () => {
@@ -124,7 +127,7 @@ await check('staff cannot write XP directly', () => as(B, `insert into public.ta
 await check('staff sees only their own XP', () => as(B, `select distinct user_id from public.task_xp_events`).then(expectRows(1)));
 await check('staff cannot give their own task to someone else later', () => as(B, `update public.tasks set assignee_id = '${A}' where id = ${TASK('Pack kits')}`), true);
 await check('who created a task cannot be rewritten', () => as(A, `update public.tasks set created_by = '${A}' where id = ${TASK('Pack kits')}`), true);
-await check('admin can reassign a task', () => as(A, `update public.tasks set assignee_id = '${A}' where id = ${TASK('Own 3')} returning title`).then(expectRows(1)));
+await check('admin can reassign a task', () => as(A, `update public.tasks set assignee_id = '${A}' where id = ${TASK('Pack kits')} returning title`).then(expectRows(1)));
 await check('staff cannot send kudos', () => as(B, `insert into public.task_kudos (to_user, message) values ('${A}', 'Thanks')`), true);
 await check('admin sends kudos: +15 XP and a bell note', async () => {
   await as(A, `insert into public.task_kudos (to_user, message) values ('${B}', 'Great work at the distribution')`);
@@ -144,6 +147,86 @@ await check('admin sets the team goal', async () => {
   await as(A, `select public.set_task_team_goal(300)`);
   return (await as(B, `select goal from public.task_team_progress()`)).rows[0].goal === 300 || Promise.reject(new Error('goal not saved'));
 });
+// Fair play: what can be changed, sending back, and a log nobody can rewrite
+const logs = async (action) => (await db.query(`select summary, audience from public.activity_logs where action = '${action}' order by id`)).rows;
+await check('a task added already finished earns nothing and is flagged to admins', async () => {
+  await as(B, `insert into public.tasks (title, status, assignee_id, created_by) values ('Instant', 'done', '${B}', '${B}')`);
+  const x = (await db.query(`select points, flag from public.task_xp_events where task_id = ${TASK('Instant')}`)).rows[0];
+  const l = await logs('task.added_done');
+  if (x.points !== 0 || x.flag !== 'added_done' || l.length !== 1 || l[0].audience !== 'admins') throw new Error(JSON.stringify({ x, l }));
+  return x;
+});
+await check('quick ticks of own tasks are noted for admins only', async () => {
+  const l = await logs('task.quick_tick');
+  if (l.length < 6 || l.some((r) => r.audience !== 'admins')) throw new Error(JSON.stringify(l.slice(0, 2)));
+  return l.length;
+});
+await check('giving a task is in the activity feed', async () => {
+  await as(A, `insert into public.tasks (title, priority, due_date, assignee_id, created_by, subtasks) values ('Given', 'high', current_date + 3, '${B}', '${A}', '[{"id":"1","title":"Count","done":false}]')`);
+  const l = await logs('task.assigned');
+  if (!l.some((r) => r.summary.includes('“Given”') && r.audience === 'everyone')) throw new Error(JSON.stringify(l));
+  return l.at(-1).summary;
+});
+await check('on a given task, the assignee cannot change the priority', () => as(B, `update public.tasks set priority = 'low' where id = ${TASK('Given')}`), true);
+await check('on a given task, the assignee cannot move the due date', () => as(B, `update public.tasks set due_date = current_date + 30 where id = ${TASK('Given')}`), true);
+await check('on a given task, the assignee cannot add steps', () => as(B, `update public.tasks set subtasks = subtasks || '[{"id":"2","title":"Extra","done":true}]' where id = ${TASK('Given')}`), true);
+await check('on a given task, the assignee cannot remove it', () => as(B, `update public.tasks set status = 'cancelled' where id = ${TASK('Given')}`), true);
+await check('on a given task, the assignee can tick steps and add notes', () =>
+  as(B, `update public.tasks set subtasks = '[{"id":"1","title":"Count","done":true}]', description = 'Counted 40 boxes' where id = ${TASK('Given')} returning title`).then(expectRows(1)));
+await check('the giver gets a bell note when it is finished', async () => {
+  await as(B, `update public.tasks set status = 'done' where id = ${TASK('Given')}`);
+  const n = await as(A, `select title, link_path from public.notifications where title like '%finished “Given”'`);
+  if (n.rows.length !== 1 || !n.rows[0].link_path.startsWith('/tasks?task=')) throw new Error(JSON.stringify(n.rows));
+  return n.rows[0].title;
+});
+await check('a finished task cannot be edited', () => as(B, `update public.tasks set description = 'Changed later' where id = ${TASK('Given')}`), true);
+await check('a finished task can still be planned in My Day', () => as(B, `update public.tasks set my_day = current_date where id = ${TASK('Given')} returning title`).then(expectRows(1)));
+await check('only the giver can send a task back', () => as(B, `select public.send_back_task(${TASK('Given')}, 'Not really done')`), true);
+await check('sending back needs a reason', () => as(A, `select public.send_back_task(${TASK('Given')}, '')`), true);
+await check('the giver sends it back: re-opened, XP taken back, reason sent, logged once', async () => {
+  const before = (await xpOf('Given'))[0]?.points;
+  await as(A, `select public.send_back_task(${TASK('Given')}, 'Only 40 of 50 boxes counted')`);
+  const status = (await db.query(`select status from public.tasks where id = ${TASK('Given')}`)).rows[0].status;
+  const xp = await xpOf('Given');
+  const note = await as(B, `select body from public.notifications where title like '%sent back “Given”'`);
+  const sent = (await logs('task.sent_back')).length;
+  const reopened = (await db.query(`select count(*)::int n from public.activity_logs where action = 'task.reopened' and entity_id = (${TASK('Given')})::text`)).rows[0].n;
+  if (!(before > 0) || status !== 'todo' || xp.length || note.rows[0]?.body !== 'Only 40 of 50 boxes counted' || sent !== 1 || reopened !== 0)
+    throw new Error(JSON.stringify({ before, status, xp, note: note.rows, sent, reopened }));
+  return { before, status };
+});
+await check('nobody can write to the log directly', () => as(A, `insert into public.activity_logs (module, action, summary) values ('tasks', 'fake', 'I did everything')`), true);
+await check('nobody can edit the log', async () => {
+  const r = await as(A, `update public.activity_logs set summary = 'edited' returning id`);
+  if (r.rows.length) throw new Error('edited');
+}, true);
+await check('nobody can delete from the log', async () => {
+  const r = await as(A, `delete from public.activity_logs returning id`);
+  if (r.rows.length) throw new Error('deleted');
+}, true);
+await check('sign-ins are logged once per 20 minutes', async () => {
+  await as(B, `select public.log_sign_in('Chrome on Android')`);
+  await as(B, `select public.log_sign_in('Chrome on Android')`);
+  const l = await logs('auth.signed_in');
+  if (l.length !== 1 || l[0].audience !== 'admins') throw new Error(JSON.stringify(l));
+  return l[0].summary;
+});
+await check('staff see the activity feed but not admin-only entries', async () => {
+  const r = (await as(B, `select count(*) filter (where audience = 'admins')::int admins, count(*)::int total from public.activity_logs`)).rows[0];
+  if (r.admins !== 0 || r.total === 0) throw new Error(JSON.stringify(r));
+  return r;
+});
+await check('admins see everything, including sign-ins and flags', async () => {
+  const r = (await as(A, `select count(*) filter (where audience = 'admins')::int admins from public.activity_logs`)).rows[0];
+  if (r.admins < 3) throw new Error(JSON.stringify(r));
+  return r;
+});
+await check('kudos are logged for admins', async () => {
+  const l = await logs('kudos.sent');
+  if (l.length !== 1 || l[0].audience !== 'admins') throw new Error(JSON.stringify(l));
+  return l[0].summary;
+});
+
 // Inventory: every write goes through record_inventory_movement / decide_inventory_transfer
 const rpc = (uid, args) => as(uid, `select public.record_inventory_movement(${args}) r`).then((r) => r.rows[0].r);
 const cid = (n) => `'00000000-0000-4000-8000-${String(n).padStart(12, '0')}'`;
