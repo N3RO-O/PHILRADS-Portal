@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, type ReactElement, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import { Circle, MapContainer, Marker, TileLayer, Tooltip, useMap, useMapEvents, type MarkerProps } from 'react-leaflet';
@@ -225,6 +225,13 @@ export function MapCanvas({ places, checkIns, live, selected, onSelect, focus, f
   onSelectRef.current = onSelect;
   const onMapClickRef = useRef(onMapClick);
   onMapClickRef.current = onMapClick;
+  // A shimmering placeholder until the first map pictures arrive, then it fades away.
+  const [tilesReady, setTilesReady] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setTilesReady(true), 8000);
+    return () => clearTimeout(t);
+  }, []);
+  const tileEvents = useMemo(() => ({ load: () => setTilesReady(true) }), []);
   const handlers = useMemo(
     () => ({
       place: (id: string) => ({ click: () => onSelectRef.current({ type: 'place', id }), keypress: (e: L.LeafletKeyboardEvent) => e.originalEvent.key === 'Enter' && onSelectRef.current({ type: 'place', id }) }),
@@ -242,6 +249,7 @@ export function MapCanvas({ places, checkIns, live, selected, onSelect, focus, f
           url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
           maxZoom={19}
           className="map-tiles-dark"
+          eventHandlers={tileEvents}
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
         {weather && <WeatherLayer view={weather} />}
@@ -311,6 +319,10 @@ export function MapCanvas({ places, checkIns, live, selected, onSelect, focus, f
           </>
         )}
       </MapContainer>
+      <div
+        aria-hidden
+        className={`skeleton pointer-events-none absolute inset-0 z-[450] !rounded-none transition-opacity duration-500 ${tilesReady ? 'opacity-0' : 'opacity-100'}`}
+      />
       {picking && (
         <div aria-hidden className="pointer-events-none absolute inset-0 z-[500] grid place-items-center">
           <div className="relative grid place-items-center">

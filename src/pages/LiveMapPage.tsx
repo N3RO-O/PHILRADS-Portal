@@ -7,7 +7,7 @@ import { isFresh, MapCanvas, type MapFocus, type MapSelection } from '../compone
 import { LiveShareCard, useLiveSharing } from '../components/map/LiveSharing';
 import { useMapWeather } from '../components/map/useMapWeather';
 import { SpotSheet, WeatherBar } from '../components/map/WeatherPanel';
-import { LoadError } from '../components/ui/Card';
+import { LoadError, Skeleton } from '../components/ui/Card';
 import { SampleBadge } from '../components/ui/SampleBadge';
 import { Sheet } from '../components/ui/Sheet';
 import { useAsyncData } from '../hooks/useAsyncData';
@@ -196,6 +196,7 @@ export function LiveMapPage() {
     );
 
   const panelProps: PanelProps = {
+    loading: placesQ.status === 'loading',
     search,
     setSearch,
     layers,
@@ -599,12 +600,14 @@ interface PanelProps {
   shownLive: LivePosition[];
   snapshot: InventorySnapshot | null;
   canManage: boolean;
+  /** Places are still loading: placeholder rows instead of "no places". */
+  loading: boolean;
   onAdd: () => void;
   onSelect: (s: Selected) => void;
 }
 
 /** Search, layers (with counts) and the lists of team check-ins and places. */
-function PlacesPanel({ search, setSearch, layers, toggleLayer, places, shownPlaces, checkIns, shownCheckIns, live, shownLive, snapshot, canManage, onAdd, onSelect }: PanelProps) {
+function PlacesPanel({ search, setSearch, layers, toggleLayer, places, shownPlaces, checkIns, shownCheckIns, live, shownLive, snapshot, canManage, loading, onAdd, onSelect }: PanelProps) {
   const counts = (l: Layer) => (l === 'team' ? checkIns.length + live.length : places.filter((p) => p.kind === l).length);
   const sorted = [...shownPlaces].sort((a, b) => a.name.localeCompare(b.name));
   return (
@@ -694,7 +697,19 @@ function PlacesPanel({ search, setSearch, layers, toggleLayer, places, shownPlac
         <h3 id="map-places" className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">
           Places <span className="font-normal normal-case tracking-normal">{sorted.length}</span>
         </h3>
-        {sorted.length === 0 ? (
+        {loading ? (
+          <div className="flex flex-col gap-2" aria-busy="true" aria-label="Loading places">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center gap-3 px-2 py-1.5">
+                <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
+                <div className="flex flex-1 flex-col gap-1.5">
+                  <Skeleton className="h-3 w-3/5" />
+                  <Skeleton className="h-2.5 w-2/5" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : sorted.length === 0 ? (
           <div className="flex flex-col items-start gap-2 rounded-xl bg-white/[0.02] px-3 py-3 text-xs text-muted">
             {places.length === 0 ? 'No places pinned yet.' : 'No places match. Try another word, or turn more layers on.'}
             {places.length === 0 && canManage && (

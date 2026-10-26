@@ -36,6 +36,7 @@ import {
   type SpotForecast,
   type WeatherMode,
 } from '../../services/weather/weather';
+import { Skeleton } from '../ui/Card';
 import { Sheet } from '../ui/Sheet';
 import type { MapWeather } from './useMapWeather';
 
@@ -142,9 +143,14 @@ export function WeatherBar({ weather, onClose }: { weather: MapWeather; onClose:
           </button>
         </p>
       ) : count === 0 ? (
-        <p className="flex items-center gap-2 px-1 text-xs text-muted">
-          <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> Loading the {isRadar ? 'radar' : 'forecast'}…
-        </p>
+        <div className="flex items-center gap-2" aria-busy="true" aria-label={`Loading the ${isRadar ? 'radar' : 'forecast'}`}>
+          <Skeleton className="h-9 w-9 shrink-0 rounded-full" />
+          <Skeleton className="h-2 flex-1 rounded-full" />
+          <div className="flex w-[5.25rem] shrink-0 flex-col items-end gap-1">
+            <Skeleton className="h-3 w-10" />
+            <Skeleton className="h-2.5 w-14" />
+          </div>
+        </div>
       ) : (
         <div className="flex items-center gap-2">
           <button
@@ -252,12 +258,7 @@ export function SpotForecastView({ lat, lng, days = false }: { lat: number; lng:
     return () => ctl.abort();
   }, [lat, lng, retry]);
 
-  if (state.status === 'loading')
-    return (
-      <p className="flex items-center gap-2 text-xs text-muted">
-        <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> Loading the forecast…
-      </p>
-    );
+  if (state.status === 'loading') return <ForecastSkeleton days={days} />;
   if (state.status === 'error')
     return (
       <p className="flex items-center gap-2 text-xs text-ink-soft">
@@ -362,6 +363,39 @@ export function SpotForecastView({ lat, lng, days = false }: { lat: number; lng:
         </a>
         .
       </p>
+    </div>
+  );
+}
+
+/** The forecast's shape while it loads, so nothing jumps when it arrives. */
+function ForecastSkeleton({ days }: { days: boolean }) {
+  return (
+    <div className="flex flex-col gap-3" aria-busy="true" aria-label="Loading the forecast">
+      <div className="flex items-center gap-3">
+        <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
+        <div className="flex flex-1 flex-col gap-2">
+          <Skeleton className="h-6 w-2/5" />
+          <Skeleton className="h-3 w-3/5" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <Skeleton className="h-12 rounded-xl" />
+        <Skeleton className="h-12 rounded-xl" />
+      </div>
+      <Skeleton className="h-3 w-24" />
+      <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-8">
+        {Array.from({ length: 8 }, (_, i) => (
+          <Skeleton key={i} className="h-[5.5rem] rounded-xl" />
+        ))}
+      </div>
+      {days && (
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-3 w-20" />
+          {Array.from({ length: 7 }, (_, i) => (
+            <Skeleton key={i} className="h-7" />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

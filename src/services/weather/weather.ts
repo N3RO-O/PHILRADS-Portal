@@ -90,11 +90,14 @@ const gridCache = new Map<string, { at: number; grid: WeatherGrid }>();
 
 /** Through the team's cache first; straight to Open-Meteo if it isn't there or fails. */
 async function getJson(proxyQuery: string, direct: string, signal?: AbortSignal): Promise<unknown> {
-  try {
-    const res = await fetch(`/api/weather?v=2&${proxyQuery}`, { signal });
-    if (res.ok && res.headers.get('content-type')?.includes('application/json')) return await res.json();
-  } catch (e) {
-    if (signal?.aborted) throw e;
+  // Local development has no /api routes (Vite would try to serve the source file).
+  if (!import.meta.env.DEV) {
+    try {
+      const res = await fetch(`/api/weather?v=2&${proxyQuery}`, { signal });
+      if (res.ok && res.headers.get('content-type')?.includes('application/json')) return await res.json();
+    } catch (e) {
+      if (signal?.aborted) throw e;
+    }
   }
   const res = await fetch(direct, { signal });
   if (res.status === 429) throw new WeatherBusyError();
