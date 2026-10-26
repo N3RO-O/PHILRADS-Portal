@@ -4,7 +4,7 @@ Documentation uploads go into the PHILRADS Documentation folder in Google Drive:
 <https://drive.google.com/drive/folders/1gXtyek05YP_57rsPYzRIUcqpCCg1N-_l>
 
 The portal uploads as the **PHILRADS Google account** (`info.philrads@gmail.com`). Files are filed as
-`Documentation › uploader's name › category › day` (for example `Documentation › Maria Santos › Photos › 2026-10-26`). Each folder is made once; everything uploaded the same day (Manila time) goes into that day's folder.
+`Documentation › uploader's full name › category › day` (for example `Documentation › Maria Santos › Photos › 2026-10-26`). Each folder is made once; everything uploaded the same day (Manila time) goes into that day's folder.
 Uploaded files count against the PHILRADS account's 15 GB of Google storage.
 
 There are four parts. Do them in order.

@@ -49,6 +49,8 @@ export async function rest<T = unknown>(c: Config, path: string, init: RequestIn
 export interface Caller {
   id: string;
   name: string;
+  /** Full name (falls back to the display name): used for their Drive folder. */
+  fullName: string;
   roleKey: string;
 }
 
@@ -60,12 +62,13 @@ export async function caller(c: Config, request: Request): Promise<Caller | null
   if (!res.ok) return null;
   const user = (await res.json().catch(() => null)) as { id?: string } | null;
   if (!user?.id || !/^[0-9a-f-]{36}$/i.test(user.id)) return null;
-  const [p] = await rest<{ role_key: string; is_active: boolean; display_name: string | null; archived_at: string | null }[]>(
+  const [p] = await rest<{ role_key: string; is_active: boolean; display_name: string | null; full_name: string | null; archived_at: string | null }[]>(
     c,
-    `profiles?id=eq.${user.id}&select=role_key,is_active,display_name,archived_at`,
+    `profiles?id=eq.${user.id}&select=role_key,is_active,display_name,full_name,archived_at`,
   );
   if (!p?.is_active || p.archived_at) return null;
-  return { id: user.id, name: (p.display_name ?? '').trim() || 'Staff member', roleKey: p.role_key };
+  const name = (p.display_name ?? '').trim() || 'Staff member';
+  return { id: user.id, name, fullName: (p.full_name ?? '').trim() || name, roleKey: p.role_key };
 }
 
 /** Same rule as has_permission(key) in the database. */

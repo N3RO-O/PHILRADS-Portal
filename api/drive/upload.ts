@@ -59,7 +59,8 @@ export async function POST(request: Request) {
     // <folder> / <uploader> / <category> / <day>. The person's folder is known by their staff id, so
     // a renamed account keeps (and renames) its folder, and two people with one name never share.
     const folders = async () => {
-      const person = await folderFor(c, token, conn.folder_id, 'philradsStaffId', who.id, folderName(who.name));
+      // Named with the person's full name; renamed if it changes.
+      const person = await folderFor(c, token, conn.folder_id, 'philradsStaffId', who.id, folderName(who.fullName));
       const category = await folderFor(c, token, person, 'philradsCategory', m.category, folderName(m.category));
       const dayFolder = await folderFor(c, token, category, 'philradsDay', day, day);
       return [person, category, dayFolder];
@@ -93,7 +94,7 @@ export async function POST(request: Request) {
     }
     const uploadUrl = init.headers.get('location');
     if (!init.ok || !uploadUrl) throw new Error(`Google Drive ${init.status}: ${(await init.text()).slice(0, 200)}`);
-    const drivePath = [conn.folder_name ?? 'Documentation', folderName(who.name), folderName(m.category), day].join('/');
+    const drivePath = [conn.folder_name ?? 'Documentation', folderName(who.fullName), folderName(m.category), day].join('/');
 
     const [session] = await rest<{ id: string }[]>(c, 'drive_upload_sessions', {
       method: 'POST',
