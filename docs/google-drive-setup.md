@@ -3,7 +3,7 @@
 Documentation uploads go into the PHILRADS Documentation folder in Google Drive:
 <https://drive.google.com/drive/folders/1gXtyek05YP_57rsPYzRIUcqpCCg1N-_l>
 
-The portal uploads as the **PHILRADS Google account** (`info.philrads2@gmail.com`). Files are filed as
+The portal uploads as the **PHILRADS Google account** (`info.philrads@gmail.com`). Files are filed as
 `Documentation › uploader's name › category` (for example `Documentation › Maria Santos › Photos`).
 Uploaded files count against the PHILRADS account's 15 GB of Google storage.
 
@@ -13,11 +13,11 @@ There are four parts. Do them in order.
 
 ## Part A: the folder's owner shares the folder (2 minutes)
 
-The person who owns the Documentation folder does this, on their own Google account:
+The person who owns the Documentation folder does this, on their own Google account. (If `info.philrads@gmail.com` already owns the folder, skip Part A.)
 
 1. Open the folder link above.
 2. Click the folder name at the top → **Share**.
-3. In "Add people", type `info.philrads2@gmail.com`.
+3. In "Add people", type `info.philrads@gmail.com`.
 4. On the right, change **Viewer** to **Editor**.
 5. Click **Send**.
 
@@ -25,7 +25,7 @@ The person who owns the Documentation folder does this, on their own Google acco
 
 ## Part B: create the "Connect Google Drive" permission in Google Cloud (10 minutes)
 
-Do this signed in as **info.philrads2@gmail.com**.
+Do this signed in as **info.philrads@gmail.com**.
 
 1. Go to <https://console.cloud.google.com>. Accept the terms if asked.
 2. At the top left, click the project picker (it may say "Select a project") → **New project**.
@@ -35,9 +35,9 @@ Do this signed in as **info.philrads2@gmail.com**.
    - Click **Enable**.
 4. Set up the sign-in screen:
    - In the search bar, type **Google Auth Platform** (or "OAuth consent screen") and open it → **Get started**.
-   - App name: `PHILRADS Staff Portal`. User support email: `info.philrads2@gmail.com` → **Next**.
+   - App name: `PHILRADS Staff Portal`. User support email: `info.philrads@gmail.com` → **Next**.
    - Audience: **External** → **Next**.
-   - Contact email: `info.philrads2@gmail.com` → **Next**. Tick the agreement → **Continue** → **Create**.
+   - Contact email: `info.philrads@gmail.com` → **Next**. Tick the agreement → **Continue** → **Create**.
 5. Allow Drive access:
    - In the left menu, click **Data access** → **Add or remove scopes**.
    - In the filter box, type `auth/drive`, tick the row that says **`.../auth/drive`**
@@ -78,7 +78,7 @@ Never paste these into the portal itself, a chat, or a `VITE_` variable.
 
 1. Sign in to the portal as an administrator → **Documentation**.
 2. In the Google Drive box, the folder link is already filled in → **Connect Google Drive**.
-3. Google asks you to choose an account: pick **info.philrads2@gmail.com**.
+3. Google asks you to choose an account: pick **info.philrads@gmail.com**.
 4. Google may say **"Google hasn't verified this app"**. That's expected (the app is only for PHILRADS):
    click **Advanced** → **Go to PHILRADS Staff Portal (unsafe)**.
 5. Tick **every** box Google shows (especially the Google Drive one) → **Continue**.
@@ -88,7 +88,7 @@ Never paste these into the portal itself, a chat, or a `VITE_` variable.
 
 | The portal says | What to do |
 | --- | --- |
-| "info.philrads2@gmail.com can't open that folder" | Part A wasn't done, or was shared with another address. |
+| "info.philrads@gmail.com can't open that folder" | Part A wasn't done, or was shared with another address. |
 | "…can only view…" | In Part A, the access was left as Viewer: change it to Editor. |
 | "Drive access wasn't allowed" | Connect again and tick the Google Drive box in step 5. |
 | "Google sign-in isn't set up on the server yet" | Part C is missing, or the portal hasn't been redeployed since. |

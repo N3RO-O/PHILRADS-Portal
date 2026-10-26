@@ -312,7 +312,7 @@ export const mockDocumentationService: DocumentationService = {
     );
   },
   async status() {
-    return { connected: sampleState.connected, googleEmail: 'info.philrads2@gmail.com', folderId: '1gXtyek05YP_57rsPYzRIUcqpCCg1N-_l', folderName: 'Documentation', connectedAt: day(3), lastError: null };
+    return { connected: sampleState.connected, googleEmail: 'info.philrads@gmail.com', folderId: '1gXtyek05YP_57rsPYzRIUcqpCCg1N-_l', folderName: 'Documentation', connectedAt: day(3), lastError: null };
   },
   async connectUrl() {
     throw new DocRuleError('In sample mode Google Drive is pretend-connected already.');
