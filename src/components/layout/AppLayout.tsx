@@ -34,7 +34,6 @@ export function AppLayout() {
   const navigate = useNavigate();
   const current = moduleForPath(location.pathname);
   const title = current?.label ?? 'Page not found';
-  const subtitle = current?.id === 'home' ? 'Your work, stock and response operations at a glance.' : current?.summary;
 
   useEffect(() => {
     document.title = `${title} · PHILRADS Staff Portal`;
@@ -87,8 +86,6 @@ export function AppLayout() {
                 </p>
               )}
               <h1 className="mt-1 text-2xl font-bold leading-tight tracking-tight text-ink sm:text-[1.75rem]">{title}</h1>
-              {/* Hidden on phones so the page's own content starts higher. */}
-              {subtitle && <p className="mt-1.5 hidden max-w-3xl text-sm leading-relaxed text-muted sm:block">{subtitle}</p>}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <OnlinePill className="sm:hidden" />

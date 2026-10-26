@@ -323,9 +323,6 @@ function DriveCard({ status, isAdmin, sample, onConnect }: { status: DriveStatus
                 <span className="block font-semibold">
                   Saving to Google Drive: “{status.folderName ?? 'Documentation'}” {sample && <SampleBadge />}
                 </span>
-                <span className="block text-xs text-muted">
-                  As {status.googleEmail}. Filed by uploader, then category, then day. Only PHILRADS staff can see the files.
-                </span>
               </>
             ) : broken ? (
               <>
