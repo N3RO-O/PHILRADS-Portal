@@ -76,6 +76,17 @@ export default defineConfig({
             },
           },
           {
+            // Live Map weather (public forecasts): the last one fetched still shows with a weak signal.
+            urlPattern: ({ url }) => url.origin === 'https://api.open-meteo.com',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'live-map-weather',
+              networkTimeoutSeconds: 8,
+              expiration: { maxEntries: 40, maxAgeSeconds: 60 * 60 * 12 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
             urlPattern: ({ url }) => url.origin === 'https://fonts.gstatic.com',
             handler: 'CacheFirst',
             options: {

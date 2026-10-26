@@ -9,6 +9,8 @@ import { PH_CENTER, PH_ZOOM, type LatLng } from '../../lib/geo';
 import { initialsOf } from '../../lib/format';
 import { kindMeta, type CheckIn, type LivePosition, type MapPlace, type PlaceKind } from '../../services/map/types';
 import { timeAgo } from '../../lib/geo';
+import type { GridArea } from '../../services/weather/weather';
+import { WeatherLayer, type WeatherView } from './WeatherLayer';
 
 const KIND_ICON: Record<PlaceKind, LucideIcon> = {
   warehouse: Warehouse,
@@ -95,6 +97,14 @@ function liveIcon(p: LivePosition, selected: boolean): L.DivIcon {
   });
 }
 
+/** Where the forecast was asked for (weather on, tapped the map). */
+const spotIcon = L.divIcon({
+  className: 'map-pin',
+  iconSize: [18, 18],
+  iconAnchor: [9, 9],
+  html: '<span style="display:block;width:18px;height:18px;border-radius:9999px;border:3px solid #ec952a;background:rgba(28,29,33,.6);box-shadow:0 0 0 4px rgba(236,149,42,.25)"></span>',
+});
+
 const meIcon = L.divIcon({
   className: 'map-pin',
   iconSize: [20, 20],
@@ -156,10 +166,24 @@ interface Props {
   /** Picking a spot: a crosshair stays in the middle; the map reports its centre as it moves. */
   picking: boolean;
   onCenter?: (c: LatLng) => void;
+  /** Weather drawn under the pins (null: off). */
+  weather?: WeatherView | null;
+  /** The area in view, after each move. */
+  onView?: (area: GridArea) => void;
+  /** A tap on the map itself (not a pin). */
+  onMapClick?: (at: LatLng) => void;
+  /** A marked spot (the forecast being shown). */
+  spot?: LatLng | null;
 }
 
-function Controller({ focus, fit, picking, onCenter, onBackground }: Pick<Props, 'focus' | 'fit' | 'picking' | 'onCenter'> & { onBackground: () => void }) {
+function Controller({ focus, fit, picking, onCenter, onBackground, onView }: Pick<Props, 'focus' | 'fit' | 'picking' | 'onCenter' | 'onView'> & { onBackground: (at: LatLng) => void }) {
   const map = useMap();
+  const reportView = () => {
+    const b = map.getBounds();
+    onView?.({ south: b.getSouth(), north: b.getNorth(), west: b.getWest(), east: b.getEast() });
+  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(reportView, [map, onView]);
   useEffect(() => {
     if (focus) map.flyTo([focus.lat, focus.lng], focus.zoom ?? Math.max(map.getZoom(), 13), { duration: 0.8 });
   }, [focus, map]);
@@ -188,16 +212,19 @@ function Controller({ focus, fit, picking, onCenter, onBackground }: Pick<Props,
   }, [picking, map, onCenter]);
   useMapEvents({
     move: () => picking && onCenter?.(map.getCenter()),
-    click: () => !picking && onBackground(),
+    click: (e) => !picking && onBackground(e.latlng),
+    moveend: reportView,
   });
   return null;
 }
 
-export function MapCanvas({ places, checkIns, live, selected, onSelect, focus, fit, me, picking, onCenter }: Props) {
+export function MapCanvas({ places, checkIns, live, selected, onSelect, focus, fit, me, picking, onCenter, weather, onView, onMapClick, spot }: Props) {
   const selectedCheck = selected?.type === 'checkin' ? checkIns.find((c) => c.id === selected.id) : null;
   const selectedLive = selected?.type === 'live' ? live.find((p) => p.profileId === selected.id) : null;
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
+  const onMapClickRef = useRef(onMapClick);
+  onMapClickRef.current = onMapClick;
   const handlers = useMemo(
     () => ({
       place: (id: string) => ({ click: () => onSelectRef.current({ type: 'place', id }), keypress: (e: L.LeafletKeyboardEvent) => e.originalEvent.key === 'Enter' && onSelectRef.current({ type: 'place', id }) }),
@@ -217,7 +244,19 @@ export function MapCanvas({ places, checkIns, live, selected, onSelect, focus, f
           className="map-tiles-dark"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
-        <Controller focus={focus} fit={fit} picking={picking} onCenter={onCenter} onBackground={() => onSelectRef.current(null)} />
+        {weather && <WeatherLayer view={weather} />}
+        <Controller
+          focus={focus}
+          fit={fit}
+          picking={picking}
+          onCenter={onCenter}
+          onView={onView}
+          onBackground={(at) => {
+            onSelectRef.current(null);
+            onMapClickRef.current?.(at);
+          }}
+        />
+        {spot && !picking && <Marker position={[spot.lat, spot.lng]} icon={spotIcon} interactive={false} />}
         {!picking &&
           places.map((p) => (
             <Marker

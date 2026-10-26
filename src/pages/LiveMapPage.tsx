@@ -1,16 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { CloudOff, List, LocateFixed, Loader2, MapPin, Maximize2, Plus, Search, UserRound, X } from 'lucide-react';
+import { CloudOff, CloudSun, List, LocateFixed, Loader2, MapPin, Maximize2, Plus, Search, UserRound, X } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
 import { CheckInDetails, LiveDetails, PlaceDetails } from '../components/map/MapDetails';
 import { CheckInSheet, PlaceForm } from '../components/map/MapForms';
 import { isFresh, MapCanvas, type MapFocus, type MapSelection } from '../components/map/MapCanvas';
 import { LiveShareCard, useLiveSharing } from '../components/map/LiveSharing';
+import { useMapWeather } from '../components/map/useMapWeather';
+import { SpotSheet, WeatherBar } from '../components/map/WeatherPanel';
 import { LoadError } from '../components/ui/Card';
 import { SampleBadge } from '../components/ui/SampleBadge';
 import { Sheet } from '../components/ui/Sheet';
 import { useAsyncData } from '../hooks/useAsyncData';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
-import { currentPosition, timeAgo, type LatLng } from '../lib/geo';
+import { currentPosition, distanceM, timeAgo, type LatLng } from '../lib/geo';
 import { formatNumber, initialsOf } from '../lib/format';
 import { useLiveRefresh } from '../lib/imsActions';
 import { eventAt, stockAt } from '../lib/mapStock';
@@ -65,6 +67,12 @@ export function LiveMapPage() {
   const [toast, setToast] = useState<{ text: string; error?: boolean } | null>(null);
   const [removing, setRemoving] = useState(false);
   const sharing = useLiveSharing();
+  const weather = useMapWeather(online);
+  /** With the weather on: the spot tapped on the map, to show its forecast. */
+  const [spot, setSpot] = useState<LatLng | null>(null);
+  useEffect(() => {
+    if (!weather.mode) setSpot(null);
+  }, [weather.mode]);
 
   // Phones: size the map to end at the bottom of the screen, measured from where it starts.
   const mapBox = useRef<HTMLDivElement>(null);
@@ -244,6 +252,10 @@ export function LiveMapPage() {
               me={me}
               picking={Boolean(picking)}
               onCenter={setCenter}
+              weather={weather.mode ? { mode: weather.mode, grid: weather.grid, hour: weather.hour, radar: weather.radar, radarIndex: weather.radarIndex } : null}
+              onView={weather.setView}
+              onMapClick={weather.mode ? setSpot : undefined}
+              spot={spot}
             />
           )}
 
@@ -255,6 +267,9 @@ export function LiveMapPage() {
               </MapButton>
               <MapButton label="Show my location" onClick={() => void locateMe()}>
                 {locating ? <Loader2 className="h-[1.125rem] w-[1.125rem] animate-spin" aria-hidden /> : <LocateFixed className="h-[1.125rem] w-[1.125rem]" aria-hidden />}
+              </MapButton>
+              <MapButton label={weather.mode ? 'Hide weather' : 'Show weather'} active={Boolean(weather.mode)} onClick={() => weather.setMode(weather.mode ? null : 'wind')}>
+                <CloudSun className="h-[1.125rem] w-[1.125rem]" aria-hidden />
               </MapButton>
             </div>
           )}
@@ -320,6 +335,13 @@ export function LiveMapPage() {
               <button type="button" className="rounded-full border border-line px-2.5 py-1 font-semibold hover:bg-surface" onClick={() => setFollowing(null)}>
                 Stop
               </button>
+            </div>
+          )}
+
+          {/* Weather: view, timeline and colour key. Above the List / Share buttons, so nothing overlaps at any width. */}
+          {weather.mode && !picking && (
+            <div className="absolute inset-x-3 bottom-[5.25rem] z-[600] lg:bottom-[5.75rem] lg:right-auto lg:w-[min(26rem,calc(100%-1.5rem))]">
+              <WeatherBar weather={weather} onClose={() => weather.setMode(null)} />
             </div>
           )}
 
@@ -422,6 +444,15 @@ export function LiveMapPage() {
             await sharing.stop();
             setSelected(null);
           }}
+        />
+      )}
+
+      {spot && !selected && !panel && (
+        <SpotSheet
+          lat={spot.lat}
+          lng={spot.lng}
+          near={places.map((p) => ({ p, d: distanceM(p, spot) })).filter((x) => x.d < 5000).sort((a, b) => a.d - b.d)[0]?.p.name}
+          onClose={() => setSpot(null)}
         />
       )}
 
@@ -540,14 +571,15 @@ function ShareButton({ live, onClick, disabled }: { live: boolean; onClick: () =
   );
 }
 
-function MapButton({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) {
+function MapButton({ label, onClick, active = false, children }: { label: string; onClick: () => void; active?: boolean; children: ReactNode }) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-label={label}
+      aria-pressed={active || undefined}
       title={label}
-      className="grid h-11 w-11 place-items-center rounded-xl border border-line bg-surface-raised/95 text-ink shadow-xl shadow-black/50 backdrop-blur-md transition hover:bg-surface-raised"
+      className={`grid h-11 w-11 place-items-center rounded-xl border bg-surface-raised/95 shadow-xl shadow-black/50 backdrop-blur-md transition hover:bg-surface-raised ${active ? 'border-uplift/70 text-uplift' : 'border-line text-ink'}`}
     >
       {children}
     </button>

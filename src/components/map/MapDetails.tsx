@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Clock, Crosshair, Navigation, Package, Pencil, Trash2, TriangleAlert, Users } from 'lucide-react';
+import { ArrowRight, Clock, CloudSun, Crosshair, Navigation, Package, Pencil, Trash2, TriangleAlert, Users } from 'lucide-react';
 import { directionsUrl, distanceM, formatDistance, formatLatLng, timeAgo } from '../../lib/geo';
 import { formatNumber, formatTime } from '../../lib/format';
 import { eventAt, stockAt } from '../../lib/mapStock';
 import type { InventorySnapshot } from '../../services/inventory/types';
 import { kindMeta, type CheckIn, type LivePosition, type MapPlace } from '../../services/map/types';
 import { Sheet } from '../ui/Sheet';
+import { SpotForecastView } from './WeatherPanel';
 
 interface PlaceProps {
   place: MapPlace;
@@ -123,6 +124,13 @@ export function PlaceDetails({ place, snapshot, checkIns, canManage, onClose, on
             </Link>
           </section>
         )}
+
+        <section className="tile flex flex-col gap-3 p-4" aria-labelledby="pd-weather">
+          <h3 id="pd-weather" className="flex items-center gap-2 text-sm font-semibold">
+            <CloudSun className="h-4 w-4 text-uplift" aria-hidden /> Weather here
+          </h3>
+          <SpotForecastView lat={place.lat} lng={place.lng} />
+        </section>
 
         <section aria-labelledby="pd-team" className="flex flex-col gap-2">
           <h3 id="pd-team" className="text-sm font-semibold">
