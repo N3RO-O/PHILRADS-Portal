@@ -4,6 +4,7 @@ import { CalendarDays } from 'lucide-react';
 import { moduleForPath } from '../../config/modules';
 import { formatLongDate } from '../../lib/format';
 import { LiveSharingProvider } from '../map/LiveSharing';
+import { LiveSharingBubble } from '../map/LiveSharingBubble';
 import { OnboardingProvider } from '../onboarding/OnboardingProvider';
 import { UpdatePrompt } from '../pwa/UpdatePrompt';
 import { MobileDrawer } from './MobileDrawer';
@@ -112,6 +113,8 @@ export function AppLayout() {
         </footer>
       </div>
       <UpdatePrompt />
+      {/* While sharing a live location: a floating bubble on every page, with Stop. */}
+      <LiveSharingBubble />
     </div>
     </LiveSharingProvider>
     </OnboardingProvider>

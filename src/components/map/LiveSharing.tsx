@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Loader2, Radio, ShieldCheck, Square } from 'lucide-react';
+import { Loader2, Radio, ShieldCheck } from 'lucide-react';
 import { currentPosition, distanceM, GOOD_M, ROUGH_M } from '../../lib/geo';
 import { formatTime, manilaDayKey } from '../../lib/format';
 import { mapService } from '../../services';
@@ -30,15 +30,19 @@ interface LiveSharingValue {
   /** The latest GPS reading's accuracy in metres (null before the first). */
   accuracyM: number | null;
   error: string | null;
+  /** Keep the phone's screen on while sharing (browsers stop GPS once it sleeps). */
+  keepAwake: boolean;
+  setKeepAwake(on: boolean): void;
   start(choice: ShareFor): Promise<boolean>;
   stop(): Promise<void>;
 }
 
 const LiveSharingContext = createContext<LiveSharingValue | null>(null);
 const key = (uid: string) => `philrads.live.until.${uid}`;
-const MIN_GAP_MS = 10_000;
-const MAX_GAP_MS = 30_000;
-const MIN_MOVE_M = 10;
+/** Moving: a new position every few seconds. Still: a heartbeat so the team sees it's live. */
+const MIN_GAP_MS = 3_000;
+const MAX_GAP_MS = 15_000;
+const MIN_MOVE_M = 5;
 /** Faster than this (m/s, beyond both readings' error) is a GPS glitch, not travel: about 160 km/h. */
 const GLITCH_SPEED = 45;
 /** How long the last good position stands before a rougher one may replace it. */
@@ -228,9 +232,54 @@ export function LiveSharingProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [until, status === 'off' || status === 'starting', send, stop]);
 
+  // Keep the screen on while sharing (on by default; the bubble has the switch). A screen that
+  // sleeps hides the portal, and browsers stop GPS for hidden pages.
+  const [keepAwake, setKeepAwakeState] = useState(() => {
+    try {
+      return localStorage.getItem('philrads.live.awake') !== 'off';
+    } catch {
+      return true;
+    }
+  });
+  const setKeepAwake = useCallback((on: boolean) => {
+    setKeepAwakeState(on);
+    try {
+      localStorage.setItem('philrads.live.awake', on ? 'on' : 'off');
+    } catch {
+      /* not remembered */
+    }
+  }, []);
+  useEffect(() => {
+    const api = (navigator as Navigator & { wakeLock?: { request(type: 'screen'): Promise<{ release(): Promise<void> }> } }).wakeLock;
+    if (!keepAwake || status === 'off' || !api) return;
+    let lock: { release(): Promise<void> } | null = null;
+    let gone = false;
+    const take = () => {
+      if (document.visibilityState !== 'visible' || lock) return;
+      api.request('screen').then(
+        (l) => (gone ? void l.release() : (lock = l)),
+        () => undefined,
+      );
+    };
+    // The browser lets go of the lock whenever the page is hidden: take it again on return.
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        lock = null;
+        take();
+      }
+    };
+    take();
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      gone = true;
+      document.removeEventListener('visibilitychange', onVisibility);
+      void lock?.release().catch(() => undefined);
+    };
+  }, [keepAwake, status === 'off']); // eslint-disable-line react-hooks/exhaustive-deps
+
   const value = useMemo<LiveSharingValue>(
-    () => ({ canShare, status, until, lastSentAt, accuracyM, error, start, stop }),
-    [canShare, status, until, lastSentAt, accuracyM, error, start, stop],
+    () => ({ canShare, status, until, lastSentAt, accuracyM, error, keepAwake, setKeepAwake, start, stop }),
+    [canShare, status, until, lastSentAt, accuracyM, error, keepAwake, setKeepAwake, start, stop],
   );
   return <LiveSharingContext.Provider value={value}>{children}</LiveSharingContext.Provider>;
 }
@@ -239,46 +288,6 @@ export function useLiveSharing(): LiveSharingValue {
   const ctx = useContext(LiveSharingContext);
   if (!ctx) throw new Error('useLiveSharing must be used inside <LiveSharingProvider>');
   return ctx;
-}
-
-/** Shown on every page while sharing: what's happening, until when, and Stop. */
-export function LiveSharingBanner() {
-  const live = useLiveSharing();
-  const [stopping, setStopping] = useState(false);
-  if (live.status === 'off' || live.status === 'starting' || !live.until) return null;
-  return (
-    <div role="status" className="flex items-center gap-3 border-t border-status-in/30 bg-status-in/[0.12] px-4 py-2 text-sm sm:px-6">
-      <span className="relative flex h-2.5 w-2.5 shrink-0" aria-hidden>
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-status-in opacity-75" />
-        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-status-in" />
-      </span>
-      <span className="min-w-0 flex-1 leading-tight">
-        <strong className="font-semibold text-ink">Sharing your live location</strong>{' '}
-        <span className="text-ink-soft">until {formatTime(live.until)}</span>
-        {live.accuracyM != null && live.status === 'live' && (
-          <span className={`block text-xs ${live.accuracyM > GOOD_M * 2 ? 'text-status-low' : 'text-muted'}`}>
-            {live.accuracyM > ROUGH_M
-              ? 'Waiting for GPS: move outside or near a window. Your pin stays where it last was accurate.'
-              : live.accuracyM > GOOD_M * 2
-                ? `Weak GPS (±${live.accuracyM} m): move outside or near a window for a sharper pin.`
-                : `GPS accurate to ±${live.accuracyM} m`}
-          </span>
-        )}
-      </span>
-      <button
-        type="button"
-        className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-lg border border-line bg-surface-raised px-3 text-xs font-semibold text-ink hover:bg-surface"
-        disabled={stopping}
-        onClick={async () => {
-          setStopping(true);
-          await live.stop();
-          setStopping(false);
-        }}
-      >
-        {stopping ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> : <Square className="h-3 w-3 fill-current" aria-hidden />} Stop
-      </button>
-    </div>
-  );
 }
 
 /** The switch: off by default; turning it on asks how long, then starts. */

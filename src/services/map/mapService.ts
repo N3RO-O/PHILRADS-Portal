@@ -172,8 +172,9 @@ export const mockMapService: MapService = {
     sampleLive = sampleLive.filter((p) => !p.mine);
     emit({ type: 'remove', profileId: demoProfile.id });
   },
-  subscribeLive(onEvent) {
+  subscribeLive(onEvent, onConnected) {
     liveListeners.add(onEvent);
+    onConnected?.(true);
     walker ??= setInterval(walk, 3000);
     return () => {
       liveListeners.delete(onEvent);
@@ -300,7 +301,7 @@ export function createSupabaseMapService(client: SupabaseClient): MapService {
       const { error } = await client.from('live_locations').delete().eq('profile_id', uid);
       if (error) fail('stop sharing', error);
     },
-    subscribeLive(onEvent) {
+    subscribeLive(onEvent, onConnected) {
       let uid: string | null = null;
       void me().then((u) => (uid = u));
       const channel = client
@@ -315,7 +316,8 @@ export function createSupabaseMapService(client: SupabaseClient): MapService {
           if (Date.parse(row.sharing_until as string) <= Date.now()) onEvent({ type: 'remove', profileId: row.profile_id as string });
           else onEvent({ type: 'upsert', position: mapLive(row, uid) });
         })
-        .subscribe();
+        // Connected or not (it reconnects by itself): the map refreshes more often while it isn't.
+        .subscribe((status) => onConnected?.(status === 'SUBSCRIBED'));
       return () => void client.removeChannel(channel);
     },
   };

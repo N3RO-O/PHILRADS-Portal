@@ -95,8 +95,10 @@ export function LiveMapPage() {
     };
   }, []);
 
-  // Live locations: loaded once, then kept current in real time (with a 30 s refresh as a safety net).
+  // Live locations: loaded once, then kept current in real time. A refresh every 30 s is the safety
+  // net, every 5 s while the real-time connection is down (it catches up once it's back).
   const [live, setLive] = useState<LivePosition[]>([]);
+  const [realtime, setRealtime] = useState(false);
   const [following, setFollowing] = useState<string | null>(null);
   const followingRef = useRef(following);
   followingRef.current = following;
@@ -116,9 +118,12 @@ export function LiveMapPage() {
         return prev ? ls.map((p) => (p.profileId === pos.profileId ? next : p)) : [...ls, next];
       });
       if (followingRef.current === pos.profileId) setFocus({ lat: pos.lat, lng: pos.lng, key: Date.now() });
-    });
+    }, setRealtime);
   }, [loadLive]);
-  useLiveRefresh(true, loadLive, 30_000);
+  useEffect(() => {
+    if (realtime) loadLive();
+  }, [realtime, loadLive]);
+  useLiveRefresh(true, loadLive, realtime ? 30_000 : 5_000);
   // Re-render every 15 s so "live, 20 s ago" and live/paused stay accurate between updates.
   const [, setTick] = useState(0);
   useEffect(() => {

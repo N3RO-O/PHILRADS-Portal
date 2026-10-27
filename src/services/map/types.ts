@@ -107,5 +107,5 @@ export interface MapService {
   /** Stop sharing: your position is removed from everyone's map. */
   stopLive(): Promise<void>;
   /** Positions as they change, within seconds. Returns a function that stops listening. */
-  subscribeLive(onEvent: (e: LiveEvent) => void): () => void;
+  subscribeLive(onEvent: (e: LiveEvent) => void, onConnected?: (connected: boolean) => void): () => void;
 }
