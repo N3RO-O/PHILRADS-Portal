@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { FolderOpen, Library, Plus, Search, User, X } from 'lucide-react';
+import { CheckSquare, FolderOpen, Library, Loader2, Plus, Search, Trash2, User, X } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
+import { useDocViewPrefs, ViewMenu, type DocView } from '../components/documentation/DocViews';
 import { ResourceCard } from '../components/resources/ResourceCard';
+import { CARD_LIST, RESOURCE_LIST, ResourceDetailsHeader, ResourceItem, ResourceSidePane } from '../components/resources/ResourceViews';
 import { ResourcePreview } from '../components/resources/ResourcePreview';
 import { ResourceSheet } from '../components/resources/ResourceSheet';
 import { EmptyState, LoadError, Skeleton } from '../components/ui/Card';
@@ -10,6 +12,7 @@ import { SampleBadge } from '../components/ui/SampleBadge';
 import { useAsyncData } from '../hooks/useAsyncData';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { formatNumber } from '../lib/format';
+import { parseResourceLink } from '../lib/resourceLinks';
 import { resourcesService } from '../services';
 import { RESOURCE_CATEGORIES, type Resource } from '../services/resources/types';
 
@@ -87,6 +90,121 @@ export function ResourcesPage() {
     const keys = groupBy === 'person' ? [...new Set(rest.map((r) => r.addedByName))].sort() : RESOURCE_CATEGORIES.filter((c) => rest.some((r) => r.category === c));
     return keys.map((k) => ({ key: k, items: rest.filter((r) => (groupBy === 'person' ? r.addedByName : r.category) === k) }));
   }, [filtered, groupBy]);
+  /** In the order shown (for Shift-click ranges). */
+  const ordered = useMemo(() => [...pinned, ...groups.flatMap((g) => g.items)], [pinned, groups]);
+
+  // Views like Documentation: the View menu (layouts, details and preview panes), remembered on this device.
+  const [prefs, setPrefs] = useDocViewPrefs('philrads.resources.view.v1');
+  const [wide, setWide] = useState(() => window.matchMedia('(min-width: 1024px)').matches);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const on = () => setWide(mq.matches);
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, []);
+  const paneOn = wide && prefs.pane !== 'none';
+  const [focusId, setFocusId] = useState<string | null>(null);
+  const focused = all.find((r) => r.id === focusId) ?? null;
+
+  // Managers: select several (Shift-click a range, Ctrl/Cmd-click one more) and remove them together.
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [anchor, setAnchor] = useState<string | null>(null);
+  const [removing, setRemoving] = useState(false);
+  const stopSelecting = useCallback(() => {
+    setSelecting(false);
+    setSelected(new Set());
+    setAnchor(null);
+  }, []);
+  const openResource = (r: Resource) => {
+    const link = parseResourceLink(r.url);
+    if (link?.previewUrl) openPreview(r);
+    else window.open(link?.openUrl ?? r.url, '_blank', 'noopener');
+  };
+  const onItemClick = (r: Resource, e: MouseEvent) => {
+    const many = canManage && (e.shiftKey || e.ctrlKey || e.metaKey);
+    if (many || selecting) {
+      if (!selecting) setSelecting(true);
+      if (e.shiftKey && canManage) {
+        const ids = ordered.map((x) => x.id);
+        const from = ids.indexOf(anchor ?? focusId ?? r.id);
+        const to = ids.indexOf(r.id);
+        const range = ids.slice(Math.min(from < 0 ? to : from, to), Math.max(from, to) + 1);
+        setSelected((s) => (e.ctrlKey || e.metaKey ? new Set([...s, ...range]) : new Set(range)));
+        if (!anchor) setAnchor(from < 0 ? r.id : ids[from]);
+      } else {
+        setSelected((s) => {
+          const next = new Set(s);
+          if (next.has(r.id)) next.delete(r.id);
+          else next.add(r.id);
+          return next;
+        });
+        setAnchor(r.id);
+      }
+      setFocusId(r.id);
+      return;
+    }
+    if (paneOn) {
+      setFocusId(r.id);
+      setAnchor(r.id);
+      return;
+    }
+    openResource(r);
+  };
+  useEffect(() => {
+    if (!selecting) return;
+    const onKey = (e: KeyboardEvent) => {
+      const typing = (e.target as HTMLElement)?.closest?.('input, textarea, select, [contenteditable]');
+      if (e.key === 'Escape' && !document.querySelector('dialog[open]')) stopSelecting();
+      else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a' && !typing) {
+        e.preventDefault();
+        setSelected(new Set(ordered.map((r) => r.id)));
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [selecting, ordered, stopSelecting]);
+  const removeSelected = async () => {
+    const ids = [...selected];
+    if (!ids.length) return;
+    if (!window.confirm(`Remove ${ids.length} resource${ids.length === 1 ? '' : 's'} from Resources? The files in Google Drive aren’t touched.`)) return;
+    setRemoving(true);
+    let failed = 0;
+    for (const id of ids) await resourcesService.remove(id).catch(() => failed++);
+    setRemoving(false);
+    stopSelecting();
+    list.reload();
+    setToast(failed ? `Removed ${ids.length - failed}. ${failed} couldn’t be removed; try again.` : `Removed ${ids.length} resource${ids.length === 1 ? '' : 's'}.`);
+  };
+
+  /** One resource in the chosen view. */
+  const item = (r: Resource) =>
+    prefs.view === 'xl' || prefs.view === 'large' ? (
+      <ResourceCard
+        key={r.id}
+        resource={r}
+        canManage={canManage}
+        onEdit={(x) => setSheet({ resource: x })}
+        onPreview={openPreview}
+        selecting={selecting}
+        selected={selected.has(r.id)}
+        onSelect={(e) => onItemClick(r, e)}
+      />
+    ) : (
+      <li key={r.id} className="min-w-0">
+        <ResourceItem
+          resource={r}
+          view={prefs.view}
+          selecting={selecting}
+          selected={selected.has(r.id)}
+          focused={paneOn && focusId === r.id}
+          compact={paneOn}
+          onClick={(e) => onItemClick(r, e)}
+          onDoubleClick={() => !selecting && openResource(r)}
+        />
+      </li>
+    );
+  const listClass = (v: DocView) => (v === 'xl' || v === 'large' ? CARD_LIST[v] : RESOURCE_LIST[v]);
 
   if (!canRead)
     return (
@@ -112,11 +230,19 @@ export function ResourcesPage() {
               <p className="mt-1 text-xs font-semibold text-sky-300">You’re offline: showing the list saved on this device. Opening files and adding resources need a connection.</p>
             )}
           </div>
-          {canManage && (
-            <button type="button" className="btn-primary hidden md:inline-flex" onClick={() => setSheet({ resource: null })}>
-              <Plus className="h-4 w-4" aria-hidden /> Add resource
-            </button>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            <ViewMenu view={prefs.view} pane={prefs.pane} onChange={setPrefs} showPanes={wide} />
+            {canManage && all.length > 0 && (
+              <button type="button" className="btn-ghost min-h-11 px-4" aria-pressed={selecting} onClick={() => (selecting ? stopSelecting() : setSelecting(true))}>
+                {selecting ? <X className="h-4 w-4" aria-hidden /> : <CheckSquare className="h-4 w-4" aria-hidden />} {selecting ? 'Done selecting' : 'Select'}
+              </button>
+            )}
+            {canManage && !selecting && (
+              <button type="button" className="btn-primary hidden md:inline-flex" onClick={() => setSheet({ resource: null })}>
+                <Plus className="h-4 w-4" aria-hidden /> Add resource
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Only the search box stays at the top while scrolling (from tablets up; phones have the top bar's
@@ -235,21 +361,43 @@ export function ResourcesPage() {
           </EmptyState>
         )}
 
-        {pinned.length > 0 && (
-          <Group title="Pinned" count={pinned.length}>
-            {pinned.map((r) => (
-              <ResourceCard key={r.id} resource={r} canManage={canManage} onEdit={(x) => setSheet({ resource: x })} onPreview={openPreview} />
-            ))}
-          </Group>
+        {list.status === 'success' && filtered.length > 0 && (
+          <div className="flex gap-5">
+            <div className="flex min-w-0 flex-1 flex-col gap-5">
+              {prefs.view === 'details' && <ResourceDetailsHeader compact={paneOn} />}
+              {pinned.length > 0 && (
+                <Group title="Pinned" count={pinned.length} listClass={listClass(prefs.view)}>
+                  {pinned.map(item)}
+                </Group>
+              )}
+              {groups.map((g) => (
+                <Group key={g.key} title={g.key} count={g.items.length} icon={groupBy === 'person' ? 'person' : 'folder'} listClass={listClass(prefs.view)}>
+                  {g.items.map(item)}
+                </Group>
+              ))}
+            </div>
+            {paneOn && prefs.pane !== 'none' && (
+              <ResourceSidePane mode={prefs.pane} resource={focused} canManage={canManage} onOpen={openResource} onEdit={(x) => setSheet({ resource: x })} />
+            )}
+          </div>
         )}
-        {groups.map((g) => (
-          <Group key={g.key} title={g.key} count={g.items.length} icon={groupBy === 'person' ? 'person' : 'folder'}>
-            {g.items.map((r) => (
-              <ResourceCard key={r.id} resource={r} canManage={canManage} onEdit={(x) => setSheet({ resource: x })} onPreview={openPreview} />
-            ))}
-          </Group>
-        ))}
       </section>
+
+      {selecting && (
+        <div className="sticky bottom-4 z-30 mx-auto flex w-full max-w-xl flex-wrap items-center gap-2 rounded-2xl border border-line bg-surface-raised/95 p-3 shadow-2xl shadow-black/50 backdrop-blur-md">
+          <span className="min-w-0 flex-1 text-sm font-semibold">{selected.size ? `${selected.size} selected` : wide ? 'Click resources to select them (Shift-click for a range)' : 'Tap resources to select them'}</span>
+          <button
+            type="button"
+            className="btn-ghost min-h-10 px-3 text-xs"
+            onClick={() => setSelected((s) => (ordered.every((r) => s.has(r.id)) ? new Set() : new Set(ordered.map((r) => r.id))))}
+          >
+            {ordered.length && ordered.every((r) => selected.has(r.id)) ? 'Select none' : `Select all ${ordered.length}`}
+          </button>
+          <button type="button" className="btn-primary min-h-10 bg-status-out px-4 text-xs text-white" onClick={() => void removeSelected()} disabled={!selected.size || removing}>
+            {removing ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Trash2 className="h-4 w-4" aria-hidden />} Remove
+          </button>
+        </div>
+      )}
 
       {canManage && (
         <button
@@ -298,7 +446,7 @@ export function ResourcesPage() {
   );
 }
 
-function Group({ title, count, icon, children }: { title: string; count: number; icon?: 'person' | 'folder'; children: ReactNode }) {
+function Group({ title, count, icon, listClass, children }: { title: string; count: number; icon?: 'person' | 'folder'; listClass: string; children: ReactNode }) {
   const Icon = icon === 'person' ? User : FolderOpen;
   return (
     <section aria-label={title} className="flex flex-col gap-3">
@@ -307,7 +455,7 @@ function Group({ title, count, icon, children }: { title: string; count: number;
         {title}
         <span className="text-xs font-normal text-muted">{count}</span>
       </h3>
-      <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{children}</ul>
+      <ul className={listClass}>{children}</ul>
     </section>
   );
 }

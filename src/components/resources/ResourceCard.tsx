@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type MouseEvent } from 'react';
 import {
   Check,
   Copy,
@@ -20,7 +20,7 @@ import { LINK_KIND_LABEL, parseResourceLink, type LinkKind } from '../../lib/res
 import { formatShortInstant } from '../../lib/format';
 import type { Resource, ResourceFileType } from '../../services/resources/types';
 
-const TYPE_ICON: Record<ResourceFileType, LucideIcon> = {
+export const TYPE_ICON: Record<ResourceFileType, LucideIcon> = {
   PDF: FileText,
   Word: FileText,
   Excel: FileSpreadsheet,
@@ -30,7 +30,7 @@ const TYPE_ICON: Record<ResourceFileType, LucideIcon> = {
   Folder: Folder,
   'Web page': Globe,
 };
-const KIND_ICON: Record<LinkKind, LucideIcon> = {
+export const KIND_ICON: Record<LinkKind, LucideIcon> = {
   drive_file: FileText,
   drive_folder: Folder,
   google_doc: FileText,
@@ -38,7 +38,7 @@ const KIND_ICON: Record<LinkKind, LucideIcon> = {
   google_slides: Presentation,
   web: Globe,
 };
-const TYPE_TONE: Partial<Record<ResourceFileType, string>> = {
+export const TYPE_TONE: Partial<Record<ResourceFileType, string>> = {
   PDF: 'bg-status-out/10 text-status-out',
   Word: 'bg-sky-300/10 text-sky-300',
   Excel: 'bg-status-in/10 text-status-in',
@@ -46,7 +46,7 @@ const TYPE_TONE: Partial<Record<ResourceFileType, string>> = {
   Folder: 'bg-status-low/10 text-status-low',
 };
 
-async function copy(text: string) {
+export async function copy(text: string) {
   try {
     await navigator.clipboard.writeText(text);
     return true;
@@ -61,10 +61,14 @@ interface Props {
   onEdit: (r: Resource) => void;
   /** Show the file inside the portal (Drive and Google files only; web pages open in a new tab). */
   onPreview: (r: Resource) => void;
+  /** Selecting several (managers): the card toggles instead of opening, actions hidden. */
+  selecting?: boolean;
+  selected?: boolean;
+  onSelect?: (e: MouseEvent) => void;
 }
 
 /** One resource: what it is, where it lives, and one-tap Preview (or Open) / Download / Copy link. */
-export function ResourceCard({ resource: r, canManage, onEdit, onPreview }: Props) {
+export function ResourceCard({ resource: r, canManage, onEdit, onPreview, selecting = false, selected = false, onSelect }: Props) {
   const link = parseResourceLink(r.url);
   const [copied, setCopied] = useState<'ok' | 'failed' | null>(null);
   useEffect(() => {
@@ -79,8 +83,18 @@ export function ResourceCard({ resource: r, canManage, onEdit, onPreview }: Prop
   const action = 'btn-ghost min-h-11 flex-1 px-3 text-xs sm:flex-none';
 
   return (
-    <li className="tile flex flex-col gap-3 p-4">
+    <li
+      className={`tile flex flex-col gap-3 p-4 ${selecting ? 'cursor-pointer select-none' : ''} ${selected ? 'ring-2 ring-uplift' : ''}`}
+      onClick={selecting ? onSelect : (e) => (e.shiftKey || e.ctrlKey || e.metaKey) && onSelect?.(e)}
+      onMouseDown={(e) => e.shiftKey && e.preventDefault()}
+      aria-selected={selecting ? selected : undefined}
+    >
       <div className="flex items-start gap-3">
+        {selecting && (
+          <span className={`mt-3 grid h-5 w-5 shrink-0 place-items-center rounded-md border-2 ${selected ? 'border-uplift bg-uplift text-page' : 'border-ink-mute'}`} aria-hidden>
+            {selected && <Check className="h-3 w-3" strokeWidth={3} />}
+          </span>
+        )}
         <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${tone}`}>
           <Icon className="h-5 w-5" aria-hidden />
         </span>
@@ -93,7 +107,7 @@ export function ResourceCard({ resource: r, canManage, onEdit, onPreview }: Prop
             {source} · {r.category}
           </p>
         </div>
-        {canManage && (
+        {canManage && !selecting && (
           <button type="button" className="icon-btn -mr-2 -mt-1 h-10 w-10" onClick={() => onEdit(r)} aria-label={`Edit ${r.title}`}>
             <Pencil className="h-4 w-4" aria-hidden />
           </button>
@@ -103,7 +117,7 @@ export function ResourceCard({ resource: r, canManage, onEdit, onPreview }: Prop
       <p className="text-[0.6875rem] text-muted">
         Updated {formatShortInstant(r.updatedAt)} · added by {r.addedByName}
       </p>
-      <div className="mt-auto flex flex-wrap gap-2">
+      <div className={`mt-auto flex flex-wrap gap-2 ${selecting ? 'hidden' : ''}`}>
         {link?.previewUrl ? (
           <button type="button" className={`${action} border-uplift/40 text-uplift`} onClick={() => onPreview(r)}>
             <Eye className="h-4 w-4" aria-hidden /> Preview

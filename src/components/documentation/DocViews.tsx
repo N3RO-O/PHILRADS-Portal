@@ -56,11 +56,11 @@ export const VIEW_LIST: Record<DocView, string> = {
 const STORE = 'philrads.docs.view.v1';
 const isView = (v: unknown): v is DocView => VIEWS.some((x) => x.id === v);
 
-/** The chosen view and pane, remembered on this device. */
-export function useDocViewPrefs() {
+/** The chosen view and pane, remembered on this device (each page keeps its own). */
+export function useDocViewPrefs(storeKey = STORE) {
   const [prefs, setPrefs] = useState<{ view: DocView; pane: DocPane }>(() => {
     try {
-      const p = JSON.parse(localStorage.getItem(STORE) ?? '{}') as { view?: unknown; pane?: unknown };
+      const p = JSON.parse(localStorage.getItem(storeKey) ?? '{}') as { view?: unknown; pane?: unknown };
       return { view: isView(p.view) ? p.view : 'large', pane: p.pane === 'details' || p.pane === 'preview' ? p.pane : 'none' };
     } catch {
       return { view: 'large', pane: 'none' };
@@ -70,13 +70,13 @@ export function useDocViewPrefs() {
     setPrefs((p) => {
       const next = { ...p, ...patch };
       try {
-        localStorage.setItem(STORE, JSON.stringify(next));
+        localStorage.setItem(storeKey, JSON.stringify(next));
       } catch {
         // Not remembered (private window or storage off); the view still changes.
       }
       return next;
     });
-  }, []);
+  }, [storeKey]);
   return [prefs, update] as const;
 }
 
