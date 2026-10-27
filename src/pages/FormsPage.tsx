@@ -106,13 +106,18 @@ function FormEditor({ form }: { form: FormDef }) {
     if (!printing) return;
     const done = () => setPrinting(false);
     window.addEventListener('afterprint', done);
+    // This form's paper and orientation for the print job (landscape forms print landscape).
+    const page = document.createElement('style');
+    page.textContent = `@media print { @page { size: ${form.pageSize}; margin: 0; } }`;
+    document.head.appendChild(page);
     // Let the print copy (and its images) render first.
     const t = setTimeout(() => window.print(), 300);
     return () => {
       clearTimeout(t);
       window.removeEventListener('afterprint', done);
+      page.remove();
     };
-  }, [printing]);
+  }, [printing, form.pageSize]);
 
   const clear = () => {
     if (!window.confirm(`Clear everything typed on the ${form.title}? This can’t be undone.`)) return;

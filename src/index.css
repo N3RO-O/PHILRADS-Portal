@@ -565,18 +565,6 @@
 .print-form .ff-dupe {
   background: transparent !important;
 }
-@page form-a4 {
-  size: A4 portrait;
-  margin: 0;
-}
-@page form-a4-landscape {
-  size: A4 landscape;
-  margin: 0;
-}
-@page form-letter {
-  size: letter portrait;
-  margin: 0;
-}
 @media print {
   .print-form {
     display: block;
@@ -590,15 +578,12 @@
   }
   /* A hair under the paper size, so a full sheet never spills a blank page. */
   .print-form .form-a4 {
-    page: form-a4;
     min-height: 296.4mm !important;
   }
   .print-form .form-a4-landscape {
-    page: form-a4-landscape;
     min-height: 209.4mm !important;
   }
   .print-form .form-letter {
-    page: form-letter;
     min-height: 278.8mm !important;
   }
   .print-form .no-print {

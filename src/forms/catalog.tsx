@@ -14,6 +14,8 @@ export interface FormDef {
   summary: string;
   /** "A4, 3 pages" and the like. */
   paper: string;
+  /** The print job's paper (CSS @page size), so it prints the right way round without changing printer settings. */
+  pageSize: 'A4 portrait' | 'A4 landscape' | 'letter portrait';
   /** The template it reproduces. */
   source: string;
   /** Lists that can grow: how many rows the template has. */
@@ -27,6 +29,7 @@ export interface FormDef {
 export const FORMS: FormDef[] = [
   {
     id: 'activity-report',
+    pageSize: 'A4 portrait',
     title: 'Activity Report',
     summary: 'Overview, highlights, beneficiaries, photos and sign-off for an activity.',
     paper: 'A4 · 3 pages',
@@ -37,6 +40,7 @@ export const FORMS: FormDef[] = [
   },
   {
     id: 'rapid-needs-assessment',
+    pageSize: 'A4 portrait',
     title: 'Rapid Needs Assessment',
     summary: 'Multi-sector assessment: shelter, food, water, health, protection and more.',
     paper: 'A4 · 4 pages',
@@ -45,6 +49,7 @@ export const FORMS: FormDef[] = [
   },
   {
     id: 'masterlist',
+    pageSize: 'A4 landscape',
     title: 'Masterlist',
     summary: 'Beneficiaries of a response by age, sex, impairment and household (PSS, Food and NFIs).',
     paper: 'A4 landscape',
@@ -54,6 +59,7 @@ export const FORMS: FormDef[] = [
   },
   {
     id: 'distribution-list',
+    pageSize: 'A4 landscape',
     title: 'Distribution List',
     summary: 'Volunteer allowances (meal, transport) with amounts and signatures.',
     paper: 'A4 landscape',
@@ -63,6 +69,7 @@ export const FORMS: FormDef[] = [
   },
   {
     id: 'canvass',
+    pageSize: 'A4 portrait',
     title: 'Canvass Form',
     summary: 'A supplier’s offer: items, prices and totals, worked out as you type.',
     paper: 'A4',
@@ -72,6 +79,7 @@ export const FORMS: FormDef[] = [
   },
   {
     id: 'feedback',
+    pageSize: 'letter portrait',
     title: 'Feedback & Complaint Form',
     summary: 'Community feedback on a humanitarian response (Filipino).',
     paper: 'US Letter · 2 pages',
@@ -80,6 +88,7 @@ export const FORMS: FormDef[] = [
   },
   {
     id: 'consent',
+    pageSize: 'letter portrait',
     title: 'Image/Story Consent Form',
     summary: 'Written consent to photograph, record or tell someone’s story (with AAR Japan).',
     paper: 'US Letter',
@@ -88,6 +97,7 @@ export const FORMS: FormDef[] = [
   },
   {
     id: 'code-of-conduct',
+    pageSize: 'A4 portrait',
     title: 'Code of Conduct',
     summary: 'Safeguarding commitment in English and Filipino, signed by staff and volunteers.',
     paper: 'A4 · 2 pages',
