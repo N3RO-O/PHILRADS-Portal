@@ -1,10 +1,9 @@
 import { useEffect, useId, useMemo, useState, type FormEvent } from 'react';
-import { CalendarDays, CircleCheck, Database, ExternalLink, MapPin, Plus, Users, X } from 'lucide-react';
+import { CalendarDays, CircleCheck, ExternalLink, MapPin, Plus, Users, X } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
 import { QuantityStepper } from '../components/inventory/QuantityStepper';
 import { EmptyState, LoadError, Skeleton } from '../components/ui/Card';
 import { Dialog } from '../components/ui/Dialog';
-import { SampleBadge } from '../components/ui/SampleBadge';
 import { env } from '../config/env';
 import { formatDateTime, formatNumber, formatShortDate } from '../lib/format';
 import { imsActionUrl, openImsAction, useImsActionResults, useLiveRefresh } from '../lib/imsActions';
@@ -74,17 +73,6 @@ function ImsEvents() {
 
   return (
     <div className="flex flex-col gap-4 pb-6">
-      {snapshot && (
-        <div role="status" className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-line/70 bg-surface px-4 py-3 text-sm">
-          <Database className="h-5 w-5 shrink-0 text-uplift" aria-hidden />
-          <p className="min-w-0 flex-1">
-            <strong className="font-semibold">{snapshot.sample ? 'Sample data in the PHILRADS IMS format' : 'Live from PHILRADS IMS'}</strong>, updated{' '}
-            {formatDateTime(snapshot.fetchedAt)}. Served counts are added in the IMS, area by area, until each target is met.
-          </p>
-          {snapshot.sample && <SampleBadge />}
-        </div>
-      )}
-
       {!snapshot && state.loading && <Skeleton className="h-72" />}
       {!snapshot && !state.loading && state.loadError && <LoadError message={state.loadError} onRetry={() => void inventoryStore.refresh()} />}
 

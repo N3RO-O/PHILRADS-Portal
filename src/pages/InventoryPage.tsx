@@ -519,9 +519,10 @@ const isStale = (snapshot: InventorySnapshot) => Date.now() - Date.parse(snapsho
 /** How long the source banner shows before it fades (gone by 4 s); "Updated … ago" by the refresh button stays. */
 const BANNER_MS = 3500;
 
-/** Where the numbers come from, how fresh they are, and where to change them. Shown briefly on arrival. */
+/** Only when something's off: the stock may be out of date, or this is the copy saved on the device. Shown briefly. */
 function ImsSourceBanner({ snapshot, imsUrl, fromCache }: { snapshot: InventorySnapshot; imsUrl: string; fromCache: boolean }) {
   const stale = isStale(snapshot);
+  const offline = fromCache && !navigator.onLine;
   const [phase, setPhase] = useState<'shown' | 'fading' | 'gone'>('shown');
   useEffect(() => {
     const fade = setTimeout(() => setPhase('fading'), BANNER_MS);
@@ -531,7 +532,7 @@ function ImsSourceBanner({ snapshot, imsUrl, fromCache }: { snapshot: InventoryS
       clearTimeout(gone);
     };
   }, []);
-  if (phase === 'gone') return null;
+  if (phase === 'gone' || (!stale && !offline)) return null;
   return (
     <div
       role="status"
@@ -541,12 +542,8 @@ function ImsSourceBanner({ snapshot, imsUrl, fromCache }: { snapshot: InventoryS
     >
       <Database className={`h-5 w-5 shrink-0 ${stale ? 'text-status-low' : 'text-uplift'}`} aria-hidden />
       <p className="min-w-0 flex-1">
-        <strong className="font-semibold">{snapshot.sample ? 'Sample data in the PHILRADS IMS format' : 'Live from PHILRADS IMS'}</strong>, updated{' '}
-        {ago(snapshot.fetchedAt)} ({formatDateTime(snapshot.fetchedAt)}).{' '}
-        {stale
-          ? 'This may be out of date: the IMS sends an update after every stock change, and at least every 15 minutes while someone is using it.'
-          : 'Receiving and releasing are done in the IMS.'}
-        {fromCache && !navigator.onLine && ' You’re offline: this is the copy saved on this device.'}
+        {stale && <>Stock may be out of date: last updated {ago(snapshot.fetchedAt)} ({formatDateTime(snapshot.fetchedAt)}).</>}
+        {offline && `${stale ? ' ' : ''}You’re offline: this is the copy saved on this device.`}
       </p>
       {imsUrl && (
         <a className="btn-ghost min-h-10 px-3 text-xs" href={`${imsUrl}/inventory.php`} target="_blank" rel="noopener noreferrer">

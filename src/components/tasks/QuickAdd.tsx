@@ -69,7 +69,7 @@ export function QuickAdd({ today, defaults, onAdd, onMore, disabled }: Props) {
             maxLength={300}
             enterKeyHint="done"
             autoComplete="off"
-            aria-describedby={`${uid}-hint`}
+            aria-describedby={typed ? `${uid}-hint` : undefined}
             disabled={disabled}
           />
         </div>
@@ -82,7 +82,7 @@ export function QuickAdd({ today, defaults, onAdd, onMore, disabled }: Props) {
           <span className="sr-only sm:not-sr-only">Add</span>
         </button>
       </div>
-      {typed ? (
+      {typed && (
         <p id={`${uid}-hint`} className="flex flex-wrap items-center gap-1.5 text-xs" aria-live="polite">
           <span className={`badge gap-1 border-transparent ${style.soft} ${style.text}`}>
             <style.icon className="h-3 w-3" aria-hidden /> {LIST_META[d.list].label}
@@ -106,10 +106,6 @@ export function QuickAdd({ today, defaults, onAdd, onMore, disabled }: Props) {
               <Flag className="h-3 w-3" aria-hidden /> {d.priority === 'high' ? 'High' : 'Low'} priority
             </span>
           )}
-        </p>
-      ) : (
-        <p id={`${uid}-hint`} className="text-xs text-muted">
-          Try “Pack 200 hygiene kits tomorrow 3pm !high #relief @field”. Lists: #relief #assessment #logistics #beneficiaries #reports #volunteers #coordination #office
         </p>
       )}
     </form>
