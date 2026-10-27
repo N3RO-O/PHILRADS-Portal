@@ -187,11 +187,15 @@ export function computeProgress(input: { awards: XpAward[]; kudos: Kudos[]; task
     stats,
     todayXp: todays.reduce((s, a) => s + a.points, 0),
     selfXpToday: todays.filter((a) => a.selfSet).reduce((s, a) => s + a.points, 0),
-    badges: BADGES.map((b) => {
-      const value = b.value(stats);
-      return { badge: b, value: Math.min(value, b.target), earned: value >= b.target };
-    }),
+    badges: badgesFor(stats),
   };
 }
+
+/** Each badge with how far along someone is. */
+export const badgesFor = (stats: TaskStats) =>
+  BADGES.map((b) => {
+    const value = b.value(stats);
+    return { badge: b, value: Math.min(value, b.target), earned: value >= b.target };
+  });
 
 export type Progress = ReturnType<typeof computeProgress>;

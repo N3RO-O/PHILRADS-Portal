@@ -366,6 +366,18 @@ await check('nobody can change someone else’s profile', async () => {
 await check('a profile picture must be an image', () => as(B, `update public.profiles set avatar_data = 'javascript:alert(1)' where id = '${B}'`), true);
 await check('a bio is at most 500 characters', () => as(B, `update public.profiles set bio = repeat('x', 501) where id = '${B}'`), true);
 
+// Badges on profiles: colleagues see the counts behind them, worked out from the XP the database awarded
+await check('a colleague sees someone’s badge counts and XP', async () => {
+  const s = (await as(A, `select public.profile_task_stats('${B}') s`)).rows[0].s;
+  const xp = (await db.query(`select coalesce(sum(points), 0)::int + (select coalesce(sum(points), 0)::int from public.task_kudos where to_user = '${B}') xp from public.task_xp_events where user_id = '${B}' and flag is null`)).rows[0].xp;
+  const total = (await db.query(`select count(*)::int n from public.task_xp_events where user_id = '${B}' and flag is null`)).rows[0].n;
+  if (s.xp !== xp || s.total !== total || s.total < 1 || typeof s.by_list.office !== 'number' || s.best_streak < 1) throw new Error(JSON.stringify({ s, xp, total }));
+  return { xp: s.xp, total: s.total, streak: s.streak };
+});
+await check('staff still can’t read a colleague’s XP records', () => as(B, `select id from public.task_xp_events where user_id <> '${B}'`).then(expectRows(0)));
+await check('staff see a colleague’s badge counts', () => as(B, `select public.profile_task_stats('${A}') s`).then(expectRows(1)));
+await check('an account not yet switched on cannot see others’ badges', () => as(C, `select public.profile_task_stats('${B}')`), true);
+
 // Inventory: every write goes through record_inventory_movement / decide_inventory_transfer
 const rpc = (uid, args) => as(uid, `select public.record_inventory_movement(${args}) r`).then((r) => r.rows[0].r);
 const cid = (n) => `'00000000-0000-4000-8000-${String(n).padStart(12, '0')}'`;
