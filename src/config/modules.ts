@@ -115,12 +115,12 @@ export const MODULES: ModuleConfig[] = [
   },
   {
     id: 'print-docs',
-    label: 'Print Docs',
-    path: '/print-docs',
+    label: 'Forms',
+    path: '/forms',
     icon: Printer,
     group: 'Work',
-    summary: 'Create printable documents, such as forms and acknowledgement receipts, from approved templates.',
-    plannedScope: ['Approved document templates', 'Fill from portal records', 'Print-ready layouts'],
+    summary: 'PHILRADS forms to fill in on screen and print or save as PDF, laid out like the originals.',
+    plannedScope: [],
   },
   {
     id: 'resources',

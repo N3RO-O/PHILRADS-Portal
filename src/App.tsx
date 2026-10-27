@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthGate } from './components/auth/AuthGate';
 import { AuthProvider } from './components/auth/AuthProvider';
 import { AppLayout } from './components/layout/AppLayout';
@@ -18,6 +18,7 @@ const DocumentationPage = lazy(() => import('./pages/DocumentationPage').then((m
 const ProjectsPage = lazy(() => import('./pages/ProjectsPage').then((m) => ({ default: m.ProjectsPage })));
 const LogsPage = lazy(() => import('./pages/LogsPage').then((m) => ({ default: m.LogsPage })));
 const StaffPage = lazy(() => import('./pages/StaffPage').then((m) => ({ default: m.StaffPage })));
+const FormsPage = lazy(() => import('./pages/FormsPage').then((m) => ({ default: m.FormsPage })));
 const ProfilePage = lazy(() => import('./pages/ProfilePage').then((m) => ({ default: m.ProfilePage })));
 const TasksPage = lazy(() => import('./pages/TasksPage').then((m) => ({ default: m.TasksPage })));
 
@@ -93,6 +94,19 @@ export default function App() {
                 }
               />
             ))}
+            {['forms', 'forms/:id'].map((path) => (
+              <Route
+                key={path}
+                path={path}
+                element={
+                  <Suspense fallback={<Skeleton className="h-96" />}>
+                    <FormsPage />
+                  </Suspense>
+                }
+              />
+            ))}
+            {/* Print Docs became Forms (2026-10-27). */}
+            <Route path="print-docs" element={<Navigate to="/forms" replace />} />
             {['profile', 'profile/:id'].map((path) => (
               <Route
                 key={path}
@@ -120,7 +134,7 @@ export default function App() {
                 </Suspense>
               }
             />
-            {MODULES.filter((m) => !['home', 'inventory', 'resources', 'response', 'staff', 'tasks', 'live-map', 'logs', 'documentation', 'projects', 'profile'].includes(m.id)).map((m) => (
+            {MODULES.filter((m) => !['home', 'inventory', 'resources', 'response', 'staff', 'tasks', 'live-map', 'logs', 'documentation', 'projects', 'profile', 'print-docs'].includes(m.id)).map((m) => (
               <Route key={m.id} path={m.path.slice(1)} element={<ModulePlaceholderPage moduleId={m.id} />} />
             ))}
             <Route path="*" element={<NotFoundPage />} />

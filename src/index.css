@@ -420,3 +420,188 @@
 .map-tiles-dark {
   filter: invert(100%) hue-rotate(180deg) brightness(92%) contrast(88%) saturate(55%);
 }
+
+/* ───────── Forms: PHILRADS paper forms, typed on screen and printed (src/forms) ───────── */
+.form-page {
+  position: relative;
+  box-sizing: border-box;
+  background: #fff no-repeat center / 100% 100%;
+  color: #000;
+  line-height: 1.25;
+  box-shadow: 0 14px 44px -14px rgba(0, 0, 0, 0.7);
+  color-scheme: light;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+/* Logos sit in the line like in Word (the app's base styles make images blocks). */
+.form-page img {
+  display: inline-block;
+}
+.form-page *,
+.form-page *::before,
+.form-page *::after {
+  box-sizing: border-box;
+}
+.form-page table {
+  border-collapse: collapse;
+}
+.ff {
+  font: inherit;
+  color: inherit;
+  min-width: 0;
+  border: 0;
+  border-radius: 1px;
+  outline: none;
+  padding: 0 0.6mm;
+  background: rgba(236, 149, 42, 0.08);
+  vertical-align: bottom;
+}
+.ff:hover {
+  background: rgba(236, 149, 42, 0.16);
+}
+.ff:focus {
+  background: rgba(236, 149, 42, 0.22);
+  box-shadow: inset 0 -1.5px 0 #ec952a;
+}
+.ff::placeholder {
+  color: #9b9b9b;
+  font-style: italic;
+  font-weight: 400;
+}
+.ff-line {
+  border-bottom: 0.75pt solid #000;
+}
+.ff-area {
+  display: block;
+  width: 100%;
+  resize: none;
+  overflow: hidden;
+  line-height: inherit;
+}
+.ff-print {
+  display: inline-block;
+  min-height: 1.2em;
+  padding: 0 0.6mm;
+  white-space: pre-wrap;
+  vertical-align: bottom;
+}
+.ff-print-area {
+  padding: 0 0.6mm;
+  white-space: pre-wrap;
+}
+.ff-sign {
+  display: inline-block;
+  height: 1.1em;
+  border-bottom: 0.75pt solid #000;
+  vertical-align: bottom;
+}
+.ff-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.2mm;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+}
+.ff-check-edit {
+  cursor: pointer;
+}
+/* Multi-line labels: the box sits at the start of the first line, as on paper. */
+.ff-check-top {
+  align-items: flex-start;
+}
+.ff-check-top .ff-box {
+  margin-top: 0.25em;
+}
+.ff-check-edit:hover .ff-box {
+  background: rgba(236, 149, 42, 0.25);
+}
+.ff-box {
+  display: inline-block;
+  flex: none;
+  border: 0.75pt solid #000;
+  background: #fff;
+  line-height: 0;
+}
+.ff-photo-slot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #bdbdbd;
+}
+.ff-photo {
+  max-width: 100%;
+  object-fit: contain;
+}
+.ff-photo-empty {
+  color: #9b9b9b;
+  font-style: italic;
+}
+.ff-photo-actions {
+  position: absolute;
+  right: 2mm;
+  bottom: 2mm;
+  display: flex;
+  gap: 1mm;
+}
+.ff-photo-actions button {
+  padding: 0.6mm 2mm;
+  border-radius: 1mm;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font: 600 8pt Arial, sans-serif;
+}
+.ff-dupe {
+  background: rgba(220, 38, 38, 0.12) !important;
+}
+.print-form {
+  display: none;
+}
+/* Duplicate-name warnings are for the screen only. */
+.print-form .ff-dupe {
+  background: transparent !important;
+}
+@page form-a4 {
+  size: A4 portrait;
+  margin: 0;
+}
+@page form-a4-landscape {
+  size: A4 landscape;
+  margin: 0;
+}
+@page form-letter {
+  size: letter portrait;
+  margin: 0;
+}
+@media print {
+  .print-form {
+    display: block;
+  }
+  .print-form .form-page {
+    box-shadow: none;
+    break-after: page;
+  }
+  .print-form .form-page:last-child {
+    break-after: auto;
+  }
+  /* A hair under the paper size, so a full sheet never spills a blank page. */
+  .print-form .form-a4 {
+    page: form-a4;
+    min-height: 296.4mm !important;
+  }
+  .print-form .form-a4-landscape {
+    page: form-a4-landscape;
+    min-height: 209.4mm !important;
+  }
+  .print-form .form-letter {
+    page: form-letter;
+    min-height: 278.8mm !important;
+  }
+  .print-form .no-print {
+    display: none !important;
+  }
+}
