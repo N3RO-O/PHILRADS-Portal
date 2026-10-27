@@ -394,12 +394,24 @@ function NewEvent({ imsUrl, onClose, onOpened }: { imsUrl: string; onClose: () =
               ))}
             </select>
           </label>
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor={`${uid}-target`} className="text-sm font-semibold text-ink-soft">
-              Target beneficiaries
-            </label>
-            <QuantityStepper id={`${uid}-target`} value={target} onChange={setTarget} max={100_000_000} unit="people" />
-          </div>
+          <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink-soft">
+            Target beneficiaries
+            {/* A plain number box: targets are hundreds or thousands, too many to step through. */}
+            <span className="relative block">
+              <input
+                id={`${uid}-target`}
+                className="field pr-16 tabular-nums"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                autoComplete="off"
+                value={target}
+                onChange={(e) => setTarget(e.target.value.replace(/\D/g, '').replace(/^0+(?=\d)/, '').slice(0, 9))}
+                placeholder="e.g. 500"
+              />
+              <span className="pointer-events-none absolute inset-y-0 right-4 grid place-items-center text-xs font-normal text-muted">people</span>
+            </span>
+          </label>
         </div>
         <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink-soft">
           Location
