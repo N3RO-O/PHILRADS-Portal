@@ -2,14 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { CheckCircle2, Download, Flag, Loader2, Lock, LogIn, RotateCcw, ScrollText, Search, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../components/auth/AuthProvider';
-import { Avatar } from '../components/ui/Avatar';
 import { EmptyState, LoadError, Skeleton } from '../components/ui/Card';
 import { SampleBadge } from '../components/ui/SampleBadge';
 import { Sheet } from '../components/ui/Sheet';
 import { downloadCsv, toCsv } from '../lib/csv';
-import { formatDateTime, formatDayHeading, formatNumber, formatTime, initialsOf, manilaDayKey } from '../lib/format';
+import { formatDateTime, formatDayHeading, formatNumber, formatTime, manilaDayKey } from '../lib/format';
 import { auditService } from '../services';
 import { FLAG_ACTIONS, LOG_CATEGORIES, type LogCategory, type LogCounts, type LogEntry, type LogPeriod, type LogQuery } from '../services/audit/auditService';
+import { PersonAvatar } from '../components/ui/PersonAvatar';
 
 const PERIODS: [LogPeriod, string][] = [
   ['today', 'Today'],
@@ -250,7 +250,7 @@ export function LogsPage() {
                   {g.items.map((e) => (
                     <li key={e.id}>
                       <button type="button" className="tap flex w-full items-start gap-3 rounded-xl px-2 py-2.5 text-left hover:bg-white/[0.03]" onClick={() => setOpen(e)}>
-                        <Avatar initials={initialsOf(e.actorName)} size="sm" />
+                        <PersonAvatar id={e.actorId} name={e.actorName} size="sm" />
                         <span className="min-w-0 flex-1">
                           <span className="block text-sm leading-snug">{e.summary}</span>
                           <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.6875rem] text-muted">

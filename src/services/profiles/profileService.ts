@@ -28,6 +28,11 @@ export interface PersonProfile {
   memberSince: string | null;
 }
 
+export interface ProfilePicture {
+  avatar: string | null;
+  color: string | null;
+}
+
 /** What someone's level and badges are worked out from (src/lib/taskProgress.ts). */
 export interface ProfileProgress {
   xp: number;
@@ -59,6 +64,8 @@ export interface ProfileService {
   get(id: string): Promise<PersonProfile | null>;
   /** Level and badges: anyone on the team can see them. */
   progress(id: string): Promise<ProfileProgress>;
+  /** Pictures and colours for several people at once (team lists, logs). */
+  pictures(ids: string[]): Promise<Record<string, ProfilePicture>>;
   /** Your own profile. */
   save(id: string, patch: ProfilePatch): Promise<void>;
 }
@@ -144,6 +151,15 @@ export function createSupabaseProfileService(client: SupabaseClient): ProfileSer
         },
       };
     },
+    async pictures(ids) {
+      const out: Record<string, ProfilePicture> = {};
+      for (let i = 0; i < ids.length; i += 100) {
+        const { data, error } = await client.from('profiles').select('id, avatar_data, avatar_color').in('id', ids.slice(i, i + 100));
+        if (error) throw new Error('Profile pictures could not be loaded.');
+        for (const r of data ?? []) out[r.id as string] = { avatar: (r.avatar_data as string | null) ?? null, color: (r.avatar_color as string | null) ?? null };
+      }
+      return out;
+    },
     async save(id, p) {
       validate(p);
       const { data, error } = await client
@@ -218,6 +234,12 @@ export const mockProfileService: ProfileService = {
     const [tasks, p] = await Promise.all([mockTasksService.list(), mockTasksService.progress()]);
     const r = computeProgress({ awards: p.awards, kudos: p.kudos, tasks, userId: id });
     return { xp: r.xp, stats: r.stats };
+  },
+  async pictures(ids) {
+    const mine = readMine();
+    return Object.fromEntries(
+      ids.map((id) => [id, id === demoProfile.id ? { avatar: mine.avatar ?? null, color: mine.avatarColor ?? null } : { avatar: SAMPLE[id]?.avatar ?? null, color: SAMPLE[id]?.avatarColor ?? null }]),
+    );
   },
   async save(id, p) {
     validate(p);

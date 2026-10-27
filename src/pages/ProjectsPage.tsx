@@ -22,10 +22,9 @@ import {
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../components/auth/AuthProvider';
 import { ProjectSheet } from '../components/projects/ProjectSheet';
-import { Avatar } from '../components/ui/Avatar';
 import { EmptyState, LoadError, Skeleton } from '../components/ui/Card';
 import { SampleBadge } from '../components/ui/SampleBadge';
-import { formatDateTime, formatNumber, formatShortDate, initialsOf } from '../lib/format';
+import { formatDateTime, formatNumber, formatShortDate } from '../lib/format';
 import { todayKey } from '../lib/inventory';
 import { daysBetween } from '../lib/tasks';
 import { documentationService, projectsService, tasksService } from '../services';
@@ -42,6 +41,7 @@ import {
   type ProjectStatus,
 } from '../services/projects/projectsService';
 import type { Task } from '../services/tasks/types';
+import { PersonAvatar } from '../components/ui/PersonAvatar';
 
 type Filter = ProjectStatus | 'all';
 const FILTERS: [Filter, string][] = [
@@ -250,7 +250,7 @@ function ProjectCard({ project: p, today }: { project: Project; today: string })
         <span className="flex min-w-0 items-center gap-2">
           {p.leadName ? (
             <>
-              <Avatar initials={initialsOf(p.leadName)} size="sm" />
+              <PersonAvatar id={p.leadId} name={p.leadName} size="sm" />
               <span className="truncate">{p.leadName}</span>
             </>
           ) : (
@@ -694,7 +694,7 @@ function Team({ project: p, people, canManage, busy, act }: { project: Project; 
       </h3>
       <ul className="flex flex-col gap-2">
         <li className="flex items-center gap-3">
-          <Avatar initials={initialsOf(p.leadName ?? '?')} size="sm" />
+          <PersonAvatar id={p.leadId} name={p.leadName ?? '?'} size="sm" />
           <span className="min-w-0 flex-1">
             {p.leadId ? (
               <Link to={`/profile/${p.leadId}`} className="block truncate text-sm font-semibold hover:underline">
@@ -708,7 +708,7 @@ function Team({ project: p, people, canManage, busy, act }: { project: Project; 
         </li>
         {members.map((m) => (
           <li key={m.profileId} className="flex items-center gap-3">
-            <Avatar initials={initialsOf(m.name)} size="sm" />
+            <PersonAvatar id={m.profileId} name={m.name} size="sm" />
             <Link to={`/profile/${m.profileId}`} className="min-w-0 flex-1 truncate text-sm hover:underline">
               {m.name}
             </Link>

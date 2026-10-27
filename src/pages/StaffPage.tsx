@@ -4,15 +4,15 @@ import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../components/auth/AuthProvider';
 import { useOnboarding } from '../components/onboarding/OnboardingProvider';
 import { InviteSheet } from '../components/staff/InviteSheet';
-import { Avatar } from '../components/ui/Avatar';
 import { EmptyState, LoadError, Skeleton } from '../components/ui/Card';
 import { SampleBadge } from '../components/ui/SampleBadge';
 import { SwipeToArchive } from '../components/ui/SwipeToArchive';
 import { useAsyncData } from '../hooks/useAsyncData';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
-import { formatNumber, formatShortInstant, initialsOf } from '../lib/format';
+import { formatNumber, formatShortInstant } from '../lib/format';
 import { staffService } from '../services';
 import { STAFF_ROLES, StaffRuleError, roleLabel, type StaffMember, type StaffRoleKey } from '../services/staff/types';
+import { PersonAvatar } from '../components/ui/PersonAvatar';
 
 type Filter = 'all' | 'active' | 'volunteers' | 'pending' | 'off' | 'archived';
 const FILTERS: [Filter, string][] = [
@@ -243,7 +243,7 @@ export function StaffPage() {
                   <SwipeToArchive enabled={swipeable} onArchive={() => archive(m)}>
                     <div className={`tile flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:gap-4 sm:p-4 ${m.isActive ? '' : 'text-ink-soft'}`}>
                       <div className="flex min-w-0 flex-1 items-center gap-3">
-                        <Avatar initials={initialsOf(m.name)} />
+                        <PersonAvatar id={m.id} name={m.name} />
                         <div className="min-w-0">
                           <p className="flex flex-wrap items-center gap-2 font-semibold">
                             <span className="truncate">{m.name}</span>

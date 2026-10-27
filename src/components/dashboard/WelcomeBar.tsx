@@ -17,7 +17,7 @@ export function WelcomeBar() {
         <div className="flex items-center gap-4">
           {/* The avatar is already in the top bar; on phones the greeting gets the room instead. */}
           <span className="hidden sm:block">
-            <Avatar initials={profile.initials} size="lg" />
+            <Avatar initials={profile.initials} src={profile.avatar} color={profile.avatarColor} size="lg" />
           </span>
           <div className="min-w-0">
             <h2 id="welcome-title" className="text-lg font-bold leading-tight sm:text-xl">
