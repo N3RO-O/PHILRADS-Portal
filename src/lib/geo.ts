@@ -39,23 +39,47 @@ export const formatLatLng = (p: LatLng) => `${p.lat.toFixed(5)}, ${p.lng.toFixed
 
 export type GeoResult = { ok: true; lat: number; lng: number; accuracyM: number } | { ok: false; reason: string };
 
-/** One reading from the phone's GPS (only when someone asks; never watched in the background). */
-export function currentPosition(): Promise<GeoResult> {
+/**
+ * The phone's position, as accurate as it gets within a few seconds (only when someone asks;
+ * never watched in the background). Phones often give a rough cell-tower or Wi-Fi position first,
+ * off by hundreds of metres, then a GPS one: so this listens for a moment, keeps the most accurate
+ * fresh reading, and answers as soon as one is good enough (`goodM`) or when `waitMs` runs out.
+ */
+export function currentPosition({ goodM = 30, waitMs = 10_000 }: { goodM?: number; waitMs?: number } = {}): Promise<GeoResult> {
   if (!('geolocation' in navigator)) return Promise.resolve({ ok: false, reason: 'This browser can’t share its location.' });
-  return new Promise((resolve) =>
-    navigator.geolocation.getCurrentPosition(
-      (p) => resolve({ ok: true, lat: p.coords.latitude, lng: p.coords.longitude, accuracyM: Math.round(p.coords.accuracy) }),
-      (e) =>
-        resolve({
-          ok: false,
-          reason:
-            e.code === e.PERMISSION_DENIED
-              ? 'Location is blocked for this site. Allow it in your browser’s site settings, then try again.'
-              : e.code === e.TIMEOUT
-                ? 'Your location took too long. Step outside or near a window and try again.'
-                : 'Your location isn’t available right now. Check that location (GPS) is on.',
-        }),
-      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 30_000 },
-    ),
-  );
+  return new Promise((resolve) => {
+    let best: GeolocationPosition | null = null;
+    let done = false;
+    const finish = (r: GeoResult) => {
+      if (done) return;
+      done = true;
+      navigator.geolocation.clearWatch(watch);
+      clearTimeout(timer);
+      resolve(r);
+    };
+    const answer = () =>
+      best
+        ? finish({ ok: true, lat: best.coords.latitude, lng: best.coords.longitude, accuracyM: Math.round(best.coords.accuracy) })
+        : finish({ ok: false, reason: 'Your location took too long. Step outside or near a window and try again.' });
+    const watch = navigator.geolocation.watchPosition(
+      (p) => {
+        if (!best || p.coords.accuracy <= best.coords.accuracy) best = p;
+        if (p.coords.accuracy <= goodM) answer();
+      },
+      (e) => {
+        if (e.code === e.PERMISSION_DENIED)
+          finish({ ok: false, reason: 'Location is blocked for this site. Allow it in your browser’s site settings, then try again.' });
+        else if (e.code !== e.TIMEOUT && !best) finish({ ok: false, reason: 'Your location isn’t available right now. Check that location (GPS) is on.' });
+      },
+      // Fresh readings only: a cached one can be from somewhere else.
+      { enableHighAccuracy: true, maximumAge: 0, timeout: waitMs + 10_000 },
+    );
+    // Out of time: the best so far; with nothing yet, give GPS a little longer before giving up.
+    const timer = setTimeout(() => (best ? answer() : setTimeout(answer, 10_000)), waitMs);
+  });
 }
+
+/** Rough position (cell tower / Wi-Fi), not GPS: worse than this is too far off to show. */
+export const ROUGH_M = 500;
+/** A GPS-quality reading. */
+export const GOOD_M = 50;

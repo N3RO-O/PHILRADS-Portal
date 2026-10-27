@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Loader2, Radio, ShieldCheck, Square } from 'lucide-react';
-import { currentPosition, distanceM } from '../../lib/geo';
+import { currentPosition, distanceM, GOOD_M, ROUGH_M } from '../../lib/geo';
 import { formatTime, manilaDayKey } from '../../lib/format';
 import { mapService } from '../../services';
 import type { LiveFix } from '../../services/map/types';
@@ -27,6 +27,8 @@ interface LiveSharingValue {
   status: Status;
   until: string | null;
   lastSentAt: string | null;
+  /** The latest GPS reading's accuracy in metres (null before the first). */
+  accuracyM: number | null;
   error: string | null;
   start(choice: ShareFor): Promise<boolean>;
   stop(): Promise<void>;
@@ -37,6 +39,40 @@ const key = (uid: string) => `philrads.live.until.${uid}`;
 const MIN_GAP_MS = 10_000;
 const MAX_GAP_MS = 30_000;
 const MIN_MOVE_M = 10;
+/** Faster than this (m/s, beyond both readings' error) is a GPS glitch, not travel: about 160 km/h. */
+const GLITCH_SPEED = 45;
+/** How long the last good position stands before a rougher one may replace it. */
+const KEEP_GOOD_MS = 120_000;
+
+type Sent = { fix: LiveFix; at: number };
+
+/**
+ * Whether to send this GPS reading. Phones mix rough cell-tower/Wi-Fi positions (hundreds of metres
+ * off) with real GPS ones, and now and then jump somewhere far for a moment; sending every reading
+ * made pins leap away from where people really were. So:
+ * - readings rougher than ROUGH_M are never sent (unless nothing better has come for 2 minutes);
+ * - a much rougher reading doesn't replace a good recent one;
+ * - an impossible jump (faster than ~160 km/h beyond both readings' error) is ignored, unless the
+ *   new reading is clearly more accurate (then it corrects the old one);
+ * - moving less than the reading's own error isn't moving: the pin stays put (a heartbeat still
+ *   goes every 30 s so the team sees it's live).
+ */
+export function judgeFix(prev: Sent | null, fix: LiveFix, now: number, fresh = false): boolean {
+  const acc = fix.accuracyM ?? ROUGH_M;
+  if (!prev) return acc <= ROUGH_M;
+  const dt = now - prev.at;
+  const prevAcc = prev.fix.accuracyM ?? ROUGH_M;
+  const clearlyBetter = acc <= GOOD_M && acc < prevAcc / 2;
+  if (acc > ROUGH_M && dt < KEEP_GOOD_MS) return false;
+  if (acc > Math.max(GOOD_M, prevAcc * 2) && dt < KEEP_GOOD_MS) return false;
+  const d = distanceM(prev.fix, fix);
+  const realMove = d - acc - prevAcc;
+  if (!clearlyBetter && realMove > 0 && realMove / Math.max(1, dt / 1000) > GLITCH_SPEED) return false;
+  if (clearlyBetter) return true;
+  if (!fresh && dt < MIN_GAP_MS) return false;
+  const still = d < Math.max(MIN_MOVE_M, Math.min(acc, prevAcc));
+  return !(still && dt < MAX_GAP_MS);
+}
 
 /**
  * "Share my live location": off until the person turns it on, for a time they choose.
@@ -53,7 +89,10 @@ export function LiveSharingProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<Status>('off');
   const [lastSentAt, setLastSentAt] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const last = useRef<{ fix: LiveFix; at: number } | null>(null);
+  const [accuracyM, setAccuracyM] = useState<number | null>(null);
+  const last = useRef<Sent | null>(null);
+  /** Back on screen after a pause: send the next good reading straight away. */
+  const fresh = useRef(true);
   const untilRef = useRef(until);
   untilRef.current = until;
 
@@ -75,6 +114,7 @@ export function LiveSharingProvider({ children }: { children: ReactNode }) {
     setUntil(null);
     setStatus('off');
     last.current = null;
+    setAccuracyM(null);
     try {
       if (uid) localStorage.removeItem(key(uid));
     } catch {
@@ -83,16 +123,13 @@ export function LiveSharingProvider({ children }: { children: ReactNode }) {
     await mapService.stopLive().catch(() => undefined);
   }, [uid]);
 
-  const send = useCallback(async (fix: LiveFix, force = false) => {
+  const send = useCallback(async (fix: LiveFix) => {
     const u = untilRef.current;
     if (!u) return;
-    const prev = last.current;
+    setAccuracyM(fix.accuracyM);
     const now = Date.now();
-    if (!force && prev) {
-      const gap = now - prev.at;
-      const moved = distanceM(prev.fix, fix);
-      if (gap < MIN_GAP_MS || (moved < MIN_MOVE_M && gap < MAX_GAP_MS)) return;
-    }
+    if (!judgeFix(last.current, fix, now, fresh.current)) return;
+    fresh.current = false;
     last.current = { fix, at: now };
     try {
       await mapService.shareLive(fix, u);
@@ -108,7 +145,7 @@ export function LiveSharingProvider({ children }: { children: ReactNode }) {
       if (!uid || !canShare) return false;
       setError(null);
       setStatus('starting');
-      const r = await currentPosition();
+      const r = await currentPosition({ goodM: 30, waitMs: 10_000 });
       if (!r.ok) {
         setStatus('off');
         setError(r.reason);
@@ -123,7 +160,9 @@ export function LiveSharingProvider({ children }: { children: ReactNode }) {
         /* keeps sharing until reload */
       }
       last.current = null;
-      await send({ lat: r.lat, lng: r.lng, accuracyM: r.accuracyM, heading: null, speedMps: null }, true);
+      fresh.current = true;
+      // A rough first reading isn't sent: the pin appears once GPS gives a good one.
+      await send({ lat: r.lat, lng: r.lng, accuracyM: r.accuracyM, heading: null, speedMps: null });
       setStatus('live');
       return true;
     },
@@ -153,7 +192,6 @@ export function LiveSharingProvider({ children }: { children: ReactNode }) {
               heading: p.coords.heading == null || Number.isNaN(p.coords.heading) ? null : Math.round(p.coords.heading),
               speedMps: p.coords.speed == null || Number.isNaN(p.coords.speed) ? null : Math.round(p.coords.speed * 10) / 10,
             },
-            last.current === null,
           ),
         (e) => {
           if (e.code === e.PERMISSION_DENIED) {
@@ -161,7 +199,8 @@ export function LiveSharingProvider({ children }: { children: ReactNode }) {
             void stop();
           }
         },
-        { enableHighAccuracy: true, maximumAge: 5000, timeout: 20_000 },
+        // Fresh readings only: a cached one can be from somewhere else.
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 30_000 },
       );
     };
     const end = () => {
@@ -170,7 +209,7 @@ export function LiveSharingProvider({ children }: { children: ReactNode }) {
     };
     const onVisibility = () => {
       if (document.visibilityState === 'visible') {
-        last.current = null; // send straight away when coming back
+        fresh.current = true; // send the next good reading straight away when coming back
         begin();
       } else {
         end();
@@ -189,7 +228,10 @@ export function LiveSharingProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [until, status === 'off' || status === 'starting', send, stop]);
 
-  const value = useMemo<LiveSharingValue>(() => ({ canShare, status, until, lastSentAt, error, start, stop }), [canShare, status, until, lastSentAt, error, start, stop]);
+  const value = useMemo<LiveSharingValue>(
+    () => ({ canShare, status, until, lastSentAt, accuracyM, error, start, stop }),
+    [canShare, status, until, lastSentAt, accuracyM, error, start, stop],
+  );
   return <LiveSharingContext.Provider value={value}>{children}</LiveSharingContext.Provider>;
 }
 
@@ -213,6 +255,15 @@ export function LiveSharingBanner() {
       <span className="min-w-0 flex-1 leading-tight">
         <strong className="font-semibold text-ink">Sharing your live location</strong>{' '}
         <span className="text-ink-soft">until {formatTime(live.until)}</span>
+        {live.accuracyM != null && live.status === 'live' && (
+          <span className={`block text-xs ${live.accuracyM > GOOD_M * 2 ? 'text-status-low' : 'text-muted'}`}>
+            {live.accuracyM > ROUGH_M
+              ? 'Waiting for GPS: move outside or near a window. Your pin stays where it last was accurate.'
+              : live.accuracyM > GOOD_M * 2
+                ? `Weak GPS (±${live.accuracyM} m): move outside or near a window for a sharper pin.`
+                : `GPS accurate to ±${live.accuracyM} m`}
+          </span>
+        )}
       </span>
       <button
         type="button"
