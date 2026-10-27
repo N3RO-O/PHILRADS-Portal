@@ -1,4 +1,4 @@
-import { Area, In, Page, PhotoSlot, SignLine, useForm } from './kit';
+import { Area, duplicateRows, In, Page, pagesOf, PhotoSlot, SignLine, useForm } from './kit';
 
 const CALIBRI = 'Calibri, Carlito, "Segoe UI", Arial, sans-serif';
 const PAD: [number, number, number, number] = [10, 25.4, 25.4, 25.4];
@@ -20,9 +20,9 @@ export function ActivityReport({ rows = ACTIVITY_BENEFICIARY_ROWS }: { rows?: nu
   const { values } = useForm();
   const td = { border: '0.75pt solid #000', padding: '1.5mm 1.8mm', verticalAlign: 'top' as const, fontWeight: 700 };
   const head = (t: string) => <div style={{ fontWeight: 700, marginTop: '4mm' }}>{t}</div>;
-  // The beneficiary table's columns are whatever the first row says (the template leaves them blank).
-  const cols = [1, 2, 3, 4, 5];
-  const seen = new Map<string, number>();
+  // Beneficiaries: 3 rows on page 2 (the template has one), longer lists on their own pages.
+  const benPages = pagesOf(rows, 3, 25);
+  const dupes = duplicateRows(values, 'ben', '1', rows);
   return (
     <>
       <Page paper="a4" pad={PAD} font={CALIBRI} size="12pt">
@@ -68,29 +68,7 @@ export function ActivityReport({ rows = ACTIVITY_BENEFICIARY_ROWS }: { rows?: nu
         {head('D. Challenges')}
         <Area k="challenges" minH="22mm" placeholder="• Access to some houses was difficult…" style={{ lineHeight: 1.6 }} />
         <div style={{ fontWeight: 700, marginTop: '6mm' }}>List of Beneficiaries:</div>
-        <table style={{ width: '100%', marginTop: '6mm', tableLayout: 'fixed', fontSize: '10.5pt' }}>
-          <tbody>
-            {Array.from({ length: rows + 1 }, (_, r) => {
-              const name = String(values[`ben.${r}.1`] ?? '').trim().toLowerCase();
-              const dupeOf = r > 0 && name ? seen.get(name) : undefined;
-              if (r > 0 && name && !dupeOf) seen.set(name, r);
-              return (
-                <tr key={r} style={{ height: '8.5mm' }}>
-                  {cols.map((c) => (
-                    <td
-                      key={c}
-                      style={{ border: '1pt solid #000', padding: 0 }}
-                      className={c === 1 && dupeOf ? 'ff-dupe' : undefined}
-                      title={c === 1 && dupeOf ? `Same name as row ${dupeOf}` : undefined}
-                    >
-                      <In k={`ben.${r}.${c}`} bold={r === 0} align={r === 0 ? 'center' : undefined} placeholder={r === 0 ? ['Name', 'Address', 'Sex', 'Age', 'Assistance'][c - 1] : undefined} />
-                    </td>
-                  ))}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <BenTable nums={benPages[0]} dupes={dupes} />
         <div style={{ marginTop: '10mm' }}>Photo Documentation:</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3mm', marginTop: '2mm' }}>
           {[1, 2].map((i) => (
@@ -103,6 +81,14 @@ export function ActivityReport({ rows = ACTIVITY_BENEFICIARY_ROWS }: { rows?: nu
         </div>
       </Page>
 
+      {benPages.slice(1).map((nums, i) => (
+        <Page key={i} paper="a4" pad={PAD} font={CALIBRI} size="12pt">
+          <Logo />
+          <div style={{ fontWeight: 700 }}>List of Beneficiaries (continued):</div>
+          <BenTable nums={nums} dupes={dupes} />
+        </Page>
+      ))}
+
       <Page paper="a4" pad={PAD} font={CALIBRI} size="12pt">
         <Logo />
         <div style={{ marginTop: '2mm' }}>Approved by:</div>
@@ -112,5 +98,33 @@ export function ActivityReport({ rows = ACTIVITY_BENEFICIARY_ROWS }: { rows?: nu
         <div style={{ marginTop: '2mm' }}>Program Manager/ President</div>
       </Page>
     </>
+  );
+}
+
+/** The list of beneficiaries: a heading row (the template leaves the columns blank), then the rows. */
+function BenTable({ nums, dupes }: { nums: number[]; dupes: Map<number, number> }) {
+  const cols = [1, 2, 3, 4, 5];
+  return (
+    <table style={{ width: '100%', marginTop: '6mm', tableLayout: 'fixed', fontSize: '10.5pt' }}>
+      <tbody>
+        {[0, ...nums].map((r) => {
+          const dupeOf = r > 0 ? dupes.get(r) : undefined;
+          return (
+            <tr key={r} style={{ height: '8.5mm', breakInside: 'avoid' }}>
+              {cols.map((c) => (
+                <td
+                  key={c}
+                  style={{ border: '1pt solid #000', padding: 0 }}
+                  className={c === 1 && dupeOf ? 'ff-dupe' : undefined}
+                  title={c === 1 && dupeOf ? `Same name as row ${dupeOf}` : undefined}
+                >
+                  <In k={`ben.${r}.${c}`} bold={r === 0} align={r === 0 ? 'center' : undefined} placeholder={r === 0 ? ['Name', 'Address', 'Sex', 'Age', 'Assistance'][c - 1] : undefined} />
+                </td>
+              ))}
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
   );
 }

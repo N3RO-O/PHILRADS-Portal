@@ -237,6 +237,21 @@ export function duplicateRows(values: Values, prefix: string, field: string, row
   return dupes;
 }
 
+/**
+ * Row numbers split into sheets: `first` rows on the first sheet, `more` on each sheet after,
+ * so a long list continues on a new page instead of running off the paper.
+ */
+export function pagesOf(rows: number, first: number, more: number): number[][] {
+  const pages: number[][] = [];
+  let n = 1;
+  for (let size = first; n <= rows; size = more) {
+    const page: number[] = [];
+    for (let i = 0; i < size && n <= rows; i++) page.push(n++);
+    pages.push(page);
+  }
+  return pages.length ? pages : [[]];
+}
+
 /** Peso amounts typed as "1,250.50" → 1250.5. */
 export const amount = (s: string | boolean | undefined) => {
   const n = Number(String(s ?? '').replace(/,/g, ''));
