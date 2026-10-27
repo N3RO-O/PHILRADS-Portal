@@ -1,13 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, Check, CheckCircle2, CheckSquare, CloudUpload, FileText, Film, HardDrive, Image as ImageIcon, Link2, Loader2, Play, RotateCw, Search, Trash2, Upload, X } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState, type MouseEvent } from 'react';
+import { AlertTriangle, CheckCircle2, CheckSquare, CloudUpload, HardDrive, Image as ImageIcon, Link2, Loader2, RotateCw, Search, Trash2, Upload, X } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../components/auth/AuthProvider';
+import { DetailsHeader, DocItem, DocSidePane, useDocViewPrefs, VIEW_LIST, ViewMenu } from '../components/documentation/DocViews';
 import { DocViewer } from '../components/documentation/DocViewer';
 import { UploadSheet, type TagOption } from '../components/documentation/UploadSheet';
 import { EmptyState, LoadError, Skeleton } from '../components/ui/Card';
 import { SampleBadge } from '../components/ui/SampleBadge';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
-import { formatBytes, formatDayHeading, formatNumber, formatTime, manilaDayKey } from '../lib/format';
+import { formatBytes, formatDayHeading, formatNumber, manilaDayKey } from '../lib/format';
 import { documentationService, inventoryStore, mapService, projectsService, uploadQueue } from '../services';
 import { DEFAULT_DRIVE_FOLDER, type DocFile, type DocLinks, type DriveStatus, type QueuedUpload } from '../services/documentation/documentationService';
 import { useInventoryState } from '../services/inventory/inventoryStore';
@@ -88,10 +89,25 @@ export function DocumentationPage() {
       else next.add(id);
       return next;
     });
-  const stopSelecting = () => {
+  const stopSelecting = useCallback(() => {
     setSelecting(false);
     setSelected(new Set());
-  };
+    setAnchor(null);
+  }, []);
+  // Where a Shift-click range starts (the last file clicked on its own), like File Explorer.
+  const [anchor, setAnchor] = useState<string | null>(null);
+
+  // Layout (View menu) and the side pane, remembered on this device.
+  const [prefs, setPrefs] = useDocViewPrefs();
+  const [wide, setWide] = useState(() => window.matchMedia('(min-width: 1024px)').matches);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const on = () => setWide(mq.matches);
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, []);
+  const paneOn = wide && prefs.pane !== 'none';
+  const [focusId, setFocusId] = useState<string | null>(null);
   const deleteSelected = async () => {
     const ids = [...selected];
     if (!ids.length) return;
@@ -184,6 +200,49 @@ export function DocumentationPage() {
     return groups;
   }, [shown]);
   const opened = all.find((d) => d.id === openId) ?? null;
+  const focused = all.find((d) => d.id === focusId) ?? null;
+
+  /** Click: open (or show in the pane). Shift-click: select a range. Ctrl/⌘-click: add or remove one. */
+  const onItemClick = (d: DocFile, e: MouseEvent) => {
+    const many = canManage && (e.shiftKey || e.ctrlKey || e.metaKey);
+    if (many || selecting) {
+      if (!selecting) setSelecting(true);
+      if (e.shiftKey && canManage) {
+        const ids = shown.map((x) => x.id);
+        const from = ids.indexOf(anchor ?? focusId ?? d.id);
+        const to = ids.indexOf(d.id);
+        const range = ids.slice(Math.min(from < 0 ? to : from, to), Math.max(from, to) + 1);
+        setSelected((s) => (e.ctrlKey || e.metaKey ? new Set([...s, ...range]) : new Set(range)));
+        if (!anchor) setAnchor(from < 0 ? d.id : ids[from]);
+      } else {
+        toggle(d.id);
+        setAnchor(d.id);
+      }
+      setFocusId(d.id);
+      return;
+    }
+    if (paneOn) {
+      setFocusId(d.id);
+      setAnchor(d.id);
+      return;
+    }
+    setOpenId(d.id);
+  };
+
+  // While selecting: Ctrl/⌘+A selects everything shown, Escape stops.
+  useEffect(() => {
+    if (!selecting) return;
+    const onKey = (e: KeyboardEvent) => {
+      const typing = (e.target as HTMLElement)?.closest?.('input, textarea, select, [contenteditable]');
+      if (e.key === 'Escape' && !document.querySelector('dialog[open]')) stopSelecting();
+      else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a' && !typing) {
+        e.preventDefault();
+        setSelected(new Set(shown.map((d) => d.id)));
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [selecting, shown, stopSelecting]);
   const today = manilaDayKey(new Date().toISOString());
   const ready = Boolean(status?.connected) && !status?.lastError;
 
@@ -208,6 +267,7 @@ export function DocumentationPage() {
             {docs && <span className="text-sm font-normal text-muted">{formatNumber(all.length)}</span>}
           </h2>
           <div className="flex flex-wrap gap-2">
+            <ViewMenu view={prefs.view} pane={prefs.pane} onChange={setPrefs} showPanes={wide} />
             {canManage && all.length > 0 && (
               <button type="button" className="btn-ghost min-h-11 px-4" aria-pressed={selecting} onClick={() => (selecting ? stopSelecting() : setSelecting(true))}>
                 {selecting ? <X className="h-4 w-4" aria-hidden /> : <CheckSquare className="h-4 w-4" aria-hidden />} {selecting ? 'Done selecting' : 'Select'}
@@ -289,28 +349,50 @@ export function DocumentationPage() {
             {all.length ? 'Try another word, person or category.' : 'Photos, videos and reports from the field show here, for the whole team.'}
           </EmptyState>
         ) : (
-          <div className="flex flex-col gap-5">
-            {days.map((g) => (
-              <section key={g.day} aria-label={formatDayHeading(g.items[0].uploadedAt)}>
-                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">
-                  {g.day === today ? 'Today' : g.day === manilaDayKey(new Date(Date.now() - 86_400_000).toISOString()) ? 'Yesterday' : formatDayHeading(g.items[0].uploadedAt)}
-                </h3>
-                <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                  {g.items.map((d) => (
-                    <li key={d.id}>
-                      <DocCard doc={d} thumb={links[d.id]?.thumb} selecting={selecting} selected={selected.has(d.id)} onOpen={() => (selecting ? toggle(d.id) : setOpenId(d.id))} />
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ))}
+          <div className="flex gap-5">
+            <div className="flex min-w-0 flex-1 flex-col gap-5">
+              {prefs.view === 'details' && <DetailsHeader compact={paneOn} />}
+              {days.map((g) => (
+                <section key={g.day} aria-label={formatDayHeading(g.items[0].uploadedAt)}>
+                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">
+                    {g.day === today ? 'Today' : g.day === manilaDayKey(new Date(Date.now() - 86_400_000).toISOString()) ? 'Yesterday' : formatDayHeading(g.items[0].uploadedAt)}
+                  </h3>
+                  <ul className={VIEW_LIST[prefs.view]}>
+                    {g.items.map((d) => (
+                      <li key={d.id} className="min-w-0">
+                        <DocItem
+                          doc={d}
+                          thumb={links[d.id]?.thumb}
+                          view={prefs.view}
+                          selecting={selecting}
+                          selected={selected.has(d.id)}
+                          focused={paneOn && focusId === d.id}
+                          onClick={(e) => onItemClick(d, e)}
+                          onDoubleClick={() => !selecting && setOpenId(d.id)}
+                          compact={paneOn}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ))}
+            </div>
+            {paneOn && prefs.pane !== 'none' && (
+              <DocSidePane
+                mode={prefs.pane}
+                doc={focused}
+                links={focused ? links[focused.id] : undefined}
+                projectName={focused?.projectId ? (projects.find((p) => p.id === focused.projectId)?.name ?? null) : null}
+                onOpen={() => focused && setOpenId(focused.id)}
+              />
+            )}
           </div>
         )}
       </section>
 
       {selecting && (
         <div className="sticky bottom-4 z-30 mx-auto flex w-full max-w-xl flex-wrap items-center gap-2 rounded-2xl border border-line bg-surface-raised/95 p-3 shadow-2xl shadow-black/50 backdrop-blur-md">
-          <span className="min-w-0 flex-1 text-sm font-semibold">{selected.size ? `${selected.size} selected` : 'Tap files to select them'}</span>
+          <span className="min-w-0 flex-1 text-sm font-semibold">{selected.size ? `${selected.size} selected` : wide ? 'Click files to select them (Shift-click for a range)' : 'Tap files to select them'}</span>
           <button
             type="button"
             className="btn-ghost min-h-10 px-3 text-xs"
@@ -465,44 +547,6 @@ function DriveCard({ status, isAdmin, sample, onConnect }: { status: DriveStatus
         </form>
       )}
     </section>
-  );
-}
-
-function DocCard({ doc, thumb, selecting = false, selected = false, onOpen }: { doc: DocFile; thumb: string | undefined; selecting?: boolean; selected?: boolean; onOpen: () => void }) {
-  const [failed, setFailed] = useState(false);
-  const isVideo = doc.mimeType.startsWith('video/');
-  const Icon = isVideo ? Film : doc.mimeType.startsWith('image/') ? ImageIcon : FileText;
-  const minutes = doc.durationMs ? `${Math.floor(doc.durationMs / 60000)}:${String(Math.round((doc.durationMs % 60000) / 1000)).padStart(2, '0')}` : null;
-  return (
-    <button type="button" onClick={onOpen} aria-pressed={selecting ? selected : undefined} className="tap group flex w-full flex-col gap-1.5 text-left">
-      <span className={`relative block aspect-[4/3] w-full overflow-hidden rounded-xl border bg-surface-sunken ${selected ? 'border-uplift ring-2 ring-uplift' : 'border-line/60'}`}>
-        {selecting && (
-          <span className={`absolute right-2 top-2 z-10 grid h-6 w-6 place-items-center rounded-md border-2 ${selected ? 'border-uplift bg-uplift text-page' : 'border-white/80 bg-black/40'}`} aria-hidden>
-            {selected && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
-          </span>
-        )}
-        {thumb && !failed ? (
-          <img src={thumb} alt="" loading="lazy" onError={() => setFailed(true)} className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]" />
-        ) : thumb === undefined && !failed ? (
-          <span className="skeleton absolute inset-0 !rounded-none" />
-        ) : (
-          <span className="grid h-full w-full place-items-center">
-            <Icon className="h-8 w-8 text-muted" aria-hidden />
-          </span>
-        )}
-        {isVideo && (
-          <span className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-black/70 px-2 py-0.5 text-[0.6875rem] font-semibold text-white">
-            <Play className="h-3 w-3 fill-white" aria-hidden /> {minutes ?? 'Video'}
-          </span>
-        )}
-        {doc.mimeType === 'application/pdf' && <span className="absolute bottom-2 left-2 rounded-md bg-black/70 px-1.5 py-0.5 text-[0.625rem] font-bold text-white">PDF</span>}
-      </span>
-      <span className="line-clamp-2 text-sm font-semibold leading-snug">{doc.title}</span>
-      <span className="truncate text-[0.6875rem] text-muted">
-        {doc.uploadedByName} · {formatTime(doc.uploadedAt)}
-        {doc.imsEventName ? ` · ${doc.imsEventName}` : ''}
-      </span>
-    </button>
   );
 }
 
