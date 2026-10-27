@@ -9,7 +9,8 @@ import { SampleBadge } from '../components/ui/SampleBadge';
 import { formatNumber, initialsOf } from '../lib/format';
 import { badgesFor, levelFor } from '../lib/taskProgress';
 import { profileService } from '../services';
-import { AVATAR_COLORS, squarePicture, type PersonProfile, type ProfilePatch, type ProfileProgress } from '../services/profiles/profileService';
+import { PhotoCropper } from '../components/profile/PhotoCropper';
+import { AVATAR_COLORS, openPicture, type PersonProfile, type ProfilePatch, type ProfileProgress } from '../services/profiles/profileService';
 
 const DEFAULT_COLOR = '#7a0b0b';
 
@@ -240,6 +241,13 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
   const [d, setD] = useState<ProfilePatch>(start);
   const [busy, setBusy] = useState(false);
   const [picBusy, setPicBusy] = useState(false);
+  /** A new photo being positioned. */
+  const [cropping, setCropping] = useState<HTMLImageElement | null>(null);
+  const closeCropper = () =>
+    setCropping((img) => {
+      if (img) URL.revokeObjectURL(img.src);
+      return null;
+    });
   const [message, setMessage] = useState<{ text: string; error?: boolean } | null>(null);
   const set = <K extends keyof ProfilePatch>(k: K, v: ProfilePatch[K]) => setD((x) => ({ ...x, [k]: v }));
   const dirty = JSON.stringify(d) !== JSON.stringify(start);
@@ -261,7 +269,7 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
     setPicBusy(true);
     setMessage(null);
     try {
-      set('avatar', await squarePicture(f));
+      setCropping(await openPicture(f));
     } catch (e) {
       setMessage({ text: e instanceof Error ? e.message : 'That photo couldn’t be used.', error: true });
     } finally {
@@ -314,12 +322,11 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
                 </button>
               )}
             </div>
-            <p className="text-xs text-muted">A square crop of your photo is kept, so faces in the middle work best.</p>
           </EditGroup>
 
           <hr className="border-line/70" />
 
-          <EditGroup title="Profile colour" note="Your banner, and your initials when there’s no photo">
+          <EditGroup title="Profile colour">
             <div className="flex flex-wrap items-center gap-2" role="radiogroup" aria-label="Profile colour">
               {AVATAR_COLORS.map((c) => (
                 <button
@@ -396,6 +403,15 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
         </p>
         <ProfileCard person={preview} progress={progress} showLocked={mine} narrow />
       </aside>
+
+      <PhotoCropper
+        image={cropping}
+        onCancel={closeCropper}
+        onApply={(url) => {
+          set('avatar', url);
+          closeCropper();
+        }}
+      />
 
       {/* Like Discord: a bar that appears while there are changes to save. */}
       <div

@@ -69,22 +69,27 @@ const validate = (p: ProfilePatch) => {
   if (p.phone.trim() && !/^[0-9+() .-]{5,30}$/.test(p.phone.trim())) throw new ProfileRuleError('Use digits, spaces and + ( ) - only for the phone number.');
 };
 
-/**
- * A picture from the phone or computer as a small square JPEG (centre-cropped, 256 px), so it
- * loads fast everywhere and fits in the profile.
- */
-export async function squarePicture(file: File, size = 256): Promise<string> {
-  if (!file.type.startsWith('image/')) throw new ProfileRuleError('Choose a photo (JPG, PNG or similar).');
-  const bitmap = await createImageBitmap(file).catch(() => {
-    throw new ProfileRuleError('That photo couldn’t be opened. Try another one.');
+/** Open a photo from the phone or computer, ready to position (PhotoCropper). */
+export function openPicture(file: File): Promise<HTMLImageElement> {
+  if (!file.type.startsWith('image/')) return Promise.reject(new ProfileRuleError('Choose a photo (JPG, PNG or similar).'));
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new ProfileRuleError('That photo couldn’t be opened. Try a JPG or PNG.'));
+    img.src = URL.createObjectURL(file);
   });
-  const side = Math.min(bitmap.width, bitmap.height);
+}
+
+/**
+ * The chosen square of a photo (x, y, side in the photo's pixels) as a small JPEG (256 px),
+ * so it loads fast everywhere and fits in the profile.
+ */
+export function cropPicture(img: HTMLImageElement, x: number, y: number, side: number, size = 256): string {
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext('2d')!;
   ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(bitmap, (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, 0, 0, size, size);
-  bitmap.close?.();
+  ctx.drawImage(img, x, y, side, side, 0, 0, size, size);
   return canvas.toDataURL('image/jpeg', 0.85);
 }
 
