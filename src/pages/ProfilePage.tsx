@@ -6,6 +6,7 @@ import { BADGE_ICON, FRAME_RING, FRAME_TEXT } from '../components/tasks/taskMeta
 import { Avatar } from '../components/ui/Avatar';
 import { EmptyState, LoadError, Skeleton } from '../components/ui/Card';
 import { SampleBadge } from '../components/ui/SampleBadge';
+import { Dialog } from '../components/ui/Dialog';
 import { formatNumber, initialsOf } from '../lib/format';
 import { badgesFor, levelFor } from '../lib/taskProgress';
 import { profileService } from '../services';
@@ -92,6 +93,8 @@ function ProfileCard({ person: p, progress, showLocked = false, narrow = false }
   const badges = progress ? badgesFor(progress.stats) : [];
   const earned = badges.filter((b) => b.earned);
   const since = memberSince(p.memberSince);
+  const [openBadge, setOpenBadge] = useState<string | null>(null);
+  const shown = badges.find((b) => b.badge.id === openBadge) ?? null;
   return (
     <article className="overflow-hidden rounded-2xl border border-line/70 bg-surface shadow-[0_24px_60px_-28px_rgba(0,0,0,0.8)]" aria-label={`${p.displayName}’s profile`}>
       <div
@@ -112,9 +115,16 @@ function ProfileCard({ person: p, progress, showLocked = false, narrow = false }
               {earned.slice(0, strip).map(({ badge }) => {
                 const Icon = BADGE_ICON[badge.icon];
                 return (
-                  <li key={badge.id} title={`${badge.name}: ${badge.description}`} className="grid h-7 w-7 place-items-center rounded-lg text-uplift">
-                    <Icon className="h-[1.05rem] w-[1.05rem]" aria-hidden />
-                    <span className="sr-only">{badge.name}</span>
+                  <li key={badge.id}>
+                    <button
+                      type="button"
+                      title={badge.name}
+                      onClick={() => setOpenBadge(badge.id)}
+                      className="grid h-7 w-7 place-items-center rounded-lg text-uplift transition hover:bg-uplift/15"
+                      aria-label={`${badge.name}. Show details`}
+                    >
+                      <Icon className="h-[1.05rem] w-[1.05rem]" aria-hidden />
+                    </button>
                   </li>
                 );
               })}
@@ -183,18 +193,30 @@ function ProfileCard({ person: p, progress, showLocked = false, narrow = false }
 
           {progress && (showLocked || earned.length > 0) && (
             <Section title={`Badges · ${earned.length} of ${badges.length}`}>
-              <ul className={`grid grid-cols-1 gap-2 ${narrow ? '' : 'sm:grid-cols-2'}`}>
+              {/* Compact: one icon per badge with a ring showing progress; tap for the details. */}
+              <ul className={`grid gap-x-1 gap-y-2.5 ${narrow ? 'grid-cols-5' : 'grid-cols-5 sm:grid-cols-6'}`}>
                 {(showLocked ? badges : earned).map(({ badge, value, earned: got }) => {
                   const Icon = BADGE_ICON[badge.icon];
+                  const pct = Math.round((value / badge.target) * 100);
                   return (
-                    <li key={badge.id} className={`flex items-center gap-2.5 rounded-lg border p-2 ${got ? 'border-uplift/30 bg-uplift/[0.07]' : 'border-line/60 bg-surface/60'}`} title={badge.description}>
-                      <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full ${got ? 'bg-uplift/15 text-uplift' : 'bg-surface-raised text-ink-mute'}`}>
-                        {got ? <Icon className="h-4 w-4" aria-hidden /> : <Lock className="h-3.5 w-3.5" aria-hidden />}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className={`block truncate text-xs font-semibold ${got ? 'text-ink' : 'text-ink-soft'}`}>{badge.name}</span>
-                        <span className="block truncate text-[0.6875rem] text-muted">{got ? badge.description : `${value} of ${badge.target}`}</span>
-                      </span>
+                    <li key={badge.id}>
+                      <button
+                        type="button"
+                        onClick={() => setOpenBadge(badge.id)}
+                        aria-label={`${badge.name}: ${got ? 'earned' : `${value} of ${badge.target}`}. Show details`}
+                        className="tap group flex w-full flex-col items-center gap-1 rounded-lg p-1 text-center hover:bg-white/[0.04]"
+                      >
+                        <span
+                          className="grid h-11 w-11 place-items-center rounded-full p-[3px]"
+                          style={{ background: got ? 'rgba(236,149,42,0.9)' : `conic-gradient(rgba(236,149,42,0.75) ${pct}%, rgba(255,255,255,0.08) 0)` }}
+                          aria-hidden
+                        >
+                          <span className={`grid h-full w-full place-items-center rounded-full ${got ? 'bg-[#3a2a14] text-uplift' : 'bg-surface-sunken text-ink-mute'}`}>
+                            {got ? <Icon className="h-[1.15rem] w-[1.15rem]" /> : <Lock className="h-3.5 w-3.5" />}
+                          </span>
+                        </span>
+                        <span className={`line-clamp-2 text-[0.625rem] font-semibold leading-tight ${got ? 'text-ink' : 'text-muted'}`}>{badge.name}</span>
+                      </button>
                     </li>
                   );
                 })}
@@ -208,7 +230,48 @@ function ProfileCard({ person: p, progress, showLocked = false, narrow = false }
           )}
         </div>
       </div>
+      {shown && <BadgeDetails item={shown} mine={showLocked} onClose={() => setOpenBadge(null)} />}
     </article>
+  );
+}
+
+/** One badge: what it's for, and how far along (or when it was earned). */
+function BadgeDetails({ item: { badge, value, earned }, mine, onClose }: { item: ReturnType<typeof badgesFor>[number]; mine: boolean; onClose: () => void }) {
+  const Icon = BADGE_ICON[badge.icon];
+  const pct = Math.min(100, Math.round((value / badge.target) * 100));
+  return (
+    <Dialog open title={badge.name} onClose={onClose}>
+      <div className="flex flex-col items-center gap-4 pb-2 text-center">
+        <span
+          className="grid h-20 w-20 place-items-center rounded-full p-1"
+          style={{ background: earned ? 'rgba(236,149,42,0.9)' : `conic-gradient(rgba(236,149,42,0.75) ${pct}%, rgba(255,255,255,0.08) 0)` }}
+          aria-hidden
+        >
+          <span className={`grid h-full w-full place-items-center rounded-full ${earned ? 'bg-[#3a2a14] text-uplift' : 'bg-surface-sunken text-ink-mute'}`}>
+            {earned ? <Icon className="h-9 w-9" /> : <Lock className="h-7 w-7" />}
+          </span>
+        </span>
+        <p className="text-sm text-ink-soft">{badge.description}</p>
+        {earned ? (
+          <p className="inline-flex items-center gap-1.5 rounded-full border border-uplift/40 bg-uplift/10 px-3 py-1 text-xs font-semibold text-uplift">
+            <Check className="h-3.5 w-3.5" aria-hidden /> Earned
+          </p>
+        ) : (
+          <div className="w-full max-w-xs">
+            <div className="flex items-baseline justify-between text-xs">
+              <span className="font-semibold text-ink">
+                {formatNumber(value)} of {formatNumber(badge.target)}
+              </span>
+              <span className="text-muted">{formatNumber(badge.target - value)} to go</span>
+            </div>
+            <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-surface-raised" role="progressbar" aria-label={`${badge.name} progress`} aria-valuemin={0} aria-valuemax={badge.target} aria-valuenow={value}>
+              <div className="h-full rounded-full bg-uplift" style={{ width: `${Math.max(3, pct)}%` }} />
+            </div>
+            {mine && <p className="mt-2 text-xs text-muted">Badges come from tasks you finish in Tasks.</p>}
+          </div>
+        )}
+      </div>
+    </Dialog>
   );
 }
 
