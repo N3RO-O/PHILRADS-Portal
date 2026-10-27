@@ -37,6 +37,8 @@ export interface Task {
   assigneeName: string | null;
   createdById: string | null;
   createdByName: string | null;
+  /** The project it belongs to, if any. */
+  projectId: string | null;
   completedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -62,6 +64,8 @@ export interface TaskDraft {
   location: string;
   /** Null: the person adding it. */
   assigneeId: string | null;
+  /** The project it belongs to (kept when editing). */
+  projectId?: string | null;
 }
 
 /** Small changes saved straight away (My Day, a subtask ticked). */

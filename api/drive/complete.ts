@@ -16,6 +16,7 @@ interface Session {
   ims_event_id: string | null;
   ims_event_name: string | null;
   map_place_id: string | null;
+  project_id: string | null;
   file_name: string;
   mime_type: string;
   size_bytes: number;
@@ -64,6 +65,7 @@ export async function POST(request: Request) {
       ims_event_id: s.ims_event_id,
       ims_event_name: s.ims_event_name,
       map_place_id: s.map_place_id,
+      project_id: s.project_id,
       width: media?.width ?? null,
       height: media?.height ?? null,
       duration_ms: f.videoMediaMetadata?.durationMillis ? Number(f.videoMediaMetadata.durationMillis) : null,

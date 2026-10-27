@@ -74,7 +74,7 @@ await check('admin creates own private task', () => as(A, `insert into public.ta
 
 // Staff member B
 await check('staff sees only their own tasks', () => as(B, `select title from public.tasks`).then(expectRows(1)));
-await check('staff cannot see projects they are not on', () => as(B, `select id from public.projects`).then(expectRows(0)));
+await check('staff see every project, not only their own (2026-10-27)', () => as(B, `select id from public.projects`).then(expectRows(1)));
 await check('staff cannot create a project', () => as(B, `insert into public.projects (name) values ('Nope')`), true);
 await check('staff cannot promote themselves', () => as(B, `update public.profiles set role_key = 'admin' where id = '${B}'`), true);
 await check('staff can edit own display name', () => as(B, `update public.profiles set display_name = 'Staff B' where id = '${B}' returning display_name`).then(expectRows(1)));
@@ -272,6 +272,55 @@ await check('staff can see whether Drive is connected (and nothing secret)', asy
   const r = (await as(B, `select connected, google_email from public.drive_status()`)).rows;
   if (r.length !== 1 || r[0].connected !== false) throw new Error(JSON.stringify(r));
   return r[0];
+});
+
+// Projects: everyone sees them; coordinators/admins and the project's lead manage; the team ticks milestones
+const PRJ = `(select id from public.projects where name = 'Typhoon Kristine recovery')`;
+const MS = (title) => `(select id from public.project_milestones where title = '${title}')`;
+await check('staff cannot start a project', () => as(B, `insert into public.projects (name) values ('Rogue project')`), true);
+await check('admin starts a project; it is in the activity feed', async () => {
+  await as(A, `insert into public.projects (name, status, program_area, partner, beneficiaries_target, start_date, end_date) values ('Typhoon Kristine recovery', 'active', 'Disaster response', 'Partner Org', 5000, current_date - 10, current_date + 60)`);
+  const l = (await db.query(`select summary from public.activity_logs where action = 'project.created' and summary like '%Typhoon Kristine%'`)).rows;
+  if (l.length !== 1) throw new Error(JSON.stringify(l));
+  return l[0].summary;
+});
+await check('every active staff member sees projects', () => as(B, `select name from public.projects where id = ${PRJ}`).then(expectRows(1)));
+await check('the lead or a coordinator adds milestones and report deadlines', () =>
+  as(A, `insert into public.project_milestones (project_id, title, kind, due_date) values (${PRJ}, 'Needs assessment', 'milestone', current_date + 3), (${PRJ}, 'First distribution', 'milestone', current_date + 10), (${PRJ}, 'Donor report 1', 'report', current_date + 30) returning title`).then(expectRows(3)));
+await check('someone not on the team cannot tick a milestone', async () => {
+  await as(B, `update public.project_milestones set done = true where id = ${MS('Needs assessment')}`);
+  const r = (await db.query(`select done from public.project_milestones where id = ${MS('Needs assessment')}`)).rows[0];
+  if (r.done) throw new Error('ticked');
+  return 'not ticked';
+});
+await check('a team member ticks a milestone: stamped, progress follows, logged', async () => {
+  await as(A, `insert into public.project_members (project_id, profile_id, member_role) values (${PRJ}, '${B}', 'member')`);
+  await as(B, `update public.project_milestones set done = true, done_at = '2020-01-01' where id = ${MS('Needs assessment')}`);
+  const m = (await db.query(`select done, done_by, done_at > now() - interval '1 hour' recent from public.project_milestones where id = ${MS('Needs assessment')}`)).rows[0];
+  const p = (await db.query(`select progress_percent from public.projects where id = ${PRJ}`)).rows[0].progress_percent;
+  const l = (await db.query(`select count(*)::int n from public.activity_logs where action = 'project.milestone_done'`)).rows[0].n;
+  if (!m.done || m.done_by !== B || !m.recent || p !== 33 || l !== 1) throw new Error(JSON.stringify({ m, p, l }));
+  return { progress: p };
+});
+await check('a team member cannot rename a milestone', () => as(B, `update public.project_milestones set title = 'Renamed' where id = ${MS('First distribution')}`), true);
+await check('a team member cannot add milestones', () => as(B, `insert into public.project_milestones (project_id, title) values (${PRJ}, 'Mine')`), true);
+await check('the project lead can add a milestone', async () => {
+  await as(A, `update public.projects set lead_id = '${B}' where id = ${PRJ}`);
+  return as(B, `insert into public.project_milestones (project_id, title) values (${PRJ}, 'Lead added this') returning title`).then(expectRows(1));
+});
+await check('the lead cannot hand the project to someone else', () => as(B, `update public.projects set lead_id = '${A}' where id = ${PRJ}`), true);
+await check('the lead can update the project', () => as(B, `update public.projects set location = 'Naga City' where id = ${PRJ} returning location`).then(expectRows(1)));
+await check('a status change is in the activity feed', async () => {
+  await as(B, `update public.projects set status = 'on_hold' where id = ${PRJ}`);
+  const l = (await db.query(`select summary from public.activity_logs where action = 'project.status'`)).rows;
+  if (l.length !== 1 || !l[0].summary.includes('on hold')) throw new Error(JSON.stringify(l));
+  return l[0].summary;
+});
+await check('staff cannot delete a project', async () => {
+  await as(B, `delete from public.projects where id = ${PRJ}`);
+  const n = (await db.query(`select count(*)::int n from public.projects where id = ${PRJ}`)).rows[0].n;
+  if (n !== 1) throw new Error('deleted');
+  return 'still there';
 });
 
 // Inventory: every write goes through record_inventory_movement / decide_inventory_transfer

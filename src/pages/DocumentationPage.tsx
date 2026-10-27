@@ -8,7 +8,7 @@ import { EmptyState, LoadError, Skeleton } from '../components/ui/Card';
 import { SampleBadge } from '../components/ui/SampleBadge';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { formatBytes, formatDayHeading, formatNumber, formatTime, manilaDayKey } from '../lib/format';
-import { documentationService, inventoryStore, mapService, uploadQueue } from '../services';
+import { documentationService, inventoryStore, mapService, projectsService, uploadQueue } from '../services';
 import { DEFAULT_DRIVE_FOLDER, type DocFile, type DocLinks, type DriveStatus, type QueuedUpload } from '../services/documentation/documentationService';
 import { useInventoryState } from '../services/inventory/inventoryStore';
 import { DOCUMENT_CATEGORIES, type DocumentCategory } from '../types';
@@ -35,6 +35,9 @@ export function DocumentationPage() {
   const [search, setSearch] = useState('');
   const [person, setPerson] = useState('');
   const [eventFilter, setEventFilter] = useState('');
+  // From a project's page: ?project=<id> shows (and uploads to) that project; &upload=1 opens the upload.
+  const [projectFilter, setProjectFilter] = useState(() => params.get('project') ?? '');
+  const [uploadProject] = useState<string | null>(() => params.get('project'));
   const [queue, setQueue] = useState<QueuedUpload[]>(() => uploadQueue.items());
 
   // Relief events from the IMS and Live Map places, for tagging uploads.
@@ -49,8 +52,10 @@ export function DocumentationPage() {
     [snapshot],
   );
   const [places, setPlaces] = useState<TagOption[]>([]);
+  const [projects, setProjects] = useState<TagOption[]>([]);
   useEffect(() => {
     mapService.listPlaces().then((ps) => setPlaces(ps.map((p) => ({ id: p.id, name: p.name }))), () => setPlaces([]));
+    projectsService.list().then((ps) => setProjects(ps.filter((p) => p.status !== 'cancelled').map((p) => ({ id: p.id, name: p.name }))), () => setProjects([]));
   }, []);
 
   const load = useCallback(async () => {
@@ -91,6 +96,12 @@ export function DocumentationPage() {
     return () => window.removeEventListener('beforeunload', warn);
   }, []);
 
+  useEffect(() => {
+    if (params.get('upload') !== '1' || !status?.connected) return;
+    setUploadOpen(true);
+    setParams((p) => (p.delete('upload'), p), { replace: true });
+  }, [params, setParams, status]);
+
   // Back from Google (connecting Drive).
   useEffect(() => {
     const drive = params.get('drive');
@@ -116,9 +127,10 @@ export function DocumentationPage() {
           (category === 'all' || d.category === category) &&
           (!person || d.uploadedByName === person) &&
           (!eventFilter || d.imsEventId === eventFilter) &&
+          (!projectFilter || d.projectId === projectFilter) &&
           (!needle || [d.title, d.notes, d.uploadedByName, d.imsEventName, d.fileName].some((s) => s?.toLowerCase().includes(needle))),
       ),
-    [all, category, person, eventFilter, needle],
+    [all, category, person, eventFilter, projectFilter, needle],
   );
   const days = useMemo(() => {
     const groups: { day: string; items: DocFile[] }[] = [];
@@ -172,7 +184,7 @@ export function DocumentationPage() {
             );
           })}
         </div>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_12rem_14rem]">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_11rem_12rem_12rem]">
           <label className="relative block">
             <span className="sr-only">Search documentation</span>
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
@@ -182,6 +194,14 @@ export function DocumentationPage() {
             <option value="">Everyone</option>
             {people.map((p) => (
               <option key={p}>{p}</option>
+            ))}
+          </select>
+          <select className="field" aria-label="Project" value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)}>
+            <option value="">All projects</option>
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
             ))}
           </select>
           <select className="field" aria-label="Response" value={eventFilter} onChange={(e) => setEventFilter(e.target.value)}>
@@ -245,6 +265,8 @@ export function DocumentationPage() {
         onClose={() => setUploadOpen(false)}
         events={events}
         places={places}
+        projects={projects}
+        initialProjectId={uploadProject}
         today={today}
         onUpload={(entries) => {
           uploadQueue.add(entries);

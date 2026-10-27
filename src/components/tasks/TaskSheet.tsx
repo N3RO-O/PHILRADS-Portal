@@ -52,6 +52,7 @@ export const draftOf = (t: Task): TaskDraft => ({
   recurrence: t.recurrence,
   location: t.location ?? '',
   assigneeId: t.assigneeId,
+  projectId: t.projectId,
 });
 
 /** Add or edit a task with everything Any.do offers: list, Field/Office, due date and time, My Day, repeat, subtasks. */

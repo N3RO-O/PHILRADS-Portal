@@ -11,6 +11,7 @@ import { createInventoryStore } from './inventory/inventoryStore';
 import { createSupabaseMapService, mockMapService } from './map/mapService';
 import type { MapService } from './map/types';
 import { createSupabaseOnboardingService, mockOnboardingService, type OnboardingService } from './onboarding/onboardingService';
+import { createSupabaseProjectsService, mockProjectsService, type ProjectsService } from './projects/projectsService';
 import { createSupabaseResourcesService, mockResourcesService } from './resources/resourcesService';
 import type { ResourcesService } from './resources/types';
 import { createSupabaseStaffService, mockStaffService } from './staff/staffService';
@@ -50,6 +51,9 @@ export const mapService: MapService = withDeviceCopy(live ? createSupabaseMapSer
 export const documentationService: DocumentationService = live ? createSupabaseDocumentationService(live) : mockDocumentationService;
 /** Uploads in progress: they carry on while staff move around the portal. */
 export const uploadQueue = createUploadQueue(documentationService);
+
+/** Projects: programs and projects with milestones, reporting deadlines and team. */
+export const projectsService: ProjectsService = live ? createSupabaseProjectsService(live) : mockProjectsService;
 
 /** The admin log (Logs page, administrators only). */
 export const auditService: AuditService = live ? createSupabaseAuditService(live) : mockAuditService;

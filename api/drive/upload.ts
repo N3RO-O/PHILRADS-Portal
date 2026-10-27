@@ -33,6 +33,7 @@ const body = z.object({
   imsEventId: z.string().trim().max(64).optional().nullable(),
   imsEventName: z.string().trim().max(200).optional().nullable(),
   mapPlaceId: z.string().uuid().optional().nullable(),
+  projectId: z.string().uuid().optional().nullable(),
   fileName: z.string().trim().min(1).max(255),
   mimeType: z.string().regex(OK_TYPES, 'This file type is not accepted. Use photos, videos, PDF, Word, Excel or PowerPoint files.'),
   // No size limit of our own (PHILRADS, 2026-10-26): Google Drive's space is the only limit.
@@ -109,6 +110,7 @@ export async function POST(request: Request) {
         ims_event_id: m.imsEventId || null,
         ims_event_name: m.imsEventName || null,
         map_place_id: m.mapPlaceId || null,
+        project_id: m.projectId || null,
         file_name: m.fileName,
         mime_type: m.mimeType,
         size_bytes: m.sizeBytes,

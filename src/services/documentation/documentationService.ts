@@ -21,6 +21,7 @@ export interface DocFile {
   imsEventId: string | null;
   imsEventName: string | null;
   mapPlaceId: string | null;
+  projectId: string | null;
   uploadedById: string | null;
   uploadedByName: string;
   uploadedAt: string;
@@ -55,9 +56,10 @@ export interface UploadMeta {
   imsEventId: string | null;
   imsEventName: string | null;
   mapPlaceId: string | null;
+  projectId: string | null;
 }
 
-export type DocPatch = Partial<Pick<DocFile, 'title' | 'category' | 'notes' | 'takenOn' | 'imsEventId' | 'imsEventName' | 'mapPlaceId'>>;
+export type DocPatch = Partial<Pick<DocFile, 'title' | 'category' | 'notes' | 'takenOn' | 'imsEventId' | 'imsEventName' | 'mapPlaceId' | 'projectId'>>;
 
 export interface UploadOptions {
   onProgress?: (fraction: number) => void;
@@ -97,7 +99,7 @@ export const titleFor = (fileName: string) => fileName.replace(/\.[a-z0-9]{1,5}$
 // ───────────────────────── Supabase + Drive ─────────────────────────
 
 const COLUMNS =
-  'id, title, category, notes, file_name, mime_type, size_bytes, taken_on, ims_event_id, ims_event_name, map_place_id, uploaded_by, uploaded_at, drive_path, width, height, duration_ms, uploader:profiles!documents_uploaded_by_fkey(display_name)';
+  'id, title, category, notes, file_name, mime_type, size_bytes, taken_on, ims_event_id, ims_event_name, map_place_id, project_id, uploaded_by, uploaded_at, drive_path, width, height, duration_ms, uploader:profiles!documents_uploaded_by_fkey(display_name)';
 
 /** Pieces sent to Google: a multiple of 256 KiB, small enough to retry quickly on a weak signal. */
 const CHUNK = 8 * 1024 * 1024;
@@ -132,6 +134,7 @@ export function createSupabaseDocumentationService(client: SupabaseClient): Docu
     imsEventId: (r.ims_event_id as string | null) ?? null,
     imsEventName: (r.ims_event_name as string | null) ?? null,
     mapPlaceId: (r.map_place_id as string | null) ?? null,
+    projectId: (r.project_id as string | null) ?? null,
     uploadedById: (r.uploaded_by as string | null) ?? null,
     uploadedByName: ((r.uploader as { display_name?: string } | null)?.display_name ?? '').trim() || 'Someone',
     uploadedAt: r.uploaded_at as string,
@@ -236,6 +239,7 @@ export function createSupabaseDocumentationService(client: SupabaseClient): Docu
       if ('imsEventId' in p) row.ims_event_id = p.imsEventId;
       if ('imsEventName' in p) row.ims_event_name = p.imsEventName;
       if ('mapPlaceId' in p) row.map_place_id = p.mapPlaceId;
+      if ('projectId' in p) row.project_id = p.projectId;
       const { error } = await client.from('documents').update(row).eq('id', id);
       if (error) throw new DocRuleError(error.code === '42501' ? 'Only the person who uploaded it, or an administrator, can change it.' : error.message);
     },
@@ -284,6 +288,7 @@ const SAMPLE: (DocFile & { picture?: string })[] = SEEDS.map((s, i) => ({
   imsEventId: s.event ? 'sample-event-1' : null,
   imsEventName: s.event,
   mapPlaceId: null,
+  projectId: s.event ? 'prj-kristine' : null,
   uploadedById: null,
   uploadedByName: s.by,
   uploadedAt: day(s.ago, 9 + i),

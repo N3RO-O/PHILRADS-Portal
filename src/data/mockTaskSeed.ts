@@ -95,6 +95,7 @@ export function createTaskSeed(today: string, userId = 'demo-user'): { tasks: Ta
     assigneeName: nameOf(to),
     createdById: by,
     createdByName: nameOf(by),
+    projectId: null,
     completedAt: null,
     createdAt: created,
     updatedAt: created,

@@ -123,6 +123,7 @@ export function createOfflineTasks(inner: TasksService): OfflineTasksService {
       assigneeName: saved.people.find((p) => p.id === assignee)?.name ?? prev?.assigneeName ?? myName(),
       createdById: prev?.createdById ?? saved.me,
       createdByName: prev?.createdByName ?? myName(),
+      projectId: d.projectId ?? prev?.projectId ?? null,
       completedAt: prev?.completedAt ?? null,
       createdAt: prev?.createdAt ?? now,
       updatedAt: now,

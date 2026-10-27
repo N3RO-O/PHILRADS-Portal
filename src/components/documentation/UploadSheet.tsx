@@ -25,11 +25,14 @@ interface Props {
   onUpload: (entries: { file: File; meta: UploadMeta }[]) => void;
   events: TagOption[];
   places: TagOption[];
+  projects: TagOption[];
+  /** Opened from a project's page: that project is chosen already. */
+  initialProjectId?: string | null;
   today: string;
 }
 
 /** Choose photos, videos or reports, give each a title, say what they are, and send them to Google Drive. */
-export function UploadSheet({ open, onClose, onUpload, events, places, today }: Props) {
+export function UploadSheet({ open, onClose, onUpload, events, places, projects, initialProjectId = null, today }: Props) {
   const uid = useId();
   const input = useRef<HTMLInputElement>(null);
   const [picked, setPicked] = useState<Picked[]>([]);
@@ -39,6 +42,7 @@ export function UploadSheet({ open, onClose, onUpload, events, places, today }: 
   const [takenOn, setTakenOn] = useState(today);
   const [eventId, setEventId] = useState('');
   const [placeId, setPlaceId] = useState('');
+  const [projectId, setProjectId] = useState('');
   const [notes, setNotes] = useState('');
 
   // Previews made for this visit, freed when the sheet closes (or the page goes away).
@@ -59,8 +63,9 @@ export function UploadSheet({ open, onClose, onUpload, events, places, today }: 
     setTakenOn(today);
     setEventId('');
     setPlaceId('');
+    setProjectId(initialProjectId ?? '');
     setNotes('');
-  }, [open, today]);
+  }, [open, today, initialProjectId]);
 
   const add = (files: FileList | null) => {
     if (!files?.length) return;
@@ -87,7 +92,7 @@ export function UploadSheet({ open, onClose, onUpload, events, places, today }: 
     onUpload(
       ok.map((p) => ({
         file: p.file,
-        meta: { title: p.title.trim() || titleFor(p.file.name), category, notes: notes.trim(), takenOn: takenOn || null, imsEventId: event?.id ?? null, imsEventName: event?.name ?? null, mapPlaceId: placeId || null },
+        meta: { title: p.title.trim() || titleFor(p.file.name), category, notes: notes.trim(), takenOn: takenOn || null, imsEventId: event?.id ?? null, imsEventName: event?.name ?? null, mapPlaceId: placeId || null, projectId: projectId || null },
       })),
     );
   };
@@ -183,6 +188,17 @@ export function UploadSheet({ open, onClose, onUpload, events, places, today }: 
               {events.map((e) => (
                 <option key={e.id} value={e.id}>
                   {e.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1.5 sm:col-span-2" htmlFor={`${uid}-project`}>
+            <span className="text-sm font-semibold text-ink-soft">For which project?</span>
+            <select id={`${uid}-project`} className="field" value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+              <option value="">Not for a project</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
                 </option>
               ))}
             </select>

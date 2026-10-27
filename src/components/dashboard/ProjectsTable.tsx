@@ -54,7 +54,7 @@ export function ProjectsTable() {
                   <tr key={p.id} className="border-t border-line/70">
                     <td className="py-3 tabular-nums text-muted">{String(i + 1).padStart(2, '0')}</td>
                     <td className="py-3 pr-4">
-                      <p className="font-medium leading-snug text-ink">{p.name}</p>
+                      <Link to={`/projects/${p.id}`} className="font-medium leading-snug text-ink hover:text-uplift hover:underline">{p.name}</Link>
                       <p className="text-xs text-muted">
                         {p.programArea} · {timeLeft(p.endDate)}
                       </p>

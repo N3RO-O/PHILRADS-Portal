@@ -127,6 +127,7 @@ function sampleSave(d: TaskDraft): Task {
     assigneeName: SAMPLE_PEOPLE.find((p) => p.id === assignee)?.name ?? 'Staff member',
     createdById: prev?.createdById ?? me,
     createdByName: prev?.createdByName ?? demoProfile.displayName,
+    projectId: d.projectId ?? prev?.projectId ?? null,
     completedAt: prev?.completedAt ?? null,
     createdAt: prev?.createdAt ?? now,
     updatedAt: now,
@@ -246,7 +247,7 @@ export function createSupabaseTasksService(client: SupabaseClient): TasksService
   const uid = async () => (await client.auth.getSession()).data.session?.user.id ?? null;
 
   const columns =
-    'id, title, description, priority, status, list, work_setting, due_date, due_time, my_day, subtasks, recurrence, location, assignee_id, created_by, completed_at, created_at, updated_at, assignee:profiles!tasks_assignee_id_fkey(display_name), creator:profiles!tasks_created_by_fkey(display_name)';
+    'id, title, description, priority, status, list, work_setting, due_date, due_time, my_day, subtasks, recurrence, location, assignee_id, created_by, project_id, completed_at, created_at, updated_at, assignee:profiles!tasks_assignee_id_fkey(display_name), creator:profiles!tasks_created_by_fkey(display_name)';
   const name = (p: unknown) => (p as { display_name?: string } | null)?.display_name || null;
   const map = (r: Record<string, unknown>): Task => ({
     id: r.id as string,
@@ -266,6 +267,7 @@ export function createSupabaseTasksService(client: SupabaseClient): TasksService
     assigneeName: name(r.assignee),
     createdById: (r.created_by as string | null) ?? null,
     createdByName: name(r.creator),
+    projectId: (r.project_id as string | null) ?? null,
     completedAt: (r.completed_at as string | null) ?? null,
     createdAt: r.created_at as string,
     updatedAt: r.updated_at as string,
@@ -283,6 +285,7 @@ export function createSupabaseTasksService(client: SupabaseClient): TasksService
     recurrence: d.recurrence,
     location: d.location.trim() || null,
     assignee_id: d.assigneeId ?? me,
+    ...(d.projectId !== undefined ? { project_id: d.projectId } : {}),
   });
   const mapAward = (r: Record<string, unknown>): XpAward => ({
     taskId: r.task_id as string,
