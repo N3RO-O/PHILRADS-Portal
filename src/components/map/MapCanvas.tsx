@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
-import { Circle, MapContainer, Marker, TileLayer, Tooltip, useMap, useMapEvents, type MarkerProps } from 'react-leaflet';
+import { Circle, MapContainer, Marker, Pane, TileLayer, Tooltip, useMap, useMapEvents, type MarkerProps } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Building2, Crosshair, HandHeart, House, LifeBuoy, Truck, Warehouse, type LucideIcon } from 'lucide-react';
@@ -253,6 +253,19 @@ export function MapCanvas({ places, checkIns, live, selected, onSelect, focus, f
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
         {weather && <WeatherLayer view={weather} />}
+        {/* The map's own names are part of its pictures, under the weather; with weather on, place
+            names (towns, cities, provinces) are drawn again on top so they stay readable. */}
+        {weather && (
+          <Pane name="weather-names" style={{ zIndex: 450, pointerEvents: 'none' }}>
+            <TileLayer
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+              maxNativeZoom={19}
+              maxZoom={19}
+              pane="weather-names"
+              attribution='Place names &copy; <a href="https://www.esri.com/">Esri</a>'
+            />
+          </Pane>
+        )}
         <Controller
           focus={focus}
           fit={fit}

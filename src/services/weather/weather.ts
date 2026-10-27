@@ -314,17 +314,27 @@ export const RAIN_SCALE: ColorStop[] = [
   { at: 50, rgb: [190, 40, 190], alpha: 1 },
 ];
 
-/** Temperature in °C, spread over the range the Philippines actually sees so differences show. */
+/**
+ * Temperature in °C, spread over the range the Philippines actually sees so differences show:
+ * between 24 and 33 °C (most days, land and sea) every degree has its own colour.
+ */
 export const TEMP_SCALE: ColorStop[] = [
+  { at: 10, rgb: [95, 55, 165] },
   { at: 16, rgb: [60, 70, 180] },
-  { at: 20, rgb: [45, 130, 215] },
-  { at: 23, rgb: [40, 185, 190] },
-  { at: 25, rgb: [70, 190, 100] },
-  { at: 27, rgb: [190, 210, 60] },
-  { at: 29, rgb: [245, 185, 45] },
-  { at: 31, rgb: [245, 120, 40] },
-  { at: 33, rgb: [225, 55, 45] },
-  { at: 36, rgb: [175, 25, 95] },
+  { at: 20, rgb: [45, 120, 220] },
+  { at: 23, rgb: [35, 175, 210] },
+  { at: 24, rgb: [35, 190, 170] },
+  { at: 25, rgb: [55, 190, 110] },
+  { at: 26, rgb: [125, 200, 65] },
+  { at: 27, rgb: [200, 215, 50] },
+  { at: 28, rgb: [250, 205, 45] },
+  { at: 29, rgb: [250, 165, 40] },
+  { at: 30, rgb: [245, 125, 35] },
+  { at: 31, rgb: [235, 85, 40] },
+  { at: 32, rgb: [215, 45, 50] },
+  { at: 33, rgb: [185, 25, 75] },
+  { at: 35, rgb: [150, 20, 100] },
+  { at: 40, rgb: [100, 15, 70] },
 ];
 
 /** [r, g, b, alpha 0–1] for a value on a scale. */

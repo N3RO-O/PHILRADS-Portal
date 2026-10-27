@@ -67,7 +67,7 @@ function Radar({ frames, index }: { frames: RadarFrame[]; index: number }) {
 }
 
 const SCALE = { wind: WIND_SCALE, rain: RAIN_SCALE, temp: TEMP_SCALE } as const;
-const FIELD_OPACITY = { wind: 0.5, rain: 0.7, temp: 0.8 } as const;
+const FIELD_OPACITY = { wind: 0.5, rain: 0.7, temp: 0.85 } as const;
 /** Colours and clouds are drawn every N screen pixels, then smoothed up. */
 const CELL = 4;
 
@@ -168,7 +168,7 @@ function Field({ grid, hour, mode }: { grid: WeatherGrid | null; hour: number; m
     let flashes: Flash[] = [];
     let stormy = false;
     let proj = projector(map);
-    // Temperature is coloured on land only; the outline loads the first time it's needed.
+    // Temperature: land is coloured more strongly than the sea and outlined; the outline loads the first time it's needed.
     let land: LandMask | null = null;
     loadLand().then((l) => {
       land = l;
@@ -248,9 +248,13 @@ function Field({ grid, hour, mode }: { grid: WeatherGrid | null; hour: number; m
       ctx.putImageData(img, 0, 0);
       if (mask) mctx.putImageData(mask, 0, 0);
       if (m === 'temp' && land) {
-        ctx.globalCompositeOperation = 'destination-in';
-        ctx.fillStyle = '#000';
-        ctx.fill(landPath(CELL), 'evenodd');
+        // Land and sea both carry the temperature; the sea is a little softer so the islands stand out.
+        const sea = new Path2D();
+        sea.rect(0, 0, fw, fh);
+        sea.addPath(landPath(CELL));
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.fillStyle = 'rgba(0,0,0,0.32)';
+        ctx.fill(sea, 'evenodd');
         ctx.globalCompositeOperation = 'source-over';
       }
       // Clouds drift with the average wind in view.
@@ -278,33 +282,97 @@ function Field({ grid, hour, mode }: { grid: WeatherGrid | null; hour: number; m
       cctx.globalCompositeOperation = 'source-over';
     };
 
-    /** Temperatures written on the land, spaced out. */
+    /**
+     * Temperature extras: isotherms (a thin line every degree), the coastline, then the numbers:
+     * bold white on land, lighter and sparser on the sea.
+     */
     const drawLabels = () => {
       const g = state.current.grid;
       if (state.current.mode !== 'temp' || !g) return;
       const t = hourOf(g);
       const onLand = land ? landPath(1) : null;
       lctx.setTransform(1, 0, 0, 1, 0, 0);
-      const spots: [number, number, number][] = [];
-      for (let row = 0, y = 30; y < proj.h - 20; y += 40, row++)
-        for (let x = 28 + (row % 2) * 30; x < proj.w - 24; x += 60) {
-          if (onLand && !lctx.isPointInPath(onLand, x, y, 'evenodd')) continue;
-          const v = sample(g, g.temp[t], proj.lat(y), proj.lng(x));
-          if (Number.isFinite(v)) spots.push([x, y, v]);
+      const spots: [number, number, number, boolean][] = [];
+      // Spaced well apart so the place names between them stay readable.
+      for (let row = 0, y = 44; y < proj.h - 24; y += 84, row++)
+        for (let col = 0, x = 48 + (row % 2) * 70; x < proj.w - 30; x += 140, col++) {
+          const lat = proj.lat(y);
+          const lng = proj.lng(x);
+          if (edgeFade(g, lat, lng) < 1) continue;
+          const isLand = !onLand || lctx.isPointInPath(onLand, x, y, 'evenodd');
+          if (!isLand && (row + col) % 2) continue;
+          const v = sample(g, g.temp[t], lat, lng);
+          if (Number.isFinite(v)) spots.push([x, y, v, isLand]);
         }
       lctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      lctx.font = '700 12px Montserrat, system-ui, sans-serif';
+      drawIsotherms(g, t);
+      if (onLand) {
+        lctx.strokeStyle = 'rgba(255,255,255,0.5)';
+        lctx.lineWidth = 0.9;
+        lctx.stroke(onLand);
+      }
       lctx.textAlign = 'center';
       lctx.textBaseline = 'middle';
       lctx.lineJoin = 'round';
-      for (const [x, y, v] of spots) {
+      for (const [x, y, v, isLand] of spots) {
         const text = `${Math.round(v)}°`;
-        lctx.lineWidth = 3.5;
-        lctx.strokeStyle = 'rgba(20,21,25,0.85)';
+        lctx.font = isLand ? '700 12px Montserrat, system-ui, sans-serif' : '600 11px Montserrat, system-ui, sans-serif';
+        lctx.lineWidth = isLand ? 3.5 : 3;
+        lctx.strokeStyle = isLand ? 'rgba(20,21,25,0.85)' : 'rgba(12,30,48,0.7)';
         lctx.strokeText(text, x, y);
-        lctx.fillStyle = '#fff';
+        lctx.fillStyle = isLand ? '#fff' : 'rgba(214,236,255,0.92)';
         lctx.fillText(text, x, y);
       }
+    };
+
+    /** Lines of equal temperature, one per whole degree (marching squares on a 12 px grid). */
+    const drawIsotherms = (g: WeatherGrid, t: number) => {
+      const S = 12;
+      const nx = Math.ceil(proj.w / S) + 1;
+      const ny = Math.ceil(proj.h / S) + 1;
+      const vals = new Float32Array(nx * ny);
+      let lo = Infinity;
+      let hi = -Infinity;
+      for (let j = 0; j < ny; j++) {
+        const lat = proj.lat(j * S);
+        for (let i = 0; i < nx; i++) {
+          const lng = proj.lng(i * S);
+          const v = edgeFade(g, lat, lng) > 0 ? sample(g, g.temp[t], lat, lng) : NaN;
+          vals[j * nx + i] = v;
+          if (Number.isFinite(v)) {
+            lo = Math.min(lo, v);
+            hi = Math.max(hi, v);
+          }
+        }
+      }
+      if (!Number.isFinite(lo)) return;
+      lctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      lctx.lineWidth = 0.8;
+      lctx.beginPath();
+      const cross = (a: number, b: number, level: number) => (level - a) / (b - a);
+      for (let level = Math.ceil(lo); level <= Math.floor(hi); level++) {
+        for (let j = 0; j < ny - 1; j++)
+          for (let i = 0; i < nx - 1; i++) {
+            const a = vals[j * nx + i];
+            const b = vals[j * nx + i + 1];
+            const c = vals[(j + 1) * nx + i + 1];
+            const d = vals[(j + 1) * nx + i];
+            if (!(Number.isFinite(a) && Number.isFinite(b) && Number.isFinite(c) && Number.isFinite(d))) continue;
+            const x0 = i * S;
+            const y0 = j * S;
+            // Where the level crosses each side of the square (top, right, bottom, left).
+            const pts: [number, number][] = [];
+            if ((a < level) !== (b < level)) pts.push([x0 + cross(a, b, level) * S, y0]);
+            if ((b < level) !== (c < level)) pts.push([x0 + S, y0 + cross(b, c, level) * S]);
+            if ((d < level) !== (c < level)) pts.push([x0 + cross(d, c, level) * S, y0 + S]);
+            if ((a < level) !== (d < level)) pts.push([x0, y0 + cross(a, d, level) * S]);
+            for (let k = 0; k + 1 < pts.length; k += 2) {
+              lctx.moveTo(pts[k][0], pts[k][1]);
+              lctx.lineTo(pts[k + 1][0], pts[k + 1][1]);
+            }
+          }
+      }
+      lctx.stroke();
     };
 
     const rainAt = (x: number, y: number) => {

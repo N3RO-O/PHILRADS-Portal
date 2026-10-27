@@ -62,7 +62,7 @@ const LEGENDS: Record<Exclude<WeatherMode, 'radar'>, { scale: ColorStop[]; ticks
     unit: 'mm/h',
     note: 'Clouds drift with the wind; flashes mark thunderstorms. Yellow, orange, red: PAGASA rainfall warning levels',
   },
-  temp: { scale: TEMP_SCALE, ticks: [20, 24, 27, 29, 31, 34], unit: '°C', note: 'Air temperature 2 m above the ground' },
+  temp: { scale: TEMP_SCALE, ticks: [22, 25, 27, 29, 31, 33], unit: '°C', note: 'Air temperature 2 m up, over land and sea' },
 };
 
 const PANEL_KEY = 'philrads.map.weather.min';

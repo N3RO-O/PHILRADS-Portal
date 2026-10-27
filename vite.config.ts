@@ -68,7 +68,8 @@ export default defineConfig({
           {
             // Live Map tiles (public map pictures, no personal data): areas already viewed
             // keep showing with a weak or no signal in the field.
-            urlPattern: ({ url }) => url.origin === 'https://tile.openstreetmap.org',
+            // (Place names drawn over the weather come from Esri's reference tiles.)
+            urlPattern: ({ url }) => url.origin === 'https://tile.openstreetmap.org' || url.href.startsWith('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/'),
             handler: 'CacheFirst',
             options: {
               cacheName: 'live-map-tiles',

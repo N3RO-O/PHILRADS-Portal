@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { CloudOff, CloudSun, List, LocateFixed, Loader2, MapPin, Maximize2, Plus, Search, UserRound, X } from 'lucide-react';
+import { CloudOff, CloudSun, Fullscreen, List, LocateFixed, Loader2, MapPin, Maximize2, Minimize2, Plus, Search, UserRound, X } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
 import { CheckInDetails, LiveDetails, PlaceDetails } from '../components/map/MapDetails';
 import { CheckInSheet, PlaceForm } from '../components/map/MapForms';
@@ -77,6 +77,34 @@ export function LiveMapPage() {
   // Phones: size the map to end at the bottom of the screen, measured from where it starts.
   const mapBox = useRef<HTMLDivElement>(null);
   const [phoneHeight, setPhoneHeight] = useState<number | null>(null);
+
+  // Full screen: the browser's own where it can; otherwise (iPhone) the map fills the window.
+  const [full, setFull] = useState<'off' | 'screen' | 'window'>('off');
+  const toggleFull = async () => {
+    if (full === 'screen') return void document.exitFullscreen().catch(() => setFull('off'));
+    if (full === 'window') return setFull('off');
+    const el = mapBox.current;
+    if (el?.requestFullscreen && document.fullscreenEnabled) {
+      try {
+        await el.requestFullscreen({ navigationUI: 'hide' });
+        return;
+      } catch {
+        /* not allowed here: fill the window instead */
+      }
+    }
+    setFull('window');
+  };
+  useEffect(() => {
+    const onChange = () => setFull(document.fullscreenElement && document.fullscreenElement === mapBox.current ? 'screen' : 'off');
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
+  }, []);
+  useEffect(() => {
+    if (full !== 'window') return;
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && !document.querySelector('dialog[open]') && setFull('off');
+    document.addEventListener('keydown', esc);
+    return () => document.removeEventListener('keydown', esc);
+  }, [full]);
   useEffect(() => {
     const update = () => {
       const el = mapBox.current;
@@ -221,7 +249,8 @@ export function LiveMapPage() {
   return (
     <div className="flex flex-col gap-4">
       {/* "isolate": the map's own layers stay under the top bar's menus. */}
-      <section className="card relative isolate overflow-hidden p-0 lg:grid lg:grid-cols-[24rem_minmax(0,1fr)]">
+      {/* Not isolated while the map fills the window, so it can sit above the sidebar and top bar. */}
+      <section className={`card relative overflow-hidden p-0 lg:grid lg:grid-cols-[24rem_minmax(0,1fr)] ${full === 'window' ? '' : 'isolate'}`}>
         {/* Desktop: list and layers beside the map */}
         <aside className="hidden h-[calc(100dvh-13rem)] min-h-[34rem] flex-col border-r border-line/70 lg:flex">
           <div className="flex items-center justify-between gap-2 border-b border-line/70 px-4 py-3">
@@ -241,7 +270,15 @@ export function LiveMapPage() {
         </aside>
 
         {/* Phones: the map fills the rest of the screen below where it starts (which moves with the sharing banner). */}
-        <div ref={mapBox} style={phoneHeight ? { height: phoneHeight } : undefined} className="relative h-[calc(100dvh-15.5rem)] min-h-[20rem] lg:h-[calc(100dvh-13rem)] lg:min-h-[34rem]">
+        <div
+          ref={mapBox}
+          style={phoneHeight && full === 'off' ? { height: phoneHeight } : undefined}
+          className={
+            full === 'window'
+              ? 'fixed inset-0 z-[1150] h-dvh bg-page'
+              : `relative h-[calc(100dvh-15.5rem)] min-h-[20rem] lg:h-[calc(100dvh-13rem)] lg:min-h-[34rem] ${full === 'screen' ? 'bg-page' : ''}`
+          }
+        >
           {placesQ.status === 'error' ? (
             <div className="grid h-full place-items-center p-6">
               <LoadError message={online ? 'The map could not be loaded.' : 'You’re offline and this device has no saved copy of the map yet.'} onRetry={placesQ.reload} />
@@ -267,7 +304,10 @@ export function LiveMapPage() {
 
           {/* Top-right: fit and my location */}
           {!picking && (
-            <div className="absolute right-3 top-3 z-[600] flex flex-col gap-2">
+            <div className={`absolute right-3 z-[600] flex flex-col gap-2 ${full === 'off' ? 'top-3' : 'top-[max(0.75rem,env(safe-area-inset-top))]'}`}>
+              <MapButton label={full === 'off' ? 'Full screen' : 'Exit full screen'} active={full !== 'off'} onClick={() => void toggleFull()}>
+                {full === 'off' ? <Fullscreen className="h-[1.125rem] w-[1.125rem]" aria-hidden /> : <Minimize2 className="h-[1.125rem] w-[1.125rem]" aria-hidden />}
+              </MapButton>
               <MapButton label="Show everything" onClick={() => setFit({ points: [...shownPlaces, ...shownCheckIns, ...shownLive], key: Date.now() })}>
                 <Maximize2 className="h-[1.125rem] w-[1.125rem]" aria-hidden />
               </MapButton>
