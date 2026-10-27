@@ -69,7 +69,10 @@ export interface TaskDraft {
 }
 
 /** Small changes saved straight away (My Day, a subtask ticked). */
-export type TaskPatch = Partial<Pick<Task, 'myDay' | 'subtasks' | 'priority' | 'dueDate'>>;
+export type TaskPatch = Partial<Pick<Task, 'myDay' | 'subtasks' | 'priority' | 'dueDate'>> & {
+  /** Started or not (finishing goes through complete(), which awards XP). */
+  status?: 'todo' | 'in_progress';
+};
 
 /** XP earned for one finished task (written by the database, never by the browser). */
 export interface XpAward {

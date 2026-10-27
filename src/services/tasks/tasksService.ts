@@ -332,6 +332,7 @@ export function createSupabaseTasksService(client: SupabaseClient): TasksService
       if ('subtasks' in p) r.subtasks = p.subtasks;
       if ('priority' in p) r.priority = p.priority;
       if ('dueDate' in p) r.due_date = p.dueDate;
+      if (p.status === 'todo' || p.status === 'in_progress') r.status = p.status;
       const { data, error } = await client.from('tasks').update(r).eq('id', id).select(columns).single();
       if (error) fail('update this task', error);
       return map(data as Record<string, unknown>);

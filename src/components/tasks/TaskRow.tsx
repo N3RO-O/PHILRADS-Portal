@@ -62,6 +62,7 @@ export function TaskRow({ task: t, today, me, onToggle, onOpen, onMyDay, flash, 
               <TriangleAlert className="h-3 w-3" aria-hidden /> Couldn’t sync
             </span>
           )}
+          {t.status === 'in_progress' && <span className="rounded bg-status-low/15 px-1.5 font-semibold text-status-low">In progress</span>}
           {due && <span className={overdue ? 'font-semibold text-rose' : t.dueDate === today && !done ? 'text-uplift' : ''}>{due}</span>}
           {showList && (
             <span className={`inline-flex items-center gap-1 ${style.text}`}>

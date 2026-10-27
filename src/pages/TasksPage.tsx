@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Building2, CalendarClock, CalendarDays, CheckCheck, ChevronDown, CloudOff, Inbox, Layers, Loader2, MapPin, Plus, RefreshCw, Send, Sun, SunMedium, UserRoundCheck, X } from 'lucide-react';
+import { Building2, CalendarClock, CalendarDays, CheckCheck, ChevronDown, CloudOff, Inbox, Layers, Loader2, MapPin, Plus, RefreshCw, Send, Sun, SunMedium, UserRoundCheck, UsersRound, X } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
 import { useOnboarding } from '../components/onboarding/OnboardingProvider';
 import { Certificate } from '../components/tasks/Certificate';
@@ -11,6 +11,7 @@ import { TaskCalendar } from '../components/tasks/TaskCalendar';
 import { LIST_STYLE } from '../components/tasks/taskMeta';
 import { TaskRow } from '../components/tasks/TaskRow';
 import { TaskSheet } from '../components/tasks/TaskSheet';
+import { TeamTasks } from '../components/tasks/TeamTasks';
 import { TeamGoalCard } from '../components/tasks/TeamGoalCard';
 import { LoadError, Skeleton } from '../components/ui/Card';
 import { SampleBadge } from '../components/ui/SampleBadge';
@@ -22,9 +23,9 @@ import { computeProgress, LEVELS, type Level } from '../lib/taskProgress';
 import { tasksService } from '../services';
 import { TASK_LISTS, TaskRuleError, type Assignee, type Kudos, type Task, type TaskDraft, type TaskList, type TeamProgress, type XpAward } from '../services/tasks/types';
 
-type View = 'myday' | 'upcoming' | 'calendar' | 'assigned' | 'delegated' | 'done' | 'list';
+type View = 'myday' | 'upcoming' | 'calendar' | 'assigned' | 'delegated' | 'team' | 'done' | 'list';
 type Where = 'all' | 'field' | 'office';
-const VIEWS: View[] = ['myday', 'upcoming', 'calendar', 'assigned', 'delegated', 'done', 'list'];
+const VIEWS: View[] = ['myday', 'upcoming', 'calendar', 'assigned', 'delegated', 'team', 'done', 'list'];
 
 const VIEW_META: Record<Exclude<View, 'list'>, { label: string; icon: typeof Sun; note: string }> = {
   myday: { label: 'My Day', icon: Sun, note: 'What you’ve planned for today.' },
@@ -32,6 +33,7 @@ const VIEW_META: Record<Exclude<View, 'list'>, { label: string; icon: typeof Sun
   calendar: { label: 'Calendar', icon: CalendarDays, note: 'Your tasks on their due dates. Tap a day to see them.' },
   assigned: { label: 'Assigned to me', icon: UserRoundCheck, note: 'Tasks a coordinator gave you.' },
   delegated: { label: 'Given to others', icon: Send, note: 'Tasks you gave to someone else.' },
+  team: { label: 'Team tasks', icon: UsersRound, note: 'Tasks given out, by person.' },
   done: { label: 'Completed', icon: CheckCheck, note: 'What you’ve finished, with the XP each earned.' },
 };
 
@@ -137,6 +139,7 @@ export function TasksPage() {
     calendar: undefined,
     assigned: openMine.filter((t) => t.createdById !== me).length,
     delegated: all.filter((t) => t.createdById === me && t.assigneeId && t.assigneeId !== me && t.status !== 'done' && whereOk(t)).length,
+    team: undefined,
     done: all.filter((t) => isMine(t) && t.status === 'done').length,
   };
   const listCount = (l: TaskList) => openMine.filter((t) => t.list === l).length;
@@ -159,6 +162,8 @@ export function TasksPage() {
           return isMine(t) && t.list === listKey && showOpen(t);
         case 'done':
           return isMine(t) && t.status === 'done';
+        case 'team':
+          return whereOk(t);
       }
     })
     .sort(compareTasks);
@@ -254,6 +259,20 @@ export function TasksPage() {
         delete n[t.id];
         return n;
       });
+      setToast({ text: errorText(e), tone: 'warn' });
+    }
+  };
+
+  /** Started or not: the person who gave the task sees it in Team tasks. */
+  const setStatus = async (t: Task, status: 'todo' | 'in_progress') => {
+    setTasks((ts) => ts && ts.map((x) => (x.id === t.id ? { ...x, status } : x)));
+    setSheet((sh) => (sh?.task?.id === t.id ? { ...sh, task: { ...t, status } } : sh));
+    try {
+      const saved = await tasksService.patch(t.id, { status });
+      setTasks((ts) => ts && upsert(ts, saved));
+    } catch (e) {
+      setTasks((ts) => ts && ts.map((x) => (x.id === t.id ? t : x)));
+      setSheet((sh) => (sh?.task?.id === t.id ? { ...sh, task: t } : sh));
       setToast({ text: errorText(e), tone: 'warn' });
     }
   };
@@ -379,7 +398,7 @@ export function TasksPage() {
       <nav aria-label="Task views" className="card sticky top-20 hidden flex-col gap-4 p-3 lg:flex">
         <ul className="flex flex-col gap-0.5">
           {(Object.keys(VIEW_META) as Exclude<View, 'list'>[])
-            .filter((v) => v !== 'delegated' || canManage || counts.delegated > 0)
+            .filter((v) => (v !== 'delegated' || canManage || counts.delegated > 0) && (v !== 'team' || canManage))
             .map((v) => {
               const Icon = VIEW_META[v].icon;
               return (
@@ -409,7 +428,7 @@ export function TasksPage() {
           <div className="flex flex-col gap-3 lg:hidden">
             <div className="flex flex-wrap gap-2" role="group" aria-label="Task views">
               {(Object.keys(VIEW_META) as Exclude<View, 'list'>[])
-                .filter((v) => v !== 'delegated' || canManage || counts.delegated > 0)
+                .filter((v) => (v !== 'delegated' || canManage || counts.delegated > 0) && (v !== 'team' || canManage))
                 .map((v) => (
                   <button key={v} type="button" className="chip gap-1.5" aria-pressed={view === v} onClick={() => go(v)}>
                     {VIEW_META[v].label}
@@ -534,6 +553,8 @@ export function TasksPage() {
           {tasks &&
             (view === 'done' ? (
               <CompletedList tasks={shown} awardOf={awardOf} rowProps={rowProps} />
+            ) : view === 'team' ? (
+              <TeamTasks tasks={shown} me={me} today={today} canSeeAll={can('tasks.read_all')} onOpen={(t) => setSheet({ task: t, initial: null })} />
             ) : view === 'calendar' ? (
               <TaskCalendar tasks={shown} today={today} selected={calDay} onSelect={(d) => setParam({ day: d === today ? null : d })}>
                 {(dayTasks, label) => (
@@ -610,6 +631,7 @@ export function TasksPage() {
         onToggleDone={(t) => void toggle(t)}
         onRemove={remove}
         onSendBack={sendBack}
+        onSetStatus={(t, st) => void setStatus(t, st)}
       />
       <RewardsSheet tab={rewardsTab} progress={progress} kudos={kudos} onTab={(tab) => setParam({ rewards: tab })} onClose={() => setParam({ rewards: null })} onPrintCertificate={(l) => setPrintLevel(LEVELS.find((x) => x.level === l) ?? null)} />
       <LevelUpDialog level={levelUp} onClose={() => setLevelUp(null)} onViewRewards={() => (setLevelUp(null), setParam({ rewards: 'levels' }))} />

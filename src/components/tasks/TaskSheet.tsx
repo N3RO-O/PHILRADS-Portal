@@ -21,6 +21,8 @@ interface Props {
   onRemove: (task: Task) => Promise<void>;
   /** The person who gave a finished task sends it back with a reason. Resolves to an error message, or null. */
   onSendBack?: (task: Task, reason: string) => Promise<string | null>;
+  /** Mark an open task started or not started (saved straight away). */
+  onSetStatus?: (task: Task, status: 'todo' | 'in_progress') => void;
 }
 
 const EMPTY: TaskDraft = {
@@ -56,7 +58,7 @@ export const draftOf = (t: Task): TaskDraft => ({
 });
 
 /** Add or edit a task with everything Any.do offers: list, Field/Office, due date and time, My Day, repeat, subtasks. */
-export function TaskSheet({ open, task, initial, today, me, canAssign, people, onClose, onSave, onToggleDone, onRemove, onSendBack }: Props) {
+export function TaskSheet({ open, task, initial, today, me, canAssign, people, onClose, onSave, onToggleDone, onRemove, onSendBack, onSetStatus }: Props) {
   const uid = useId();
   const [d, setD] = useState<TaskDraft>(EMPTY);
   const [base, setBase] = useState<TaskDraft>(EMPTY);
@@ -172,6 +174,33 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, people, o
           <p role="alert" className="rounded-xl border border-status-out/40 bg-status-out/10 px-4 py-3 text-sm">
             <strong className="font-semibold text-status-out">Not saved.</strong> {error}
           </p>
+        )}
+        {task && !done && onSetStatus && (task.assigneeId ?? task.createdById) === me && (
+          // Where you are with it: the person who gave it sees this (Team tasks).
+          <div className="flex gap-1 rounded-xl bg-surface-sunken p-1" role="radiogroup" aria-label="Progress">
+            {(
+              [
+                ['todo', 'Not started'],
+                ['in_progress', 'In progress'],
+              ] as const
+            ).map(([s, label]) => {
+              const on = (task.status === 'in_progress' ? 'in_progress' : 'todo') === s;
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => !on && onSetStatus(task, s)}
+                  className={`tap min-h-10 flex-1 rounded-lg text-sm font-semibold transition-colors ${
+                    on ? (s === 'in_progress' ? 'bg-status-low/20 text-status-low' : 'bg-surface-raised text-ink') : 'text-ink-soft hover:text-ink'
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
         )}
         {(locked || given) && (
           <p className="flex items-start gap-2 rounded-xl border border-line/70 bg-white/[0.03] px-4 py-3 text-xs text-ink-soft">
