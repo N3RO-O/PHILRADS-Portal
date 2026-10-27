@@ -97,6 +97,21 @@ function sampleImsPayload(imsUrl: string): ImsSnapshot {
         approvals: i === 0 ? [{ by: 'Grace Villanueva (sample admin)', decision: 'approved' as const, at: m.occurredAt }] : [],
       })),
     events: SAMPLE_EVENTS(),
+    pending_events: [
+      {
+        id: 'sample-ev-new-1',
+        name: 'Medical mission: Catanduanes (sample)',
+        type: 'medical_mission',
+        location: 'Virac, Catanduanes',
+        target: 400,
+        start_date: new Date(Date.now() + 9 * 86_400_000).toISOString().slice(0, 10),
+        end_date: null,
+        status: 'partially_approved' as const,
+        created_by: 'Maria Santos (sample)',
+        created_at: new Date(Date.now() - 3 * 3600_000).toISOString(),
+        approvals: [{ by: 'Grace Villanueva (sample admin)', decision: 'approved' as const, reason: null, at: new Date(Date.now() - 3600_000).toISOString() }],
+      },
+    ],
     donations: sampleDonations(seed),
   };
 }

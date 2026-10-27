@@ -10,7 +10,10 @@ import { useEffect, useRef } from 'react';
  */
 export type ImsAction =
   | { act: 'release'; id: string }
-  | { act: 'served'; event: string; area?: string; served?: number; note?: string };
+  | { act: 'served'; event: string; area?: string; served?: number; note?: string }
+  /** A new relief event filled in on the portal (the IMS window shows it to check, then creates it). */
+  | { act: 'event'; name: string; type: string; location?: string; target?: number; start?: string; end?: string; description?: string }
+  | { act: 'event-approve'; id: string };
 
 export function imsActionUrl(imsUrl: string, action: ImsAction): string {
   const params = new URLSearchParams();

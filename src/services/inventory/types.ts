@@ -1,5 +1,5 @@
 import type { DataSource } from '../../types';
-import type { ImsDonation, ImsEvent, ImsPendingRelease } from './imsSnapshot';
+import type { ImsDonation, ImsEvent, ImsPendingEvent, ImsPendingRelease } from './imsSnapshot';
 
 /** Inventory types: stock mirrored from PHILRADS IMS, shaped for the portal's views. */
 
@@ -96,6 +96,8 @@ export interface InventorySnapshot {
   imsPendingReleases?: ImsPendingRelease[];
   /** IMS only: relief events with beneficiary targets and served counts by area. */
   imsEvents?: ImsEvent[];
+  /** IMS only: events waiting for their two administrator approvals (and ones rejected lately). */
+  imsPendingEvents?: ImsPendingEvent[];
   /** IMS only: donations traced to the releases that gave them out. */
   imsDonations?: ImsDonation[];
   items: InventoryItem[];

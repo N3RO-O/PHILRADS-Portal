@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useState, type FormEvent } from 'react';
-import { CalendarDays, CircleCheck, ExternalLink, MapPin, Plus, Users, X } from 'lucide-react';
+import { CalendarDays, CircleCheck, Clock, ExternalLink, MapPin, Plus, Users, X } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
 import { QuantityStepper } from '../components/inventory/QuantityStepper';
 import { EmptyState, LoadError, Skeleton } from '../components/ui/Card';
@@ -8,7 +8,7 @@ import { env } from '../config/env';
 import { formatDateTime, formatNumber, formatShortDate } from '../lib/format';
 import { imsActionUrl, openImsAction, useImsActionResults, useLiveRefresh } from '../lib/imsActions';
 import { inventoryStore } from '../services';
-import type { ImsEvent } from '../services/inventory/imsSnapshot';
+import type { ImsEvent, ImsPendingEvent } from '../services/inventory/imsSnapshot';
 import { useInventoryState } from '../services/inventory/inventoryStore';
 
 const TYPE_LABEL: Record<string, string> = {
@@ -29,8 +29,9 @@ type Filter = 'open' | 'all' | 'completed';
 
 /**
  * Response: relief events from PHILRADS IMS with their beneficiary targets, and served counts
- * added area by area until the target is met. Counts are added through the IMS window
- * (administrators and warehouse managers), so the IMS stays the single record.
+ * added area by area until the target is met. New events are filled in here, and served counts
+ * and event approvals are entered here too; each is confirmed in a small IMS window (the person's
+ * own IMS account and roles, 2 administrator approvals per event), so the IMS stays the single record.
  */
 export function ResponsePage() {
   return <ImsEvents />;
@@ -41,9 +42,18 @@ function ImsEvents() {
   const state = useInventoryState(inventoryStore);
   const { snapshot } = state;
   const canRecord = can('beneficiaries.record');
+  const canApprove = can('inventory.approve');
   const imsUrl = snapshot?.imsUrl || env.imsUrl;
   const [filter, setFilter] = useState<Filter>('open');
   const [adding, setAdding] = useState<ImsEvent | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [blocked, setBlocked] = useState<string | null>(null);
+  const review = (e: ImsPendingEvent) => {
+    if (!imsUrl) return;
+    const action = { act: 'event-approve' as const, id: e.id };
+    if (openImsAction(imsUrl, action)) setToast('Approve or reject in the PHILRADS IMS window. This page updates when it’s done.');
+    else setBlocked(imsActionUrl(imsUrl, action));
+  };
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
@@ -60,6 +70,7 @@ function ImsEvents() {
   }, [toast]);
 
   const events = snapshot?.imsEvents ?? [];
+  const pending = snapshot?.imsPendingEvents ?? [];
   const shown = useMemo(
     () =>
       events.filter((e) =>
@@ -93,11 +104,19 @@ function ImsEvents() {
             ))}
           </section>
 
+          {pending.length > 0 && <PendingEvents events={pending} canApprove={canApprove && Boolean(imsUrl)} onReview={review} blocked={blocked} />}
+
           <section className="card flex flex-col gap-4 p-4 sm:p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="card-title flex items-center gap-2">
                 <Users className="h-4 w-4 text-uplift" aria-hidden /> Relief events and beneficiaries
               </h2>
+              <div className="flex flex-wrap items-center gap-2">
+              {canRecord && imsUrl && (
+                <button type="button" className="btn-primary min-h-10 px-4 text-sm" onClick={() => setCreating(true)}>
+                  <Plus className="h-4 w-4" aria-hidden /> New event
+                </button>
+              )}
               <div role="group" aria-label="Show" className="flex gap-1 rounded-xl bg-surface-sunken p-1">
                 {(
                   [
@@ -117,6 +136,7 @@ function ImsEvents() {
                   </button>
                 ))}
               </div>
+              </div>
             </div>
 
             {shown.length === 0 ? (
@@ -128,14 +148,14 @@ function ImsEvents() {
                     <button type="button" className="btn-ghost min-h-10 px-4 text-sm" onClick={() => setFilter('all')}>
                       Show all events
                     </button>
-                  ) : imsUrl ? (
-                    <a className="btn-primary min-h-10 px-4 text-sm" href={`${imsUrl}/events.php`} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-4 w-4" aria-hidden /> Plan an event in the IMS
-                    </a>
+                  ) : canRecord && imsUrl ? (
+                    <button type="button" className="btn-primary min-h-10 px-4 text-sm" onClick={() => setCreating(true)}>
+                      <Plus className="h-4 w-4" aria-hidden /> New event
+                    </button>
                   ) : undefined
                 }
               >
-                Relief events planned in PHILRADS IMS show here with how many people were served.
+                Relief events show here with how many people were served.
               </EmptyState>
             ) : (
               <ul className="grid gap-3 lg:grid-cols-2">
@@ -149,6 +169,7 @@ function ImsEvents() {
       )}
 
       {adding && imsUrl && <AddServed event={adding} imsUrl={imsUrl} onClose={() => setAdding(null)} onOpened={setToast} />}
+      {creating && imsUrl && <NewEvent imsUrl={imsUrl} onClose={() => setCreating(false)} onOpened={setToast} />}
 
       <div aria-live="polite" className="pointer-events-none fixed inset-x-4 bottom-[calc(1.5rem+env(safe-area-inset-bottom))] z-40 flex justify-center md:left-auto md:right-6 md:justify-end">
         {toast && (
@@ -252,6 +273,171 @@ function EventCard({ event: e, canRecord, onAdd }: { event: ImsEvent; canRecord:
         </button>
       )}
     </li>
+  );
+}
+
+/** New events waiting for their 2 administrator approvals (and ones rejected lately). */
+function PendingEvents({ events, canApprove, onReview, blocked }: { events: ImsPendingEvent[]; canApprove: boolean; onReview: (e: ImsPendingEvent) => void; blocked: string | null }) {
+  return (
+    <section className="card flex flex-col gap-3 p-4 sm:p-5" aria-labelledby="pending-events">
+      <h2 id="pending-events" className="card-title flex items-center gap-2">
+        <Clock className="h-4 w-4 text-uplift" aria-hidden /> Waiting for approval
+        <span className="text-sm font-normal text-muted">{events.filter((e) => e.status !== 'rejected').length}</span>
+      </h2>
+      <ul className="flex flex-col gap-2">
+        {events.map((e) => {
+          const approved = e.approvals.filter((a) => a.decision === 'approved');
+          const rejection = e.approvals.find((a) => a.decision === 'rejected');
+          return (
+            <li key={e.id} className="tile flex flex-col gap-3 p-3 sm:flex-row sm:items-center">
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold leading-snug">{e.name}</p>
+                <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted">
+                  <span>{TYPE_LABEL[e.type] ?? e.type}</span>
+                  {e.location && (
+                    <span className="inline-flex items-center gap-1">
+                      <MapPin className="h-3 w-3" aria-hidden /> {e.location}
+                    </span>
+                  )}
+                  {e.start_date && (
+                    <span className="inline-flex items-center gap-1">
+                      <CalendarDays className="h-3 w-3" aria-hidden /> {formatShortDate(e.start_date)}
+                      {e.end_date && ` – ${formatShortDate(e.end_date)}`}
+                    </span>
+                  )}
+                  {e.target > 0 && <span>Target {formatNumber(e.target)}</span>}
+                </p>
+                <p className="mt-1 text-xs text-ink-soft">
+                  {e.status === 'rejected' && rejection
+                    ? `Rejected by ${rejection.by}${rejection.reason ? `: ${rejection.reason}` : ''}`
+                    : `Created by ${e.created_by || 'someone'} · ${approved.length} of 2 approvals${approved.length ? ` (${approved.map((a) => a.by).join(', ')})` : ''}`}
+                </p>
+              </div>
+              {e.status === 'rejected' ? (
+                <span className="shrink-0 self-start rounded-md border border-status-out/40 px-2 py-0.5 text-[0.6875rem] font-semibold text-status-out sm:self-center">Rejected</span>
+              ) : canApprove ? (
+                <button type="button" className="btn-ghost min-h-10 shrink-0 px-4 text-sm" onClick={() => onReview(e)}>
+                  <ExternalLink className="h-4 w-4" aria-hidden /> Review
+                </button>
+              ) : (
+                <span className="shrink-0 self-start rounded-md border border-uplift/40 bg-uplift/10 px-2 py-0.5 text-[0.6875rem] font-semibold text-uplift sm:self-center">
+                  {approved.length} of 2
+                </span>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      {blocked && (
+        <p role="alert" className="text-sm">
+          Your browser blocked the IMS window.{' '}
+          <a className="font-semibold text-uplift underline" href={blocked} target="_blank" rel="opener">
+            Open it here
+          </a>
+          .
+        </p>
+      )}
+    </section>
+  );
+}
+
+/** A new relief event: filled in here, created in the IMS window (then 2 administrators approve it). */
+function NewEvent({ imsUrl, onClose, onOpened }: { imsUrl: string; onClose: () => void; onOpened: (m: string) => void }) {
+  const uid = useId();
+  const [name, setName] = useState('');
+  const [type, setType] = useState('disaster_relief');
+  const [location, setLocation] = useState('');
+  const [target, setTarget] = useState('');
+  const [start, setStart] = useState('');
+  const [end, setEnd] = useState('');
+  const [description, setDescription] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [blocked, setBlocked] = useState<string | null>(null);
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    const n = target.trim() ? Number.parseInt(target, 10) : 0;
+    if (!name.trim()) return setError('Enter the event name.');
+    if (!Number.isInteger(n) || n < 0 || n > 100_000_000) return setError('The target must be a whole number.');
+    if (start && end && end < start) return setError('The end date can’t be before the start date.');
+    const action = {
+      act: 'event' as const,
+      name: name.trim(),
+      type,
+      location: location.trim() || undefined,
+      target: n || undefined,
+      start: start || undefined,
+      end: end || undefined,
+      description: description.trim() || undefined,
+    };
+    if (openImsAction(imsUrl, action)) {
+      onOpened('Check the details and tap Create in the PHILRADS IMS window. The event shows here under Waiting for approval.');
+      onClose();
+    } else setBlocked(imsActionUrl(imsUrl, action));
+  };
+
+  return (
+    <Dialog open title="New relief event" onClose={onClose}>
+      <form onSubmit={submit} noValidate className="flex flex-col gap-4">
+        <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink-soft">
+          Event name
+          <input className="field" value={name} onChange={(e) => setName(e.target.value)} maxLength={200} placeholder="e.g. Typhoon response: Catanduanes" data-autofocus />
+        </label>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink-soft">
+            Type
+            <select className="field" value={type} onChange={(e) => setType(e.target.value)}>
+              {Object.entries(TYPE_LABEL).map(([k, label]) => (
+                <option key={k} value={k}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor={`${uid}-target`} className="text-sm font-semibold text-ink-soft">
+              Target beneficiaries
+            </label>
+            <QuantityStepper id={`${uid}-target`} value={target} onChange={setTarget} max={100_000_000} unit="people" />
+          </div>
+        </div>
+        <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink-soft">
+          Location
+          <input className="field" value={location} onChange={(e) => setLocation(e.target.value)} maxLength={255} placeholder="e.g. Virac, Catanduanes" />
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink-soft">
+            Start date
+            <input type="date" className="field" value={start} onChange={(e) => setStart(e.target.value)} />
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink-soft">
+            End date
+            <input type="date" className="field" value={end} min={start || undefined} onChange={(e) => setEnd(e.target.value)} />
+          </label>
+        </div>
+        <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink-soft">
+          Description <span className="text-xs font-normal text-muted">Optional</span>
+          <textarea className="field min-h-24" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} maxLength={2000} />
+        </label>
+        {error && (
+          <p role="alert" className="text-xs font-medium text-status-out">
+            {error}
+          </p>
+        )}
+        {blocked && (
+          <p role="alert" className="text-sm">
+            Your browser blocked the IMS window.{' '}
+            <a className="font-semibold text-uplift underline" href={blocked} target="_blank" rel="opener">
+              Open it here
+            </a>
+            .
+          </p>
+        )}
+        <button type="submit" className="btn-primary h-12 text-base">
+          <ExternalLink className="h-4 w-4" aria-hidden /> Create in PHILRADS IMS
+        </button>
+      </form>
+    </Dialog>
   );
 }
 

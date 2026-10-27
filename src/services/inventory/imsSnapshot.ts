@@ -98,6 +98,25 @@ export const imsSnapshotSchema = z.object({
     )
     .max(200)
     .optional(),
+  // Events waiting for their 2 administrator approvals, and ones rejected lately (added 2026-10-27).
+  pending_events: z
+    .array(
+      z.object({
+        id,
+        name: text(255),
+        type: text(40),
+        location: text(255).nullable(),
+        target: z.number().int().nonnegative().max(1e9),
+        start_date: isoDate.nullable(),
+        end_date: isoDate.nullable(),
+        status: z.enum(['pending', 'partially_approved', 'rejected']),
+        created_by: text(200),
+        created_at: isoTime.nullable(),
+        approvals: z.array(z.object({ by: text(200), decision: z.enum(['approved', 'rejected']), reason: text(255).nullable(), at: isoTime.nullable() })).max(20),
+      }),
+    )
+    .max(50)
+    .optional(),
   // Donation tracking (added 2026-10-22): each donation and every released line that drew from it.
   donations: z
     .array(
@@ -145,6 +164,7 @@ export const imsSnapshotSchema = z.object({
 export type ImsSnapshot = z.infer<typeof imsSnapshotSchema>;
 export type ImsPendingRelease = NonNullable<ImsSnapshot['pending_releases']>[number];
 export type ImsEvent = NonNullable<ImsSnapshot['events']>[number];
+export type ImsPendingEvent = NonNullable<ImsSnapshot['pending_events']>[number];
 export type ImsDonation = NonNullable<ImsSnapshot['donations']>[number];
 
 /** IMS keeps one storage location per batch as free text; each distinct name becomes a portal location. */
@@ -212,6 +232,7 @@ export function mapImsSnapshot(s: ImsSnapshot, receivedAt?: string): InventorySn
     imsUrl: s.ims_url || undefined,
     imsPendingReleases: s.pending_releases ?? [],
     imsEvents: s.events ?? [],
+    imsPendingEvents: s.pending_events ?? [],
     imsDonations: s.donations ?? [],
   };
 }
