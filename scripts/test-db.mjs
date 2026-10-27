@@ -534,7 +534,8 @@ await check('beneficiaries.record goes to admins and coordinators', async () => 
   if (r.join() !== 'admin,coordinator') throw new Error(r.join());
   return r;
 });
-await check('dashboard summary runs as staff', () => as(B, `select metric, value::int from public.get_dashboard_summary()`).then(expectRows(6)));
+// Four figures; inventory alerts and relief responses come from the IMS snapshot (2026-10-27).
+await check('dashboard summary runs as staff', () => as(B, `select metric, value::int from public.get_dashboard_summary()`).then(expectRows(4)));
 await check('weekly response counts return 8 weeks', () => as(B, `select * from public.get_weekly_response_counts(8)`).then(expectRows(8)).then(() => undefined));
 
 // Staff page: administrators manage accounts; nobody locks themselves (or everyone) out
@@ -658,6 +659,18 @@ await db.exec(`insert into public.notifications (recipient_id, title) values ('$
 await check('staff marks a notification read', () => as(B, `update public.notifications set read_at = now() returning title`).then(expectRows(1)));
 await check('staff cannot rewrite notification text', () => as(B, `update public.notifications set title = 'changed'`), true);
 await check('others cannot read the notification', () => as(A, `select id from public.notifications`).then(expectRows(0)));
+
+// Home figures: deleted files aren't counted; planned projects and milestones are
+await check('Home counts only files still in the portal, and open projects and milestones', async () => {
+  const m = Object.fromEntries((await as(B, `select metric, value from public.get_dashboard_summary()`)).rows.map((r) => [r.metric, Number(r.value)]));
+  const docs = (await db.query(`select count(*)::int n from public.documents where removed_at is null and uploaded_at >= now() - interval '7 days'`)).rows[0].n;
+  const removed = (await db.query(`select count(*)::int n from public.documents where removed_at is not null`)).rows[0].n;
+  const open = (await db.query(`select count(*)::int n from public.projects where status in ('planned', 'active', 'on_hold')`)).rows[0].n;
+  const due = (await db.query(`select (select count(*) from public.tasks where status not in ('done', 'cancelled') and due_date between current_date and current_date + 14)
+    + (select count(*) from public.project_milestones m join public.projects p on p.id = m.project_id where not m.done and p.status not in ('completed', 'cancelled') and m.due_date between current_date and current_date + 14) n`)).rows[0].n;
+  if (removed < 1 || m.documentation_updates !== docs || m.active_projects !== open || m.upcoming_deadlines !== Number(due)) throw new Error(JSON.stringify({ m, docs, removed, open, due }));
+  return m;
+});
 
 // Inactive account and signed-out visitors
 await check('inactive account sees no tasks', () => as(C, `select id from public.tasks`).then(expectRows(0)));

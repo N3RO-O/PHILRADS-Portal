@@ -21,10 +21,10 @@ interface Meta {
 }
 
 const META: Record<SummaryKey, Meta> = {
-  active_projects: { label: 'Active projects', window: 'Right now', empty: 'No active projects right now', cta: 'View projects', icon: FolderKanban, to: '/projects', tone: 0 },
+  active_projects: { label: 'Open projects', window: 'Planned, active or on hold', empty: 'No open projects right now', cta: 'View projects', icon: FolderKanban, to: '/projects', tone: 0 },
   pending_tasks: { label: 'Pending tasks', window: 'Assigned to your teams', empty: 'Nothing pending for your teams', cta: 'Create a task', icon: SquareCheckBig, to: '/tasks', tone: 2 },
-  inventory_alerts: { label: 'Inventory alerts', window: 'Below reorder level', empty: 'All items above reorder level', cta: 'View inventory', icon: TriangleAlert, to: '/inventory?status=low', tone: 1 },
-  response_activities: { label: 'Response activities', window: 'Last 30 days', empty: 'None in the last 30 days', cta: 'Open Response', icon: LifeBuoy, to: '/response', tone: 0 },
+  inventory_alerts: { label: 'Inventory alerts', window: 'Low or out of stock', empty: 'All items above reorder level', cta: 'View inventory', icon: TriangleAlert, to: '/inventory', tone: 1 },
+  response_activities: { label: 'Relief responses', window: 'Open in the IMS', empty: 'No open relief events', cta: 'Open Response', icon: LifeBuoy, to: '/response', tone: 0 },
   documentation_updates: { label: 'Documentation updates', window: 'Last 7 days', empty: 'No uploads in the last 7 days', cta: 'Upload a file', icon: FileText, to: '/documentation', tone: 2 },
   upcoming_deadlines: { label: 'Upcoming deadlines', window: 'Next 14 days', empty: 'Nothing due in the next 14 days', cta: 'Open Tasks', icon: CalendarClock, to: '/tasks', tone: 1 },
 };
