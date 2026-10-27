@@ -1,11 +1,10 @@
 import { useEffect, useId, useState, type ReactNode } from 'react';
 import { Loader2 } from 'lucide-react';
-import { PROGRAM_AREAS, PROJECT_STATUSES, type Project, type ProjectDraft, type ProjectStatus } from '../../services/projects/projectsService';
+import { PROJECT_STATUSES, PROJECT_TYPES, type Project, type ProjectDraft, type ProjectStatus } from '../../services/projects/projectsService';
 import { Sheet } from '../ui/Sheet';
 
 const EMPTY: ProjectDraft = {
   name: '',
-  code: '',
   description: '',
   programArea: '',
   status: 'active',
@@ -13,14 +12,15 @@ const EMPTY: ProjectDraft = {
   endDate: null,
   leadId: null,
   partner: '',
+  donor: '',
   location: '',
   beneficiariesTarget: null,
+  beneficiariesAdditional: 0,
 };
 
 export const draftOf = (p: Project): ProjectDraft => ({
   id: p.id,
   name: p.name,
-  code: p.code ?? '',
   description: p.description ?? '',
   programArea: p.programArea ?? '',
   status: p.status,
@@ -28,15 +28,17 @@ export const draftOf = (p: Project): ProjectDraft => ({
   endDate: p.endDate,
   leadId: p.leadId,
   partner: p.partner ?? '',
+  donor: p.donor ?? '',
   location: p.location ?? '',
   beneficiariesTarget: p.beneficiariesTarget,
+  beneficiariesAdditional: p.beneficiariesAdditional,
 });
 
 interface Props {
   open: boolean;
   project: Project | null;
   people: { id: string; name: string }[];
-  /** Coordinators/admins: the lead and code can be changed (a lead can't hand the project on). */
+  /** Coordinators/admins: the lead can be changed (a lead can't hand the project on). */
   canSetLead: boolean;
   onClose: () => void;
   /** Resolves to an error message, or null when saved. */
@@ -92,19 +94,14 @@ export function ProjectSheet({ open, project, people, canSetLead, onClose, onSav
         <Field id={`${uid}-name`} label="Project name">
           <input id={`${uid}-name`} className="field" data-autofocus={project ? undefined : true} maxLength={200} value={d.name} onChange={(e) => set('name', e.target.value)} placeholder="e.g. Typhoon Kristine relief and early recovery" />
         </Field>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <Field id={`${uid}-area`} label="Program area">
-            <input id={`${uid}-area`} className="field" list={`${uid}-areas`} maxLength={100} value={d.programArea} onChange={(e) => set('programArea', e.target.value)} placeholder="Disaster response, Livelihood…" />
-            <datalist id={`${uid}-areas`}>
-              {PROGRAM_AREAS.map((a) => (
-                <option key={a} value={a} />
-              ))}
-            </datalist>
-          </Field>
-          <Field id={`${uid}-code`} label="Code" hint="Optional">
-            <input id={`${uid}-code`} className="field" maxLength={40} value={d.code} onChange={(e) => set('code', e.target.value)} disabled={Boolean(project) && !canSetLead} placeholder="e.g. DR-2026-07" />
-          </Field>
-        </div>
+        <Field id={`${uid}-type`} label="Project type">
+          <input id={`${uid}-type`} className="field" list={`${uid}-types`} maxLength={100} value={d.programArea} onChange={(e) => set('programArea', e.target.value)} placeholder="Disaster response, Livelihood…" />
+          <datalist id={`${uid}-types`}>
+            {PROJECT_TYPES.map((a) => (
+              <option key={a} value={a} />
+            ))}
+          </datalist>
+        </Field>
         <Field label="Status">
           <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Status">
             {PROJECT_STATUSES.map((s) => (
@@ -133,10 +130,15 @@ export function ProjectSheet({ open, project, people, canSetLead, onClose, onSav
           </select>
         </Field>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <Field id={`${uid}-partner`} label="Donor or partner" hint="Optional">
+          <Field id={`${uid}-donor`} label="Donor" hint="Optional">
+            <input id={`${uid}-donor`} className="field" maxLength={200} value={d.donor} onChange={(e) => set('donor', e.target.value)} />
+          </Field>
+          <Field id={`${uid}-partner`} label="Partner" hint="Optional">
             <input id={`${uid}-partner`} className="field" maxLength={200} value={d.partner} onChange={(e) => set('partner', e.target.value)} />
           </Field>
-          <Field id={`${uid}-target`} label="People to reach" hint="Optional">
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field id={`${uid}-target`} label="People to reach" hint="Can change later">
             <input
               id={`${uid}-target`}
               type="number"
@@ -145,6 +147,17 @@ export function ProjectSheet({ open, project, people, canSetLead, onClose, onSav
               className="field"
               value={d.beneficiariesTarget ?? ''}
               onChange={(e) => set('beneficiariesTarget', e.target.value === '' ? null : Math.max(0, Math.round(Number(e.target.value))))}
+            />
+          </Field>
+          <Field id={`${uid}-extra`} label="Additional beneficiaries" hint="Beyond the plan">
+            <input
+              id={`${uid}-extra`}
+              type="number"
+              inputMode="numeric"
+              min={0}
+              className="field"
+              value={d.beneficiariesAdditional || ''}
+              onChange={(e) => set('beneficiariesAdditional', e.target.value === '' ? 0 : Math.max(0, Math.round(Number(e.target.value))))}
             />
           </Field>
         </div>

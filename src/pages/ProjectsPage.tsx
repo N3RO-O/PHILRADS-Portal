@@ -7,6 +7,7 @@ import {
   FileText,
   FolderKanban,
   HandHeart,
+  Landmark,
   Loader2,
   MapPin,
   Pencil,
@@ -149,7 +150,7 @@ function ProjectList({ projects, me, canCreate, onNew }: { projects: Project[] |
     (p) =>
       (filter === 'all' ? p.status !== 'cancelled' : p.status === filter) &&
       (!mine || isMine(p)) &&
-      (!needle || [p.name, p.code, p.programArea, p.partner, p.location, p.leadName].some((s) => s?.toLowerCase().includes(needle))),
+      (!needle || [p.name, p.programArea, p.donor, p.partner, p.location, p.leadName].some((s) => s?.toLowerCase().includes(needle))),
   );
   const count = (f: Filter) => all.filter((p) => (f === 'all' ? p.status !== 'cancelled' : p.status === f)).length;
 
@@ -178,7 +179,7 @@ function ProjectList({ projects, me, canCreate, onNew }: { projects: Project[] |
       <label className="relative block">
         <span className="sr-only">Search projects</span>
         <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
-        <input type="search" className="field pl-10" placeholder="Search: name, area, partner, place, lead…" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <input type="search" className="field pl-10" placeholder="Search: name, type, donor, partner, place, lead…" value={search} onChange={(e) => setSearch(e.target.value)} />
       </label>
 
       {projects === null ? (
@@ -223,7 +224,7 @@ function ProjectCard({ project: p, today }: { project: Project; today: string })
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="line-clamp-2 font-semibold leading-snug">{p.name}</p>
-          <p className="mt-0.5 truncate text-xs text-muted">{[p.programArea, p.code].filter(Boolean).join(' · ') || 'Project'}</p>
+          <p className="mt-0.5 truncate text-xs text-muted">{p.programArea || 'Project'}</p>
         </div>
         <span className={`shrink-0 rounded-md px-2 py-0.5 text-[0.6875rem] font-semibold ${STATUS_TONE[p.status]}`}>{statusLabel(p.status)}</span>
       </div>
@@ -313,10 +314,10 @@ function ProjectDetail({ project: p, me, canManage, people, onChanged, onEdit }:
 
   const done = p.milestones.filter((m) => m.done).length;
   const facts: [ReactNode, string][] = [];
-  if (p.partner) facts.push([<HandHeart key="i" className="h-4 w-4 text-uplift" aria-hidden />, p.partner]);
+  if (p.donor) facts.push([<Landmark key="i" className="h-4 w-4 text-uplift" aria-hidden />, `Donor: ${p.donor}`]);
+  if (p.partner) facts.push([<HandHeart key="i" className="h-4 w-4 text-uplift" aria-hidden />, `Partner: ${p.partner}`]);
   if (p.location) facts.push([<MapPin key="i" className="h-4 w-4 text-uplift" aria-hidden />, p.location]);
   if (dateRange(p)) facts.push([<CalendarClock key="i" className="h-4 w-4 text-uplift" aria-hidden />, dateRange(p)!]);
-  if (p.beneficiariesTarget != null) facts.push([<Users key="i" className="h-4 w-4 text-uplift" aria-hidden />, `${formatNumber(p.beneficiariesTarget)} people to reach`]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -327,7 +328,7 @@ function ProjectDetail({ project: p, me, canManage, people, onChanged, onEdit }:
       <section className="card flex flex-col gap-4 p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted">{[p.programArea, p.code].filter(Boolean).join(' · ') || 'Project'}</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted">{p.programArea || 'Project'}</p>
             <h2 className="mt-1 text-xl font-bold leading-tight sm:text-2xl">{p.name}</h2>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -366,6 +367,7 @@ function ProjectDetail({ project: p, me, canManage, people, onChanged, onEdit }:
           </ul>
         )}
         {p.description && <p className="max-w-3xl whitespace-pre-line text-sm leading-relaxed text-ink-soft">{p.description}</p>}
+        <PeopleToReach project={p} canManage={canManage} busy={busy} act={act} />
         <div>
           <div className="flex items-baseline justify-between text-sm">
             <span className="text-muted">{p.milestones.length ? `${done} of ${p.milestones.length} milestones done` : 'Progress'}</span>
@@ -412,6 +414,79 @@ function ProjectDetail({ project: p, me, canManage, people, onChanged, onEdit }:
 }
 
 type Act = (key: string, fn: () => Promise<unknown>) => Promise<void>;
+
+/** People to reach (it changes as a project goes on) plus people reached beyond the plan. */
+function PeopleToReach({ project: p, canManage, busy, act }: { project: Project; canManage: boolean; busy: string | null; act: Act }) {
+  const [editing, setEditing] = useState(false);
+  const [target, setTarget] = useState('');
+  const [extra, setExtra] = useState('');
+  const total = (p.beneficiariesTarget ?? 0) + p.beneficiariesAdditional;
+  const begin = () => {
+    setTarget(p.beneficiariesTarget == null ? '' : String(p.beneficiariesTarget));
+    setExtra(p.beneficiariesAdditional ? String(p.beneficiariesAdditional) : '');
+    setEditing(true);
+  };
+  const num = (v: string) => Math.max(0, Math.round(Number(v) || 0));
+  if (p.beneficiariesTarget == null && !p.beneficiariesAdditional && !canManage) return null;
+  return (
+    <div className="flex flex-col gap-3 rounded-xl border border-line/70 bg-white/[0.02] p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="flex items-center gap-2 text-sm font-semibold">
+          <Users className="h-4 w-4 text-uplift" aria-hidden /> People to reach
+        </p>
+        {canManage && !editing && (
+          <button type="button" className="btn-ghost min-h-9 px-3 text-xs" onClick={begin}>
+            <Pencil className="h-3.5 w-3.5" aria-hidden /> Change
+          </button>
+        )}
+      </div>
+      {editing ? (
+        <form
+          className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void act('people', async () => {
+              await projectsService.setPeople(p.id, target === '' ? null : num(target), num(extra));
+              setEditing(false);
+            });
+          }}
+        >
+          <label className="flex flex-col gap-1 text-xs text-muted">
+            Planned
+            <input type="number" inputMode="numeric" min={0} className="field" value={target} onChange={(e) => setTarget(e.target.value)} />
+          </label>
+          <label className="flex flex-col gap-1 text-xs text-muted">
+            Additional beneficiaries
+            <input type="number" inputMode="numeric" min={0} className="field" value={extra} onChange={(e) => setExtra(e.target.value)} />
+          </label>
+          <div className="flex items-end gap-2">
+            <button type="button" className="btn-ghost min-h-11 px-3" onClick={() => setEditing(false)}>
+              Cancel
+            </button>
+            <button type="submit" className="btn-primary min-h-11 px-4" disabled={busy === 'people'}>
+              {busy === 'people' && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />} Save
+            </button>
+          </div>
+        </form>
+      ) : (
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <div className="rounded-lg bg-white/[0.03] px-2 py-2">
+            <p className="text-lg font-bold tabular-nums">{p.beneficiariesTarget == null ? '—' : formatNumber(p.beneficiariesTarget)}</p>
+            <p className="text-[0.6875rem] text-muted">Planned</p>
+          </div>
+          <div className="rounded-lg bg-white/[0.03] px-2 py-2">
+            <p className="text-lg font-bold tabular-nums text-status-in">+{formatNumber(p.beneficiariesAdditional)}</p>
+            <p className="text-[0.6875rem] text-muted">Additional</p>
+          </div>
+          <div className="rounded-lg bg-white/[0.03] px-2 py-2">
+            <p className="text-lg font-bold tabular-nums">{formatNumber(total)}</p>
+            <p className="text-[0.6875rem] text-muted">In all</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function Milestones({ project: p, today, canManage, onTeam, busy, act }: { project: Project; today: string; canManage: boolean; onTeam: boolean; busy: string | null; act: Act }) {
   const [title, setTitle] = useState('');
@@ -621,14 +696,22 @@ function Team({ project: p, people, canManage, busy, act }: { project: Project; 
         <li className="flex items-center gap-3">
           <Avatar initials={initialsOf(p.leadName ?? '?')} size="sm" />
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-semibold">{p.leadName ?? 'No lead yet'}</span>
+            {p.leadId ? (
+              <Link to={`/profile/${p.leadId}`} className="block truncate text-sm font-semibold hover:underline">
+                {p.leadName ?? 'Project lead'}
+              </Link>
+            ) : (
+              <span className="block truncate text-sm font-semibold">No lead yet</span>
+            )}
             <span className="block text-[0.6875rem] text-muted">Project lead</span>
           </span>
         </li>
         {members.map((m) => (
           <li key={m.profileId} className="flex items-center gap-3">
             <Avatar initials={initialsOf(m.name)} size="sm" />
-            <span className="min-w-0 flex-1 truncate text-sm">{m.name}</span>
+            <Link to={`/profile/${m.profileId}`} className="min-w-0 flex-1 truncate text-sm hover:underline">
+              {m.name}
+            </Link>
             {canManage && (
               <button type="button" className="icon-btn h-8 w-8" aria-label={`Remove ${m.name} from the team`} disabled={busy === `rm-${m.profileId}`} onClick={() => void act(`rm-${m.profileId}`, () => projectsService.removeMember(p.id, m.profileId))}>
                 <X className="h-4 w-4" aria-hidden />

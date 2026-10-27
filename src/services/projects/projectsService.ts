@@ -20,8 +20,8 @@ export const PROJECT_STATUSES = [
 export type ProjectStatus = (typeof PROJECT_STATUSES)[number]['key'];
 export const statusLabel = (s: ProjectStatus) => PROJECT_STATUSES.find((x) => x.key === s)?.label ?? s;
 
-/** Suggestions for the program area (any text is fine). */
-export const PROGRAM_AREAS = [
+/** Suggestions for the project type (any text is fine). */
+export const PROJECT_TYPES = [
   'Disaster response',
   'Recovery and rehabilitation',
   'Disaster preparedness',
@@ -54,9 +54,9 @@ export interface Milestone {
 
 export interface Project {
   id: string;
-  code: string | null;
   name: string;
   description: string | null;
+  /** Project type, e.g. Disaster response, Livelihood. */
   programArea: string | null;
   status: ProjectStatus;
   /** 0–100; follows the milestones once there are any. */
@@ -66,8 +66,12 @@ export interface Project {
   leadId: string | null;
   leadName: string | null;
   partner: string | null;
+  donor: string | null;
   location: string | null;
+  /** People the project plans to reach (changes as it goes on). */
   beneficiariesTarget: number | null;
+  /** People reached beyond the plan. */
+  beneficiariesAdditional: number;
   members: ProjectMember[];
   milestones: Milestone[];
   updatedAt: string;
@@ -76,7 +80,6 @@ export interface Project {
 export interface ProjectDraft {
   id?: string;
   name: string;
-  code: string;
   description: string;
   programArea: string;
   status: ProjectStatus;
@@ -84,8 +87,10 @@ export interface ProjectDraft {
   endDate: string | null;
   leadId: string | null;
   partner: string;
+  donor: string;
   location: string;
   beneficiariesTarget: number | null;
+  beneficiariesAdditional: number;
 }
 
 export interface MilestoneDraft {
@@ -113,6 +118,8 @@ export interface ProjectsService {
   list(): Promise<Project[]>;
   save(draft: ProjectDraft): Promise<string>;
   setStatus(id: string, status: ProjectStatus): Promise<void>;
+  /** People to reach and additional beneficiaries (the lead or a coordinator; logged). */
+  setPeople(id: string, target: number | null, additional: number): Promise<void>;
   addMember(projectId: string, profileId: string): Promise<void>;
   removeMember(projectId: string, profileId: string): Promise<void>;
   addMilestone(projectId: string, m: MilestoneDraft): Promise<void>;
@@ -129,17 +136,22 @@ export const orderMilestones = (ms: Milestone[]) =>
 /** The next open milestone or report (the soonest due). */
 export const nextDeadline = (p: Project) => orderMilestones(p.milestones).find((m) => !m.done) ?? null;
 
+const checkPeople = (target: number | null, additional: number) => {
+  if (target != null && (target < 0 || !Number.isInteger(target))) throw new ProjectRuleError('People to reach is a whole number.');
+  if (additional < 0 || !Number.isInteger(additional)) throw new ProjectRuleError('Additional beneficiaries is a whole number.');
+};
+
 const validate = (d: ProjectDraft) => {
   if (!d.name.trim()) throw new ProjectRuleError('Give the project a name.');
   if (d.name.trim().length > 200) throw new ProjectRuleError('Keep the name under 200 characters.');
   if (d.startDate && d.endDate && d.endDate < d.startDate) throw new ProjectRuleError('The end date is before the start date.');
-  if (d.beneficiariesTarget != null && (d.beneficiariesTarget < 0 || !Number.isInteger(d.beneficiariesTarget))) throw new ProjectRuleError('The target is a whole number of people.');
+  checkPeople(d.beneficiariesTarget, d.beneficiariesAdditional);
 };
 
 // ───────────────────────── Supabase ─────────────────────────
 
 const COLUMNS =
-  'id, code, name, description, program_area, status, progress_percent, start_date, end_date, lead_id, partner, location, beneficiaries_target, updated_at, ' +
+  'id, name, description, program_area, status, progress_percent, start_date, end_date, lead_id, partner, donor, location, beneficiaries_target, beneficiaries_additional, updated_at, ' +
   'lead:profiles!projects_lead_id_fkey(display_name), ' +
   'members:project_members(profile_id, member_role, person:profiles(display_name)), ' +
   'milestones:project_milestones(id, project_id, title, kind, due_date, done, done_at, position, by:profiles!project_milestones_done_by_fkey(display_name))';
@@ -155,7 +167,6 @@ export function createSupabaseProjectsService(client: SupabaseClient): ProjectsS
   };
   const map = (r: Record<string, unknown>): Project => ({
     id: r.id as string,
-    code: (r.code as string | null) ?? null,
     name: r.name as string,
     description: (r.description as string | null) ?? null,
     programArea: (r.program_area as string | null) ?? null,
@@ -166,8 +177,10 @@ export function createSupabaseProjectsService(client: SupabaseClient): ProjectsS
     leadId: (r.lead_id as string | null) ?? null,
     leadName: name(r.lead),
     partner: (r.partner as string | null) ?? null,
+    donor: (r.donor as string | null) ?? null,
     location: (r.location as string | null) ?? null,
     beneficiariesTarget: r.beneficiaries_target == null ? null : Number(r.beneficiaries_target),
+    beneficiariesAdditional: Number(r.beneficiaries_additional ?? 0),
     members: ((r.members as Record<string, unknown>[]) ?? []).map((m) => ({ profileId: m.profile_id as string, name: name(m.person) ?? 'Staff member', role: m.member_role as 'lead' | 'member' })),
     milestones: ((r.milestones as Record<string, unknown>[]) ?? []).map((m) => ({
       id: m.id as string,
@@ -194,7 +207,6 @@ export function createSupabaseProjectsService(client: SupabaseClient): ProjectsS
       validate(d);
       const row = {
         name: d.name.trim(),
-        code: d.code.trim() || null,
         description: d.description.trim() || null,
         program_area: d.programArea.trim() || null,
         status: d.status,
@@ -202,8 +214,10 @@ export function createSupabaseProjectsService(client: SupabaseClient): ProjectsS
         end_date: d.endDate,
         lead_id: d.leadId,
         partner: d.partner.trim() || null,
+        donor: d.donor.trim() || null,
         location: d.location.trim() || null,
         beneficiaries_target: d.beneficiariesTarget,
+        beneficiaries_additional: d.beneficiariesAdditional,
       };
       const q = d.id ? client.from('projects').update(row).eq('id', d.id) : client.from('projects').insert(row);
       const { data, error } = await q.select('id').single();
@@ -213,6 +227,12 @@ export function createSupabaseProjectsService(client: SupabaseClient): ProjectsS
     async setStatus(id, status) {
       const { error } = await client.from('projects').update({ status }).eq('id', id);
       if (error) fail('change the status', error);
+    },
+    async setPeople(id, target, additional) {
+      checkPeople(target, additional);
+      const { data, error } = await client.from('projects').update({ beneficiaries_target: target, beneficiaries_additional: additional }).eq('id', id).select('id');
+      if (error) fail('save the numbers', error);
+      if (!data?.length) throw new ProjectRuleError('Only the project lead or a coordinator can change this.');
     },
     async addMember(projectId, profileId) {
       const { error } = await client.from('project_members').upsert({ project_id: projectId, profile_id: profileId, member_role: 'member' }, { onConflict: 'project_id,profile_id' });
@@ -290,7 +310,6 @@ const progressOf = (m: Milestone[]) => (m.length ? Math.round((100 * m.filter((x
 const sample: Project[] = [
   {
     id: 'prj-kristine',
-    code: 'DR-2026-07',
     name: 'Typhoon Kristine relief and early recovery',
     description: 'Food packs, hygiene kits and shelter repair kits for families displaced in Camarines Sur, with a cash-for-work phase for debris clearing.',
     programArea: 'Disaster response',
@@ -301,8 +320,10 @@ const sample: Project[] = [
     leadId: 'p-maria',
     leadName: 'Maria Santos',
     partner: 'Partner Church Network',
+    donor: 'Relief Foundation',
     location: 'Naga City and Pili, Camarines Sur',
     beneficiariesTarget: 4500,
+    beneficiariesAdditional: 320,
     members: [
       { profileId: 'p-maria', name: 'Maria Santos', role: 'lead' },
       { profileId: 'p-jun', name: 'Jun Dela Cruz', role: 'member' },
@@ -313,7 +334,6 @@ const sample: Project[] = [
   },
   {
     id: 'prj-livelihood',
-    code: 'LV-2026-02',
     name: 'Sari-sari store livelihood grants',
     description: 'Small grants, coaching and record-keeping training for 60 women-led households.',
     programArea: 'Livelihood',
@@ -324,8 +344,10 @@ const sample: Project[] = [
     leadId: 'p-ana',
     leadName: 'Ana Reyes',
     partner: null,
+    donor: 'Community Grants Fund',
     location: 'Quezon City',
     beneficiariesTarget: 60,
+    beneficiariesAdditional: 0,
     members: [
       { profileId: 'p-ana', name: 'Ana Reyes', role: 'lead' },
       { profileId: 'p-leo', name: 'Leo Mendoza', role: 'member' },
@@ -335,7 +357,6 @@ const sample: Project[] = [
   },
   {
     id: 'prj-prep',
-    code: null,
     name: 'School-based disaster preparedness',
     description: 'Earthquake and fire drills, go-bags and family preparedness plans in five public schools.',
     programArea: 'Disaster preparedness',
@@ -346,8 +367,10 @@ const sample: Project[] = [
     leadId: null,
     leadName: null,
     partner: 'Division schools office',
+    donor: null,
     location: 'Quezon City',
     beneficiariesTarget: 2500,
+    beneficiariesAdditional: 0,
     members: [],
     milestones: [],
     updatedAt: new Date(Date.now() - 3 * 86_400_000).toISOString(),
@@ -390,7 +413,6 @@ export const mockProjectsService: ProjectsService = {
     validate(d);
     const lead = SAMPLE_PEOPLE.find((x) => x.id === d.leadId);
     const fields = {
-      code: d.code.trim() || null,
       name: d.name.trim(),
       description: d.description.trim() || null,
       programArea: d.programArea.trim() || null,
@@ -400,8 +422,10 @@ export const mockProjectsService: ProjectsService = {
       leadId: d.leadId,
       leadName: lead?.name ?? null,
       partner: d.partner.trim() || null,
+      donor: d.donor.trim() || null,
       location: d.location.trim() || null,
       beneficiariesTarget: d.beneficiariesTarget,
+      beneficiariesAdditional: d.beneficiariesAdditional,
       updatedAt: new Date().toISOString(),
     };
     if (d.id) {
@@ -415,6 +439,13 @@ export const mockProjectsService: ProjectsService = {
   async setStatus(id, status) {
     need();
     sample.find((p) => p.id === id)!.status = status;
+    touch(id);
+    await later(null);
+  },
+  async setPeople(id, target, additional) {
+    need();
+    checkPeople(target, additional);
+    Object.assign(sample.find((p) => p.id === id)!, { beneficiariesTarget: target, beneficiariesAdditional: additional });
     touch(id);
     await later(null);
   },

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, CheckCircle2, CloudUpload, FileText, Film, HardDrive, Image as ImageIcon, Link2, Loader2, Play, RotateCw, Search, Upload, X } from 'lucide-react';
+import { AlertTriangle, Check, CheckCircle2, CheckSquare, CloudUpload, FileText, Film, HardDrive, Image as ImageIcon, Link2, Loader2, Play, RotateCw, Search, Trash2, Upload, X } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../components/auth/AuthProvider';
 import { DocViewer } from '../components/documentation/DocViewer';
@@ -73,6 +73,47 @@ export function DocumentationPage() {
     }
   }, []);
   useEffect(() => void load(), [load]);
+  useEffect(() => {
+    documentationService.sync().then((n) => n > 0 && void load(), () => undefined);
+  }, [load]);
+
+  // Administrators: select several files and delete them (in Google Drive too).
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
+  const toggle = (id: string) =>
+    setSelected((s) => {
+      const next = new Set(s);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const stopSelecting = () => {
+    setSelecting(false);
+    setSelected(new Set());
+  };
+  const deleteSelected = async () => {
+    const ids = [...selected];
+    if (!ids.length) return;
+    if (!window.confirm(`Delete ${ids.length} file${ids.length === 1 ? '' : 's'}? ${ids.length === 1 ? 'It’s' : 'They’re'} removed from the portal and moved to Google Drive’s trash (recoverable there for 30 days).`)) return;
+    setDeleting(true);
+    try {
+      const r = await documentationService.remove(ids);
+      const failed = new Set(r.failed.map((f) => f.id));
+      setDocs((list) => list && list.filter((d) => !ids.includes(d.id) || failed.has(d.id)));
+      setSelected(failed);
+      if (!failed.size) setSelecting(false);
+      setToast(
+        r.failed.length
+          ? { text: `Deleted ${r.deleted}. ${r.failed.length} couldn’t be: ${r.failed[0].error}`, error: true }
+          : { text: `Deleted ${r.deleted} file${r.deleted === 1 ? '' : 's'}. They’re in Google Drive’s trash for 30 days if you need them back.` },
+      );
+    } catch (e) {
+      setToast({ text: e instanceof Error ? e.message : 'Nothing was deleted. Try again.', error: true });
+    } finally {
+      setDeleting(false);
+    }
+  };
   const loadStatus = useCallback(() => documentationService.status().then(setStatus, () => setStatus(null)), []);
   useEffect(() => void loadStatus(), [loadStatus]);
 
@@ -166,11 +207,18 @@ export function DocumentationPage() {
             <ImageIcon className="h-4 w-4 text-uplift" aria-hidden /> Field documentation
             {docs && <span className="text-sm font-normal text-muted">{formatNumber(all.length)}</span>}
           </h2>
-          {canUpload && (
-            <button type="button" className="btn-primary min-h-11 px-4" onClick={() => setUploadOpen(true)} disabled={!ready || !online} title={!ready ? 'Google Drive isn’t connected yet' : undefined}>
-              <Upload className="h-4 w-4" aria-hidden /> Upload
-            </button>
-          )}
+          <div className="flex flex-wrap gap-2">
+            {canManage && all.length > 0 && (
+              <button type="button" className="btn-ghost min-h-11 px-4" aria-pressed={selecting} onClick={() => (selecting ? stopSelecting() : setSelecting(true))}>
+                {selecting ? <X className="h-4 w-4" aria-hidden /> : <CheckSquare className="h-4 w-4" aria-hidden />} {selecting ? 'Done selecting' : 'Select'}
+              </button>
+            )}
+            {canUpload && !selecting && (
+              <button type="button" className="btn-primary min-h-11 px-4" onClick={() => setUploadOpen(true)} disabled={!ready || !online} title={!ready ? 'Google Drive isn’t connected yet' : undefined}>
+                <Upload className="h-4 w-4" aria-hidden /> Upload
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Show">
@@ -250,7 +298,7 @@ export function DocumentationPage() {
                 <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                   {g.items.map((d) => (
                     <li key={d.id}>
-                      <DocCard doc={d} thumb={links[d.id]?.thumb} onOpen={() => setOpenId(d.id)} />
+                      <DocCard doc={d} thumb={links[d.id]?.thumb} selecting={selecting} selected={selected.has(d.id)} onOpen={() => (selecting ? toggle(d.id) : setOpenId(d.id))} />
                     </li>
                   ))}
                 </ul>
@@ -259,6 +307,22 @@ export function DocumentationPage() {
           </div>
         )}
       </section>
+
+      {selecting && (
+        <div className="sticky bottom-4 z-30 mx-auto flex w-full max-w-xl flex-wrap items-center gap-2 rounded-2xl border border-line bg-surface-raised/95 p-3 shadow-2xl shadow-black/50 backdrop-blur-md">
+          <span className="min-w-0 flex-1 text-sm font-semibold">{selected.size ? `${selected.size} selected` : 'Tap files to select them'}</span>
+          <button
+            type="button"
+            className="btn-ghost min-h-10 px-3 text-xs"
+            onClick={() => setSelected((s) => (shown.every((d) => s.has(d.id)) ? new Set() : new Set(shown.map((d) => d.id))))}
+          >
+            {shown.length && shown.every((d) => selected.has(d.id)) ? 'Select none' : `Select all ${shown.length}`}
+          </button>
+          <button type="button" className="btn-primary min-h-10 bg-status-out px-4 text-xs text-white" onClick={() => void deleteSelected()} disabled={!selected.size || deleting}>
+            {deleting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Trash2 className="h-4 w-4" aria-hidden />} Delete
+          </button>
+        </div>
+      )}
 
       <UploadSheet
         open={uploadOpen}
@@ -294,13 +358,14 @@ export function DocumentationPage() {
           }}
           onRemove={async () => {
             try {
-              await documentationService.remove(opened.id);
+              const r = await documentationService.remove([opened.id]);
+              if (r.failed.length) return r.failed[0].error;
               setDocs((list) => list && list.filter((d) => d.id !== opened.id));
               setOpenId(null);
-              setToast({ text: `Removed “${opened.title}” from the portal. It’s still in Google Drive.` });
+              setToast({ text: `Deleted “${opened.title}”. It’s in Google Drive’s trash for 30 days if you need it back.` });
               return null;
             } catch (e) {
-              return e instanceof Error ? e.message : 'Not removed.';
+              return e instanceof Error ? e.message : 'Not deleted.';
             }
           }}
         />
@@ -403,14 +468,19 @@ function DriveCard({ status, isAdmin, sample, onConnect }: { status: DriveStatus
   );
 }
 
-function DocCard({ doc, thumb, onOpen }: { doc: DocFile; thumb: string | undefined; onOpen: () => void }) {
+function DocCard({ doc, thumb, selecting = false, selected = false, onOpen }: { doc: DocFile; thumb: string | undefined; selecting?: boolean; selected?: boolean; onOpen: () => void }) {
   const [failed, setFailed] = useState(false);
   const isVideo = doc.mimeType.startsWith('video/');
   const Icon = isVideo ? Film : doc.mimeType.startsWith('image/') ? ImageIcon : FileText;
   const minutes = doc.durationMs ? `${Math.floor(doc.durationMs / 60000)}:${String(Math.round((doc.durationMs % 60000) / 1000)).padStart(2, '0')}` : null;
   return (
-    <button type="button" onClick={onOpen} className="tap group flex w-full flex-col gap-1.5 text-left">
-      <span className="relative block aspect-[4/3] w-full overflow-hidden rounded-xl border border-line/60 bg-surface-sunken">
+    <button type="button" onClick={onOpen} aria-pressed={selecting ? selected : undefined} className="tap group flex w-full flex-col gap-1.5 text-left">
+      <span className={`relative block aspect-[4/3] w-full overflow-hidden rounded-xl border bg-surface-sunken ${selected ? 'border-uplift ring-2 ring-uplift' : 'border-line/60'}`}>
+        {selecting && (
+          <span className={`absolute right-2 top-2 z-10 grid h-6 w-6 place-items-center rounded-md border-2 ${selected ? 'border-uplift bg-uplift text-page' : 'border-white/80 bg-black/40'}`} aria-hidden>
+            {selected && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
+          </span>
+        )}
         {thumb && !failed ? (
           <img src={thumb} alt="" loading="lazy" onError={() => setFailed(true)} className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]" />
         ) : thumb === undefined && !failed ? (

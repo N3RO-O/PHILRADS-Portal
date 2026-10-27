@@ -11,6 +11,7 @@ import { createInventoryStore } from './inventory/inventoryStore';
 import { createSupabaseMapService, mockMapService } from './map/mapService';
 import type { MapService } from './map/types';
 import { createSupabaseOnboardingService, mockOnboardingService, type OnboardingService } from './onboarding/onboardingService';
+import { createSupabaseProfileService, mockProfileService, type ProfileService } from './profiles/profileService';
 import { createSupabaseProjectsService, mockProjectsService, type ProjectsService } from './projects/projectsService';
 import { createSupabaseResourcesService, mockResourcesService } from './resources/resourcesService';
 import type { ResourcesService } from './resources/types';
@@ -54,6 +55,9 @@ export const uploadQueue = createUploadQueue(documentationService);
 
 /** Projects: programs and projects with milestones, reporting deadlines and team. */
 export const projectsService: ProjectsService = live ? createSupabaseProjectsService(live) : mockProjectsService;
+
+/** Profiles: photo, position, phone and bio (Profile page). */
+export const profileService: ProfileService = live ? createSupabaseProfileService(live) : mockProfileService;
 
 /** The admin log (Logs page, administrators only). */
 export const auditService: AuditService = live ? createSupabaseAuditService(live) : mockAuditService;

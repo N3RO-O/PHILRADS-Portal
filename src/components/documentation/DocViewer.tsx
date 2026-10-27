@@ -56,7 +56,7 @@ export function DocViewer({ doc, links, canEdit, events, places, onClose, onSave
   };
 
   const remove = async () => {
-    if (!window.confirm(`Remove “${doc.title}” from the portal? The file stays in Google Drive.`)) return;
+    if (!window.confirm(`Delete “${doc.title}”? It’s also moved to Google Drive’s trash (recoverable there for 30 days).`)) return;
     setBusy('remove');
     const err = await onRemove();
     setBusy(null);
@@ -74,9 +74,9 @@ export function DocViewer({ doc, links, canEdit, events, places, onClose, onSave
         <div className="flex gap-2">
           {canEdit && !editing && (
             <>
-              <button type="button" className="btn-ghost px-3 text-status-out" onClick={() => void remove()} disabled={Boolean(busy)} title="Remove from the portal">
+              <button type="button" className="btn-ghost px-3 text-status-out" onClick={() => void remove()} disabled={Boolean(busy)} title="Delete (also in Google Drive)">
                 {busy === 'remove' ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Trash2 className="h-4 w-4" aria-hidden />}
-                <span className="sr-only">Remove from the portal</span>
+                <span className="sr-only">Delete (also in Google Drive)</span>
               </button>
               <button type="button" className="btn-ghost px-3" onClick={() => setEditing(true)}>
                 <Pencil className="h-4 w-4" aria-hidden /> Edit

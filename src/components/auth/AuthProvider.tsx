@@ -49,6 +49,8 @@ interface AuthContextValue {
   /** Emails a password-reset link. Returns an error message, or null. */
   requestPasswordReset(email: string): Promise<string | null>;
   signOut(): Promise<void>;
+  /** After saving your profile: show the changes everywhere without reloading. */
+  updateProfile(patch: Partial<StaffProfile>): void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -56,7 +58,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 async function fetchProfile(client: SupabaseClient, userId: string): Promise<{ profile: StaffProfile | null; error?: string; network?: boolean }> {
   const { data, error } = await client
     .from('profiles')
-    .select('id, display_name, full_name, office, is_active, role_key, roles(name)')
+    .select('id, display_name, full_name, office, is_active, role_key, job_title, phone, bio, avatar_data, avatar_color, roles(name)')
     .eq('id', userId)
     .maybeSingle();
   if (error) {
@@ -76,6 +78,11 @@ async function fetchProfile(client: SupabaseClient, userId: string): Promise<{ p
       office: (data.office as string | null) ?? undefined,
       initials: initialsOf(displayName),
       isActive: Boolean(data.is_active),
+      jobTitle: (data.job_title as string | null) ?? null,
+      phone: (data.phone as string | null) ?? null,
+      bio: (data.bio as string | null) ?? null,
+      avatar: (data.avatar_data as string | null) ?? null,
+      avatarColor: (data.avatar_color as string | null) ?? null,
     },
   };
 }
@@ -252,6 +259,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState({ status: 'demo', profile: demoProfileFor(roleKey) });
   }, []);
 
+  const updateProfile = useCallback((patch: Partial<StaffProfile>) => {
+    setState((s) => {
+      if ((s.status !== 'demo' && s.status !== 'signed-in') || !s.profile) return s;
+      const profile = { ...s.profile, ...patch };
+      profile.initials = initialsOf(profile.displayName);
+      return { ...s, profile } as typeof s;
+    });
+  }, []);
+
   const value = useMemo<AuthContextValue>(() => {
     const granted = new Set<string>(
       state.status === 'demo'
@@ -270,8 +286,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setPassword,
       requestPasswordReset,
       signOut,
+      updateProfile,
     };
-  }, [state, needsPassword, signIn, setPassword, requestPasswordReset, signOut, setDemoRole]);
+  }, [state, needsPassword, signIn, setPassword, requestPasswordReset, signOut, setDemoRole, updateProfile]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

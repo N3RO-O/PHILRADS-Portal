@@ -12,7 +12,8 @@ export type ModuleId =
   | 'print-docs'
   | 'resources'
   | 'staff'
-  | 'logs';
+  | 'logs'
+  | 'profile';
 
 /** Where a value came from. The UI labels anything from "mock" as sample data. */
 export type DataSource = 'mock' | 'supabase';
@@ -26,6 +27,13 @@ export interface StaffProfile {
   office?: string;
   initials: string;
   isActive: boolean;
+  jobTitle?: string | null;
+  phone?: string | null;
+  bio?: string | null;
+  /** Profile picture (a small data URL), or none. */
+  avatar?: string | null;
+  /** Colour of the initials badge when there's no picture. */
+  avatarColor?: string | null;
 }
 
 export type TaskPriority = 'low' | 'medium' | 'high';

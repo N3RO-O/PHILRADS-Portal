@@ -14,7 +14,7 @@ interface NavItemsProps {
  */
 export function NavItems({ expanded, onNavigate }: NavItemsProps) {
   const { can } = useAuth();
-  const visible = MODULES.filter((m) => !m.permission || can(m.permission));
+  const visible = MODULES.filter((m) => !m.hidden && (!m.permission || can(m.permission)));
   return (
     <>
       {NAV_GROUPS.filter((group) => visible.some((m) => m.group === group)).map((group, gi) => (

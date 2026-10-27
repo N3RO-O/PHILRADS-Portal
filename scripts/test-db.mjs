@@ -323,6 +323,49 @@ await check('staff cannot delete a project', async () => {
   return 'still there';
 });
 
+// Projects: people to reach changes over time; additional beneficiaries counted apart
+await check('changing people to reach is in the project history', async () => {
+  await as(A, `update public.projects set beneficiaries_target = 5200 where id = ${PRJ}`);
+  const l = (await db.query(`select summary from public.activity_logs where action = 'project.people_to_reach' and entity_id = (${PRJ})::text`)).rows;
+  if (l.length !== 1 || !l[0].summary.includes('5,000 to 5,200')) throw new Error(JSON.stringify(l));
+  return l[0].summary;
+});
+await check('additional beneficiaries are counted and logged', async () => {
+  await as(B, `update public.projects set beneficiaries_additional = 300, donor = 'Donor Foundation' where id = ${PRJ}`);
+  const l = (await db.query(`select summary from public.activity_logs where action = 'project.additional_beneficiaries'`)).rows;
+  if (l.length !== 1 || !l[0].summary.includes('0 to 300')) throw new Error(JSON.stringify(l));
+  return l[0].summary;
+});
+await check('additional beneficiaries cannot be negative', () => as(A, `update public.projects set beneficiaries_additional = -5 where id = ${PRJ}`), true);
+await check('a file deleted in Google Drive leaves the portal and says why', async () => {
+  await db.exec(`insert into public.documents (title, category, module, mime_type, drive_file_id, uploaded_by) values ('Gone in Drive', 'Photos', 'documentation', 'image/jpeg', 'drive-file-gone', '${B}')`);
+  await db.exec(`update public.documents set removed_at = now(), removed_reason = 'drive' where drive_file_id = 'drive-file-gone'`);
+  const seen = (await as(B, `select id from public.documents where drive_file_id = 'drive-file-gone'`)).rows.length;
+  const l = (await db.query(`select summary from public.activity_logs where action = 'document.deleted_in_drive'`)).rows;
+  if (seen !== 0 || l.length !== 1) throw new Error(JSON.stringify({ seen, l }));
+  return l[0].summary;
+});
+await check('a file deleted in the portal is logged with who deleted it', async () => {
+  await db.exec(`insert into public.documents (title, category, module, mime_type, drive_file_id, uploaded_by) values ('Delete me', 'Photos', 'documentation', 'image/jpeg', 'drive-file-del', '${B}')`);
+  await db.exec(`update public.documents set removed_at = now(), removed_by = '${A}', removed_reason = 'portal' where drive_file_id = 'drive-file-del'`);
+  const l = (await db.query(`select summary from public.activity_logs where action = 'document.removed' and summary like '%Delete me%'`)).rows;
+  if (l.length !== 1 || !l[0].summary.startsWith('admin deleted') || !l[0].summary.includes('trash')) throw new Error(JSON.stringify(l));
+  return l[0].summary;
+});
+
+// Profiles: describe yourself; a small picture; colleagues can see it, only you can change it
+await check('staff edit their own profile (position, phone, bio, picture, colour)', () =>
+  as(B, `update public.profiles set job_title = 'Field officer', phone = '+63 917 123 4567', bio = 'Relief logistics in Bicol.', avatar_data = 'data:image/jpeg;base64,AAAA', avatar_color = '#ec952a' where id = '${B}' returning job_title`).then(expectRows(1)));
+await check('colleagues can see a profile', () => as(A, `select bio, avatar_data from public.profiles where id = '${B}' and bio is not null`).then(expectRows(1)));
+await check('nobody can change someone else’s profile', async () => {
+  await as(B, `update public.profiles set bio = 'hacked' where id = '${A}'`);
+  const r = (await db.query(`select bio from public.profiles where id = '${A}'`)).rows[0];
+  if (r.bio === 'hacked') throw new Error('changed');
+  return 'unchanged';
+});
+await check('a profile picture must be an image', () => as(B, `update public.profiles set avatar_data = 'javascript:alert(1)' where id = '${B}'`), true);
+await check('a bio is at most 500 characters', () => as(B, `update public.profiles set bio = repeat('x', 501) where id = '${B}'`), true);
+
 // Inventory: every write goes through record_inventory_movement / decide_inventory_transfer
 const rpc = (uid, args) => as(uid, `select public.record_inventory_movement(${args}) r`).then((r) => r.rows[0].r);
 const cid = (n) => `'00000000-0000-4000-8000-${String(n).padStart(12, '0')}'`;

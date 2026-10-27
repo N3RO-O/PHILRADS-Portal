@@ -10,6 +10,7 @@ import {
   Printer,
   ScrollText,
   SquareCheckBig,
+  UserRound,
   UsersRound,
   type LucideIcon,
 } from 'lucide-react';
@@ -30,6 +31,8 @@ export interface ModuleConfig {
   plannedScope: string[];
   /** Shown in the navigation only to staff with this permission. */
   permission?: PermissionKey;
+  /** A page that isn't in the navigation (reached from the account menu). */
+  hidden?: boolean;
 }
 
 /** The nine portal modules, in the order PHILRADS specified. */
@@ -147,6 +150,16 @@ export const MODULES: ModuleConfig[] = [
     summary: 'Everything that happens in the portal: tasks, stock, staff changes and sign-ins, with flags to look into. Nobody can change or delete it.',
     plannedScope: [],
     permission: 'audit.read',
+  },
+  {
+    id: 'profile',
+    label: 'Profile',
+    path: '/profile',
+    icon: UserRound,
+    group: 'Overview',
+    summary: 'Your photo, position and a short bio, seen by colleagues.',
+    plannedScope: [],
+    hidden: true,
   },
 ];
 

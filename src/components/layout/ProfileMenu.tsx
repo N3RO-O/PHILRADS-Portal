@@ -1,6 +1,6 @@
 import { useCallback, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, Download, LogOut, Rocket, SquareCheckBig, UsersRound } from 'lucide-react';
+import { ChevronDown, Download, LogOut, Rocket, SquareCheckBig, UserRound, UsersRound } from 'lucide-react';
 import { useOnboarding } from '../onboarding/OnboardingProvider';
 import { useDismiss } from '../../hooks/useDismiss';
 import { DEMO_ROLES } from '../../config/permissions';
@@ -43,20 +43,23 @@ export function ProfileMenu() {
         onClick={() => setOpen((o) => !o)}
         className="flex h-10 items-center gap-2 rounded-xl pl-1 pr-2 transition-colors hover:bg-surface-raised"
       >
-        <Avatar initials={profile.initials} size="sm" />
+        <Avatar initials={profile.initials} src={profile.avatar} color={profile.avatarColor} size="sm" />
         <span className="hidden max-w-[9rem] truncate text-sm font-medium text-ink sm:block">{profile.displayName}</span>
         <ChevronDown className="h-4 w-4 text-muted" aria-hidden />
       </button>
       {open && (
         <div id={panelId} className="popover absolute right-0 top-12 z-50 w-72 origin-top-right animate-pop-in p-3">
           <div className="flex items-center gap-3 border-b border-line px-2 pb-3">
-            <Avatar initials={profile.initials} />
+            <Avatar initials={profile.initials} src={profile.avatar} color={profile.avatarColor} />
             <div className="min-w-0">
               <p className="truncate font-semibold">{profile.displayName}</p>
-              <p className="truncate text-xs text-muted">{[profile.roleName, profile.office].filter(Boolean).join(' · ')}</p>
+              <p className="truncate text-xs text-muted">{[profile.jobTitle || profile.roleName, profile.office].filter(Boolean).join(' · ')}</p>
             </div>
           </div>
           <div className="flex flex-col gap-0.5 py-2">
+            <Link to="/profile" className={itemClass} onClick={() => setOpen(false)}>
+              <UserRound className="h-4 w-4 text-uplift" aria-hidden /> Your profile
+            </Link>
             <Link to="/#my-tasks" className={itemClass} onClick={() => setOpen(false)}>
               <SquareCheckBig className="h-4 w-4 text-uplift" aria-hidden /> My tasks
             </Link>

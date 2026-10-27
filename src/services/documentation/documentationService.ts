@@ -76,8 +76,10 @@ export interface DocumentationService {
   /** Resolves to the new record's id. */
   upload(file: File, meta: UploadMeta, options?: UploadOptions): Promise<string>;
   update(id: string, patch: DocPatch): Promise<void>;
-  /** Off the portal; the file stays in Drive. */
-  remove(id: string): Promise<void>;
+  /** Deletes files in the portal and moves them to Google Drive's trash (recoverable there for 30 days). */
+  remove(ids: string[]): Promise<{ deleted: number; failed: { id: string; error: string }[] }>;
+  /** Takes out files that were deleted in Google Drive; resolves to how many. */
+  sync(): Promise<number>;
 }
 
 /** The folder PHILRADS chose for Documentation (2026-10-28); an administrator can change it when connecting. */
@@ -243,9 +245,15 @@ export function createSupabaseDocumentationService(client: SupabaseClient): Docu
       const { error } = await client.from('documents').update(row).eq('id', id);
       if (error) throw new DocRuleError(error.code === '42501' ? 'Only the person who uploaded it, or an administrator, can change it.' : error.message);
     },
-    async remove(id) {
-      const { error } = await client.rpc('remove_document', { p_id: id });
-      if (error) throw new DocRuleError(error.message);
+    async remove(ids) {
+      return api<{ deleted: number; failed: { id: string; error: string }[] }>('delete', { ids });
+    },
+    async sync() {
+      try {
+        return (await api<{ removed: number }>('sync')).removed ?? 0;
+      } catch {
+        return 0;
+      }
     },
   };
 }
@@ -354,8 +362,13 @@ export const mockDocumentationService: DocumentationService = {
   async update(id, p) {
     sampleState.files = sampleState.files.map((f) => (f.id === id ? { ...f, ...p } : f));
   },
-  async remove(id) {
-    sampleState.files = sampleState.files.filter((f) => f.id !== id);
+  async remove(ids) {
+    const before = sampleState.files.length;
+    sampleState.files = sampleState.files.filter((f) => !ids.includes(f.id));
+    return { deleted: before - sampleState.files.length, failed: [] };
+  },
+  async sync() {
+    return 0;
   },
 };
 
