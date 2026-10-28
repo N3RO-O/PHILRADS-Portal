@@ -84,6 +84,8 @@ export function useDocViewPrefs(storeKey = STORE) {
 
 export function ViewMenu({ view, pane, onChange, showPanes }: { view: DocView; pane: DocPane; onChange: (p: Partial<{ view: DocView; pane: DocPane }>) => void; showPanes: boolean }) {
   const [open, setOpen] = useState(false);
+  // Opens toward the side with room: rightward when the button sits near the left edge (phones).
+  const [toRight, setToRight] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
   const close = useCallback(() => setOpen(false), []);
@@ -93,11 +95,15 @@ export function ViewMenu({ view, pane, onChange, showPanes }: { view: DocView; p
   const dot = (on: boolean) => <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${on ? 'bg-ink' : 'bg-transparent'}`} aria-hidden />;
   return (
     <div ref={wrap} className="relative">
-      <button ref={button} type="button" className="btn-ghost min-h-11 px-3.5" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+      <button ref={button} type="button" className="btn-ghost min-h-11 px-3.5" aria-haspopup="menu" aria-expanded={open} onClick={() => {
+          const r = button.current?.getBoundingClientRect();
+          setToRight(Boolean(r && r.right < 248));
+          setOpen((o) => !o);
+        }}>
         <Current className="h-4 w-4" aria-hidden /> View <ChevronDown className="h-4 w-4 text-muted" aria-hidden />
       </button>
       {open && (
-        <div role="menu" aria-label="View" className="popover absolute right-0 top-12 z-40 w-60 origin-top-right animate-pop-in p-1.5">
+        <div role="menu" aria-label="View" className={`popover absolute top-12 z-40 w-60 max-w-[calc(100vw-2rem)] animate-pop-in p-1.5 ${toRight ? 'left-0 origin-top-left' : 'right-0 origin-top-right'}`}>
           {VIEWS.map((v) => (
             <button key={v.id} type="button" role="menuitemradio" aria-checked={view === v.id} className={item} onClick={() => (onChange({ view: v.id }), setOpen(false))}>
               {dot(view === v.id)}
