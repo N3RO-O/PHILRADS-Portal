@@ -10,6 +10,7 @@ export type ModuleId =
   | 'projects'
   | 'tasks'
   | 'chat'
+  | 'statistics'
   | 'print-docs'
   | 'resources'
   | 'staff'

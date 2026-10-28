@@ -10,3 +10,6 @@ dev-dist
 *.log
 supabase/.temp
 supabase/.branches
+
+# Real records copied in for local previews only (they live in the database)
+*.local.json

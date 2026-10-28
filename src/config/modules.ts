@@ -1,4 +1,5 @@
 import {
+  ChartColumn,
   ClipboardCheck,
   FileText,
   FolderKanban,
@@ -97,6 +98,15 @@ export const MODULES: ModuleConfig[] = [
     group: 'Field operations',
     summary: 'Log and coordinate disaster response, from rapid needs assessment to distribution and reporting.',
     plannedScope: ['Response operations and activity logs', 'Assessments and distributions', 'Links to inventory and documentation'],
+  },
+  {
+    id: 'statistics',
+    label: 'Statistics',
+    path: '/statistics',
+    icon: ChartColumn,
+    group: 'Field operations',
+    summary: 'Every PHILRADS project and activity since 2023: where, when, who was served, donors and partners.',
+    plannedScope: [],
   },
   {
     id: 'projects',

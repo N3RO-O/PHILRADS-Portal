@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { CloudOff, CloudSun, Fullscreen, List, LocateFixed, Loader2, MapPin, Maximize2, Minimize2, Plus, Search, UserRound, X } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
 import { CheckInDetails, LiveDetails, PlaceDetails } from '../components/map/MapDetails';
 import { CheckInSheet, PlaceForm } from '../components/map/MapForms';
+import { SiteDetails } from '../components/map/SiteDetails';
 import { isFresh, MapCanvas, type MapFocus, type MapSelection } from '../components/map/MapCanvas';
 import { LiveShareCard, useLiveSharing } from '../components/map/LiveSharing';
 import { useMapWeather } from '../components/map/useMapWeather';
@@ -16,18 +18,28 @@ import { currentPosition, distanceM, timeAgo, type LatLng } from '../lib/geo';
 import { formatNumber, initialsOf } from '../lib/format';
 import { useLiveRefresh } from '../lib/imsActions';
 import { eventAt, stockAt } from '../lib/mapStock';
-import { inventoryStore, mapService } from '../services';
+import { activitiesService, inventoryStore, mapService } from '../services';
+import { groupSites, PROGRAMS, programMeta, type ActivitySite } from '../services/activities/types';
 import { useInventoryState } from '../services/inventory/inventoryStore';
 import type { InventorySnapshot } from '../services/inventory/types';
 import { kindMeta, PLACE_KINDS, type CheckIn, type LivePosition, type MapPlace, type PlaceDraft, type PlaceKind } from '../services/map/types';
 
-type Layer = PlaceKind | 'team';
-const ALL_LAYERS: Layer[] = [...PLACE_KINDS.map((k) => k.key), 'team'];
+type Layer = PlaceKind | 'team' | 'activities';
+const ALL_LAYERS: Layer[] = [...PLACE_KINDS.map((k) => k.key), 'team', 'activities'];
 const LAYER_KEY = 'philrads.map.layers';
+// Saved choices from before the Statistics layer existed: it's added once, turned on.
+const ACTIVITIES_ADDED = 'philrads.map.layers.activities';
 const readLayers = (): Set<Layer> => {
   try {
     const raw = localStorage.getItem(LAYER_KEY);
-    if (raw) return new Set((JSON.parse(raw) as Layer[]).filter((l) => ALL_LAYERS.includes(l)));
+    if (raw) {
+      const saved = new Set((JSON.parse(raw) as Layer[]).filter((l) => ALL_LAYERS.includes(l)));
+      if (!localStorage.getItem(ACTIVITIES_ADDED)) {
+        localStorage.setItem(ACTIVITIES_ADDED, '1');
+        saved.add('activities');
+      }
+      return saved;
+    }
   } catch {
     /* default: everything */
   }
@@ -46,6 +58,9 @@ export function LiveMapPage() {
   const canCheckIn = can('map.checkin');
   const placesQ = useAsyncData(() => mapService.listPlaces());
   const checksQ = useAsyncData(() => mapService.listCheckIns());
+  const activitiesQ = useAsyncData(() => activitiesService.list());
+  const [actYear, setActYear] = useState<number | 'all'>('all');
+  const [params, setParams] = useSearchParams();
   useLiveRefresh(true, checksQ.reload);
   const { snapshot } = useInventoryState(inventoryStore);
   useEffect(() => {
@@ -177,6 +192,19 @@ export function LiveMapPage() {
   );
   const shownCheckIns = useMemo(() => (layers.has('team') ? checkIns.filter((c) => !needle || [c.name, c.note].some((s) => s?.toLowerCase().includes(needle))) : []), [checkIns, layers, needle]);
   const shownLive = useMemo(() => (layers.has('team') ? live.filter((p) => !needle || p.name.toLowerCase().includes(needle)) : []), [live, layers, needle]);
+  // Statistics layer: sites of past activities (scheduled ones aren't done yet, so they stay off the map).
+  const activities = useMemo(() => (activitiesQ.status === 'success' ? activitiesQ.data.filter((a) => a.status !== 'scheduled') : []), [activitiesQ.status, activitiesQ.data]);
+  const actYears = useMemo(() => [...new Set(activities.map((a) => a.year))].sort((a, b) => b - a), [activities]);
+  const sites = useMemo(() => groupSites(activities.filter((a) => actYear === 'all' || a.year === actYear)), [activities, actYear]);
+  const shownSites = useMemo(
+    () =>
+      layers.has('activities')
+        ? needle
+          ? groupSites(sites.flatMap((s) => s.activities).filter((a) => [a.site, a.activity, a.response, a.donors, a.partner].some((v) => v?.toLowerCase().includes(needle))))
+          : sites
+        : [],
+    [sites, layers, needle],
+  );
 
   // First load: fit everything in view.
   const [fitted, setFitted] = useState(false);
@@ -204,9 +232,23 @@ export function LiveMapPage() {
     setSelected(s);
     setPanel(null);
     if (!s || !fly) return;
-    const p = s.type === 'place' ? places.find((x) => x.id === s.id) : s.type === 'live' ? live.find((x) => x.profileId === s.id) : checkIns.find((x) => x.id === s.id);
-    if (p) setFocus({ lat: p.lat, lng: p.lng, zoom: 15, key: Date.now() });
-  }, [places, checkIns, live]);
+    const p =
+      s.type === 'place' ? places.find((x) => x.id === s.id) : s.type === 'live' ? live.find((x) => x.profileId === s.id) : s.type === 'site' ? sites.find((x) => x.key === s.id) : checkIns.find((x) => x.id === s.id);
+    if (p) setFocus({ lat: p.lat, lng: p.lng, zoom: s.type === 'site' ? 12 : 15, key: Date.now() });
+  }, [places, checkIns, live, sites]);
+
+  // Opened from Statistics ("Show on the Live Map"): that site, layer on, all years.
+  const siteParam = params.get('site');
+  useEffect(() => {
+    if (!siteParam || activitiesQ.status !== 'success') return;
+    const s = groupSites(activities).find((x) => x.key === siteParam);
+    setParams({}, { replace: true });
+    if (!s) return;
+    setActYear('all');
+    setLayers((l) => new Set([...l, 'activities']));
+    setSelected({ type: 'site', id: s.key });
+    setFocus({ lat: s.lat, lng: s.lng, zoom: 12, key: Date.now() });
+  }, [siteParam, activitiesQ.status, activities, setParams]);
 
   const locateMe = async () => {
     setLocating(true);
@@ -220,6 +262,7 @@ export function LiveMapPage() {
   const selectedPlace = selected?.type === 'place' ? places.find((p) => p.id === selected.id) ?? null : null;
   const selectedCheck = selected?.type === 'checkin' ? checkIns.find((c) => c.id === selected.id) ?? null : null;
   const selectedLive = selected?.type === 'live' ? live.find((p) => p.profileId === selected.id) ?? null : null;
+  const selectedSite = selected?.type === 'site' ? (sites.find((s) => s.key === selected.id) ?? groupSites(activities).find((s) => s.key === selected.id) ?? null) : null;
 
   if (!can('map.read'))
     return (
@@ -240,6 +283,12 @@ export function LiveMapPage() {
     shownCheckIns,
     live,
     shownLive,
+    sites,
+    shownSites,
+    actYear,
+    setActYear,
+    actYears,
+    activitiesLoading: activitiesQ.status === 'loading',
     snapshot,
     canManage,
     onAdd: () => setPanel({ type: 'form', draft: blankDraft() }),
@@ -286,6 +335,7 @@ export function LiveMapPage() {
           ) : (
             <MapCanvas
               places={shownPlaces}
+              sites={shownSites}
               checkIns={shownCheckIns}
               live={shownLive}
               selected={selected}
@@ -308,7 +358,7 @@ export function LiveMapPage() {
               <MapButton label={full === 'off' ? 'Full screen' : 'Exit full screen'} active={full !== 'off'} onClick={() => void toggleFull()}>
                 {full === 'off' ? <Fullscreen className="h-[1.125rem] w-[1.125rem]" aria-hidden /> : <Minimize2 className="h-[1.125rem] w-[1.125rem]" aria-hidden />}
               </MapButton>
-              <MapButton label="Show everything" onClick={() => setFit({ points: [...shownPlaces, ...shownCheckIns, ...shownLive], key: Date.now() })}>
+              <MapButton label="Show everything" onClick={() => setFit({ points: [...shownPlaces, ...shownCheckIns, ...shownLive, ...shownSites], key: Date.now() })}>
                 <Maximize2 className="h-[1.125rem] w-[1.125rem]" aria-hidden />
               </MapButton>
               <MapButton label="Show my location" onClick={() => void locateMe()}>
@@ -396,7 +446,7 @@ export function LiveMapPage() {
             <div className="absolute inset-x-3 bottom-6 z-[600] flex items-center justify-between gap-2 lg:hidden">
               <button type="button" className="flex min-h-12 items-center gap-2 rounded-full border border-line bg-surface-raised/95 px-4 text-sm font-semibold shadow-xl backdrop-blur-md" onClick={() => setPanel({ type: 'list' })}>
                 <List className="h-4 w-4 text-uplift" aria-hidden /> List
-                <span className="text-xs font-normal text-muted">{formatNumber(shownPlaces.length + shownCheckIns.length + shownLive.length)}</span>
+                <span className="text-xs font-normal text-muted">{formatNumber(shownPlaces.length + shownCheckIns.length + shownLive.length + shownSites.length)}</span>
               </button>
               {canCheckIn && <ShareButton live={sharing.status !== 'off'} onClick={() => setPanel({ type: 'share' })} disabled={!online} />}
             </div>
@@ -449,6 +499,16 @@ export function LiveMapPage() {
             })
           }
           onSelectCheckIn={(c) => select({ type: 'checkin', id: c.id }, true)}
+        />
+      )}
+      {selectedSite && !panel && (
+        <SiteDetails
+          site={selectedSite}
+          onClose={() => setSelected(null)}
+          onCenter={() => {
+            setFocus({ lat: selectedSite.lat, lng: selectedSite.lng, zoom: 13, key: Date.now() });
+            setSelected(null);
+          }}
         />
       )}
       {selectedCheck && !panel && (
@@ -643,6 +703,13 @@ interface PanelProps {
   shownCheckIns: CheckIn[];
   live: LivePosition[];
   shownLive: LivePosition[];
+  /** Statistics layer: sites in the chosen year, and those matching the search. */
+  sites: ActivitySite[];
+  shownSites: ActivitySite[];
+  actYear: number | 'all';
+  setActYear: (y: number | 'all') => void;
+  actYears: number[];
+  activitiesLoading: boolean;
   snapshot: InventorySnapshot | null;
   canManage: boolean;
   /** Places are still loading: placeholder rows instead of "no places". */
@@ -652,8 +719,8 @@ interface PanelProps {
 }
 
 /** Search, layers (with counts) and the lists of team check-ins and places. */
-function PlacesPanel({ search, setSearch, layers, toggleLayer, places, shownPlaces, checkIns, shownCheckIns, live, shownLive, snapshot, canManage, loading, onAdd, onSelect }: PanelProps) {
-  const counts = (l: Layer) => (l === 'team' ? checkIns.length + live.length : places.filter((p) => p.kind === l).length);
+function PlacesPanel({ search, setSearch, layers, toggleLayer, places, shownPlaces, checkIns, shownCheckIns, live, shownLive, sites, shownSites, actYear, setActYear, actYears, activitiesLoading, snapshot, canManage, loading, onAdd, onSelect }: PanelProps) {
+  const counts = (l: Layer) => (l === 'team' ? checkIns.length + live.length : l === 'activities' ? sites.length : places.filter((p) => p.kind === l).length);
   const sorted = [...shownPlaces].sort((a, b) => a.name.localeCompare(b.name));
   return (
     <div className="flex flex-col gap-5">
@@ -668,7 +735,7 @@ function PlacesPanel({ search, setSearch, layers, toggleLayer, places, shownPlac
       <fieldset>
         <legend className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Show on the map</legend>
         <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-1">
-          {[...PLACE_KINDS.map((k) => ({ key: k.key as Layer, label: k.plural, color: k.color })), { key: 'team' as Layer, label: 'Team: live and check-ins', color: '#7a1f1f' }].map((l) => (
+          {[...PLACE_KINDS.map((k) => ({ key: k.key as Layer, label: k.plural, color: k.color })), { key: 'team' as Layer, label: 'Team: live and check-ins', color: '#7a1f1f' }, { key: 'activities' as Layer, label: 'Past activities (Statistics)', color: programMeta('emergency').color }].map((l) => (
             <label key={l.key} className="tap flex min-h-10 cursor-pointer items-center gap-3 rounded-xl px-2 text-sm hover:bg-white/[0.04]">
               <input type="checkbox" className="h-4 w-4 accent-uplift" checked={layers.has(l.key)} onChange={() => toggleLayer(l.key)} />
               <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: l.color }} aria-hidden />
@@ -678,6 +745,50 @@ function PlacesPanel({ search, setSearch, layers, toggleLayer, places, shownPlac
           ))}
         </div>
       </fieldset>
+
+      {layers.has('activities') && actYears.length > 0 && (
+        <section aria-labelledby="map-acts" className="flex flex-col gap-2">
+          <h3 id="map-acts" className="text-xs font-semibold uppercase tracking-wider text-muted">
+            Past activities <span className="font-normal normal-case tracking-normal">{shownSites.length} sites</span>
+          </h3>
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Year">
+            {(['all', ...actYears] as const).map((y) => (
+              <button key={y} type="button" className="chip min-h-7 px-2.5" aria-pressed={actYear === y} onClick={() => setActYear(y)}>
+                {y === 'all' ? 'All years' : y}
+              </button>
+            ))}
+          </div>
+          <p className="flex flex-wrap gap-x-3 gap-y-1 text-[0.6875rem] text-muted">
+            {PROGRAMS.filter((p) => sites.some((s) => s.program === p.key)).map((p) => (
+              <span key={p.key} className="inline-flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full" style={{ background: p.color }} aria-hidden />
+                {p.short}
+              </span>
+            ))}
+            <span>· bigger circle, more people served</span>
+          </p>
+          <ul className="flex max-h-72 flex-col overflow-y-auto">
+            {[...shownSites]
+              .sort((a, b) => (b.activities[0].startDate ?? `${b.activities[0].year}`).localeCompare(a.activities[0].startDate ?? `${a.activities[0].year}`))
+              .map((s) => (
+                <li key={s.key}>
+                  <button type="button" className="tap flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-white/[0.04]" onClick={() => onSelect({ type: 'site', id: s.key })}>
+                    <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-[0.625rem] font-bold text-page" style={{ background: programMeta(s.program).color }} aria-hidden>
+                      {s.activities.length}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium">{s.name}</span>
+                      <span className="block truncate text-xs text-muted">
+                        {s.activities[0].response ?? s.activities[0].activity} · {s.activities[0].year}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+          </ul>
+        </section>
+      )}
+      {layers.has('activities') && activitiesLoading && <Skeleton className="h-16" />}
 
       {layers.has('team') && shownLive.length > 0 && (
         <section aria-labelledby="map-live">

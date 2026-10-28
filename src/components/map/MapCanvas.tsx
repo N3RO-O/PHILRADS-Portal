@@ -10,6 +10,7 @@ import { initialsOf } from '../../lib/format';
 import { kindMeta, type CheckIn, type LivePosition, type MapPlace, type PlaceKind } from '../../services/map/types';
 import { timeAgo } from '../../lib/geo';
 import type { GridArea } from '../../services/weather/weather';
+import { programMeta, type ActivitySite } from '../../services/activities/types';
 import { WeatherLayer, type WeatherView } from './WeatherLayer';
 
 const KIND_ICON: Record<PlaceKind, LucideIcon> = {
@@ -57,6 +58,24 @@ function placeIcon(kind: PlaceKind, selected: boolean): L.DivIcon {
   });
   iconCache.set(key, icon);
   return icon;
+}
+
+/**
+ * A site of past PHILRADS activities (Statistics): a soft disc in the program's colour, larger where
+ * more were served, with the number of activities when there's more than one.
+ */
+function siteIcon(s: ActivitySite, selected: boolean): L.DivIcon {
+  const reached = Math.max(s.households, s.individuals);
+  const size = Math.round(Math.min(46, 18 + Math.sqrt(reached) / 2.2)) + (selected ? 6 : 0);
+  const color = programMeta(s.program).color;
+  const n = s.activities.length;
+  return L.divIcon({
+    className: 'map-pin',
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    tooltipAnchor: [0, -size / 2],
+    html: `<span style="display:grid;place-items:center;width:${size}px;height:${size}px;border-radius:9999px;background:${color}40;border:2px solid ${selected ? '#fff' : color};box-shadow:0 0 0 ${selected ? 6 : 3}px ${color}${selected ? '55' : '22'},0 6px 16px -6px rgba(0,0,0,.7)"><span style="display:grid;place-items:center;min-width:${n > 1 ? 18 : 8}px;height:${n > 1 ? 18 : 8}px;padding:0 4px;border-radius:9999px;background:${color};color:#1c1d21;font:700 10px/1 Montserrat,system-ui,sans-serif">${n > 1 ? n : ''}</span></span>`,
+  });
 }
 
 /** A team member's check-in: their initials; a pulse while it's under an hour old. */
@@ -150,10 +169,12 @@ function GlidingMarker({ lat, lng, children, ...rest }: { lat: number; lng: numb
   );
 }
 
-export type MapSelection = { type: 'place' | 'checkin' | 'live'; id: string } | null;
+export type MapSelection = { type: 'place' | 'checkin' | 'live' | 'site'; id: string } | null;
 
 interface Props {
   places: MapPlace[];
+  /** Sites of past activities (Statistics layer). */
+  sites?: ActivitySite[];
   checkIns: CheckIn[];
   selected: MapSelection;
   onSelect: (s: MapSelection) => void;
@@ -218,7 +239,7 @@ function Controller({ focus, fit, picking, onCenter, onBackground, onView }: Pic
   return null;
 }
 
-export function MapCanvas({ places, checkIns, live, selected, onSelect, focus, fit, me, picking, onCenter, weather, onView, onMapClick, spot }: Props) {
+export function MapCanvas({ places, sites = [], checkIns, live, selected, onSelect, focus, fit, me, picking, onCenter, weather, onView, onMapClick, spot }: Props) {
   const selectedCheck = selected?.type === 'checkin' ? checkIns.find((c) => c.id === selected.id) : null;
   const selectedLive = selected?.type === 'live' ? live.find((p) => p.profileId === selected.id) : null;
   const onSelectRef = useRef(onSelect);
@@ -237,6 +258,7 @@ export function MapCanvas({ places, checkIns, live, selected, onSelect, focus, f
       place: (id: string) => ({ click: () => onSelectRef.current({ type: 'place', id }), keypress: (e: L.LeafletKeyboardEvent) => e.originalEvent.key === 'Enter' && onSelectRef.current({ type: 'place', id }) }),
       person: (id: string) => ({ click: () => onSelectRef.current({ type: 'checkin', id }) }),
       live: (id: string) => ({ click: () => onSelectRef.current({ type: 'live', id }) }),
+      site: (id: string) => ({ click: () => onSelectRef.current({ type: 'site', id }), keypress: (e: L.LeafletKeyboardEvent) => e.originalEvent.key === 'Enter' && onSelectRef.current({ type: 'site', id }) }),
     }),
     [],
   );
@@ -278,6 +300,22 @@ export function MapCanvas({ places, checkIns, live, selected, onSelect, focus, f
           }}
         />
         {spot && !picking && <Marker position={[spot.lat, spot.lng]} icon={spotIcon} interactive={false} />}
+        {!picking &&
+          sites.map((s) => (
+            <Marker
+              key={`site-${s.key}`}
+              position={[s.lat, s.lng]}
+              icon={siteIcon(s, selected?.type === 'site' && selected.id === s.key)}
+              alt={s.name}
+              keyboard
+              zIndexOffset={selected?.type === 'site' && selected.id === s.key ? 900 : -500}
+              eventHandlers={handlers.site(s.key)}
+            >
+              <Tooltip direction="auto" opacity={1} className="!rounded-lg !border-line !bg-surface-raised !px-2 !py-1 !text-xs !font-semibold !text-ink !shadow-xl">
+                {s.name} · {s.activities.length} {s.activities.length === 1 ? 'activity' : 'activities'}
+              </Tooltip>
+            </Marker>
+          ))}
         {!picking &&
           places.map((p) => (
             <Marker

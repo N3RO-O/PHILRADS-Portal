@@ -672,6 +672,18 @@ await check('Home counts only files still in the portal, and open projects and m
   return m;
 });
 
+// Statistics: the record of projects and activities
+const ACTIVITY = `insert into public.program_activities (year, start_date, date_label, program, response, activity, site, lat, lng, households_served, individuals_served)
+  values (2025, '2025-11-20', 'November 20, 2025', 'emergency', 'Severe Tropical Storm Uwan', 'Food packs', 'Viga, Catanduanes', 13.87, 124.31, 153, 612) returning id`;
+await check('a coordinator records an activity', () => as(A, ACTIVITY).then(expectRows(1)));
+await check('staff see the records', () => as(B, `select activity, households_served from public.program_activities`).then(expectRows(1)));
+await check('staff cannot add records', () => as(B, ACTIVITY), true);
+await check('staff cannot change records', () => as(B, `update public.program_activities set households_served = 999 returning id`).then(expectRows(0)));
+await check('records are never deleted', () => as(A, `delete from public.program_activities`), true);
+await check('a pin must be in the Philippines', () => as(A, ACTIVITY.replace('13.87, 124.31', '51.5, -0.12')), true);
+await check('an end date cannot be before the start', () => as(A, `insert into public.program_activities (year, start_date, end_date, date_label, program, activity, site) values (2025, '2025-05-02', '2025-05-01', 'May 2025', 'training', 'Training', 'Quezon City')`), true);
+await check('inactive account sees no records', () => as(C, `select id from public.program_activities`).then(expectRows(0)));
+
 // Inactive account and signed-out visitors
 await check('inactive account sees no tasks', () => as(C, `select id from public.tasks`).then(expectRows(0)));
 await check('inactive account still sees its own profile', () => as(C, `select id from public.profiles`).then(expectRows(1)));
@@ -680,6 +692,7 @@ await check('signed-out visitors cannot read tasks', () => db.query(`select * fr
 await check('signed-out visitors cannot call the dashboard summary', () => db.query(`select * from public.get_dashboard_summary()`), true);
 await check('signed-out visitors cannot read the IMS snapshot', () => db.query(`select * from public.ims_inventory_snapshot`), true);
 await check('signed-out visitors cannot read resources', () => db.query(`select * from public.resources`), true);
+await check('signed-out visitors cannot read the activity records', () => db.query(`select * from public.program_activities`), true);
 await check('signed-out visitors cannot record stock', () => db.query(`select public.record_inventory_movement(gen_random_uuid(), 'receipt', gen_random_uuid(), gen_random_uuid(), 1)`), true);
 await db.exec(`reset role`);
 

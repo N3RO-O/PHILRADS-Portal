@@ -1,6 +1,8 @@
 import { dataSource, env } from '../config/env';
 import { withDeviceCopy } from '../lib/deviceCopy';
 import { supabase } from '../lib/supabase';
+import { createSupabaseActivitiesService, mockActivitiesService } from './activities/activitiesService';
+import type { ActivitiesService } from './activities/types';
 import { createSupabaseAuditService, mockAuditService, type AuditService } from './audit/auditService';
 import { mockDashboardService } from './dashboard/mockDashboardService';
 import { createSupabaseDocumentationService, createUploadQueue, mockDocumentationService, type DocumentationService } from './documentation/documentationService';
@@ -64,3 +66,6 @@ export const auditService: AuditService = live ? createSupabaseAuditService(live
 
 /** First-run progress (Get started), saved to the person's account and kept on the device. */
 export const onboardingService: OnboardingService = live ? createSupabaseOnboardingService(live) : mockOnboardingService;
+
+/** Statistics: PHILRADS projects and activities since 2023 (where, when, who was served). */
+export const activitiesService: ActivitiesService = withDeviceCopy(live ? createSupabaseActivitiesService(live) : mockActivitiesService, 'activities', ['list']);
