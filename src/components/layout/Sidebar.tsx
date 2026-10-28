@@ -30,8 +30,8 @@ export function Sidebar({ expanded, onToggle }: SidebarProps) {
           </span>
         )}
       </Link>
-      {/* Fits without scrolling on normal screens, so hover labels are never clipped. Very short windows scroll. */}
-      <nav aria-label="Modules" className="flex flex-1 flex-col px-3 py-3 [@media(max-height:700px)]:overflow-y-auto">
+      {/* Scrolls when the window is too short for every module (hover labels float outside it, so nothing is clipped). */}
+      <nav aria-label="Modules" className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-3 py-3">
         <NavItems expanded={expanded} />
       </nav>
       <div className="flex shrink-0 flex-col gap-1 border-t border-line/70 px-3 py-3">

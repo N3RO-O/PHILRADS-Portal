@@ -6,6 +6,7 @@ import {
   Library,
   LifeBuoy,
   Map,
+  MessagesSquare,
   Package,
   Printer,
   ScrollText,
@@ -33,6 +34,8 @@ export interface ModuleConfig {
   permission?: PermissionKey;
   /** A page that isn't in the navigation (reached from the account menu). */
   hidden?: boolean;
+  /** Not built yet: shown in the navigation with a "Soon" tag. */
+  soon?: boolean;
 }
 
 /** The nine portal modules, in the order PHILRADS specified. */
@@ -112,6 +115,16 @@ export const MODULES: ModuleConfig[] = [
     group: 'Work',
     summary: 'Create, assign and track tasks across teams and modules.',
     plannedScope: ['Create and assign tasks', 'Priorities, due dates and status', 'Your tasks and your team’s tasks'],
+  },
+  {
+    id: 'chat',
+    label: 'Chat',
+    path: '/chat',
+    icon: MessagesSquare,
+    group: 'Work',
+    summary: 'Messages between staff and teams, right inside the portal.',
+    plannedScope: [],
+    soon: true,
   },
   {
     id: 'print-docs',
