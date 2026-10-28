@@ -3,6 +3,7 @@ import { Download, ExternalLink, Loader2, X } from 'lucide-react';
 import { LINK_KIND_LABEL, parseResourceLink, withGoogleAccount } from '../../lib/resourceLinks';
 import type { Resource } from '../../services/resources/types';
 import { useBackdropClose } from '../ui/Sheet';
+import { FolderBrowser } from './FolderBrowser';
 
 interface Props {
   /** The resource to show, or null when the preview is closed. */
@@ -33,6 +34,9 @@ export function ResourcePreview({ resource, googleAccount, onClose }: Props) {
     if (!open && el.open) el.close();
   }, [open]);
   useEffect(() => setLoaded(false), [link?.previewUrl]);
+  // Google's own folder view, when the portal can't list a folder (not shared with its account).
+  const [googleView, setGoogleView] = useState(false);
+  useEffect(() => setGoogleView(false), [resource?.id]);
 
   return (
     <dialog
@@ -66,6 +70,10 @@ export function ResourcePreview({ resource, googleAccount, onClose }: Props) {
               <X className="h-5 w-5" aria-hidden />
             </button>
           </header>
+          {link.kind === 'drive_folder' && !googleView ? (
+            // Folders: browsed in the portal (views, choose files, download), Google's view as a fallback.
+            <FolderBrowser resource={resource} onFallback={() => setGoogleView(true)} />
+          ) : (
           <div className="relative min-h-0 flex-1 bg-white">
             {!loaded && (
               <div className="absolute inset-0 grid place-items-center bg-page text-sm text-muted" aria-hidden>
@@ -83,7 +91,9 @@ export function ResourcePreview({ resource, googleAccount, onClose }: Props) {
               onLoad={() => setLoaded(true)}
             />
           </div>
+          )}
           {/* Google's viewer can't tell the portal it failed (wrong account, not shared), so say what to do. */}
+          {(link.kind !== 'drive_folder' || googleView) && (
           <p className="shrink-0 border-t border-line/70 px-4 pb-[calc(0.625rem+env(safe-area-inset-bottom))] pt-2.5 text-xs text-muted sm:px-5">
             Seeing a sign-in page or “You need access”? Sign in to Google with your PHILRADS account
             {googleAccount ? ` (${googleAccount})` : ''}, or use{' '}
@@ -92,6 +102,7 @@ export function ResourcePreview({ resource, googleAccount, onClose }: Props) {
             </a>
             .
           </p>
+          )}
         </>
       )}
     </dialog>

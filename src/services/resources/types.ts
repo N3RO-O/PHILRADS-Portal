@@ -48,9 +48,34 @@ export class ResourceRuleError extends Error {
   }
 }
 
+/** A file or folder inside a Drive folder resource (read through the PHILRADS Drive connection). */
+export interface FolderItem {
+  id: string;
+  name: string;
+  mimeType: string;
+  folder: boolean;
+  sizeBytes: number | null;
+  modifiedAt: string | null;
+  durationMs: number | null;
+  width: number | null;
+  height: number | null;
+  /** Google Docs, Sheets and Slides download as ".docx", ".xlsx", ".pptx". */
+  downloadAs: string | null;
+  /** Short-lived links (2 hours); none for folders. */
+  links: { thumb: string | null; view: string; download: string } | null;
+}
+
+export interface FolderListing {
+  /** From the resource's folder down to the one shown. */
+  path: { id: string; name: string }[];
+  items: FolderItem[];
+}
+
 export interface ResourcesService {
   readonly source: DataSource;
   list(): Promise<Resource[]>;
+  /** What's inside a Drive folder resource, or a folder within it. */
+  folder(resourceId: string, folderId?: string): Promise<FolderListing>;
   save(draft: ResourceDraft): Promise<Resource>;
   /** Removes it from Resources only; the file in Google Drive is not touched. */
   remove(id: string): Promise<void>;
