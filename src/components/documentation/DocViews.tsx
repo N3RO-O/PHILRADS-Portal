@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type MouseEvent, type ReactNode } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import {
   Check,
   ChevronDown,
@@ -84,8 +84,15 @@ export function useDocViewPrefs(storeKey = STORE) {
 
 export function ViewMenu({ view, pane, onChange, showPanes }: { view: DocView; pane: DocPane; onChange: (p: Partial<{ view: DocView; pane: DocPane }>) => void; showPanes: boolean }) {
   const [open, setOpen] = useState(false);
-  // Opens toward the side with room: rightward when the button sits near the left edge (phones).
-  const [toRight, setToRight] = useState(false);
+  // Kept on screen: after it opens, it's nudged in from whichever edge it would cross.
+  const [shift, setShift] = useState(0);
+  const menu = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    if (!open || !menu.current) return;
+    const r = menu.current.getBoundingClientRect();
+    const edge = document.documentElement.clientWidth - 8;
+    setShift((s) => s + (r.left < 8 ? 8 - r.left : r.right > edge ? edge - r.right : 0));
+  }, [open]);
   const wrap = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
   const close = useCallback(() => setOpen(false), []);
@@ -96,14 +103,13 @@ export function ViewMenu({ view, pane, onChange, showPanes }: { view: DocView; p
   return (
     <div ref={wrap} className="relative">
       <button ref={button} type="button" className="btn-ghost min-h-11 px-3.5" aria-haspopup="menu" aria-expanded={open} onClick={() => {
-          const r = button.current?.getBoundingClientRect();
-          setToRight(Boolean(r && r.right < 248));
+          setShift(0);
           setOpen((o) => !o);
         }}>
         <Current className="h-4 w-4" aria-hidden /> View <ChevronDown className="h-4 w-4 text-muted" aria-hidden />
       </button>
       {open && (
-        <div role="menu" aria-label="View" className={`popover absolute top-12 z-40 w-60 max-w-[calc(100vw-2rem)] animate-pop-in p-1.5 ${toRight ? 'left-0 origin-top-left' : 'right-0 origin-top-right'}`}>
+        <div ref={menu} role="menu" aria-label="View" className="popover absolute right-0 top-12 z-40 w-60 max-w-[calc(100vw-1rem)] origin-top animate-pop-in p-1.5" style={{ right: -shift }}>
           {VIEWS.map((v) => (
             <button key={v.id} type="button" role="menuitemradio" aria-checked={view === v.id} className={item} onClick={() => (onChange({ view: v.id }), setOpen(false))}>
               {dot(view === v.id)}
