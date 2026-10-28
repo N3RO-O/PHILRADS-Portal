@@ -5,6 +5,7 @@ import { moduleForPath } from '../../config/modules';
 import { formatLongDate } from '../../lib/format';
 import { LiveSharingProvider } from '../map/LiveSharing';
 import { LiveSharingBubble } from '../map/LiveSharingBubble';
+import { IdleSignOut } from '../auth/IdleSignOut';
 import { OnboardingProvider } from '../onboarding/OnboardingProvider';
 import { UpdatePrompt } from '../pwa/UpdatePrompt';
 import { MobileDrawer } from './MobileDrawer';
@@ -115,6 +116,8 @@ export function AppLayout() {
       <UpdatePrompt />
       {/* While sharing a live location: a floating bubble on every page, with Stop. */}
       <LiveSharingBubble />
+      {/* Signed-in staff: signed out after 10 minutes without activity. */}
+      <IdleSignOut />
     </div>
     </LiveSharingProvider>
     </OnboardingProvider>

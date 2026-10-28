@@ -4,6 +4,7 @@ import { useAuth } from '../components/auth/AuthProvider';
 import { Emblem } from '../components/ui/Emblem';
 import { SignInBackground } from '../components/auth/SignInBackground';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import { takeIdleSignOut } from '../lib/idle';
 
 const schema = z.object({
   email: z.string().trim().email('Enter a valid email address.'),
@@ -21,6 +22,7 @@ export function SignInPage() {
   const [error, setError] = useState<string | null>(null);
   const [resetSentTo, setResetSentTo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [idleOut] = useState(takeIdleSignOut);
 
   const switchMode = (next: 'sign-in' | 'reset') => {
     setMode(next);
@@ -76,6 +78,11 @@ export function SignInPage() {
         {mode === 'sign-in' ? (
           <form onSubmit={submit} noValidate className="flex flex-col gap-4 p-6">
             <h1 className="text-lg font-bold">Sign in</h1>
+            {idleOut && !error && (
+              <p role="status" className="rounded-xl border border-uplift/30 bg-uplift/10 px-4 py-3 text-sm text-ink-soft">
+                You were signed out after 10 minutes without activity. Sign in again to continue.
+              </p>
+            )}
             <label className="flex flex-col gap-1.5 text-sm font-medium text-ink-soft">
               Email
               <input className="field" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required />
