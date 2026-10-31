@@ -1,6 +1,7 @@
 import { useCallback, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, Download, LogOut, Rocket, SquareCheckBig, UserRound, UsersRound } from 'lucide-react';
+import { ChevronDown, Download, Gift, LogOut, Rocket, SquareCheckBig, UserRound, UsersRound } from 'lucide-react';
+import { whatsNew } from '../../lib/whatsNew';
 import { useOnboarding } from '../onboarding/OnboardingProvider';
 import { useDismiss } from '../../hooks/useDismiss';
 import { DEMO_ROLES } from '../../config/permissions';
@@ -84,6 +85,16 @@ export function ProfileMenu() {
                 <UsersRound className="h-4 w-4 text-uplift" aria-hidden /> Manage staff
               </Link>
             )}
+            <button
+              type="button"
+              className={itemClass}
+              onClick={() => {
+                setOpen(false);
+                whatsNew.showNotes();
+              }}
+            >
+              <Gift className="h-4 w-4 text-uplift" aria-hidden /> What’s new
+            </button>
             {install !== 'installed' && (
               <button type="button" className={itemClass} onClick={() => void onInstall()}>
                 <Download className="h-4 w-4 text-uplift" aria-hidden /> Install app

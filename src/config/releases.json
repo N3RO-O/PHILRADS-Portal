@@ -1,0 +1,126 @@
+[
+  {
+    "id": "2026-10-31",
+    "date": "2026-10-31",
+    "title": "Private funding, spreadsheet sync and smoother motion",
+    "items": [
+      {
+        "icon": "lock",
+        "title": "Funding is private",
+        "body": "Funding amounts and donors on Statistics are now visible only to administrators and coordinators."
+      },
+      {
+        "icon": "file-spreadsheet",
+        "title": "Sync from the statistics workbook",
+        "body": "Drop the Excel file on Statistics, choose this month or this year, check every change, then apply. Nothing is ever deleted.",
+        "path": "/statistics",
+        "permission": "projects.manage"
+      },
+      {
+        "icon": "crown",
+        "title": "Top donors",
+        "body": "Who supported the most activities this month, this year or since 2023, by funding or by number of activities.",
+        "path": "/statistics",
+        "permission": "funding.read"
+      },
+      {
+        "icon": "toggle-right",
+        "title": "Switches that feel real",
+        "body": "On/off settings stretch, overshoot and settle, like a real switch."
+      },
+      {
+        "icon": "sparkles",
+        "title": "Smoother tabs and lists",
+        "body": "Tab highlights glide to your choice, and a deleted row slides away while the rest move up, so you never lose your place."
+      },
+      {
+        "icon": "key-round",
+        "title": "See your password",
+        "body": "An eye button shows what you typed when signing in, and a wrong password gives the card a little shake."
+      },
+      {
+        "icon": "gift",
+        "title": "What’s new, right here",
+        "body": "Each update now shows what it brings before you install it. You’ll also find it in the bell and the account menu."
+      }
+    ]
+  },
+  {
+    "id": "2026-10-28",
+    "date": "2026-10-28",
+    "title": "Statistics and a new app icon",
+    "items": [
+      {
+        "icon": "chart",
+        "title": "Statistics",
+        "body": "Every PHILRADS project and activity since 2023: where, when and who was served, also shown on the Live Map.",
+        "path": "/statistics"
+      },
+      {
+        "icon": "folder",
+        "title": "Browse Drive folders in Resources",
+        "body": "Open a shared folder inside the preview, choose files and download them.",
+        "path": "/resources"
+      },
+      {
+        "icon": "smartphone",
+        "title": "New app icon",
+        "body": "The portal also signs you out after 10 minutes without activity, to keep shared phones safe."
+      },
+      {
+        "icon": "messages",
+        "title": "Chat is coming",
+        "body": "It has a place in the sidebar already, marked Soon."
+      }
+    ]
+  },
+  {
+    "id": "2026-10-27",
+    "date": "2026-10-27",
+    "title": "Forms, Projects and profiles",
+    "items": [
+      {
+        "icon": "printer",
+        "title": "Forms",
+        "body": "PHILRADS templates to fill in on screen and print, each on the right paper.",
+        "path": "/forms"
+      },
+      {
+        "icon": "kanban",
+        "title": "Projects",
+        "body": "Programs and projects with milestones, reports, team, tasks and documentation.",
+        "path": "/projects"
+      },
+      {
+        "icon": "life-buoy",
+        "title": "Relief events from the portal",
+        "body": "Create relief events on Response and approve them; the IMS confirms them.",
+        "path": "/response",
+        "permission": "response.manage"
+      },
+      {
+        "icon": "map",
+        "title": "Live Map upgrades",
+        "body": "Temperature over land and sea, full screen, and faster live sharing with a floating bubble.",
+        "path": "/live-map"
+      },
+      {
+        "icon": "user",
+        "title": "Profiles",
+        "body": "A profile card with your level and badges, and photos you can drag and zoom before saving.",
+        "path": "/profile"
+      },
+      {
+        "icon": "calendar",
+        "title": "Calendars",
+        "body": "A new look, weekends set apart, and Philippine holidays for 2026 and 2027."
+      },
+      {
+        "icon": "users",
+        "title": "Team tasks",
+        "body": "See the whole team’s tasks, and mark a task In progress.",
+        "path": "/tasks"
+      }
+    ]
+  }
+]

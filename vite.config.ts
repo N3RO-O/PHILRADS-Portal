@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -23,6 +24,20 @@ export default defineConfig({
   },
   plugins: [
     react(),
+    // Publishes the release notes as /releases.json, so a version that is still running can show
+    // what a waiting update brings before installing it (src/lib/whatsNew.ts). Not precached.
+    {
+      name: 'release-notes',
+      configureServer(server) {
+        server.middlewares.use('/releases.json', (_req, res) => {
+          res.setHeader('Content-Type', 'application/json');
+          res.end(readFileSync('src/config/releases.json'));
+        });
+      },
+      generateBundle() {
+        this.emitFile({ type: 'asset', fileName: 'releases.json', source: readFileSync('src/config/releases.json', 'utf8') });
+      },
+    },
     VitePWA({
       // The app shows its own "new version available" prompt (src/components/pwa/UpdatePrompt.tsx),
       // so a new service worker only takes over when staff choose to reload.

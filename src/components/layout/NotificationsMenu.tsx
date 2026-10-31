@@ -1,20 +1,26 @@
 import { useCallback, useId, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, CheckCheck, ChevronRight } from 'lucide-react';
+import { Bell, CheckCheck, ChevronRight, Gift } from 'lucide-react';
+import type { PermissionKey } from '../../config/permissions';
 import { useAsyncData } from '../../hooks/useAsyncData';
 import { useDismiss } from '../../hooks/useDismiss';
 import { formatDayHeading, formatTime } from '../../lib/format';
 import { useLiveRefresh } from '../../lib/imsActions';
+import { CURRENT, useWhatsNew, whatsNew } from '../../lib/whatsNew';
 import { dashboardService } from '../../services';
 import type { NotificationItem } from '../../types';
 import { LoadError, Skeleton } from '../ui/Card';
 import { SampleBadge } from '../ui/SampleBadge';
+import { useAuth } from '../auth/AuthProvider';
 
 /**
  * The bell: in-portal notices, including what's new in PHILRADS IMS (releases waiting for
  * approval, new items, stock received or released). Checks for new ones every minute.
- * Nothing here is emailed; the IMS sends its own emails.
+ * Nothing here is emailed; the IMS sends its own emails. It also carries the portal's own news:
+ * an update waiting to be installed, and what's new in this version (both open the What's new popup).
  */
+type Note = NotificationItem & { portal?: () => void };
+
 export function NotificationsMenu() {
   const [open, setOpen] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
@@ -25,9 +31,41 @@ export function NotificationsMenu() {
   useDismiss(open, wrap, close, button);
   const notes = useAsyncData(() => dashboardService.getNotifications());
   useLiveRefresh(!open, notes.reload);
-  const unread = notes.status === 'success' ? notes.data.filter((n) => !n.read) : [];
+  const { can } = useAuth();
+  const news = useWhatsNew();
+  const newsItems = CURRENT.items.filter((i) => !i.permission || can(i.permission as PermissionKey));
+  const portal: Note[] = [
+    ...(news.updateReady
+      ? [
+          {
+            id: 'portal-update',
+            title: news.incoming?.[0] ? `Update ready: ${news.incoming[0].title}` : 'A new version of the portal is ready',
+            body: 'See what’s new, then update.',
+            createdAt: new Date().toISOString(),
+            read: false,
+            portal: whatsNew.showUpdate,
+          },
+        ]
+      : []),
+    {
+      id: `portal-whats-new-${CURRENT.id}`,
+      title: `What’s new: ${CURRENT.title}`,
+      body: newsItems
+        .slice(0, 3)
+        .map((i) => i.title)
+        .join(' · '),
+      createdAt: `${CURRENT.date}T08:00:00+08:00`,
+      read: news.seen === CURRENT.id,
+      portal: () => whatsNew.showNotes(),
+    },
+  ];
+  const list: Note[] = notes.status === 'success' ? [...portal, ...notes.data].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)) : portal;
+  const unread = list.filter((n) => !n.read);
 
   const markRead = async (ids: string[]) => {
+    if (ids.includes(`portal-whats-new-${CURRENT.id}`)) whatsNew.markSeen(CURRENT.id);
+    ids = ids.filter((id) => !id.startsWith('portal-'));
+    if (!ids.length) return;
     try {
       await dashboardService.markNotificationsRead(ids);
       notes.reload();
@@ -35,7 +73,12 @@ export function NotificationsMenu() {
       /* stays unread; the next refresh shows the real state */
     }
   };
-  const openNote = (n: NotificationItem) => {
+  const openNote = (n: Note) => {
+    if (n.portal) {
+      setOpen(false);
+      n.portal();
+      return;
+    }
     if (!n.read) void markRead([n.id]);
     if (n.linkPath) {
       setOpen(false);
@@ -83,7 +126,7 @@ export function NotificationsMenu() {
           {notes.status === 'loading' && <Skeleton className="h-24" />}
           {notes.status === 'error' && <LoadError message={notes.error.message} onRetry={notes.reload} />}
           {notes.status === 'success' &&
-            (notes.data.length === 0 ? (
+            (list.length === 0 ? (
               <div className="flex flex-col items-center gap-2 py-5 text-center">
                 <CheckCheck className="h-6 w-6 text-status-in" aria-hidden />
                 <p className="text-sm font-semibold text-ink">You’re all caught up</p>
@@ -101,14 +144,18 @@ export function NotificationsMenu() {
               </div>
             ) : (
               <ul className="flex max-h-[min(28rem,70dvh)] flex-col overflow-y-auto">
-                {notes.data.map((n) => (
+                {list.map((n) => (
                   <li key={n.id}>
                     <button
                       type="button"
                       onClick={() => openNote(n)}
                       className="tap flex w-full gap-3 rounded-xl px-2 py-2.5 text-left transition-colors hover:bg-white/[0.04]"
                     >
-                      <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${n.read ? 'bg-line' : 'bg-uplift'}`} aria-hidden />
+                      {n.portal ? (
+                        <Gift className={`mt-0.5 h-4 w-4 shrink-0 ${n.read ? 'text-muted' : 'text-uplift'}`} aria-hidden />
+                      ) : (
+                        <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${n.read ? 'bg-line' : 'bg-uplift'}`} aria-hidden />
+                      )}
                       <span className="min-w-0 flex-1">
                         <span className={`block text-sm ${n.read ? 'text-ink-soft' : 'font-medium text-ink'}`}>
                           {n.title}
@@ -119,7 +166,7 @@ export function NotificationsMenu() {
                           {formatDayHeading(n.createdAt)}, {formatTime(n.createdAt)}
                         </span>
                       </span>
-                      {n.linkPath && <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted" aria-hidden />}
+                      {(n.linkPath || n.portal) && <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted" aria-hidden />}
                     </button>
                   </li>
                 ))}
