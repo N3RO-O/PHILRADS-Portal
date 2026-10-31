@@ -89,8 +89,11 @@ export function startErrorSound() {
       .catch(() => undefined)
       .finally(() => (audio!.muted = false));
     window.removeEventListener('pointerdown', unlock, true);
+    window.removeEventListener('keydown', unlock, true);
   };
+  // A tap, or the first key for someone signing in with the keyboard alone.
   window.addEventListener('pointerdown', unlock, true);
+  window.addEventListener('keydown', unlock, true);
   for (const type of ['pointerdown', 'keydown', 'submit']) window.addEventListener(type, acted, true);
 
   new MutationObserver((mutations) => {

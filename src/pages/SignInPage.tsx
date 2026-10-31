@@ -6,6 +6,7 @@ import { PasswordField } from '../components/ui/PasswordField';
 import { SignInBackground } from '../components/auth/SignInBackground';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { takeIdleSignOut } from '../lib/idle';
+import { errorSound } from '../lib/errorSound';
 import { shake } from '../lib/motion';
 
 const schema = z.object({
@@ -34,6 +35,7 @@ export function SignInPage() {
     setError(message);
     setAttempt((n) => n + 1);
     shake(card.current);
+    errorSound.play();
   };
 
   const switchMode = (next: 'sign-in' | 'reset') => {

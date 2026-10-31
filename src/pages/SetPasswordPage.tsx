@@ -5,6 +5,7 @@ import { Emblem } from '../components/ui/Emblem';
 import { PasswordField } from '../components/ui/PasswordField';
 import { SoffitGradient } from '../components/ui/SoffitGradient';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import { errorSound } from '../lib/errorSound';
 import { shake } from '../lib/motion';
 
 const schema = z
@@ -31,6 +32,7 @@ export function SetPasswordPage() {
     setError(message);
     setAttempt((n) => n + 1);
     shake(card.current);
+    errorSound.play();
   };
 
   const submit = async (e: FormEvent) => {
