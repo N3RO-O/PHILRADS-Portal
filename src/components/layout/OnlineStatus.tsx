@@ -20,7 +20,7 @@ export function OfflineNotice() {
   const online = useOnlineStatus();
   if (online) return null;
   return (
-    <div role="alert" className="mb-5 flex animate-fade-up items-start gap-3 rounded-2xl border border-uplift/30 bg-uplift/10 px-5 py-4 text-sm text-ink">
+    <div role="alert" data-quiet className="mb-5 flex animate-fade-up items-start gap-3 rounded-2xl border border-uplift/30 bg-uplift/10 px-5 py-4 text-sm text-ink">
       <WifiOff className="mt-0.5 h-5 w-5 shrink-0 text-uplift" aria-hidden />
       <p>
         <strong className="font-semibold">You’re offline.</strong> You can keep working on Tasks: changes are saved on this device,

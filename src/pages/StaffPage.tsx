@@ -118,7 +118,7 @@ export function StaffPage() {
 
   if (!can('staff.manage'))
     return (
-      <p className="card text-sm text-ink-soft" role="alert">
+      <p className="card text-sm text-ink-soft" role="alert" data-quiet>
         Only administrators can manage staff and volunteer accounts.
       </p>
     );

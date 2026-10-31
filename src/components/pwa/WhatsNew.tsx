@@ -22,6 +22,7 @@ import {
   ToggleRight,
   UserRound,
   UsersRound,
+  Volume2,
   X,
   type LucideIcon,
 } from 'lucide-react';
@@ -51,6 +52,7 @@ const ICONS: Record<string, LucideIcon> = {
   'toggle-right': ToggleRight,
   user: UserRound,
   users: UsersRound,
+  volume: Volume2,
 };
 const DAY = new Intl.DateTimeFormat('en-PH', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 const dayOf = (iso: string) => DAY.format(new Date(`${iso}T00:00:00Z`));

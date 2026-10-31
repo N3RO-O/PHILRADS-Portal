@@ -1,7 +1,9 @@
 import { useCallback, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, Download, Gift, LogOut, Rocket, SquareCheckBig, UserRound, UsersRound } from 'lucide-react';
+import { ChevronDown, Download, Gift, LogOut, Rocket, SquareCheckBig, UserRound, UsersRound, Volume2 } from 'lucide-react';
 import { whatsNew } from '../../lib/whatsNew';
+import { errorSound, useErrorSound } from '../../lib/errorSound';
+import { Switch } from '../ui/Switch';
 import { useOnboarding } from '../onboarding/OnboardingProvider';
 import { useDismiss } from '../../hooks/useDismiss';
 import { DEMO_ROLES } from '../../config/permissions';
@@ -24,6 +26,7 @@ export function ProfileMenu() {
   const close = useCallback(() => setOpen(false), []);
   useDismiss(open, wrap, close, button);
   const install = useInstallAvailability();
+  const soundOn = useErrorSound();
 
   if (!profile) return null;
 
@@ -95,6 +98,13 @@ export function ProfileMenu() {
             >
               <Gift className="h-4 w-4 text-uplift" aria-hidden /> What’s new
             </button>
+            <div className={itemClass}>
+              <Volume2 className="h-4 w-4 text-uplift" aria-hidden />
+              <span id={`${panelId}-sound`} className="flex-1">
+                Sound on errors
+              </span>
+              <Switch checked={soundOn} labelledBy={`${panelId}-sound`} onChange={(next) => errorSound.set(next)} />
+            </div>
             {install !== 'installed' && (
               <button type="button" className={itemClass} onClick={() => void onInstall()}>
                 <Download className="h-4 w-4 text-uplift" aria-hidden /> Install app

@@ -223,7 +223,7 @@ export function ResourcesPage() {
 
   if (!canRead)
     return (
-      <p className="card text-sm text-ink-soft" role="alert">
+      <p className="card text-sm text-ink-soft" role="alert" data-quiet>
         Your role doesn’t include access to Resources. Ask an administrator if you need it.
       </p>
     );

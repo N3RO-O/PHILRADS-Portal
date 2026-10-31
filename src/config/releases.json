@@ -39,6 +39,11 @@
         "body": "An eye button shows what you typed when signing in, and a wrong password gives the card a little shake."
       },
       {
+        "icon": "volume",
+        "title": "A sound when something goes wrong",
+        "body": "A wrong password or an action that fails now plays a sound. Turn it off under Sound on errors in the account menu."
+      },
+      {
         "icon": "gift",
         "title": "What’s new, right here",
         "body": "Each update now shows what it brings before you install it. You’ll also find it in the bell and the account menu."

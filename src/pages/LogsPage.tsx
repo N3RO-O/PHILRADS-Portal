@@ -150,7 +150,7 @@ export function LogsPage() {
 
   if (!allowed)
     return (
-      <p className="card text-sm text-ink-soft" role="alert">
+      <p className="card text-sm text-ink-soft" role="alert" data-quiet>
         The admin log is for administrators. Ask an administrator if you need something from it.
       </p>
     );

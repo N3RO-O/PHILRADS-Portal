@@ -135,7 +135,7 @@ export function WeatherBar({ weather, onClose }: { weather: MapWeather; onClose:
       </div>
 
       {status.state === 'error' ? (
-        <p className="flex items-center gap-2 px-1 text-xs text-ink-soft" role="alert">
+        <p className="flex items-center gap-2 px-1 text-xs text-ink-soft" role="alert" data-quiet>
           <TriangleAlert className="h-3.5 w-3.5 shrink-0 text-status-low" aria-hidden />
           <span className="flex-1">{status.message}</span>
           <button type="button" className="btn-ghost min-h-8 shrink-0 px-2.5 text-xs" onClick={weather.retry}>

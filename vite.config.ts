@@ -66,7 +66,7 @@ export default defineConfig({
       },
       workbox: {
         // Precache only the built app shell and static assets.
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,mp3}'],
         navigateFallback: '/index.html',
         // /about.html and /privacy.html are plain public pages (Google's sign-in screen links to them), not the app.
         navigateFallbackDenylist: [/^\/api\//, /^\/(about|privacy)\.html$/],

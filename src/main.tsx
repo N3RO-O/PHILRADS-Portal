@@ -4,9 +4,11 @@ import { createRoot } from 'react-dom/client';
 import './lib/installPrompt';
 import { envProblems } from './config/env';
 import App from './App';
+import { startErrorSound } from './lib/errorSound';
 import './index.css';
 
 if (envProblems.length) console.warn('[config]', envProblems.join('\n'));
+startErrorSound();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
