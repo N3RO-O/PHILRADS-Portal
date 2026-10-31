@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type MouseEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import { AlertTriangle, CheckCircle2, CheckSquare, CloudUpload, HardDrive, Image as ImageIcon, Link2, Loader2, RotateCw, Search, Trash2, Upload, X } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../components/auth/AuthProvider';
@@ -13,6 +13,7 @@ import { documentationService, inventoryStore, mapService, projectsService, uplo
 import { DEFAULT_DRIVE_FOLDER, type DocFile, type DocLinks, type DriveStatus, type QueuedUpload } from '../services/documentation/documentationService';
 import { useInventoryState } from '../services/inventory/inventoryStore';
 import { DOCUMENT_CATEGORIES, type DocumentCategory } from '../types';
+import { LeavingRow, useFlip, useLeaving } from '../components/ui/LeavingRow';
 
 type Toast = { text: string; error?: boolean };
 
@@ -108,15 +109,25 @@ export function DocumentationPage() {
   }, []);
   const paneOn = wide && prefs.pane !== 'none';
   const [focusId, setFocusId] = useState<string | null>(null);
+  // Deleted files slide away and the rest glide into their places.
+  const { leaving, leave } = useLeaving();
+  const listBox = useRef<HTMLDivElement>(null);
+  useFlip(listBox, (docs ?? []).map((d) => d.id).join());
   const deleteSelected = async () => {
     const ids = [...selected];
     if (!ids.length) return;
     if (!window.confirm(`Delete ${ids.length} file${ids.length === 1 ? '' : 's'}? ${ids.length === 1 ? 'It’s' : 'They’re'} removed from the portal and moved to Google Drive’s trash (recoverable there for 30 days).`)) return;
     setDeleting(true);
     try {
-      const r = await documentationService.remove(ids);
+      const r = await leave(
+        ids,
+        () => documentationService.remove(ids),
+        (r) => {
+          const failed = new Set(r.failed.map((f) => f.id));
+          setDocs((list) => list && list.filter((d) => !ids.includes(d.id) || failed.has(d.id)));
+        },
+      );
       const failed = new Set(r.failed.map((f) => f.id));
-      setDocs((list) => list && list.filter((d) => !ids.includes(d.id) || failed.has(d.id)));
       setSelected(failed);
       if (!failed.size) setSelecting(false);
       setToast(
@@ -350,16 +361,16 @@ export function DocumentationPage() {
           </EmptyState>
         ) : (
           <div className="flex gap-5">
-            <div className="flex min-w-0 flex-1 flex-col gap-5">
+            <div ref={listBox} className="flex min-w-0 flex-1 flex-col gap-5">
               {prefs.view === 'details' && <DetailsHeader compact={paneOn} />}
               {days.map((g) => (
                 <section key={g.day} aria-label={formatDayHeading(g.items[0].uploadedAt)}>
-                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">
+                  <h3 data-flip={`day-${g.day}`} className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">
                     {g.day === today ? 'Today' : g.day === manilaDayKey(new Date(Date.now() - 86_400_000).toISOString()) ? 'Yesterday' : formatDayHeading(g.items[0].uploadedAt)}
                   </h3>
                   <ul className={VIEW_LIST[prefs.view]}>
                     {g.items.map((d) => (
-                      <li key={d.id} className="min-w-0">
+                      <LeavingRow key={d.id} as="li" flip={d.id} leaving={leaving.has(d.id)} className="min-w-0">
                         <DocItem
                           doc={d}
                           thumb={links[d.id]?.thumb}
@@ -371,7 +382,7 @@ export function DocumentationPage() {
                           onDoubleClick={() => !selecting && setOpenId(d.id)}
                           compact={paneOn}
                         />
-                      </li>
+                      </LeavingRow>
                     ))}
                   </ul>
                 </section>
@@ -442,8 +453,8 @@ export function DocumentationPage() {
             try {
               const r = await documentationService.remove([opened.id]);
               if (r.failed.length) return r.failed[0].error;
-              setDocs((list) => list && list.filter((d) => d.id !== opened.id));
               setOpenId(null);
+              void leave([opened.id], async () => undefined, () => setDocs((list) => list && list.filter((d) => d.id !== opened.id)));
               setToast({ text: `Deleted “${opened.title}”. It’s in Google Drive’s trash for 30 days if you need it back.` });
               return null;
             } catch (e) {

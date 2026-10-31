@@ -18,6 +18,7 @@ Some access applies to everyone, whatever their role: staff always see tasks ass
 | --- | :-: | :-: | :-: | :-: |
 | projects.read_all | ✓ | ✓ | | |
 | projects.manage | ✓ | ✓ | | |
+| funding.read | ✓ | ✓ | | |
 | tasks.read_all | ✓ | ✓ | | |
 | tasks.manage | ✓ | ✓ | | |
 | inventory.read | ✓ | ✓ | ✓ | ✓ |
@@ -36,6 +37,21 @@ Some access applies to everyone, whatever their role: staff always see tasks ass
 | staff.manage | ✓ | | | |
 | settings.manage | ✓ | | | |
 
+### Funding and donors
+
+The funding amount, funding note and donors of each Statistics activity are kept in their own table, `program_activity_funding`, which only `funding.read` can read (administrators and coordinators). Everyone else still sees the activity, its dates, place and the people served, but no funding, no donors and no Top donors card. Because the database enforces this, the amounts never reach other roles' devices.
+
+### Syncing the statistics workbook
+
+People with `projects.manage` can drop the statistics workbook (`.xlsx`, one sheet per year) on the Statistics page and choose **This month** or **This year**. The portal lists what would change before anything is saved:
+
+- **New records**: rows not in the portal yet (ticked).
+- **Updates**: empty fields in the portal filled from the sheet (ticked), and values that differ (left unticked: the portal's were checked by hand).
+- **Not added**: rows with no date and no matching record, and repeated rows.
+- Records the workbook doesn't list are kept, since the portal also holds activities from the activity tracker and statistical report. Nothing is ever deleted.
+
+The chosen changes are saved all at once by `sync_program_activities`, or not at all. Funding and donors are only compared and saved for people who also have `funding.read`.
+
 ## Questions for PHILRADS
 
 1. What are the real staff roles (e.g. Executive Director, Program Manager, Field Officer, Warehouse, Finance, Communications, Volunteer)?
@@ -43,8 +59,9 @@ Some access applies to everyone, whatever their role: staff always see tasks ass
 3. Who may record stock movements, who approves transfers and stock adjustments/write-offs (`inventory.approve`), and who may create or retire inventory items?
 4. Who may create and close response operations?
 5. Who may see all uploaded documents? Are some categories (e.g. contracts, beneficiary lists) restricted further?
-6. Who activates new staff accounts and assigns roles?
-7. Should volunteers or partners have accounts at all?
+6. Who may see funding amounts and donors (`funding.read`)? Today: administrators and coordinators.
+7. Who activates new staff accounts and assigns roles?
+8. Should volunteers or partners have accounts at all?
 
 ## Changing it
 

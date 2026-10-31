@@ -83,8 +83,8 @@ export function ResourceCard({ resource: r, canManage, onEdit, onPreview, select
   const action = 'btn-ghost min-h-11 flex-1 px-3 text-xs sm:flex-none';
 
   return (
-    <li
-      className={`tile flex flex-col gap-3 p-4 ${selecting ? 'cursor-pointer select-none' : ''} ${selected ? 'ring-2 ring-uplift' : ''}`}
+    <div
+      className={`tile flex h-full flex-col gap-3 p-4 ${selecting ? 'cursor-pointer select-none' : ''} ${selected ? 'ring-2 ring-uplift' : ''}`}
       onClick={selecting ? onSelect : (e) => (e.shiftKey || e.ctrlKey || e.metaKey) && onSelect?.(e)}
       onMouseDown={(e) => e.shiftKey && e.preventDefault()}
       aria-selected={selecting ? selected : undefined}
@@ -137,6 +137,6 @@ export function ResourceCard({ resource: r, canManage, onEdit, onPreview, select
           {copied === 'ok' ? 'Copied' : copied === 'failed' ? 'Copy failed' : 'Copy link'}
         </button>
       </div>
-    </li>
+    </div>
   );
 }

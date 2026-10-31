@@ -5,6 +5,7 @@ import { formatTime, manilaDayKey } from '../../lib/format';
 import { mapService } from '../../services';
 import type { LiveFix } from '../../services/map/types';
 import { useAuth } from '../auth/AuthProvider';
+import { Switch } from '../ui/Switch';
 
 /** How long to share: a number of hours, or until the end of today (Manila time). */
 export type ShareFor = 1 | 4 | 'eod';
@@ -312,17 +313,13 @@ export function LiveShareCard() {
             {on && live.until ? (live.status === 'paused' ? `Paused while the portal isn’t open · until ${formatTime(live.until)}` : `On · until ${formatTime(live.until)}`) : 'Off. Your pin moves on the team’s map while it’s on.'}
           </p>
         </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={on || choosing}
-          aria-labelledby="live-share-title"
+        <Switch
+          checked={on || choosing}
+          labelledBy="live-share-title"
           disabled={live.status === 'starting'}
-          onClick={() => (on ? void live.stop() : setChoosing((c) => !c))}
-          className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors after:absolute after:-inset-2.5 after:content-[''] ${on || choosing ? 'border-status-in bg-status-in/80' : 'border-line bg-surface-raised'}`}
-        >
-          <span className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${on || choosing ? 'translate-x-6' : 'translate-x-1'}`} />
-        </button>
+          onChange={() => (on ? void live.stop() : setChoosing((c) => !c))}
+          onClass="border-status-in bg-status-in/80"
+        />
       </div>
 
       {!on && choosing && (

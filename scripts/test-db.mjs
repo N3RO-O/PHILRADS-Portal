@@ -684,6 +684,50 @@ await check('a pin must be in the Philippines', () => as(A, ACTIVITY.replace('13
 await check('an end date cannot be before the start', () => as(A, `insert into public.program_activities (year, start_date, end_date, date_label, program, activity, site) values (2025, '2025-05-02', '2025-05-01', 'May 2025', 'training', 'Training', 'Quezon City')`), true);
 await check('inactive account sees no records', () => as(C, `select id from public.program_activities`).then(expectRows(0)));
 
+// Statistics: funding is private; the workbook sync
+await check('funding moved out of the activity records', async () => {
+  const cols = (await db.query(`select column_name from information_schema.columns where table_name = 'program_activities' and column_name in ('funding', 'funding_note', 'donors')`)).rows;
+  if (cols.length) throw new Error(`still on program_activities: ${cols.map((c) => c.column_name)}`);
+});
+await check('funding.read is given to administrators and coordinators only', async () => {
+  const r = (await db.query(`select role_key from public.role_permissions where permission_key = 'funding.read' order by 1`)).rows.map((x) => x.role_key).join(',');
+  if (r !== 'admin,coordinator') throw new Error(r);
+  return r;
+});
+const SYNC_INSERT = `select public.sync_program_activities('[{"action":"insert","row":{"year":2026,"start_date":"2026-10-06","date_label":"October 6, 2026","program":"emergency","activity":"Food packs","site":"Iligan City","households_served":120,"status":"completed","source":"DB 2026"},"fund":{"funding":250000,"donors":"101 Foundation & Sample Church"}}]'::jsonb) as r`;
+await check('an administrator syncs a new record with its funding', async () => {
+  const r = (await as(A, SYNC_INSERT)).rows[0].r;
+  if (r.inserted !== 1 || r.funding !== 1) throw new Error(JSON.stringify(r));
+  return r;
+});
+const synced = (await db.query(`select id from public.program_activities where site = 'Iligan City' and start_date = '2026-10-06'`)).rows[0].id;
+await check('administrators see funding and donors', () => as(A, `select funding, donors from public.program_activity_funding where activity_id = '${synced}'`).then(expectRows(1)));
+await check('staff see the synced activity', () => as(B, `select id from public.program_activities where id = '${synced}'`).then(expectRows(1)));
+await check('staff cannot see funding or donors', () => as(B, `select funding from public.program_activity_funding`).then(expectRows(0)));
+await check('viewers cannot see funding or donors', () => as(D, `select donors from public.program_activity_funding`).then(expectRows(0)));
+await check('staff cannot write funding', () => as(B, `insert into public.program_activity_funding (activity_id, funding) values ('${synced}', 1)`), true);
+await check('staff cannot sync', () => as(B, SYNC_INSERT), true);
+await check('a sync updates only the fields it names, and funding keeps what it does not name', async () => {
+  const r = (await as(A, `select public.sync_program_activities('[{"action":"update","id":"${synced}","set":{"individuals_served":480,"partner":"Sample Church"},"fund":{"funding":260000}}]'::jsonb) as r`)).rows[0].r;
+  const row = (await db.query(`select households_served, individuals_served, partner from public.program_activities where id = '${synced}'`)).rows[0];
+  const fund = (await db.query(`select funding::int, donors from public.program_activity_funding where activity_id = '${synced}'`)).rows[0];
+  if (r.updated !== 1 || row.households_served !== 120 || row.individuals_served !== 480 || row.partner !== 'Sample Church' || fund.funding !== 260000 || !fund.donors)
+    throw new Error(JSON.stringify({ r, row, fund }));
+  return { row, fund };
+});
+await check('a sync is all or nothing', async () => {
+  const before = (await db.query(`select count(*)::int n from public.program_activities`)).rows[0].n;
+  const bad = `select public.sync_program_activities('[{"action":"insert","row":{"year":2026,"date_label":"October 7, 2026","program":"training","activity":"Training","site":"Cebu"}},{"action":"update","id":"00000000-0000-0000-0000-000000000099","set":{"partner":"x"}}]'::jsonb)`;
+  try {
+    await as(A, bad);
+  } catch {
+    const after = (await db.query(`select count(*)::int n from public.program_activities`)).rows[0].n;
+    if (after !== before) throw new Error(`rows went from ${before} to ${after}`);
+    return 'rolled back';
+  }
+  throw new Error('the broken sync was accepted');
+});
+
 // Inactive account and signed-out visitors
 await check('inactive account sees no tasks', () => as(C, `select id from public.tasks`).then(expectRows(0)));
 await check('inactive account still sees its own profile', () => as(C, `select id from public.profiles`).then(expectRows(1)));
@@ -693,6 +737,8 @@ await check('signed-out visitors cannot call the dashboard summary', () => db.qu
 await check('signed-out visitors cannot read the IMS snapshot', () => db.query(`select * from public.ims_inventory_snapshot`), true);
 await check('signed-out visitors cannot read resources', () => db.query(`select * from public.resources`), true);
 await check('signed-out visitors cannot read the activity records', () => db.query(`select * from public.program_activities`), true);
+await check('signed-out visitors cannot read funding', () => db.query(`select * from public.program_activity_funding`), true);
+await check('signed-out visitors cannot sync', () => db.query(`select public.sync_program_activities('[]'::jsonb)`), true);
 await check('signed-out visitors cannot record stock', () => db.query(`select public.record_inventory_movement(gen_random_uuid(), 'receipt', gen_random_uuid(), gen_random_uuid(), 1)`), true);
 await db.exec(`reset role`);
 

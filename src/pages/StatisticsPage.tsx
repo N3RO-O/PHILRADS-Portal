@@ -1,12 +1,15 @@
 import { useMemo, useState, type CSSProperties } from 'react';
-import { CalendarDays, ChevronDown, Home, MapPin, Search, UsersRound, Wallet, X } from 'lucide-react';
+import { CalendarDays, ChevronDown, FileSpreadsheet, Home, MapPin, Search, UsersRound, Wallet, X } from 'lucide-react';
+import { useAuth } from '../components/auth/AuthProvider';
 import { RecordDetails } from '../components/statistics/RecordDetails';
+import { SyncSheet } from '../components/statistics/SyncSheet';
+import { TopDonors } from '../components/statistics/TopDonors';
 import { LoadError, Skeleton } from '../components/ui/Card';
 import { SampleBadge } from '../components/ui/SampleBadge';
 import { useAsyncData } from '../hooks/useAsyncData';
 import { formatNumber } from '../lib/format';
 import { activitiesService } from '../services';
-import { byNewest, PROGRAMS, programMeta, servedText, siteKey, type ProgramActivity, type ProgramKey } from '../services/activities/types';
+import { byNewest, PROGRAMS, programMeta, servedText, siteKey, withoutFunding, type ProgramActivity, type ProgramKey } from '../services/activities/types';
 
 const compact = (n: number) => new Intl.NumberFormat('en-PH', { notation: 'compact', maximumFractionDigits: 1 }).format(n);
 /** The program most of these activities belong to. */
@@ -20,14 +23,22 @@ const sum = (list: ProgramActivity[], f: (a: ProgramActivity) => number | null) 
 /**
  * Statistics: every PHILRADS project and activity on record since 2023, with totals, a year-by-year
  * view, what each program and response reached, and the full details of each record (target and
- * served, men and women, funding, donors, partners). Mapped records open on the Live Map.
+ * served, men and women, partners). Mapped records open on the Live Map. Funding, donors and the top
+ * donors are for administrators and coordinators only (funding.read); people who manage projects can
+ * sync the records from the statistics workbook.
  */
 export function StatisticsPage() {
+  const { can } = useAuth();
+  const canFunding = can('funding.read');
+  const canSync = can('projects.manage');
   const q = useAsyncData(() => activitiesService.list());
   const [year, setYear] = useState<number | 'all'>('all');
   const [program, setProgram] = useState<ProgramKey | 'all'>('all');
   const [search, setSearch] = useState('');
-  const all = useMemo(() => (q.status === 'success' ? [...q.data].sort(byNewest) : []), [q.status, q.data]);
+  const [syncOpen, setSyncOpen] = useState(false);
+  const [synced, setSynced] = useState(false);
+  // The database already withholds funding from other roles; this does the same for the sample data.
+  const all = useMemo(() => (q.status === 'success' ? q.data.map((a) => (canFunding ? a : withoutFunding(a))).sort(byNewest) : []), [q.status, q.data, canFunding]);
   const years = useMemo(() => [...new Set(all.map((a) => a.year))].sort((a, b) => b - a), [all]);
 
   const needle = search.trim().toLowerCase();
@@ -37,9 +48,9 @@ export function StatisticsPage() {
         (a) =>
           (year === 'all' || a.year === year) &&
           (program === 'all' || a.program === program) &&
-          (!needle || [a.activity, a.site, a.response, a.donors, a.partner, a.contactPerson, a.dateLabel].some((s) => s?.toLowerCase().includes(needle))),
+          (!needle || [a.activity, a.site, a.response, canFunding ? a.donors : null, a.partner, a.contactPerson, a.dateLabel].some((s) => s?.toLowerCase().includes(needle))),
       ),
-    [all, year, program, needle],
+    [all, year, program, needle, canFunding],
   );
 
   if (q.status === 'error') return <LoadError message={q.error.message} onRetry={q.reload} />;
@@ -71,16 +82,24 @@ export function StatisticsPage() {
             </h2>
             <p className="card-note">From the PHILRADS statistics database, activity tracker and statistical report.</p>
           </div>
-          <label className="relative w-full sm:w-72">
-            <span className="sr-only">Search records</span>
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
-            <input className="field py-2.5 pl-9 pr-9" placeholder="Search place, donor, partner…" value={search} onChange={(e) => setSearch(e.target.value)} />
-            {search && (
-              <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted hover:text-ink" onClick={() => setSearch('')} aria-label="Clear search">
-                <X className="h-4 w-4" aria-hidden />
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+            <label className="relative w-full sm:w-72">
+              <span className="sr-only">Search records</span>
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
+              <input className="field py-2.5 pl-9 pr-9" placeholder={canFunding ? 'Search place, donor, partner…' : 'Search place, partner, response…'} value={search} onChange={(e) => setSearch(e.target.value)} />
+              {search && (
+                <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted hover:text-ink" onClick={() => setSearch('')} aria-label="Clear search">
+                  <X className="h-4 w-4" aria-hidden />
+                </button>
+              )}
+            </label>
+            {canSync && (
+              <button type="button" className="btn-ghost w-full gap-2 sm:w-auto" onClick={() => setSyncOpen(true)}>
+                <FileSpreadsheet className="h-4 w-4" aria-hidden />
+                Sync from spreadsheet
               </button>
             )}
-          </label>
+          </div>
         </div>
         <div className="flex flex-wrap gap-2" role="group" aria-label="Year">
           {(['all', ...years] as const).map((y) => (
@@ -103,19 +122,21 @@ export function StatisticsPage() {
       </section>
 
       {/* Totals */}
-      <section className="grid animate-fade-up grid-cols-2 gap-3 [animation-delay:60ms] lg:grid-cols-5" aria-label="Totals">
+      <section className={`grid animate-fade-up grid-cols-2 gap-3 [animation-delay:60ms] ${canFunding ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`} aria-label="Totals">
         <Kpi icon={CalendarDays} label="Activities" value={formatNumber(done.length)} note={shown.length > done.length ? `+${shown.length - done.length} scheduled` : 'completed or ongoing'} />
         <Kpi icon={Home} label="Households served" value={formatNumber(sum(done, (a) => a.householdsServed))} note="where recorded" glow="rgba(96,165,250,.2)" />
         <Kpi icon={UsersRound} label="People served" value={formatNumber(sum(done, (a) => a.individualsServed))} note="individuals, where recorded" glow="rgba(74,222,128,.18)" />
         <Kpi icon={MapPin} label="Places reached" value={formatNumber(places)} note="barangays, towns and provinces" glow="rgba(224,122,122,.2)" />
-        <Kpi
-          icon={Wallet}
-          label="Funding recorded"
-          value={funded.length ? `₱${compact(sum(funded, (a) => a.funding))}` : '—'}
-          note={funded.length ? `for ${funded.length} of ${done.length} activities` : 'none recorded'}
-          glow="rgba(196,181,253,.2)"
-          className="col-span-2 lg:col-span-1"
-        />
+        {canFunding && (
+          <Kpi
+            icon={Wallet}
+            label="Funding recorded"
+            value={funded.length ? `₱${compact(sum(funded, (a) => a.funding))}` : '—'}
+            note={funded.length ? `for ${funded.length} of ${done.length} activities` : 'none recorded'}
+            glow="rgba(196,181,253,.2)"
+            className="col-span-2 lg:col-span-1"
+          />
+        )}
       </section>
 
       <div className="grid animate-fade-up grid-cols-1 gap-5 [animation-delay:120ms] xl:grid-cols-12">
@@ -171,6 +192,8 @@ export function StatisticsPage() {
 
       <Responses list={done} onSearch={setSearch} />
 
+      {canFunding && <TopDonors list={program === 'all' && !needle ? all.filter((a) => a.status !== 'scheduled') : done} />}
+
       {/* Every record */}
       <section className="card flex animate-fade-up flex-col gap-1 p-0 [animation-delay:180ms]">
         <div className="flex flex-wrap items-baseline justify-between gap-2 px-5 pb-2 pt-5">
@@ -211,6 +234,21 @@ export function StatisticsPage() {
           ))
         )}
       </section>
+
+      {canSync && (
+        <SyncSheet
+          open={syncOpen}
+          onClose={() => {
+            setSyncOpen(false);
+            // Reloading shows the page's loading state, so it waits until the summary has been read.
+            if (synced) q.refresh();
+            setSynced(false);
+          }}
+          records={all}
+          withFunding={canFunding}
+          onSynced={() => setSynced(true)}
+        />
+      )}
     </div>
   );
 }

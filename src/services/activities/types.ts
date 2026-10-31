@@ -37,6 +37,7 @@ export interface ProgramActivity {
   male: number | null;
   female: number | null;
   servedNote: string | null;
+  /** Funding and donors: only filled for administrators and coordinators (funding.read); null for everyone else. */
   funding: number | null;
   fundingNote: string | null;
   donors: string | null;
@@ -47,10 +48,50 @@ export interface ProgramActivity {
   notes: string | null;
 }
 
+/** Fields the statistics workbook can set on a record (database column names). */
+export interface SyncRow {
+  year: number;
+  start_date: string | null;
+  end_date: string | null;
+  date_label: string;
+  program: ProgramKey;
+  activity: string;
+  site: string;
+  households_target: number | null;
+  individuals_target: number | null;
+  households_served: number | null;
+  individuals_served: number | null;
+  partner: string | null;
+  contact_person: string | null;
+  status: ActivityStatus;
+  source: string;
+  notes: string | null;
+}
+export type SyncFields = Partial<Pick<SyncRow, 'households_target' | 'individuals_target' | 'households_served' | 'individuals_served' | 'partner' | 'contact_person'>>;
+export interface SyncFunding {
+  funding?: number | null;
+  funding_note?: string | null;
+  donors?: string | null;
+}
+/** One reviewed change from the workbook: a new record, or chosen fields of an existing one. */
+export type SyncChange =
+  | { action: 'insert'; row: SyncRow; fund?: SyncFunding }
+  | { action: 'update'; id: string; set: SyncFields; fund?: SyncFunding };
+export interface SyncResult {
+  inserted: number;
+  updated: number;
+  funding: number;
+}
+
 export interface ActivitiesService {
   readonly source: DataSource;
   list(): Promise<ProgramActivity[]>;
+  /** Apply reviewed changes from the statistics workbook, all or nothing. Needs projects.manage (and funding.read for funding). */
+  sync(changes: SyncChange[]): Promise<SyncResult>;
 }
+
+/** The record without its funding and donors (for anyone without funding.read). */
+export const withoutFunding = (a: ProgramActivity): ProgramActivity => (a.funding === null && a.fundingNote === null && a.donors === null ? a : { ...a, funding: null, fundingNote: null, donors: null });
 
 /** Activities at the same spot, for one pin on the map. */
 export interface ActivitySite {

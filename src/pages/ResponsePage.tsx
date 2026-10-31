@@ -4,6 +4,7 @@ import { useAuth } from '../components/auth/AuthProvider';
 import { QuantityStepper } from '../components/inventory/QuantityStepper';
 import { EmptyState, LoadError, Skeleton } from '../components/ui/Card';
 import { Dialog } from '../components/ui/Dialog';
+import { SlidingPill } from '../components/ui/SlidingPill';
 import { env } from '../config/env';
 import { formatDateTime, formatNumber, formatShortDate } from '../lib/format';
 import { imsActionUrl, openImsAction, useImsActionResults, useLiveRefresh } from '../lib/imsActions';
@@ -117,7 +118,8 @@ function ImsEvents() {
                   <Plus className="h-4 w-4" aria-hidden /> New event
                 </button>
               )}
-              <div role="group" aria-label="Show" className="flex gap-1 rounded-xl bg-surface-sunken p-1">
+              <div role="group" aria-label="Show" className="relative flex gap-1 rounded-xl bg-surface-sunken p-1">
+                <SlidingPill className="rounded-lg bg-surface-raised shadow-sm shadow-black/30 ring-1 ring-inset ring-white/[0.06]" />
                 {(
                   [
                     ['open', 'Open'],
@@ -130,7 +132,7 @@ function ImsEvents() {
                     type="button"
                     aria-pressed={filter === f}
                     onClick={() => setFilter(f)}
-                    className="tap min-h-9 rounded-lg px-3 text-sm font-semibold text-ink-soft aria-pressed:bg-surface-raised aria-pressed:text-ink"
+                    className="tap min-h-9 rounded-lg px-3 text-sm font-semibold text-ink-soft relative z-10 transition-colors duration-500 aria-pressed:text-ink"
                   >
                     {label}
                   </button>

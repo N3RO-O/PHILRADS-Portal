@@ -7,12 +7,14 @@ import { InviteSheet } from '../components/staff/InviteSheet';
 import { EmptyState, LoadError, Skeleton } from '../components/ui/Card';
 import { SampleBadge } from '../components/ui/SampleBadge';
 import { SwipeToArchive } from '../components/ui/SwipeToArchive';
+import { LeavingRow, useLeaving } from '../components/ui/LeavingRow';
 import { useAsyncData } from '../hooks/useAsyncData';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { formatNumber, formatShortInstant } from '../lib/format';
 import { staffService } from '../services';
 import { STAFF_ROLES, StaffRuleError, roleLabel, type StaffMember, type StaffRoleKey } from '../services/staff/types';
 import { PersonAvatar } from '../components/ui/PersonAvatar';
+import { Switch } from '../components/ui/Switch';
 
 type Filter = 'all' | 'active' | 'volunteers' | 'pending' | 'off' | 'archived';
 const FILTERS: [Filter, string][] = [
@@ -59,6 +61,12 @@ export function StaffPage() {
   const pendingTimer = useRef<ReturnType<typeof setTimeout>>();
   const pendingRef = useRef<StaffMember | null>(null);
   pendingRef.current = pending;
+  // Archived rows slide away (a swiped one has already moved, so it only closes up); undone ones glide back.
+  const { leaving, leave } = useLeaving();
+  const swiped = useRef(new Set<string>());
+  const [returning, setReturning] = useState<string | null>(null);
+  // A switched account shows its new state at once, while the change is saved.
+  const [flipped, setFlipped] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!toast) return;
@@ -81,7 +89,7 @@ export function StaffPage() {
       } catch (err) {
         if (!quiet) report(err);
       } finally {
-        if (!quiet) list.reload();
+        if (!quiet) list.refresh();
       }
     },
     [list, report],
@@ -98,6 +106,8 @@ export function StaffPage() {
   );
 
   const all = list.status === 'success' ? list.data : [];
+  // The refreshed list now says the same as the switches.
+  useEffect(() => setFlipped({}), [list.data]);
   const shown = useMemo(() => {
     const needle = search.trim().toLowerCase();
     return all.filter(
@@ -118,9 +128,11 @@ export function StaffPage() {
     try {
       await change();
       setToast({ text: done });
-      list.reload();
+      list.refresh();
+      return true;
     } catch (err) {
       report(err);
+      return false;
     } finally {
       setBusyId(null);
     }
@@ -129,7 +141,10 @@ export function StaffPage() {
     void run(m, () => staffService.setRole(m.id, roleKey), `${m.name} is now ${roleLabel(roleKey) === 'Administrator' ? 'an' : 'a'} ${roleLabel(roleKey)}.`);
   const toggle = (m: StaffMember) => {
     if (m.isActive && !window.confirm(`Switch off ${m.name}’s account? They can still sign in, but won’t see any portal data until it’s switched back on.`)) return;
-    void run(m, () => staffService.setActive(m.id, !m.isActive), m.isActive ? `Switched off ${m.name}’s account.` : `Switched on ${m.name}’s account.`);
+    setFlipped((f) => ({ ...f, [m.id]: !m.isActive }));
+    void run(m, () => staffService.setActive(m.id, !m.isActive), m.isActive ? `Switched off ${m.name}’s account.` : `Switched on ${m.name}’s account.`).then(
+      (saved) => saved || setFlipped(({ [m.id]: _, ...rest }) => rest),
+    );
   };
   const resend = (m: StaffMember) =>
     void run(
@@ -139,15 +154,25 @@ export function StaffPage() {
     );
   const restore = (m: StaffMember) => void run(m, () => staffService.restore(m.id), `Restored ${m.name}. Their account is still switched off.`);
 
-  const archive = (m: StaffMember) => {
+  const archive = (m: StaffMember, bySwipe = false) => {
     if (pendingRef.current) void commitArchive(pendingRef.current);
     setToast(null);
-    setPending(m);
-    clearTimeout(pendingTimer.current);
-    pendingTimer.current = setTimeout(() => void commitArchive(m), UNDO_MS);
+    if (bySwipe) swiped.current.add(m.id);
+    void leave(
+      [m.id],
+      async () => undefined,
+      () => {
+        swiped.current.delete(m.id);
+        setPending(m);
+        clearTimeout(pendingTimer.current);
+        pendingTimer.current = setTimeout(() => void commitArchive(m), UNDO_MS);
+      },
+    );
   };
   const undo = () => {
     clearTimeout(pendingTimer.current);
+    setReturning(pendingRef.current?.id ?? null);
+    setTimeout(() => setReturning(null), 700);
     setPending(null);
   };
 
@@ -239,8 +264,8 @@ export function StaffPage() {
               const busy = busyId === m.id;
               const swipeable = canArchive(m) && online;
               return (
-                <li key={m.id}>
-                  <SwipeToArchive enabled={swipeable} onArchive={() => archive(m)}>
+                <LeavingRow key={m.id} as="li" gap="0.5rem" leaving={leaving.has(m.id)} slide={!swiped.current.has(m.id)} className={returning === m.id ? 'is-returning' : ''}>
+                  <SwipeToArchive enabled={swipeable} onArchive={() => archive(m, true)}>
                     <div className={`tile flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:gap-4 sm:p-4 ${m.isActive ? '' : 'text-ink-soft'}`}>
                       <div className="flex min-w-0 flex-1 items-center gap-3">
                         <PersonAvatar id={m.id} name={m.name} />
@@ -283,20 +308,13 @@ export function StaffPage() {
                               </option>
                             ))}
                           </select>
-                          <button
-                            type="button"
-                            role="switch"
-                            aria-checked={m.isActive}
-                            aria-label={`${m.name}’s account is ${m.isActive ? 'on' : 'off'}`}
+                          <Switch
+                            checked={flipped[m.id] ?? m.isActive}
+                            label={`${m.name}’s account is ${m.isActive ? 'on' : 'off'}`}
                             title={self ? 'You can’t switch off your own account.' : m.isActive ? 'Switch off' : 'Switch on'}
                             disabled={self || busy || !online}
-                            onClick={() => toggle(m)}
-                            className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors after:absolute after:-inset-2.5 after:content-[''] disabled:cursor-not-allowed disabled:opacity-50 ${
-                              m.isActive ? 'border-uplift bg-uplift/80' : 'border-line bg-surface-raised'
-                            }`}
-                          >
-                            <span className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${m.isActive ? 'translate-x-6' : 'translate-x-1'}`} />
-                          </button>
+                            onChange={() => toggle(m)}
+                          />
                           <button
                             type="button"
                             className="icon-btn"
@@ -311,7 +329,7 @@ export function StaffPage() {
                       )}
                     </div>
                   </SwipeToArchive>
-                </li>
+                </LeavingRow>
               );
             })}
           </ul>

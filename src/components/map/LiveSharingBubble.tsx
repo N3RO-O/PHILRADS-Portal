@@ -5,6 +5,7 @@ import { GOOD_M, ROUGH_M } from '../../lib/geo';
 import { formatTime } from '../../lib/format';
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../ui/Avatar';
+import { Switch } from '../ui/Switch';
 import { useLiveSharing } from './LiveSharing';
 
 const SIZE = 56;
@@ -147,7 +148,7 @@ export function LiveSharingBubble() {
           <label className="mt-3 flex cursor-pointer items-center gap-3 rounded-xl bg-surface-sunken px-3 py-2.5">
             <Sun className="h-4 w-4 shrink-0 text-uplift" aria-hidden />
             <span className="min-w-0 flex-1 text-sm">Keep screen on</span>
-            <input type="checkbox" className="h-5 w-5 accent-uplift" checked={live.keepAwake} onChange={(e) => live.setKeepAwake(e.target.checked)} />
+            <Switch checked={live.keepAwake} onChange={live.setKeepAwake} />
           </label>
 
           <div className="mt-3 flex gap-2">

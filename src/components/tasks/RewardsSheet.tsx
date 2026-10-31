@@ -3,6 +3,7 @@ import { formatNumber, formatShortInstant } from '../../lib/format';
 import { FRAME_LABEL, LEVELS, XP_RULES, type Progress } from '../../lib/taskProgress';
 import type { Kudos } from '../../services/tasks/types';
 import { Sheet } from '../ui/Sheet';
+import { SlidingPill } from '../ui/SlidingPill';
 import { BADGE_ICON } from './taskMeta';
 
 export type RewardsTab = 'badges' | 'levels' | 'kudos';
@@ -26,7 +27,8 @@ export function RewardsSheet({ tab, progress, kudos, onTab, onClose, onPrintCert
       title="Badges and rewards"
       subtitle={`Level ${progress.level.level} · ${progress.level.title} · ${formatNumber(progress.xp)} XP. Only you and administrators see this.`}
     >
-      <div role="tablist" aria-label="Rewards" className="mb-5 grid grid-cols-3 gap-1 rounded-2xl bg-surface-sunken p-1">
+      <div role="tablist" aria-label="Rewards" className="relative mb-5 grid grid-cols-3 gap-1 rounded-2xl bg-surface-sunken p-1">
+        <SlidingPill className="rounded-xl bg-surface-raised shadow-sm shadow-black/30 ring-1 ring-inset ring-white/[0.06]" />
         {(
           [
             ['badges', `Badges ${earned}/${progress.badges.length}`],
@@ -40,7 +42,7 @@ export function RewardsSheet({ tab, progress, kudos, onTab, onClose, onPrintCert
             role="tab"
             aria-selected={tab === t}
             onClick={() => onTab(t)}
-            className="tap min-h-11 rounded-xl text-sm font-semibold text-ink-soft transition aria-selected:bg-surface-raised aria-selected:text-ink"
+            className="tap min-h-11 rounded-xl text-sm font-semibold text-ink-soft relative z-10 transition-colors duration-500 aria-selected:text-ink"
           >
             {label}
           </button>

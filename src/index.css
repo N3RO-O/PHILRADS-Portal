@@ -590,3 +590,144 @@
     display: none !important;
   }
 }
+
+/* ───── Motion details ───── */
+
+/* Switch: the knob stretches as it sets off, overshoots the end, then settles (like a real switch). */
+.switch {
+  position: relative;
+  display: inline-flex;
+  height: 1.75rem;
+  width: 3rem;
+  flex-shrink: 0;
+  align-items: center;
+  border-radius: 9999px;
+  border-width: 1px;
+  transition:
+    background-color 380ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 380ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.switch::after {
+  content: '';
+  position: absolute;
+  inset: -0.625rem;
+}
+.switch:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.switch-thumb {
+  display: block;
+  height: 1.25rem;
+  width: 1.25rem;
+  border-radius: 9999px;
+  background: #fff;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.35),
+    0 0 0 0.5px rgba(0, 0, 0, 0.06);
+  translate: 0.1875rem 0;
+  transition:
+    translate 560ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    width 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.switch[aria-checked='true'] .switch-thumb {
+  translate: calc(1.5625rem - 2px) 0;
+}
+/* Pressing and holding stretches the knob toward the middle. */
+.switch:active:not(:disabled) .switch-thumb {
+  width: 1.625rem;
+}
+.switch[aria-checked='true']:active:not(:disabled) .switch-thumb {
+  translate: calc(1.1875rem - 2px) 0;
+}
+.switch-thumb[data-moved='on'] {
+  animation: switch-stretch-on 560ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.switch-thumb[data-moved='off'] {
+  animation: switch-stretch-off 560ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* Two names for the same motion, so it plays again on every flip. */
+@keyframes switch-stretch-on {
+  0% { scale: 1 1; }
+  28% { scale: 1.42 0.82; }
+  58% { scale: 0.92 1.07; }
+  80% { scale: 1.03 0.98; }
+  100% { scale: 1 1; }
+}
+@keyframes switch-stretch-off {
+  0% { scale: 1 1; }
+  28% { scale: 1.42 0.82; }
+  58% { scale: 0.92 1.07; }
+  80% { scale: 1.03 0.98; }
+  100% { scale: 1 1; }
+}
+
+/* Tabs and segmented controls: the highlight glides, slowly, from the old choice to the new one. */
+.sliding-pill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition:
+    translate 640ms cubic-bezier(0.45, 0, 0.15, 1),
+    width 640ms cubic-bezier(0.45, 0, 0.15, 1),
+    height 640ms cubic-bezier(0.45, 0, 0.15, 1),
+    opacity 200ms ease-out;
+}
+
+/* A deleted row slides off to the left, then the rows below glide up into its place. */
+.leave-row {
+  grid-template-columns: minmax(0, 1fr);
+  display: grid;
+  grid-template-rows: 1fr;
+  transition:
+    grid-template-rows 420ms cubic-bezier(0.65, 0, 0.35, 1) 340ms,
+    margin 420ms cubic-bezier(0.65, 0, 0.35, 1) 340ms;
+}
+.leave-row-inner {
+  min-height: 0;
+  transition:
+    translate 400ms cubic-bezier(0.55, 0, 0.75, 0.2),
+    opacity 400ms ease-in;
+}
+.leave-row.is-leaving {
+  grid-template-rows: 0fr;
+  margin-bottom: calc(-1 * var(--leave-gap, 0px));
+  overflow: hidden;
+  pointer-events: none;
+}
+.leave-row.is-leaving > .leave-row-inner {
+  overflow: hidden;
+  translate: -105% 0;
+  opacity: 0;
+}
+.leave-row.is-leaving.no-slide {
+  transition-delay: 0ms;
+}
+.leave-row.is-leaving.no-slide > .leave-row-inner {
+  translate: none;
+}
+/* An undone row glides back in from the left and opens its space again. */
+.leave-row.is-returning {
+  animation: row-return-space 420ms cubic-bezier(0.65, 0, 0.35, 1) backwards;
+}
+.leave-row.is-returning > .leave-row-inner {
+  animation: row-return-slide 460ms cubic-bezier(0.22, 1, 0.36, 1) 200ms backwards;
+}
+@keyframes row-return-space {
+  from {
+    grid-template-rows: 0fr;
+    margin-bottom: calc(-1 * var(--leave-gap, 0px));
+  }
+}
+@keyframes row-return-slide {
+  from {
+    translate: -40% 0;
+    opacity: 0;
+  }
+}
+.leave-row.is-returning > .leave-row-inner {
+  overflow: hidden;
+}

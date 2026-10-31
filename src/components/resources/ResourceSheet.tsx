@@ -14,6 +14,8 @@ import {
   type ResourceFileType,
 } from '../../services/resources/types';
 import { Sheet } from '../ui/Sheet';
+import { Switch } from '../ui/Switch';
+import { SlidingPill } from '../ui/SlidingPill';
 
 interface Props {
   open: boolean;
@@ -186,7 +188,8 @@ export function ResourceSheet({ open, resource, existing, onClose, onSave, onRem
       }
     >
       {!resource && (
-        <div role="tablist" aria-label="How to add" className="mb-5 grid grid-cols-2 gap-1 rounded-2xl bg-surface-sunken p-1">
+        <div role="tablist" aria-label="How to add" className="relative mb-5 grid grid-cols-2 gap-1 rounded-2xl bg-surface-sunken p-1">
+          <SlidingPill className="rounded-xl bg-surface-raised shadow-sm shadow-black/30 ring-1 ring-inset ring-white/[0.06]" />
           {(
             [
               ['link', 'Paste a link', Link2],
@@ -199,7 +202,7 @@ export function ResourceSheet({ open, resource, existing, onClose, onSave, onRem
               role="tab"
               aria-selected={mode === m}
               onClick={() => setMode(m)}
-              className="tap flex min-h-11 items-center justify-center gap-2 rounded-xl text-sm font-semibold text-ink-soft transition aria-selected:bg-surface-raised aria-selected:text-ink"
+              className="tap flex min-h-11 items-center justify-center gap-2 rounded-xl text-sm font-semibold text-ink-soft relative z-10 transition-colors duration-500 aria-selected:text-ink"
             >
               <Icon className="h-4 w-4" aria-hidden /> {label}
             </button>
@@ -278,7 +281,7 @@ export function ResourceSheet({ open, resource, existing, onClose, onSave, onRem
               <span className="block text-sm font-semibold">Pin to the top</span>
               <span className="block text-xs text-muted">For the few things staff need most often.</span>
             </span>
-            <input type="checkbox" className="h-5 w-5 accent-uplift" checked={pinned} onChange={(e) => setPinned(e.target.checked)} />
+            <Switch checked={pinned} onChange={setPinned} />
           </label>
           <p className="text-xs text-muted">
             Check the file’s sharing in Google Drive: staff can only open it if it’s shared with their PHILRADS account or the PHILRADS Shared Drive.

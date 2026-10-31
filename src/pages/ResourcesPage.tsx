@@ -9,6 +9,8 @@ import { ResourcePreview } from '../components/resources/ResourcePreview';
 import { ResourceSheet } from '../components/resources/ResourceSheet';
 import { EmptyState, LoadError, Skeleton } from '../components/ui/Card';
 import { SampleBadge } from '../components/ui/SampleBadge';
+import { SlidingPill } from '../components/ui/SlidingPill';
+import { LeavingRow, useFlip, useLeaving } from '../components/ui/LeavingRow';
 import { useAsyncData } from '../hooks/useAsyncData';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { formatNumber } from '../lib/format';
@@ -74,7 +76,13 @@ export function ResourcesPage() {
     return () => clearTimeout(t);
   }, [toast]);
 
-  const all = list.status === 'success' ? list.data : [];
+  // Removed resources slide away and stay hidden, without reloading the whole list.
+  const { leaving, leave } = useLeaving();
+  const [removed, setRemoved] = useState<ReadonlySet<string>>(new Set());
+  const hide = (ids: string[]) => setRemoved((s) => new Set([...s, ...ids]));
+  const all = useMemo(() => (list.status === 'success' ? list.data.filter((r) => !removed.has(r.id)) : []), [list.status, list.data, removed]);
+  const listBox = useRef<HTMLDivElement>(null);
+  useFlip(listBox, all.map((r) => r.id).join());
   const people = useMemo(() => [...new Set(all.map((r) => r.addedByName))].sort(), [all]);
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -169,29 +177,36 @@ export function ResourcesPage() {
     if (!ids.length) return;
     if (!window.confirm(`Remove ${ids.length} resource${ids.length === 1 ? '' : 's'} from Resources? The files in Google Drive aren’t touched.`)) return;
     setRemoving(true);
-    let failed = 0;
-    for (const id of ids) await resourcesService.remove(id).catch(() => failed++);
+    const done: string[] = [];
+    await leave(
+      ids,
+      async () => {
+        for (const id of ids) await resourcesService.remove(id).then(() => done.push(id), () => undefined);
+      },
+      () => hide(done),
+    );
+    const failed = ids.length - done.length;
     setRemoving(false);
     stopSelecting();
-    list.reload();
     setToast(failed ? `Removed ${ids.length - failed}. ${failed} couldn’t be removed; try again.` : `Removed ${ids.length} resource${ids.length === 1 ? '' : 's'}.`);
   };
 
   /** One resource in the chosen view. */
   const item = (r: Resource) =>
     prefs.view === 'xl' || prefs.view === 'large' ? (
-      <ResourceCard
-        key={r.id}
-        resource={r}
-        canManage={canManage}
-        onEdit={(x) => setSheet({ resource: x })}
-        onPreview={openPreview}
-        selecting={selecting}
-        selected={selected.has(r.id)}
-        onSelect={(e) => onItemClick(r, e)}
-      />
+      <LeavingRow key={r.id} as="li" flip={r.id} leaving={leaving.has(r.id)}>
+        <ResourceCard
+          resource={r}
+          canManage={canManage}
+          onEdit={(x) => setSheet({ resource: x })}
+          onPreview={openPreview}
+          selecting={selecting}
+          selected={selected.has(r.id)}
+          onSelect={(e) => onItemClick(r, e)}
+        />
+      </LeavingRow>
     ) : (
-      <li key={r.id} className="min-w-0">
+      <LeavingRow key={r.id} as="li" flip={r.id} leaving={leaving.has(r.id)} className="min-w-0">
         <ResourceItem
           resource={r}
           view={prefs.view}
@@ -202,7 +217,7 @@ export function ResourcesPage() {
           onClick={(e) => onItemClick(r, e)}
           onDoubleClick={() => !selecting && openResource(r)}
         />
-      </li>
+      </LeavingRow>
     );
   const listClass = (v: DocView) => (v === 'xl' || v === 'large' ? CARD_LIST[v] : RESOURCE_LIST[v]);
 
@@ -292,7 +307,8 @@ export function ResourcesPage() {
                 <option key={p}>{p}</option>
               ))}
             </select>
-            <div role="group" aria-label="Group by" className="flex gap-1 rounded-lg bg-surface-sunken p-0.5">
+            <div role="group" aria-label="Group by" className="relative flex gap-1 rounded-lg bg-surface-sunken p-0.5">
+              <SlidingPill className="rounded-md bg-surface-raised shadow-sm shadow-black/30 ring-1 ring-inset ring-white/[0.06]" />
               {(
                 [
                   ['category', 'By category', FolderOpen],
@@ -304,7 +320,7 @@ export function ResourcesPage() {
                   type="button"
                   aria-pressed={groupBy === g}
                   onClick={() => setParam({ group: g === 'category' ? null : g })}
-                  className="tap inline-flex min-h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-semibold text-ink-soft aria-pressed:bg-surface-raised aria-pressed:text-ink"
+                  className="tap inline-flex min-h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-semibold text-ink-soft relative z-10 transition-colors duration-500 aria-pressed:text-ink"
                 >
                   <Icon className="h-3.5 w-3.5" aria-hidden /> {label}
                 </button>
@@ -363,7 +379,7 @@ export function ResourcesPage() {
 
         {list.status === 'success' && filtered.length > 0 && (
           <div className="flex gap-5">
-            <div className="flex min-w-0 flex-1 flex-col gap-5">
+            <div ref={listBox} className="flex min-w-0 flex-1 flex-col gap-5">
               {prefs.view === 'details' && <ResourceDetailsHeader compact={paneOn} />}
               {pinned.length > 0 && (
                 <Group title="Pinned" count={pinned.length} listClass={listClass(prefs.view)}>
@@ -427,7 +443,7 @@ export function ResourcesPage() {
         }}
         onRemove={async (r) => {
           await resourcesService.remove(r.id);
-          reload();
+          void leave([r.id], async () => undefined, () => hide([r.id]));
         }}
         onDone={setToast}
       />
@@ -450,7 +466,7 @@ function Group({ title, count, icon, listClass, children }: { title: string; cou
   const Icon = icon === 'person' ? User : FolderOpen;
   return (
     <section aria-label={title} className="flex flex-col gap-3">
-      <h3 className="flex items-center gap-2 text-sm font-semibold text-ink">
+      <h3 data-flip={`group-${title}`} className="flex items-center gap-2 text-sm font-semibold text-ink">
         {icon && <Icon className="h-4 w-4 text-muted" aria-hidden />}
         {title}
         <span className="text-xs font-normal text-muted">{count}</span>

@@ -12,6 +12,7 @@ import { SpotSheet, WeatherBar } from '../components/map/WeatherPanel';
 import { LoadError, Skeleton } from '../components/ui/Card';
 import { SampleBadge } from '../components/ui/SampleBadge';
 import { Sheet } from '../components/ui/Sheet';
+import { Switch } from '../components/ui/Switch';
 import { useAsyncData } from '../hooks/useAsyncData';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { currentPosition, distanceM, timeAgo, type LatLng } from '../lib/geo';
@@ -19,7 +20,7 @@ import { formatNumber, initialsOf } from '../lib/format';
 import { useLiveRefresh } from '../lib/imsActions';
 import { eventAt, stockAt } from '../lib/mapStock';
 import { activitiesService, inventoryStore, mapService } from '../services';
-import { groupSites, PROGRAMS, programMeta, type ActivitySite } from '../services/activities/types';
+import { groupSites, PROGRAMS, programMeta, withoutFunding, type ActivitySite } from '../services/activities/types';
 import { useInventoryState } from '../services/inventory/inventoryStore';
 import type { InventorySnapshot } from '../services/inventory/types';
 import { kindMeta, PLACE_KINDS, type CheckIn, type LivePosition, type MapPlace, type PlaceDraft, type PlaceKind } from '../services/map/types';
@@ -193,7 +194,12 @@ export function LiveMapPage() {
   const shownCheckIns = useMemo(() => (layers.has('team') ? checkIns.filter((c) => !needle || [c.name, c.note].some((s) => s?.toLowerCase().includes(needle))) : []), [checkIns, layers, needle]);
   const shownLive = useMemo(() => (layers.has('team') ? live.filter((p) => !needle || p.name.toLowerCase().includes(needle)) : []), [live, layers, needle]);
   // Statistics layer: sites of past activities (scheduled ones aren't done yet, so they stay off the map).
-  const activities = useMemo(() => (activitiesQ.status === 'success' ? activitiesQ.data.filter((a) => a.status !== 'scheduled') : []), [activitiesQ.status, activitiesQ.data]);
+  // Funding and donors only for administrators and coordinators (the database already withholds them; this covers sample mode).
+  const canFunding = can('funding.read');
+  const activities = useMemo(
+    () => (activitiesQ.status === 'success' ? activitiesQ.data.filter((a) => a.status !== 'scheduled').map((a) => (canFunding ? a : withoutFunding(a))) : []),
+    [activitiesQ.status, activitiesQ.data, canFunding],
+  );
   const actYears = useMemo(() => [...new Set(activities.map((a) => a.year))].sort((a, b) => b - a), [activities]);
   const sites = useMemo(() => groupSites(activities.filter((a) => actYear === 'all' || a.year === actYear)), [activities, actYear]);
   const shownSites = useMemo(
@@ -737,10 +743,10 @@ function PlacesPanel({ search, setSearch, layers, toggleLayer, places, shownPlac
         <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-1">
           {[...PLACE_KINDS.map((k) => ({ key: k.key as Layer, label: k.plural, color: k.color })), { key: 'team' as Layer, label: 'Team: live and check-ins', color: '#7a1f1f' }, { key: 'activities' as Layer, label: 'Past activities (Statistics)', color: programMeta('emergency').color }].map((l) => (
             <label key={l.key} className="tap flex min-h-10 cursor-pointer items-center gap-3 rounded-xl px-2 text-sm hover:bg-white/[0.04]">
-              <input type="checkbox" className="h-4 w-4 accent-uplift" checked={layers.has(l.key)} onChange={() => toggleLayer(l.key)} />
               <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: l.color }} aria-hidden />
               <span className="min-w-0 flex-1 truncate">{l.label}</span>
               <span className="text-xs tabular-nums text-muted">{counts(l.key)}</span>
+              <Switch checked={layers.has(l.key)} onChange={() => toggleLayer(l.key)} />
             </label>
           ))}
         </div>

@@ -4,6 +4,7 @@ import { addDays, LIST_META, RECURRENCE_LABEL, weekday } from '../../lib/tasks';
 import { XP_RULES } from '../../lib/taskProgress';
 import { TASK_LISTS, type Assignee, type Recurrence, type Task, type TaskDraft, type TaskList } from '../../services/tasks/types';
 import { Sheet } from '../ui/Sheet';
+import { Switch } from '../ui/Switch';
 
 interface Props {
   open: boolean;
@@ -269,7 +270,7 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, people, o
               <span className="block text-xs text-muted">Plan it for today.</span>
             </span>
           </span>
-          <input type="checkbox" className="h-5 w-5 accent-uplift" checked={d.myDay === today} onChange={(e) => set('myDay', e.target.checked ? today : null)} />
+          <Switch checked={d.myDay === today} onChange={(on) => set('myDay', on ? today : null)} />
         </label>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

@@ -20,6 +20,7 @@ import { formatLongDate, formatNumber, manilaDayKey } from '../lib/format';
 import { todayKey } from '../lib/inventory';
 import { BUCKET_LABEL, BUCKETS, bucketOf, compareTasks, daysBetween, LIST_META, type Bucket } from '../lib/tasks';
 import { computeProgress, LEVELS, type Level } from '../lib/taskProgress';
+import { useLeaving } from '../components/ui/LeavingRow';
 import { tasksService } from '../services';
 import { TASK_LISTS, TaskRuleError, type Assignee, type Kudos, type Task, type TaskDraft, type TaskList, type TeamProgress, type XpAward } from '../services/tasks/types';
 
@@ -72,6 +73,7 @@ export function TasksPage() {
   const calDay = rawDay && /^\d{4}-\d{2}-\d{2}$/.test(rawDay) && !Number.isNaN(Date.parse(rawDay)) ? rawDay : today;
   const [me, setMe] = useState<string | null>(null);
   const [tasks, setTasks] = useState<Task[] | null>(null);
+  const { leaving, leave } = useLeaving();
   const [loadError, setLoadError] = useState<string | null>(null);
   const [awards, setAwards] = useState<XpAward[]>([]);
   const [kudos, setKudos] = useState<Kudos[]>([]);
@@ -316,10 +318,10 @@ export function TasksPage() {
 
   const remove = async (t: Task) => {
     if (!window.confirm(`Remove “${t.title}”? It won’t show in your lists any more.`)) return;
+    // The sheet closes first, so the row can be seen sliding away.
+    setSheet(null);
     try {
-      await tasksService.remove(t.id);
-      setTasks((ts) => ts && ts.filter((x) => x.id !== t.id));
-      setSheet(null);
+      await leave([t.id], () => tasksService.remove(t.id), () => setTasks((ts) => ts && ts.filter((x) => x.id !== t.id)));
       setToast({ text: `Removed “${t.title}”.`, tone: 'ok' });
     } catch (e) {
       setSheet(null);
@@ -380,7 +382,7 @@ export function TasksPage() {
   } as const;
   const go = (v: View, l?: TaskList) => setParam({ view: v === 'myday' ? null : v, list: v === 'list' ? (l ?? listKey) : null, day: null });
   const syncOf = (t: Task) => (pending.has(t.id) ? (pending.get(t.id)!.error ? ('failed' as const) : ('waiting' as const)) : null);
-  const rowProps = { today, me, syncOf, onToggle: (t: Task) => void toggle(t), onOpen: (t: Task) => setSheet({ task: t, initial: null }), onMyDay: (t: Task) => void toggleMyDay(t) };
+  const rowProps = { today, me, syncOf, leavingIds: leaving, onToggle: (t: Task) => void toggle(t), onOpen: (t: Task) => setSheet({ task: t, initial: null }), onMyDay: (t: Task) => void toggleMyDay(t) };
 
   const myDayDone = all.filter((t) => isMine(t) && whereOk(t) && doneToday(t));
   const plannedToday = shown.length + myDayDone.length;

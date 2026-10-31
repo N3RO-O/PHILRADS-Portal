@@ -2,6 +2,7 @@ import { useEffect, useState, type FocusEvent, type PointerEvent } from 'react';
 import { NavLink } from 'react-router-dom';
 import { MODULES, NAV_GROUPS } from '../../config/modules';
 import { useAuth } from '../auth/AuthProvider';
+import { SlidingPill } from '../ui/SlidingPill';
 
 interface NavItemsProps {
   expanded: boolean;
@@ -10,7 +11,8 @@ interface NavItemsProps {
 
 /**
  * Module links in groups (Overview / Field operations / Work, plus Admin for administrators),
- * separated by thin dividers. Expanded: icon + label, active item filled yellow. Collapsed: icons
+ * separated by thin dividers. Expanded: icon + label, active item filled yellow; the highlight glides
+ * from the old page to the new one, so the eye follows it. Collapsed: icons
  * only, active icon yellow with an indicator bar, and a label on hover or keyboard focus. The label
  * floats (fixed) beside the rail, so the navigation can scroll without clipping it. Modules not built
  * yet carry a "Soon" tag.
@@ -34,6 +36,12 @@ export function NavItems({ expanded, onNavigate }: NavItemsProps) {
   useEffect(hideTip, [expanded]);
   return (
     <>
+      {/* The active highlight, behind the links (the nav around this is relative). */}
+      <SlidingPill
+        className={`rounded-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.07)] ring-1 ring-inset ring-uplift/35 ${
+          expanded ? 'bg-gradient-to-r from-uplift/25 via-uplift/10 to-uplift/[0.03]' : 'bg-gradient-to-b from-uplift/25 to-uplift/[0.06]'
+        }`}
+      />
       {NAV_GROUPS.filter((group) => visible.some((m) => m.group === group)).map((group, gi) => (
         <div key={group} role="group" aria-label={group} className="flex flex-col gap-1">
           {gi > 0 && <hr className="mx-2 my-2 border-line/70" aria-hidden />}
@@ -52,14 +60,12 @@ export function NavItems({ expanded, onNavigate }: NavItemsProps) {
               onBlur={hideTip}
               aria-label={expanded ? undefined : m.soon ? `${m.label} (coming soon)` : m.label}
               className={({ isActive }) =>
-                `group relative flex h-10 shrink-0 items-center gap-3 rounded-xl text-sm transition-colors ${
+                `group relative z-10 flex h-10 shrink-0 items-center gap-3 rounded-xl text-sm transition-colors duration-500 ${
                   expanded ? 'px-3' : 'justify-center'
                 } ${
                   isActive
-                    ? // Glassy highlight: a yellow wash fading to the right, with a fine yellow edge.
-                      `font-semibold ring-1 ring-inset ring-uplift/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.07)] ${
-                        expanded ? 'bg-gradient-to-r from-uplift/25 via-uplift/10 to-uplift/[0.03] text-ink' : 'bg-gradient-to-b from-uplift/25 to-uplift/[0.06] text-uplift'
-                      }`
+                    ? // The glassy yellow highlight itself is the sliding pill above.
+                      `font-semibold ${expanded ? 'text-ink' : 'text-uplift'}`
                     : 'font-medium text-ink-soft hover:bg-white/[0.04] hover:text-ink'
                 }`
               }

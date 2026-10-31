@@ -4,6 +4,7 @@ import { formatShortDate } from '../../lib/format';
 import { daysBetween, LIST_META } from '../../lib/tasks';
 import type { Task } from '../../services/tasks/types';
 import { PersonAvatar } from '../ui/PersonAvatar';
+import { SlidingPill } from '../ui/SlidingPill';
 import { LIST_STYLE } from './taskMeta';
 
 /** Where a task given to someone stands, by colour. */
@@ -65,7 +66,8 @@ export function TeamTasks({ tasks, me, today, canSeeAll, onOpen }: { tasks: Task
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
         {canSeeAll && (
-          <div role="group" aria-label="Whose tasks" className="flex gap-1 rounded-lg bg-surface-sunken p-0.5">
+          <div role="group" aria-label="Whose tasks" className="relative flex gap-1 rounded-lg bg-surface-sunken p-0.5">
+            <SlidingPill className="rounded-md bg-surface-raised shadow-sm shadow-black/30 ring-1 ring-inset ring-white/[0.06]" />
             {(
               [
                 ['mine', 'Given by me'],
@@ -77,7 +79,7 @@ export function TeamTasks({ tasks, me, today, canSeeAll, onOpen }: { tasks: Task
                 type="button"
                 aria-pressed={scope === s}
                 onClick={() => setScope(s)}
-                className="tap min-h-8 rounded-md px-2.5 text-xs font-semibold text-ink-soft aria-pressed:bg-surface-raised aria-pressed:text-ink"
+                className="tap min-h-8 rounded-md px-2.5 text-xs font-semibold text-ink-soft relative z-10 transition-colors duration-500 aria-pressed:text-ink"
               >
                 {label}
               </button>

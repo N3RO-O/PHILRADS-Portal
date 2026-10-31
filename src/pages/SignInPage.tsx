@@ -1,10 +1,12 @@
-import { useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import { z } from 'zod';
 import { useAuth } from '../components/auth/AuthProvider';
 import { Emblem } from '../components/ui/Emblem';
+import { PasswordField } from '../components/ui/PasswordField';
 import { SignInBackground } from '../components/auth/SignInBackground';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { takeIdleSignOut } from '../lib/idle';
+import { shake } from '../lib/motion';
 
 const schema = z.object({
   email: z.string().trim().email('Enter a valid email address.'),
@@ -23,6 +25,16 @@ export function SignInPage() {
   const [resetSentTo, setResetSentTo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [idleOut] = useState(takeIdleSignOut);
+  const card = useRef<HTMLDivElement>(null);
+  // Counts failed tries, so the same message still shakes and fades in again.
+  const [attempt, setAttempt] = useState(0);
+
+  /** Something is wrong: the card shakes, then the message appears. */
+  const fail = (message: string) => {
+    setError(message);
+    setAttempt((n) => n + 1);
+    shake(card.current);
+  };
 
   const switchMode = (next: 'sign-in' | 'reset') => {
     setMode(next);
@@ -34,16 +46,17 @@ export function SignInPage() {
     e.preventDefault();
     const parsed = resetSchema.safeParse({ email });
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? 'Check your email address.');
+      fail(parsed.error.issues[0]?.message ?? 'Check your email address.');
       return;
     }
     if (!online) {
-      setError('You are offline. Sending a reset link needs an internet connection.');
+      fail('You are offline. Sending a reset link needs an internet connection.');
       return;
     }
     setBusy(true);
     const failure = await requestPasswordReset(parsed.data.email);
-    setError(failure);
+    if (failure) fail(failure);
+    else setError(null);
     setResetSentTo(failure ? null : parsed.data.email);
     setBusy(false);
   };
@@ -52,22 +65,24 @@ export function SignInPage() {
     e.preventDefault();
     const parsed = schema.safeParse({ email, password });
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? 'Check your details.');
+      fail(parsed.error.issues[0]?.message ?? 'Check your details.');
       return;
     }
     if (!online) {
-      setError('You are offline. Signing in needs an internet connection.');
+      fail('You are offline. Signing in needs an internet connection.');
       return;
     }
     setBusy(true);
-    setError(await signIn(parsed.data.email, parsed.data.password));
+    const failure = await signIn(parsed.data.email, parsed.data.password);
     setBusy(false);
+    if (failure) fail(failure);
+    else setError(null);
   };
 
   return (
     <main className="relative isolate grid min-h-dvh place-items-center overflow-hidden p-4">
       <SignInBackground />
-      <div className="card w-full max-w-sm animate-fade-up gap-0 p-0 shadow-2xl shadow-black/40">
+      <div ref={card} className="card w-full max-w-sm animate-fade-up gap-0 p-0 shadow-2xl shadow-black/40">
         <div className="flex flex-col items-center gap-3 rounded-t-2xl border-b border-line/70 px-6 py-8 text-center">
           <Emblem className="h-16 w-16" />
           <div>
@@ -87,12 +102,22 @@ export function SignInPage() {
               Email
               <input className="field" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </label>
-            <label className="flex flex-col gap-1.5 text-sm font-medium text-ink-soft">
-              Password
-              <input className="field" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-            </label>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="sign-in-password" className="text-sm font-medium text-ink-soft">
+                Password
+              </label>
+              <PasswordField
+                id="sign-in-password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                aria-invalid={Boolean(error) || undefined}
+                className={error ? 'border-rose/60' : ''}
+                required
+              />
+            </div>
             {error && (
-              <p role="alert" className="rounded-xl border border-rose/40 bg-rose/10 px-4 py-3 text-sm text-rose">
+              <p key={attempt} role="alert" className="animate-fade-in rounded-xl border border-rose/40 bg-rose/10 px-4 py-3 text-sm text-rose [animation-delay:380ms]">
                 {error}
               </p>
             )}
@@ -115,7 +140,7 @@ export function SignInPage() {
               <input className="field" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </label>
             {error && (
-              <p role="alert" className="rounded-xl border border-rose/40 bg-rose/10 px-4 py-3 text-sm text-rose">
+              <p key={attempt} role="alert" className="animate-fade-in rounded-xl border border-rose/40 bg-rose/10 px-4 py-3 text-sm text-rose [animation-delay:380ms]">
                 {error}
               </p>
             )}

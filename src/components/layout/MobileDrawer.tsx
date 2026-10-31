@@ -40,7 +40,7 @@ export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
             <X className="h-5 w-5" aria-hidden />
           </button>
         </div>
-        <nav aria-label="Modules" className="flex flex-col px-3 py-3">
+        <nav aria-label="Modules" className="relative flex flex-col px-3 py-3">
           <NavItems expanded onNavigate={onClose} />
         </nav>
       </div>

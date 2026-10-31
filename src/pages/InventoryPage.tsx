@@ -12,6 +12,7 @@ import { StockDetailSheet } from '../components/inventory/StockDetailSheet';
 import { StockList, type SortKey, type SortState } from '../components/inventory/StockList';
 import { LoadError, Skeleton } from '../components/ui/Card';
 import { SampleBadge } from '../components/ui/SampleBadge';
+import { SlidingPill } from '../components/ui/SlidingPill';
 import { useDismiss } from '../hooks/useDismiss';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { downloadCsv, toCsv } from '../lib/csv';
@@ -330,8 +331,9 @@ export function InventoryPage() {
               <div
                 role="tablist"
                 aria-label="Inventory views"
-                className={`grid w-full gap-1 rounded-xl bg-surface-sunken p-1 sm:flex sm:w-auto ${canApprove ? 'grid-cols-2' : 'grid-cols-3'}`}
+                className={`relative grid w-full gap-1 rounded-xl bg-surface-sunken p-1 sm:flex sm:w-auto ${canApprove ? 'grid-cols-2' : 'grid-cols-3'}`}
               >
+                <SlidingPill className="rounded-lg bg-surface-raised shadow-sm shadow-black/30 ring-1 ring-inset ring-white/[0.06]" />
                 {(
                   [
                     ['stock', 'Stock', 'Stock'],
@@ -347,7 +349,7 @@ export function InventoryPage() {
                     aria-selected={tab === t}
                     aria-label={label}
                     onClick={() => setParam({ tab: t === 'stock' ? null : t, type: null })}
-                    className="tap min-h-10 min-w-0 truncate whitespace-nowrap rounded-lg px-3 text-sm font-semibold text-ink-soft transition aria-selected:bg-surface-raised aria-selected:text-ink"
+                    className="tap min-h-10 min-w-0 truncate whitespace-nowrap rounded-lg px-3 text-sm font-semibold text-ink-soft relative z-10 transition-colors duration-500 aria-selected:text-ink"
                   >
                     <span className="sm:hidden">{short}</span>
                     <span className="hidden sm:inline">{label}</span>
