@@ -68,6 +68,7 @@ export default {
         'grow-y': { from: { transform: 'scaleY(0)' }, to: { transform: 'scaleY(1)' } },
         'sheet-up': { from: { transform: 'translateY(100%)' }, to: { transform: 'translateY(0)' } },
         'sheet-left': { from: { transform: 'translateX(100%)' }, to: { transform: 'translateX(0)' } },
+        'roll-in': { from: { opacity: '0', transform: 'translateY(100%)' }, to: { opacity: '1', transform: 'translateY(0)' } },
         // Undo bar: shrinks to nothing over the undo window.
         'undo-countdown': { from: { transform: 'scaleX(1)' }, to: { transform: 'scaleX(0)' } },
       },
@@ -82,6 +83,7 @@ export default {
         'sheet-up': 'sheet-up 320ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
         'sheet-left': 'sheet-left 320ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
         'undo-countdown': 'undo-countdown 3s linear forwards',
+        'roll-in': 'roll-in 420ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
       },
     },
   },

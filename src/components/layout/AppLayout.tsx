@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Outlet, useLocation, useNavigate, useOutletContext } from 'react-router-dom';
+import { Outlet, useLocation, useOutletContext } from 'react-router-dom';
 import { CalendarDays } from 'lucide-react';
 import { moduleForPath } from '../../config/modules';
 import { formatLongDate } from '../../lib/format';
@@ -33,7 +33,6 @@ export function AppLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [search, setSearch] = useState('');
   const location = useLocation();
-  const navigate = useNavigate();
   const current = moduleForPath(location.pathname);
   const title = current?.label ?? 'Page not found';
 
@@ -57,10 +56,8 @@ export function AppLayout() {
       return !v;
     });
 
-  const onSearch = (value: string) => {
-    setSearch(value);
-    if (value && location.pathname !== '/') navigate('/');
-  };
+  // Search anything: results show under the box; Home also filters its tasks and activity by it.
+  const onSearch = (value: string) => setSearch(value);
 
   return (
     <OnboardingProvider>

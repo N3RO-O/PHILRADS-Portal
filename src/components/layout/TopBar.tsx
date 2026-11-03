@@ -1,7 +1,8 @@
-import { useEffect, useRef, type RefObject } from 'react';
-import { Menu, Search } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { Menu } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Emblem } from '../ui/Emblem';
+import { GlobalSearch } from './GlobalSearch';
 import { NotificationsMenu } from './NotificationsMenu';
 import { OnlinePill } from './OnlineStatus';
 import { ProfileMenu } from './ProfileMenu';
@@ -17,43 +18,6 @@ interface TopBarProps {
 
 const isApple = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
 const SHORTCUT_LABEL = isApple ? '⌘K' : 'Ctrl K';
-
-interface SearchBoxProps {
-  value: string;
-  onChange: (v: string) => void;
-  inputRef: RefObject<HTMLInputElement>;
-  showShortcut?: boolean;
-  className?: string;
-}
-
-function SearchBox({ value, onChange, inputRef, showShortcut = false, className = '' }: SearchBoxProps) {
-  return (
-    <label
-      className={`flex h-11 min-w-0 items-center gap-2 rounded-xl border border-line/70 bg-surface px-4 text-muted transition-colors focus-within:border-uplift ${className}`}
-    >
-      <Search className="h-4 w-4 shrink-0" aria-hidden />
-      <span className="sr-only">Search tasks and activity</span>
-      <input
-        ref={inputRef}
-        type="search"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Escape') e.currentTarget.blur();
-        }}
-        placeholder="Search tasks and activity"
-        autoComplete="off"
-        aria-keyshortcuts="Control+K Meta+K"
-        className="min-w-0 flex-1 bg-transparent text-sm text-ink placeholder:text-muted focus:outline-none"
-      />
-      {showShortcut && (
-        <kbd aria-hidden className="shrink-0 rounded-md border border-line bg-surface-raised px-1.5 py-0.5 font-sans text-[0.6875rem] font-semibold text-muted">
-          {SHORTCUT_LABEL}
-        </kbd>
-      )}
-    </label>
-  );
-}
 
 export function TopBar({ search, onSearch, menuOpen, onOpenMenu, hideMobileSearch = false }: TopBarProps) {
   const desktopInput = useRef<HTMLInputElement>(null);
@@ -83,7 +47,7 @@ export function TopBar({ search, onSearch, menuOpen, onOpenMenu, hideMobileSearc
           <Emblem className="h-8 w-8" decorative />
           <span className="hidden font-display text-sm tracking-wide min-[380px]:inline">PHILRADS</span>
         </Link>
-        <SearchBox value={search} onChange={onSearch} inputRef={desktopInput} showShortcut className="hidden w-full max-w-md md:flex" />
+        <GlobalSearch value={search} onChange={onSearch} inputRef={desktopInput} shortcut={SHORTCUT_LABEL} className="hidden w-full max-w-md md:block" />
         <div className="ml-auto flex items-center gap-1 sm:gap-2">
           <OnlinePill className="hidden sm:inline-flex" />
           <NotificationsMenu />
@@ -91,7 +55,7 @@ export function TopBar({ search, onSearch, menuOpen, onOpenMenu, hideMobileSearc
         </div>
       </div>
       <div className={`px-4 pb-3 sm:px-6 md:hidden ${hideMobileSearch ? 'hidden' : ''}`}>
-        <SearchBox value={search} onChange={onSearch} inputRef={mobileInput} />
+        <GlobalSearch value={search} onChange={onSearch} inputRef={mobileInput} />
       </div>
     </header>
   );
