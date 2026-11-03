@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BellRing, X } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
+import { usePresence } from '../../lib/presence';
 import { supabase } from '../../lib/supabase';
 import { dashboardService } from '../../services';
 
@@ -23,10 +24,14 @@ export function NotificationToasts() {
   const navigate = useNavigate();
   const [toasts, setToasts] = useState<Toast[]>([]);
   const me = profile?.id ?? null;
+  const { mine } = usePresence();
+  const dndRef = useRef(false);
+  dndRef.current = mine === 'dnd';
 
   const push = (t: Toast) => {
-    setToasts((ts) => [t, ...ts.filter((x) => x.id !== t.id)].slice(0, 3));
     window.dispatchEvent(new Event('philrads:notification'));
+    if (dndRef.current) return;
+    setToasts((ts) => [t, ...ts.filter((x) => x.id !== t.id)].slice(0, 3));
     navigator.vibrate?.(30);
   };
 

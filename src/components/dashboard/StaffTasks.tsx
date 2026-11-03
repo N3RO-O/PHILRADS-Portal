@@ -4,7 +4,8 @@ import { BellRing, Check, ChevronLeft, ChevronRight, CircleCheck, Clock, Hourgla
 import { useAuth } from '../auth/AuthProvider';
 import { useAsyncData } from '../../hooks/useAsyncData';
 import { formatShortDate } from '../../lib/format';
-import { usePresence } from '../../lib/presence';
+import { STATUS_META, usePresence, type Status } from '../../lib/presence';
+import { StatusDot } from '../ui/StatusDot';
 import { staffBoardService } from '../../services';
 import type { BoardPerson, BoardTask } from '../../services/tasks/staffBoard';
 import { LoadError, Skeleton } from '../ui/Card';
@@ -30,7 +31,8 @@ function ringOf(p: BoardPerson) {
  */
 export function StaffTasks({ search }: { search: string }) {
   const { profile } = useAuth();
-  const online = usePresence();
+  const presence = usePresence();
+  const rank: Record<Status, number> = { online: 3, dnd: 2, idle: 1, offline: 0 };
   const board = useAsyncData(() => staffBoardService.board());
   const [view, setView] = useState<'row' | 'grid'>(() => {
     try {
@@ -50,12 +52,12 @@ export function StaffTasks({ search }: { search: string }) {
       .sort(
         (a, b) =>
           Number(b.id === profile?.id) - Number(a.id === profile?.id) ||
-          Number(online.has(b.id)) - Number(online.has(a.id)) ||
+          rank[presence.statusOf(b.id)] - rank[presence.statusOf(a.id)] ||
           b.open + b.inProgress - (a.open + a.inProgress) ||
           a.name.localeCompare(b.name),
       );
-  }, [board.status, board.data, search, online, profile?.id]);
-  const onlineCount = people.filter((p) => online.has(p.id)).length;
+  }, [board.status, board.data, search, presence, profile?.id]);
+  const onlineCount = presence.activeCount(people.map((p) => p.id));
   const person = people.find((p) => p.id === openId) ?? null;
 
   const setViewSaved = (v: 'row' | 'grid') => {
@@ -132,7 +134,7 @@ export function StaffTasks({ search }: { search: string }) {
         >
           {people.map((p, i) => {
             const r = ringOf(p);
-            const isOn = online.has(p.id);
+            const status = presence.statusOf(p.id);
             const mine = p.id === profile?.id;
             return (
               <li key={p.id} className={view === 'row' ? 'w-36 shrink-0 snap-start sm:w-44' : ''}>
@@ -141,7 +143,7 @@ export function StaffTasks({ search }: { search: string }) {
                   onClick={() => setOpenId(p.id)}
                   className="press group flex w-full animate-fade-up flex-col items-center gap-2 rounded-2xl px-1 py-2 text-center transition-colors hover:bg-white/[0.03]"
                   style={{ animationDelay: `${Math.min(i, 8) * 55}ms` }}
-                  aria-label={`${mine ? 'You' : p.name}, ${isOn ? 'online' : 'offline'}, ${r.label}`}
+                  aria-label={`${mine ? 'You' : p.name}, ${STATUS_META[status].label}, ${r.label}`}
                 >
                   <span className="relative">
                     {/* Gradient ring in the person's state; it turns slowly on hover. */}
@@ -151,9 +153,10 @@ export function StaffTasks({ search }: { search: string }) {
                       </span>
                     </span>
                     {/* Online or offline */}
-                    <span className="absolute bottom-2 left-2 flex h-5 w-5 items-center justify-center rounded-full bg-surface" title={isOn ? 'Online' : 'Offline'}>
-                      {isOn && <span className="absolute h-3.5 w-3.5 animate-ping rounded-full bg-status-in/60" />}
-                      <span className={`relative h-3.5 w-3.5 rounded-full ${isOn ? 'bg-status-in' : 'border-2 border-ink-mute bg-surface'}`} />
+                    {/* Online, idle, do not disturb or offline (Discord-style). */}
+                    <span className="absolute bottom-1.5 left-1.5 flex">
+                      {status === 'online' && <span className="absolute inset-1 animate-ping rounded-full bg-[#23a55a]/50" aria-hidden />}
+                      <StatusDot status={status} size={26} ring="#26272c" />
                     </span>
                     {/* How many they're carrying */}
                     <span className={`absolute bottom-1 right-0 min-w-[2.25rem] rounded-xl border border-white/10 bg-surface-raised/95 px-2 py-1 text-center font-display text-sm tabular-nums tracking-wide shadow-lg backdrop-blur ${r.tone}`}>
@@ -174,7 +177,7 @@ export function StaffTasks({ search }: { search: string }) {
         </ul>
       )}
 
-      {person && <PersonTasks person={person} online={online.has(person.id)} me={profile?.id ?? null} onClose={() => setOpenId(null)} onChanged={board.reload} />}
+      {person && <PersonTasks person={person} status={presence.statusOf(person.id)} me={profile?.id ?? null} onClose={() => setOpenId(null)} onChanged={board.reload} />}
     </section>
   );
 }
@@ -190,7 +193,7 @@ const standing = (t: BoardTask, today: string) =>
   t.status === 'done' ? 'done' : t.status === 'review' ? 'review' : t.status === 'in_progress' ? 'in_progress' : t.dueDate && t.dueDate < today ? 'overdue' : 'todo';
 
 /** One person's tasks, with nudges (for whoever gave the task) and accept or decline (for yourself). */
-function PersonTasks({ person, online, me, onClose, onChanged }: { person: BoardPerson; online: boolean; me: string | null; onClose: () => void; onChanged: () => void }) {
+function PersonTasks({ person, status, me, onClose, onChanged }: { person: BoardPerson; status: Status; me: string | null; onClose: () => void; onChanged: () => void }) {
   const { can } = useAuth();
   const tasks = useAsyncData(() => staffBoardService.tasksOf(person.id));
   const today = manilaToday();
@@ -225,12 +228,12 @@ function PersonTasks({ person, online, me, onClose, onChanged }: { person: Board
         <span className="flex items-center gap-3">
           <span className="relative">
             <PersonAvatar id={person.id} name={person.name} size="lg" />
-            <span className={`absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full border-2 border-surface ${online ? 'bg-status-in' : 'bg-ink-mute'}`} aria-hidden />
+            <StatusDot status={status} size={20} ring="#26272c" className="absolute -bottom-1 -right-1" />
           </span>
           <span className="min-w-0">
             <span className="block truncate">{mine ? 'Your tasks' : person.name}</span>
             <span className="block text-xs font-normal text-muted">
-              {person.roleName ?? 'Staff'} · {online ? <span className="text-status-in">Online</span> : 'Offline'}
+              {person.roleName ?? 'Staff'} · <span style={{ color: STATUS_META[status].color }}>{STATUS_META[status].label}</span>
             </span>
           </span>
         </span>

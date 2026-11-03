@@ -2,6 +2,8 @@ import { useCallback, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, Download, Fingerprint, Gift, LogOut, Rocket, SquareCheckBig, UserRound, UsersRound, Volume2 } from 'lucide-react';
 import { QuickUnlockSheet, useQuickUnlock } from '../auth/QuickUnlock';
+import { CHOICES, STATUS_META, usePresence, type Choice } from '../../lib/presence';
+import { StatusDot } from '../ui/StatusDot';
 import { whatsNew } from '../../lib/whatsNew';
 import { errorSound, useErrorSound } from '../../lib/errorSound';
 import { Switch } from '../ui/Switch';
@@ -30,6 +32,8 @@ export function ProfileMenu() {
   const soundOn = useErrorSound();
   const [unlockOpen, setUnlockOpen] = useState(false);
   const quick = useQuickUnlock();
+  const presence = usePresence();
+  const [picking, setPicking] = useState(false);
 
   if (!profile) return null;
 
@@ -50,20 +54,51 @@ export function ProfileMenu() {
         onClick={() => setOpen((o) => !o)}
         className="flex h-10 items-center gap-2 rounded-xl pl-1 pr-2 transition-colors hover:bg-surface-raised"
       >
-        <Avatar initials={profile.initials} src={profile.avatar} color={profile.avatarColor} size="sm" />
+        <span className="relative">
+          <Avatar initials={profile.initials} src={profile.avatar} color={profile.avatarColor} size="sm" />
+          <StatusDot status={presence.mine} size={13} ring="#1c1d21" className="absolute -bottom-0.5 -right-0.5" />
+        </span>
         <span className="hidden max-w-[9rem] truncate text-sm font-medium text-ink sm:block">{profile.displayName}</span>
         <ChevronDown className="h-4 w-4 text-muted" aria-hidden />
       </button>
       {open && (
         <div id={panelId} className="popover absolute right-0 top-12 z-50 w-72 origin-top-right animate-pop-in p-3">
           <div className="flex items-center gap-3 border-b border-line px-2 pb-3">
-            <Avatar initials={profile.initials} src={profile.avatar} color={profile.avatarColor} />
+            <span className="relative">
+              <Avatar initials={profile.initials} src={profile.avatar} color={profile.avatarColor} />
+              <StatusDot status={presence.mine} size={16} ring="#303137" className="absolute -bottom-1 -right-1" />
+            </span>
             <div className="min-w-0">
               <p className="truncate font-semibold">{profile.displayName}</p>
               <p className="truncate text-xs text-muted">{[profile.jobTitle || profile.roleName, profile.office].filter(Boolean).join(' · ')}</p>
             </div>
           </div>
           <div className="flex flex-col gap-0.5 py-2">
+            <button type="button" className={itemClass} onClick={() => setPicking((p) => !p)} aria-expanded={picking}>
+              <StatusDot status={presence.choice === 'invisible' ? 'offline' : presence.choice} size={16} ring="#303137" />
+              <span className="flex-1">{presence.choice === 'invisible' ? 'Invisible' : STATUS_META[presence.choice].label}</span>
+              <span className="text-xs text-muted">{picking ? 'Close' : 'Change'}</span>
+            </button>
+            {picking && (
+              <div className="mb-1 flex animate-pop-in flex-col rounded-xl bg-white/[0.03] p-1" role="radiogroup" aria-label="Your status">
+                {CHOICES.map((c) => (
+                  <button
+                    key={c.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={presence.choice === c.value}
+                    onClick={() => (presence.setChoice(c.value as Choice), setPicking(false))}
+                    className={`flex w-full items-start gap-3 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-white/[0.06] ${presence.choice === c.value ? 'bg-white/[0.05]' : ''}`}
+                  >
+                    <StatusDot status={c.value === 'invisible' ? 'offline' : c.value} size={16} ring="#2a2b30" className="mt-0.5" />
+                    <span className="min-w-0">
+                      <span className="block text-sm font-semibold text-ink">{c.label}</span>
+                      <span className="block text-xs leading-snug text-muted">{c.note}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
             <Link to="/profile" className={itemClass} onClick={() => setOpen(false)}>
               <UserRound className="h-4 w-4 text-uplift" aria-hidden /> Your profile
             </Link>
