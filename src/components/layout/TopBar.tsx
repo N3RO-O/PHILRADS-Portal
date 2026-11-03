@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Menu } from 'lucide-react';
+import { Menu, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Emblem } from '../ui/Emblem';
 import { GlobalSearch } from './GlobalSearch';
@@ -14,12 +14,15 @@ interface TopBarProps {
   onOpenMenu: () => void;
   /** Pages with their own sticky search (Inventory) hide the phone search row to save vertical space. */
   hideMobileSearch?: boolean;
+  /** The Active list (who's on) is showing. */
+  activeShown?: boolean;
+  onToggleActive?: () => void;
 }
 
 const isApple = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
 const SHORTCUT_LABEL = isApple ? '⌘K' : 'Ctrl K';
 
-export function TopBar({ search, onSearch, menuOpen, onOpenMenu, hideMobileSearch = false }: TopBarProps) {
+export function TopBar({ search, onSearch, menuOpen, onOpenMenu, hideMobileSearch = false, activeShown = false, onToggleActive }: TopBarProps) {
   const desktopInput = useRef<HTMLInputElement>(null);
   const mobileInput = useRef<HTMLInputElement>(null);
 
@@ -50,6 +53,18 @@ export function TopBar({ search, onSearch, menuOpen, onOpenMenu, hideMobileSearc
         <GlobalSearch value={search} onChange={onSearch} inputRef={desktopInput} shortcut={SHORTCUT_LABEL} className="hidden w-full max-w-md md:block" />
         <div className="ml-auto flex items-center gap-1 sm:gap-2">
           <OnlinePill className="hidden sm:inline-flex" />
+          {onToggleActive && (
+            <button
+              type="button"
+              className={`icon-btn ${activeShown ? 'text-uplift' : ''}`}
+              onClick={onToggleActive}
+              aria-pressed={activeShown}
+              aria-label={activeShown ? 'Hide the Active list' : 'Show who’s active'}
+              title={activeShown ? 'Hide the Active list' : 'Show who’s active'}
+            >
+              <Users className="h-[1.125rem] w-[1.125rem]" aria-hidden />
+            </button>
+          )}
           <NotificationsMenu />
           <ProfileMenu />
         </div>

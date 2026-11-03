@@ -15,6 +15,7 @@ import { MobileDrawer } from './MobileDrawer';
 import { OfflineNotice, OnlinePill } from './OnlineStatus';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
+import { ActivePanel } from './ActivePanel';
 import { PullToRefresh } from '../ui/PullToRefresh';
 
 export interface LayoutContext {
@@ -23,6 +24,20 @@ export interface LayoutContext {
 export const useLayoutContext = () => useOutletContext<LayoutContext>();
 
 const SIDEBAR_KEY = 'philrads.sidebar.expanded';
+const ACTIVE_KEY = 'philrads.active.open';
+
+/** Wide enough (1280px+) to keep the Active list beside the page. */
+function useWide() {
+  const query = '(min-width: 1280px)';
+  const [wide, setWide] = useState(() => typeof window !== 'undefined' && window.matchMedia(query).matches);
+  useEffect(() => {
+    const m = window.matchMedia(query);
+    const on = () => setWide(m.matches);
+    m.addEventListener('change', on);
+    return () => m.removeEventListener('change', on);
+  }, []);
+  return wide;
+}
 /** Expanded by default; remembers the staff member's choice on this device. */
 const readExpanded = () => {
   try {
@@ -65,6 +80,26 @@ export function AppLayout() {
   // Pull to refresh (phones): the page loads its data again.
   const [refreshKey, setRefreshKey] = useState(0);
   const refreshPage = useCallback(() => setRefreshKey((k) => k + 1), []);
+  // The Active list: docked on the right on wide screens (shown unless hidden), a drawer below that.
+  const wide = useWide();
+  const [activeDocked, setActiveDocked] = useState(() => {
+    try {
+      return localStorage.getItem(ACTIVE_KEY) !== '0';
+    } catch {
+      return true;
+    }
+  });
+  const [activeDrawer, setActiveDrawer] = useState(false);
+  const setDocked = (v: boolean) => {
+    setActiveDocked(v);
+    try {
+      localStorage.setItem(ACTIVE_KEY, v ? '1' : '0');
+    } catch {
+      /* this visit only */
+    }
+  };
+  const toggleActive = () => (wide ? setDocked(!activeDocked) : setActiveDrawer((o) => !o));
+  useEffect(() => setActiveDrawer(false), [location.pathname]);
 
   return (
     <OnboardingProvider>
@@ -77,8 +112,10 @@ export function AppLayout() {
       </a>
       <Sidebar expanded={expanded} onToggle={toggleSidebar} />
       <MobileDrawer open={menuOpen} onClose={() => setMenuOpen(false)} />
-      <div className={`flex min-h-dvh flex-col transition-[padding] duration-300 ${expanded ? 'lg:pl-64' : 'lg:pl-[4.5rem]'}`}>
+      <div className={`flex min-h-dvh flex-col transition-[padding] duration-300 ${expanded ? 'lg:pl-64' : 'lg:pl-[4.5rem]'} ${activeDocked ? 'xl:pr-64' : ''}`}>
         <TopBar
+          activeShown={wide ? activeDocked : activeDrawer}
+          onToggleActive={toggleActive}
           search={search}
           onSearch={onSearch}
           menuOpen={menuOpen}
@@ -124,6 +161,20 @@ export function AppLayout() {
       <UpdatePrompt />
       {/* While sharing a live location: a floating bubble on every page, with Stop. */}
       <LiveSharingBubble />
+      {/* Active: who's on, by role (docked on wide screens, a drawer on smaller ones). */}
+      {wide && activeDocked && (
+        <div className="fixed inset-y-0 right-0 z-30 animate-sheet-left">
+          <ActivePanel variant="docked" onClose={() => setDocked(false)} />
+        </div>
+      )}
+      {!wide && activeDrawer && (
+        <div className="fixed inset-0 z-[60] flex justify-end">
+          <button type="button" className="absolute inset-0 animate-fade-in bg-black/50 backdrop-blur-[2px]" aria-label="Close the Active list" onClick={() => setActiveDrawer(false)} />
+          <div className="relative h-full animate-sheet-left">
+            <ActivePanel variant="drawer" onClose={() => setActiveDrawer(false)} />
+          </div>
+        </div>
+      )}
       {/* New bell notes pop in as they arrive. */}
       <NotificationToasts />
       {/* Signed-in staff: signed out after 10 minutes without activity. */}

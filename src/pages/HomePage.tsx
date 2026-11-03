@@ -5,7 +5,6 @@ import { WelcomeQuestion } from '../components/onboarding/WelcomeQuestion';
 import { useLocation } from 'react-router-dom';
 import { useLayoutContext } from '../components/layout/AppLayout';
 import { DeadlineCalendar } from '../components/dashboard/DeadlineCalendar';
-import { StaffTasks } from '../components/dashboard/StaffTasks';
 import { OverviewKpis } from '../components/dashboard/OverviewKpis';
 import { ProjectsTable } from '../components/dashboard/ProjectsTable';
 import { RecentActivity } from '../components/dashboard/RecentActivity';
@@ -83,9 +82,6 @@ export function HomePage() {
       </Cell>
       <Cell className="order-10 xl:col-span-4" step={5}>
         <StockHealth stock={stock} />
-      </Cell>
-      <Cell className="order-3 md:col-span-2 xl:col-span-8" step={6}>
-        <StaffTasks search={query} />
       </Cell>
       <Cell className="order-4 xl:col-span-6" step={7}>
         <RecentActivity search={query} />

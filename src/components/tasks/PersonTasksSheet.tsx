@@ -1,186 +1,19 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BellRing, Check, ChevronLeft, ChevronRight, CircleCheck, Clock, Hourglass, LayoutGrid, Loader2, Rows3, TriangleAlert, Users, X } from 'lucide-react';
+import { BellRing, Check, CircleCheck, Clock, Hourglass, Loader2, TriangleAlert, X } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { useAsyncData } from '../../hooks/useAsyncData';
 import { formatShortDate } from '../../lib/format';
-import { STATUS_META, usePresence, type Status } from '../../lib/presence';
-import { StatusDot } from '../ui/StatusDot';
+import { STATUS_META, type Status } from '../../lib/presence';
 import { staffBoardService } from '../../services';
 import type { BoardPerson, BoardTask } from '../../services/tasks/staffBoard';
 import { LoadError, Skeleton } from '../ui/Card';
 import { PersonAvatar } from '../ui/PersonAvatar';
 import { Sheet } from '../ui/Sheet';
+import { StatusDot } from '../ui/StatusDot';
 import { SuccessTick } from '../ui/SuccessTick';
 
-const VIEW_KEY = 'philrads.home.staff-view';
 const manilaToday = () => new Date(Date.now() + 8 * 3600_000).toISOString().slice(0, 10);
-
-/** The ring round someone's picture says how they're doing at a glance. */
-function ringOf(p: BoardPerson) {
-  if (p.overdue > 0) return { ring: 'from-rose via-status-out to-rose/60', label: `${p.overdue} overdue`, tone: 'text-rose' };
-  if (p.pending > 0) return { ring: 'from-sky-300 via-sky-400/70 to-sky-200', label: `${p.pending} to accept`, tone: 'text-sky-300' };
-  if (p.open + p.inProgress === 0) return { ring: 'from-status-in via-status-in/60 to-emerald-200', label: 'All clear', tone: 'text-status-in' };
-  return { ring: 'from-uplift via-uplift-soft to-rose/70', label: `${p.open + p.inProgress} open`, tone: 'text-uplift' };
-}
-
-/**
- * Staff Tasks on Home: everyone's picture with whether they're online, how many tasks they carry and
- * how many they finished this week. Tap someone to see the tasks they've been given, nudge them about
- * one, or (for yourself) accept the ones waiting for you.
- */
-export function StaffTasks({ search }: { search: string }) {
-  const { profile } = useAuth();
-  const presence = usePresence();
-  const rank: Record<Status, number> = { online: 3, dnd: 2, idle: 1, offline: 0 };
-  const board = useAsyncData(() => staffBoardService.board());
-  const [view, setView] = useState<'row' | 'grid'>(() => {
-    try {
-      return localStorage.getItem(VIEW_KEY) === 'grid' ? 'grid' : 'row';
-    } catch {
-      return 'row';
-    }
-  });
-  const [openId, setOpenId] = useState<string | null>(null);
-  const scroller = useRef<HTMLUListElement>(null);
-
-  const people = useMemo(() => {
-    const list = board.status === 'success' ? board.data : [];
-    const q = search.trim().toLowerCase();
-    return list
-      .filter((p) => !q || p.name.toLowerCase().includes(q) || p.roleName?.toLowerCase().includes(q))
-      .sort(
-        (a, b) =>
-          Number(b.id === profile?.id) - Number(a.id === profile?.id) ||
-          rank[presence.statusOf(b.id)] - rank[presence.statusOf(a.id)] ||
-          b.open + b.inProgress - (a.open + a.inProgress) ||
-          a.name.localeCompare(b.name),
-      );
-  }, [board.status, board.data, search, presence, profile?.id]);
-  const onlineCount = presence.activeCount(people.map((p) => p.id));
-  const person = people.find((p) => p.id === openId) ?? null;
-
-  const setViewSaved = (v: 'row' | 'grid') => {
-    setView(v);
-    try {
-      localStorage.setItem(VIEW_KEY, v);
-    } catch {
-      /* this visit only */
-    }
-  };
-  const page = (dir: 1 | -1) => scroller.current?.scrollBy({ left: dir * scroller.current.clientWidth * 0.8, behavior: 'smooth' });
-
-  return (
-    <section id="staff-tasks" aria-labelledby="staff-tasks-title" className="card flex scroll-mt-24 flex-col gap-5 overflow-hidden">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 id="staff-tasks-title" className="font-display text-2xl tracking-wide text-ink">
-            Staff Tasks
-          </h2>
-          <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm text-muted">
-            Who’s carrying what. Tap someone to see their tasks.
-            {board.status === 'success' && (
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-status-in">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-status-in opacity-60" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-status-in" />
-                </span>
-                {onlineCount} online
-              </span>
-            )}
-          </p>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <button type="button" className="icon-btn press rounded-full bg-white/[0.05]" onClick={() => setViewSaved(view === 'row' ? 'grid' : 'row')} aria-label={view === 'row' ? 'Show everyone in a grid' : 'Show in one row'} title={view === 'row' ? 'Grid' : 'Row'}>
-            {view === 'row' ? <LayoutGrid className="h-[1.125rem] w-[1.125rem]" aria-hidden /> : <Rows3 className="h-[1.125rem] w-[1.125rem]" aria-hidden />}
-          </button>
-          {view === 'row' && (
-            <>
-              <button type="button" className="icon-btn press rounded-full bg-white/[0.05]" onClick={() => page(-1)} aria-label="Previous">
-                <ChevronLeft className="h-5 w-5" aria-hidden />
-              </button>
-              <button type="button" className="icon-btn press rounded-full bg-white/[0.05]" onClick={() => page(1)} aria-label="Next">
-                <ChevronRight className="h-5 w-5" aria-hidden />
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-
-      {board.status === 'error' ? (
-        <LoadError message={board.error.message} onRetry={board.reload} />
-      ) : board.status === 'loading' ? (
-        <div className="flex gap-5 overflow-hidden">
-          {[0, 1, 2, 3, 4].map((i) => (
-            <div key={i} className="flex w-36 shrink-0 flex-col items-center gap-3">
-              <Skeleton className="h-32 w-32 rounded-full" />
-              <Skeleton className="h-3.5 w-24" />
-              <Skeleton className="h-3 w-20" />
-            </div>
-          ))}
-        </div>
-      ) : people.length === 0 ? (
-        <p className="flex items-center gap-2 py-6 text-sm text-muted">
-          <Users className="h-4 w-4" aria-hidden /> No one matches “{search.trim()}”.
-        </p>
-      ) : (
-        <ul
-          ref={scroller}
-          className={
-            view === 'row'
-              ? '-mx-5 flex snap-x snap-mandatory gap-2 overflow-x-auto scroll-smooth px-5 pb-2 [scrollbar-width:none] sm:gap-4 [&::-webkit-scrollbar]:hidden'
-              : 'grid grid-cols-2 gap-x-2 gap-y-6 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6'
-          }
-        >
-          {people.map((p, i) => {
-            const r = ringOf(p);
-            const status = presence.statusOf(p.id);
-            const mine = p.id === profile?.id;
-            return (
-              <li key={p.id} className={view === 'row' ? 'w-36 shrink-0 snap-start sm:w-44' : ''}>
-                <button
-                  type="button"
-                  onClick={() => setOpenId(p.id)}
-                  className="press group flex w-full animate-fade-up flex-col items-center gap-2 rounded-2xl px-1 py-2 text-center transition-colors hover:bg-white/[0.03]"
-                  style={{ animationDelay: `${Math.min(i, 8) * 55}ms` }}
-                  aria-label={`${mine ? 'You' : p.name}, ${STATUS_META[status].label}, ${r.label}`}
-                >
-                  <span className="relative">
-                    {/* Gradient ring in the person's state; it turns slowly on hover. */}
-                    <span className={`block rounded-full bg-gradient-to-tr p-[3px] transition-transform duration-500 group-hover:rotate-6 ${r.ring}`}>
-                      <span className="block rounded-full bg-surface p-[3px]">
-                        <PersonAvatar id={p.id} name={p.name} size="hero" ring="ring-0" />
-                      </span>
-                    </span>
-                    {/* Online or offline */}
-                    {/* Online, idle, do not disturb or offline (Discord-style). */}
-                    <span className="absolute bottom-1.5 left-1.5 flex">
-                      {status === 'online' && <span className="absolute inset-1 animate-ping rounded-full bg-[#23a55a]/50" aria-hidden />}
-                      <StatusDot status={status} size={26} ring="#26272c" />
-                    </span>
-                    {/* How many they're carrying */}
-                    <span className={`absolute bottom-1 right-0 min-w-[2.25rem] rounded-xl border border-white/10 bg-surface-raised/95 px-2 py-1 text-center font-display text-sm tabular-nums tracking-wide shadow-lg backdrop-blur ${r.tone}`}>
-                      {p.open + p.inProgress}
-                    </span>
-                  </span>
-                  <span className="mt-1 block w-full truncate text-[0.95rem] font-semibold text-ink">{mine ? 'You' : p.name}</span>
-                  <span className="-mt-1 block w-full truncate text-xs text-muted">{p.roleName ?? 'Staff'}</span>
-                  <span className="text-xs text-ink-soft">
-                    <span className={r.tone}>{r.label}</span>
-                    {p.inProgress > 0 && <span> · {p.inProgress} in progress</span>}
-                  </span>
-                  <span className="-mt-1 text-xs text-muted">{p.doneWeek} done this week</span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-
-      {person && <PersonTasks person={person} status={presence.statusOf(person.id)} me={profile?.id ?? null} onClose={() => setOpenId(null)} onChanged={board.reload} />}
-    </section>
-  );
-}
 
 const STANDING = {
   done: { label: 'Done', cls: 'border-l-status-in bg-status-in/[0.07]', chip: 'bg-status-in/15 text-status-in' },
@@ -193,7 +26,7 @@ const standing = (t: BoardTask, today: string) =>
   t.status === 'done' ? 'done' : t.status === 'review' ? 'review' : t.status === 'in_progress' ? 'in_progress' : t.dueDate && t.dueDate < today ? 'overdue' : 'todo';
 
 /** One person's tasks, with nudges (for whoever gave the task) and accept or decline (for yourself). */
-function PersonTasks({ person, status, me, onClose, onChanged }: { person: BoardPerson; status: Status; me: string | null; onClose: () => void; onChanged: () => void }) {
+export function PersonTasks({ person, status, me, onClose, onChanged }: { person: BoardPerson; status: Status; me: string | null; onClose: () => void; onChanged: () => void }) {
   const { can } = useAuth();
   const tasks = useAsyncData(() => staffBoardService.tasksOf(person.id));
   const today = manilaToday();

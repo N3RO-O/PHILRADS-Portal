@@ -8,6 +8,8 @@ import { TaskRuleError } from './types';
 export interface BoardPerson {
   id: string;
   name: string;
+  /** admin, coordinator, staff, volunteer or viewer: the Active list groups by it. */
+  roleKey: string;
   roleName: string | null;
   open: number;
   inProgress: number;
@@ -58,6 +60,7 @@ export function createSupabaseStaffBoard(client: SupabaseClient): StaffBoardServ
       return ((data ?? []) as Record<string, unknown>[]).map((r) => ({
         id: r.profile_id as string,
         name: r.name as string,
+        roleKey: (r.role_key as string | null) ?? 'staff',
         roleName: (r.role_name as string | null) ?? null,
         open: Number(r.open_count),
         inProgress: Number(r.in_progress),
@@ -99,12 +102,12 @@ export function createSupabaseStaffBoard(client: SupabaseClient): StaffBoardServ
 
 const day = (n: number) => new Date(Date.now() + n * 86_400_000 + 8 * 3600_000).toISOString().slice(0, 10);
 const SAMPLE_BOARD: BoardPerson[] = [
-  { id: demoProfile.id, name: demoProfile.displayName, roleName: 'Administrator', open: 4, inProgress: 1, overdue: 0, pending: 0, doneWeek: 3 },
-  { id: 'sample-ana', name: 'Ana Reyes', roleName: 'Coordinator', open: 3, inProgress: 2, overdue: 1, pending: 0, doneWeek: 5 },
-  { id: 'sample-jun', name: 'Jun Dela Cruz', roleName: 'Field staff', open: 5, inProgress: 1, overdue: 0, pending: 1, doneWeek: 2 },
-  { id: 'sample-maria', name: 'Maria Santos', roleName: 'Field staff', open: 2, inProgress: 0, overdue: 0, pending: 0, doneWeek: 6 },
-  { id: 'sample-leo', name: 'Leo Mendoza', roleName: 'Volunteer', open: 1, inProgress: 1, overdue: 1, pending: 0, doneWeek: 1 },
-  { id: 'sample-grace', name: 'Grace Lim', roleName: 'Field staff', open: 0, inProgress: 0, overdue: 0, pending: 0, doneWeek: 4 },
+  { id: demoProfile.id, name: demoProfile.displayName, roleKey: 'admin', roleName: 'Administrator', open: 4, inProgress: 1, overdue: 0, pending: 0, doneWeek: 3 },
+  { id: 'sample-ana', name: 'Ana Reyes', roleKey: 'coordinator', roleName: 'Coordinator', open: 3, inProgress: 2, overdue: 1, pending: 0, doneWeek: 5 },
+  { id: 'sample-jun', name: 'Jun Dela Cruz', roleKey: 'staff', roleName: 'Field staff', open: 5, inProgress: 1, overdue: 0, pending: 1, doneWeek: 2 },
+  { id: 'sample-maria', name: 'Maria Santos', roleKey: 'staff', roleName: 'Field staff', open: 2, inProgress: 0, overdue: 0, pending: 0, doneWeek: 6 },
+  { id: 'sample-leo', name: 'Leo Mendoza', roleKey: 'volunteer', roleName: 'Volunteer', open: 1, inProgress: 1, overdue: 1, pending: 0, doneWeek: 1 },
+  { id: 'sample-grace', name: 'Grace Lim', roleKey: 'staff', roleName: 'Field staff', open: 0, inProgress: 0, overdue: 0, pending: 0, doneWeek: 4 },
 ];
 const sampleTasks = (personId: string): BoardTask[] => {
   const base: BoardTask[] = [

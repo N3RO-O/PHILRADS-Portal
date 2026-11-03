@@ -286,13 +286,13 @@ grant execute on function public.nudge_task(uuid, text) to authenticated;
 -- Staff Tasks board
 -- ---------------------------------------------------------------------------
 create or replace function public.staff_task_board()
-returns table (profile_id uuid, name text, role_name text, open_count int, in_progress int, overdue int, pending int, done_week int)
+returns table (profile_id uuid, name text, role_key text, role_name text, open_count int, in_progress int, overdue int, pending int, done_week int)
 language sql
 stable
 security definer
 set search_path = ''
 as $$
-  select p.id, coalesce(nullif(p.display_name, ''), p.full_name, 'Staff member'), r.name,
+  select p.id, coalesce(nullif(p.display_name, ''), p.full_name, 'Staff member'), p.role_key, r.name,
     count(t.id) filter (where t.status in ('todo', 'review') and t.acceptance <> 'declined')::int,
     count(t.id) filter (where t.status = 'in_progress')::int,
     count(t.id) filter (where t.status not in ('done', 'cancelled') and t.acceptance <> 'declined'
@@ -303,7 +303,7 @@ as $$
   left join public.roles r on r.key = p.role_key
   left join public.tasks t on t.assignee_id = p.id and t.status <> 'cancelled'
   where p.is_active and public.is_active_staff()
-  group by p.id, p.display_name, p.full_name, r.name
+  group by p.id, p.display_name, p.full_name, p.role_key, r.name
   order by 2
 $$;
 revoke execute on function public.staff_task_board() from public, anon;
