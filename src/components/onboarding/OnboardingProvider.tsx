@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { emptyOnboarding, mergeOnboarding, stepsFor, type Focus, type OnboardingPatch, type OnboardingState, type StepDef, type StepId } from '../../lib/onboarding';
+import { pushEnabled } from '../../lib/push';
 import { onboardingService } from '../../services';
 import { useAuth } from '../auth/AuthProvider';
 import { useInstallAvailability } from '../pwa/InstallDialog';
@@ -33,7 +34,7 @@ const OnboardingContext = createContext<OnboardingContextValue | null>(null);
 
 /** First-run progress for the signed-in person (or the demo profile), plus the steps that tick themselves. */
 export function OnboardingProvider({ children }: { children: ReactNode }) {
-  const { state: auth, can } = useAuth();
+  const { state: auth, can, profile } = useAuth();
   const userId = auth.status === 'signed-in' ? auth.session.user.id : auth.status === 'demo' ? 'demo' : null;
   const [state, setState] = useState<OnboardingState>(emptyOnboarding);
   const [ready, setReady] = useState(false);
@@ -71,16 +72,24 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     [save],
   );
 
-  // Steps that tick themselves: being signed in, opening Inventory or Resources, having the app installed.
+  // Steps that tick themselves: being signed in, opening Inventory, Resources or the Live Map, having
+  // a photo, the app installed, or phone alerts on. (Search and quick unlock tick where they happen.)
   const { pathname } = useLocation();
   const install = useInstallAvailability();
+  const hasPhoto = Boolean(profile?.avatar);
   useEffect(() => {
     if (!ready) return;
     complete('signin');
     if (pathname.startsWith('/inventory')) complete('stock');
     if (pathname.startsWith('/resources')) complete('file');
+    if (pathname.startsWith('/live-map')) complete('map');
+    if (hasPhoto) complete('profile');
     if (install === 'installed') complete('install');
-  }, [ready, pathname, install, complete]);
+  }, [ready, pathname, install, hasPhoto, complete]);
+  useEffect(() => {
+    if (!ready) return;
+    void pushEnabled().then((on) => on && complete('notify'), () => undefined);
+  }, [ready, complete]);
 
   const value = useMemo<OnboardingContextValue>(() => {
     // Signing in is done by definition (and saved for the record), so the list always opens at "1 of N".

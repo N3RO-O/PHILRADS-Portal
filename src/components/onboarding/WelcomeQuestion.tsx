@@ -1,9 +1,9 @@
-import { ArrowRight, FolderOpen, Package, SquareCheckBig, UsersRound } from 'lucide-react';
+import { ArrowRight, FolderOpen, Map, Package, SquareCheckBig, UsersRound } from 'lucide-react';
 import { FOCUS_OPTIONS, type Focus } from '../../lib/onboarding';
 import { useAuth } from '../auth/AuthProvider';
 import { Sheet } from '../ui/Sheet';
 
-const ICON: Record<Focus, typeof Package> = { task: SquareCheckBig, stock: Package, file: FolderOpen, invite: UsersRound };
+const ICON: Record<Focus, typeof Package> = { task: SquareCheckBig, stock: Package, file: FolderOpen, map: Map, invite: UsersRound };
 
 interface Props {
   open: boolean;

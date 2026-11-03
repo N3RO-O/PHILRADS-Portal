@@ -2,22 +2,49 @@ import { useEffect, useRef, useState, type RefObject } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Check, ChevronUp, PartyPopper, Rocket, Sparkles, X } from 'lucide-react';
 import { promptInstall } from '../../lib/installPrompt';
+import { FOCUS_STEP } from '../../lib/onboarding';
+import { enablePush } from '../../lib/push';
+import { QuickUnlockSheet } from '../auth/QuickUnlock';
 import { InstallDialog, useInstallAvailability } from '../pwa/InstallDialog';
 import { Sheet } from '../ui/Sheet';
 import { useOnboarding, type Step } from './OnboardingProvider';
 
-/** Runs a step's action: go to its page, or offer to install. */
+/** Runs a step's action: go to its page, or open what it needs right here (install, quick unlock, phone alerts, search). */
 function useStepAction() {
   const navigate = useNavigate();
   const install = useInstallAvailability();
+  const { complete } = useOnboarding();
   const [installOpen, setInstallOpen] = useState(false);
+  const [unlockOpen, setUnlockOpen] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
   const run = (s: Step) => {
+    setProblem(null);
+    if (s.to === 'unlock') return setUnlockOpen(true);
+    if (s.to === 'search') {
+      // After a sheet closes, so the search box can take the focus.
+      setTimeout(() => window.dispatchEvent(new Event('philrads:search')), 250);
+      return;
+    }
+    if (s.to === 'notify') {
+      void enablePush().then((err) => (err ? setProblem(err) : complete('notify')));
+      return;
+    }
     if (s.to !== 'install') return navigate(s.to);
     if (install === 'prompt') void promptInstall();
     else setInstallOpen(true);
   };
-  const dialog = <InstallDialog open={installOpen} onClose={() => setInstallOpen(false)} />;
-  return { run, dialog };
+  const dialog = (
+    <>
+      <InstallDialog open={installOpen} onClose={() => setInstallOpen(false)} />
+      <QuickUnlockSheet open={unlockOpen} onClose={() => setUnlockOpen(false)} />
+    </>
+  );
+  const note = problem && (
+    <p role="alert" className="rounded-xl bg-rose/10 px-3 py-2 text-xs text-rose">
+      {problem}
+    </p>
+  );
+  return { run, dialog, note };
 }
 
 function Progress({ done, total }: { done: number; total: number }) {
@@ -35,12 +62,33 @@ function Progress({ done, total }: { done: number; total: number }) {
 
 /** `stacked`: the button goes under the text, full width (phones), instead of beside it. */
 function StepList({ onRun, nextRef, stacked }: { onRun: (s: Step) => void; nextRef?: RefObject<HTMLButtonElement>; stacked?: boolean }) {
-  const { steps, next, state } = useOnboarding();
+  const { steps, next, state, doneCount } = useOnboarding();
+  const [showDone, setShowDone] = useState(false);
+  const focusStep = state.focus ? FOCUS_STEP[state.focus] : null;
+  // Done steps fold into one line (tap to see them), so the list is only what's left.
+  const shown = showDone ? steps : steps.filter((s) => !s.done);
   return (
     <ol className="flex flex-col gap-1">
-      {steps.map((s, i) => {
+      {doneCount > 0 && (
+        <li>
+          <button
+            type="button"
+            className="flex w-full items-center gap-3 rounded-xl px-2 py-1.5 text-left text-xs font-semibold text-muted hover:text-ink"
+            onClick={() => setShowDone((v) => !v)}
+            aria-expanded={showDone}
+          >
+            <span aria-hidden className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-status-in/90 text-page">
+              <Check className="h-4 w-4" strokeWidth={3} />
+            </span>
+            {doneCount} done{showDone ? ' · hide' : ' · show'}
+          </button>
+        </li>
+      )}
+      {shown.map((s) => {
+        // Numbered in the order shown: the folded done steps come first.
+        const i = showDone ? steps.indexOf(s) : doneCount + shown.indexOf(s);
         const isNext = s.id === next?.id;
-        const recommended = !s.done && state.focus && i === 1;
+        const recommended = !s.done && s.id === focusStep;
         const button = !s.done && s.action && (
           <button
             ref={isNext ? nextRef : undefined}
@@ -126,7 +174,7 @@ function CoachMark({ target, text, below, onDone }: { target: RefObject<HTMLElem
 /** Larger screens: the checklist as a card on Home. `onPersonalise` re-asks the question after a skip. */
 export function GettingStartedCard({ onPersonalise }: { onPersonalise?: () => void }) {
   const o = useOnboarding();
-  const { run, dialog } = useStepAction();
+  const { run, dialog, note } = useStepAction();
   const nextRef = useRef<HTMLButtonElement>(null);
   if (!o.showChecklist || o.steps.length === 0) return null;
   const coach = !o.state.coachSeen && Boolean(o.state.question) && !o.allDone;
@@ -159,6 +207,7 @@ export function GettingStartedCard({ onPersonalise }: { onPersonalise?: () => vo
         </button>
       </div>
       <Progress done={o.doneCount} total={o.steps.length} />
+      {note}
       {!o.allDone && <StepList onRun={run} nextRef={nextRef} />}
       {coach && (
         <CoachMark target={nextRef} below text="Your next step is always highlighted here. It ticks itself off when you do it." onDone={o.seeCoach} />
@@ -171,7 +220,7 @@ export function GettingStartedCard({ onPersonalise }: { onPersonalise?: () => vo
 /** Phones: the next step in a bar at the bottom of Home (thumb reach); tap for the full list. */
 export function GettingStartedBar() {
   const o = useOnboarding();
-  const { run, dialog } = useStepAction();
+  const { run, dialog, note } = useStepAction();
   const [open, setOpen] = useState(false);
   const barRef = useRef<HTMLButtonElement>(null);
   if (!o.showChecklist || o.steps.length === 0) return null;
@@ -222,6 +271,7 @@ export function GettingStartedBar() {
           </button>
         }
       >
+        {note}
         <StepList
           stacked
           onRun={(s) => {

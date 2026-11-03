@@ -15,6 +15,7 @@ import type { NotificationItem } from '../../types';
 import { LoadError, Skeleton } from '../ui/Card';
 import { SampleBadge } from '../ui/SampleBadge';
 import { useAuth } from '../auth/AuthProvider';
+import { useOnboarding } from '../onboarding/OnboardingProvider';
 
 /**
  * The bell: in-portal notices, including what's new in PHILRADS IMS (releases waiting for
@@ -38,6 +39,7 @@ export function NotificationsMenu() {
   const [more, setMore] = useState(false);
   const [phone, setPhone] = useState<'on' | 'off' | 'busy'>('off');
   const [phoneError, setPhoneError] = useState<string | null>(null);
+  const onboarding = useOnboarding();
   useEffect(() => {
     const again = () => notes.reload();
     window.addEventListener('philrads:notification', again);
@@ -56,6 +58,7 @@ export function NotificationsMenu() {
       setPhone('off');
     } else {
       const err = await enablePush();
+      if (!err) onboarding.complete('notify');
       setPhoneError(err);
       setPhone(err ? 'off' : 'on');
     }

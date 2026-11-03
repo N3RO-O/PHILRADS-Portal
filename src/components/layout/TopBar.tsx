@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Menu, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useOnboarding } from '../onboarding/OnboardingProvider';
 import { Emblem } from '../ui/Emblem';
 import { GlobalSearch } from './GlobalSearch';
 import { NotificationsMenu } from './NotificationsMenu';
@@ -26,19 +27,31 @@ export function TopBar({ search, onSearch, menuOpen, onOpenMenu, hideMobileSearc
   const desktopInput = useRef<HTMLInputElement>(null);
   const mobileInput = useRef<HTMLInputElement>(null);
 
-  // Ctrl+K / ⌘K focuses whichever search box is visible at this screen size.
+  // Ctrl+K / ⌘K (or "Try it" in Get started) focuses whichever search box is visible at this screen size.
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey || e.key.toLowerCase() !== 'k') return;
+    const focus = () => {
       const target = [desktopInput.current, mobileInput.current].find((el) => el && el.offsetParent !== null);
-      if (!target) return;
-      e.preventDefault();
+      if (!target) return false;
       target.focus();
       target.select();
+      return true;
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey || e.key.toLowerCase() !== 'k') return;
+      if (focus()) e.preventDefault();
     };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener('philrads:search', focus);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('philrads:search', focus);
+    };
   }, []);
+  // Get started: searching once ticks "Search anything".
+  const { complete } = useOnboarding();
+  useEffect(() => {
+    if (search.trim().length >= 2) complete('search');
+  }, [search, complete]);
 
   return (
     <header className="sticky top-0 z-30 border-b border-white/[0.05] bg-page/75 backdrop-blur-xl backdrop-saturate-150">

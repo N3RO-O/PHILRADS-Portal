@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Delete, Fingerprint, Loader2, LogOut, ShieldCheck } from 'lucide-react';
 import { useAuth } from './AuthProvider';
+import { useOnboarding } from '../onboarding/OnboardingProvider';
 import { biometricAvailable, biometricSetUp, forgetBiometric, setUpBiometric, verifyBiometric } from '../../lib/biometric';
 import { markActive } from '../../lib/idle';
 import { checkPin, clearQuickUnlock, markLocked, markUnlocked, pinSet, quickUnlockOn, setPin, unlockedThisSession } from '../../lib/quickUnlock';
@@ -37,6 +38,11 @@ export function QuickUnlockProvider({ children }: { children: ReactNode }) {
     setLocked(true);
   }, [uid]);
   const refresh = useCallback(() => setEnabled(Boolean(uid && quickUnlockOn(uid))), [uid]);
+  // Get started: "Set up quick unlock" ticks once it's on for this device.
+  const { complete } = useOnboarding();
+  useEffect(() => {
+    if (enabled) complete('unlock');
+  }, [enabled, complete]);
   return (
     <Ctx.Provider value={{ enabled, locked, lock, refresh }}>
       {children}
