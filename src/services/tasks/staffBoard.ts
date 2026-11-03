@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { flushPush } from '../../lib/push';
 import { demoProfile } from '../../data/mockDashboard';
 import type { TaskPriority, TaskStatus } from '../../types';
 import { TaskRuleError } from './types';
@@ -84,10 +85,12 @@ export function createSupabaseStaffBoard(client: SupabaseClient): StaffBoardServ
     async respond(taskId, accept, reason) {
       const { error } = await client.rpc('accept_task', { p_task: taskId, p_accept: accept, p_reason: reason ?? null });
       if (error) fail(error);
+      flushPush();
     },
     async nudge(taskId, message) {
       const { error } = await client.rpc('nudge_task', { p_task: taskId, p_message: message ?? null });
       if (error) fail(error);
+      flushPush();
     },
   };
 }

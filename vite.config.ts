@@ -68,6 +68,8 @@ export default defineConfig({
         // Precache only the built app shell and static assets.
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,mp3}'],
         navigateFallback: '/index.html',
+        // Phone notifications: shows pushed notes and opens the right page when one is tapped.
+        importScripts: ['push-sw.js'],
         // /about.html and /privacy.html are plain public pages (Google's sign-in screen links to them), not the app.
         navigateFallbackDenylist: [/^\/api\//, /^\/(about|privacy)\.html$/],
         cleanupOutdatedCaches: true,

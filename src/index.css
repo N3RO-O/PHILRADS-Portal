@@ -794,3 +794,25 @@
   60% { transform: rotate(-8deg); }
   80% { transform: rotate(4deg); }
 }
+
+/* A new notification springs in from the right (from the top on phones). */
+.toast-in {
+  animation: toast-in 520ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  transition: opacity 300ms ease, transform 300ms ease;
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    translate: 0 -1.5rem;
+    scale: 0.92;
+  }
+}
+@media (min-width: 640px) {
+  @keyframes toast-in {
+    from {
+      opacity: 0;
+      translate: 2rem 0;
+      scale: 0.96;
+    }
+  }
+}

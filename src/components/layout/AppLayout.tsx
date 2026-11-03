@@ -5,6 +5,7 @@ import { moduleForPath } from '../../config/modules';
 import { formatLongDate } from '../../lib/format';
 import { LiveSharingProvider } from '../map/LiveSharing';
 import { PresenceProvider } from '../../lib/presence';
+import { NotificationToasts } from './NotificationToasts';
 import { LiveSharingBubble } from '../map/LiveSharingBubble';
 import { IdleSignOut } from '../auth/IdleSignOut';
 import { OnboardingProvider } from '../onboarding/OnboardingProvider';
@@ -115,6 +116,8 @@ export function AppLayout() {
       <UpdatePrompt />
       {/* While sharing a live location: a floating bubble on every page, with Stop. */}
       <LiveSharingBubble />
+      {/* New bell notes pop in as they arrive. */}
+      <NotificationToasts />
       {/* Signed-in staff: signed out after 10 minutes without activity. */}
       <IdleSignOut />
     </div>

@@ -6,6 +6,7 @@ import { todayKey } from '../../lib/inventory';
 import { nextOccurrence } from '../../lib/tasks';
 import { scoreCompletion, XP_RULES } from '../../lib/taskProgress';
 import type { TaskPriority, TaskStatus } from '../../types';
+import { flushPush } from '../../lib/push';
 import {
   TaskOfflineError,
   TaskRuleError,
@@ -316,7 +317,10 @@ export function createSupabaseTasksService(client: SupabaseClient): TasksService
       if (!again.error) return map(again.data as Record<string, unknown>);
     }
     if (error) fail('save this task', error);
-    return map(data as Record<string, unknown>);
+    const saved = map(data as Record<string, unknown>);
+    // Given to someone else: their bell note goes to their phone too.
+    if (saved.assigneeId && saved.assigneeId !== saved.createdById) flushPush();
+    return saved;
   };
 
   return {
@@ -390,10 +394,12 @@ export function createSupabaseTasksService(client: SupabaseClient): TasksService
     async sendKudos(toId, message) {
       const { error } = await client.from('task_kudos').insert({ to_user: toId, message: message.trim() });
       if (error) fail('send kudos', error);
+      flushPush();
     },
     async sendBack(id, reason) {
       const { error } = await client.rpc('send_back_task', { p_task: id, p_reason: reason.trim() });
       if (error) fail('send this task back', error);
+      flushPush();
       const { data, error: readError } = await client.from('tasks').select(columns).eq('id', id).single();
       if (readError) fail('load this task', readError);
       return map(data as Record<string, unknown>);
