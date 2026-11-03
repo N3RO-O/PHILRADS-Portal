@@ -42,6 +42,9 @@ export interface Task {
   completedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Given by someone of the same or a lower role: waits for the person to accept (missing = accepted). */
+  acceptance?: 'pending' | 'accepted' | 'declined';
+  declinedReason?: string | null;
 }
 
 export interface TaskDraft {

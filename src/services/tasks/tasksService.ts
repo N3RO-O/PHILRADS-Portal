@@ -247,7 +247,7 @@ export function createSupabaseTasksService(client: SupabaseClient): TasksService
   const uid = async () => (await client.auth.getSession()).data.session?.user.id ?? null;
 
   const columns =
-    'id, title, description, priority, status, list, work_setting, due_date, due_time, my_day, subtasks, recurrence, location, assignee_id, created_by, project_id, completed_at, created_at, updated_at, assignee:profiles!tasks_assignee_id_fkey(display_name), creator:profiles!tasks_created_by_fkey(display_name)';
+    'id, title, description, priority, status, list, work_setting, due_date, due_time, my_day, subtasks, recurrence, location, assignee_id, created_by, project_id, completed_at, created_at, updated_at, acceptance, declined_reason, assignee:profiles!tasks_assignee_id_fkey(display_name), creator:profiles!tasks_created_by_fkey(display_name)';
   const name = (p: unknown) => (p as { display_name?: string } | null)?.display_name || null;
   const map = (r: Record<string, unknown>): Task => ({
     id: r.id as string,
@@ -271,6 +271,8 @@ export function createSupabaseTasksService(client: SupabaseClient): TasksService
     completedAt: (r.completed_at as string | null) ?? null,
     createdAt: r.created_at as string,
     updatedAt: r.updated_at as string,
+    acceptance: (r.acceptance as Task['acceptance']) ?? 'accepted',
+    declinedReason: (r.declined_reason as string | null) ?? null,
   });
   const row = (d: TaskDraft, me: string | null) => ({
     title: d.title.trim(),

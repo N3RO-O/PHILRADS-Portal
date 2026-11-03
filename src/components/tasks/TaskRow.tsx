@@ -1,4 +1,4 @@
-import { Building2, Check, CloudOff, Flag, ListChecks, MapPin, Repeat, Sun, TriangleAlert } from 'lucide-react';
+import { Building2, Check, CloudOff, Flag, Hourglass, ListChecks, MapPin, Repeat, Sun, TriangleAlert } from 'lucide-react';
 import { daysBetween, dueLabel, LIST_META } from '../../lib/tasks';
 import type { Task } from '../../services/tasks/types';
 import { LIST_STYLE } from './taskMeta';
@@ -32,6 +32,9 @@ export function TaskRow({ task: t, today, me, onToggle, onOpen, onMyDay, flash, 
   const fromOther = t.createdById && t.createdById !== me && t.assigneeId === me ? t.createdByName : null;
   const forOther = t.assigneeId && t.assigneeId !== me ? t.assigneeName : null;
   const inMyDay = t.myDay === today;
+  // Waiting to be accepted: the person it's for answers first (the checkbox opens the task instead).
+  const pending = t.acceptance === 'pending';
+  const needsMe = pending && t.assigneeId === me && t.createdById !== me;
 
   return (
     <li className={`leave-row ${leaving ? 'is-leaving' : ''}`} aria-hidden={leaving || undefined}>
@@ -42,7 +45,7 @@ export function TaskRow({ task: t, today, me, onToggle, onOpen, onMyDay, flash, 
             role="checkbox"
             aria-checked={done}
             aria-label={done ? `Mark “${t.title}” not done` : `Mark “${t.title}” done`}
-            onClick={() => onToggle(t)}
+            onClick={() => (needsMe ? onOpen(t) : onToggle(t))}
             className="-m-2 grid h-10 w-10 shrink-0 place-items-center rounded-full"
           >
             <span
@@ -67,6 +70,13 @@ export function TaskRow({ task: t, today, me, onToggle, onOpen, onMyDay, flash, 
                   <TriangleAlert className="h-3 w-3" aria-hidden /> Couldn’t sync
                 </span>
               )}
+              {needsMe && (
+                <span className="inline-flex items-center gap-1 rounded bg-sky-300/15 px-1.5 font-semibold text-sky-300">
+                  <Hourglass className="h-3 w-3" aria-hidden /> Accept or decline
+                </span>
+              )}
+              {pending && !needsMe && t.assigneeId !== me && <span className="rounded bg-sky-300/15 px-1.5 font-semibold text-sky-300">Waiting for {t.assigneeName ?? 'them'} to accept</span>}
+              {t.acceptance === 'declined' && <span className="rounded bg-status-out/15 px-1.5 font-semibold text-status-out">Declined</span>}
               {t.status === 'in_progress' && <span className="rounded bg-status-low/15 px-1.5 font-semibold text-status-low">In progress</span>}
               {due && <span className={overdue ? 'font-semibold text-rose' : t.dueDate === today && !done ? 'text-uplift' : ''}>{due}</span>}
               {showList && (

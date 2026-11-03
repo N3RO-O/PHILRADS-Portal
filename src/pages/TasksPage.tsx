@@ -21,7 +21,7 @@ import { todayKey } from '../lib/inventory';
 import { BUCKET_LABEL, BUCKETS, bucketOf, compareTasks, daysBetween, LIST_META, type Bucket } from '../lib/tasks';
 import { computeProgress, LEVELS, type Level } from '../lib/taskProgress';
 import { useLeaving } from '../components/ui/LeavingRow';
-import { tasksService } from '../services';
+import { tasksService, staffBoardService } from '../services';
 import { TASK_LISTS, TaskRuleError, type Assignee, type Kudos, type Task, type TaskDraft, type TaskList, type TeamProgress, type XpAward } from '../services/tasks/types';
 
 type View = 'myday' | 'upcoming' | 'calendar' | 'assigned' | 'delegated' | 'team' | 'done' | 'list';
@@ -46,6 +46,8 @@ export function TasksPage() {
   const onboarding = useOnboarding();
   const online = useOnlineStatus();
   const canManage = can('tasks.manage');
+  // Anyone from volunteer up can give a task to someone; from the same or a lower role it waits to be accepted.
+  const canGive = canManage || (profile?.roleKey !== undefined && profile.roleKey !== 'viewer');
   const [params, setParams] = useSearchParams();
   const rawView = params.get('view') as View | null;
   const view: View = rawView && VIEWS.includes(rawView) ? rawView : 'myday';
@@ -330,6 +332,18 @@ export function TasksPage() {
   };
 
   // The person who gave a finished task sends it back: it re-opens and the XP is taken back.
+  const respond = async (t: Task, accept: boolean, reason?: string) => {
+    try {
+      await staffBoardService.respond(t.id, accept, reason);
+      setTasks((ts) => ts && ts.map((x) => (x.id === t.id ? { ...x, acceptance: accept ? 'accepted' : 'declined', declinedReason: accept ? null : (reason ?? null) } : x)));
+      setToast({ text: accept ? `Accepted “${t.title}”. ${t.createdByName ?? 'They'}’ll see it in their bell.` : `Declined “${t.title}”. ${t.createdByName ?? 'They'}’ll see your reason.`, tone: 'ok' });
+      void load();
+      return null;
+    } catch (e) {
+      return errorText(e);
+    }
+  };
+
   const sendBack = async (t: Task, reason: string) => {
     try {
       const updated = await tasksService.sendBack(t.id, reason);
@@ -627,7 +641,9 @@ export function TasksPage() {
         today={today}
         me={me}
         canAssign={canManage}
+        canGive={canGive}
         people={people}
+        onRespond={respond}
         onClose={() => setSheet(null)}
         onSave={saveFromSheet}
         onToggleDone={(t) => void toggle(t)}

@@ -14,7 +14,11 @@ interface Props {
   today: string;
   me: string | null;
   canAssign: boolean;
+  /** Can give tasks to others (it may need accepting). Defaults to canAssign. */
+  canGive?: boolean;
   people: Assignee[];
+  /** Accept or decline a task given to you. Resolves to an error message, or null. */
+  onRespond?: (task: Task, accept: boolean, reason?: string) => Promise<string | null>;
   onClose: () => void;
   /** Resolves to an error message, or null when saved. */
   onSave: (draft: TaskDraft) => Promise<string | null>;
@@ -59,7 +63,7 @@ export const draftOf = (t: Task): TaskDraft => ({
 });
 
 /** Add or edit a task with everything Any.do offers: list, Field/Office, due date and time, My Day, repeat, subtasks. */
-export function TaskSheet({ open, task, initial, today, me, canAssign, people, onClose, onSave, onToggleDone, onRemove, onSendBack, onSetStatus }: Props) {
+export function TaskSheet({ open, task, initial, today, me, canAssign, canGive = canAssign, people, onRespond, onClose, onSave, onToggleDone, onRemove, onSendBack, onSetStatus }: Props) {
   const uid = useId();
   const [d, setD] = useState<TaskDraft>(EMPTY);
   const [base, setBase] = useState<TaskDraft>(EMPTY);
@@ -67,6 +71,8 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, people, o
   const [busy, setBusy] = useState<'save' | 'remove' | 'sendBack' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reason, setReason] = useState('');
+  const [declining, setDeclining] = useState(false);
+  const [answering, setAnswering] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -76,6 +82,7 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, people, o
     setSub('');
     setError(null);
     setReason('');
+    setDeclining(false);
   }, [open, task, initial]);
 
   const set = <K extends keyof TaskDraft>(k: K, v: TaskDraft[K]) => setD((x) => ({ ...x, [k]: v }));
@@ -88,6 +95,21 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, people, o
   // Finished: locked until re-opened (My Day can still be planned).
   const locked = done;
   const fixed = locked || given;
+  // Given to you by someone of the same or a lower role: answer it first.
+  const needsAnswer = Boolean(task && task.acceptance === 'pending' && task.assigneeId === me && task.createdById !== me && onRespond);
+  const respond = async (accept: boolean) => {
+    if (!task || !onRespond || answering) return;
+    if (!accept && reason.trim().length < 3) {
+      setError('Say in a few words why you can’t take it.');
+      return;
+    }
+    setAnswering(true);
+    setError(null);
+    const err = await onRespond(task, accept, accept ? undefined : reason.trim());
+    setAnswering(false);
+    if (err) setError(err);
+    else onClose();
+  };
   const canSendBack = Boolean(done && task && task.assigneeId && task.assigneeId !== me && (task.createdById === me || canAssign) && onSendBack);
   const sendBack = async () => {
     if (!task || !onSendBack || busy) return;
@@ -157,10 +179,12 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, people, o
                 <span className="sr-only">Remove task</span>
               </button>
               )}
+              {!needsAnswer && (
               <button type="button" className="btn-ghost px-3" onClick={() => (onToggleDone(task), onClose())} disabled={Boolean(busy)}>
                 {done ? <RotateCcw className="h-4 w-4" aria-hidden /> : <CheckCircle2 className="h-4 w-4 text-status-in" aria-hidden />}
                 {done ? 'Re-open' : 'Done'}
               </button>
+              )}
             </>
           )}
           <button type="submit" form={`${uid}-form`} className="btn-primary h-12 flex-1 text-base" disabled={Boolean(busy)}>
@@ -176,7 +200,41 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, people, o
             <strong className="font-semibold text-status-out">Not saved.</strong> {error}
           </p>
         )}
-        {task && !done && onSetStatus && (task.assigneeId ?? task.createdById) === me && (
+        {needsAnswer && task && (
+          <section className="flex animate-pop-in flex-col gap-3 rounded-2xl border border-sky-300/40 bg-sky-300/[0.07] p-4" aria-label="Accept this task">
+            <p className="text-sm text-ink">
+              <strong className="font-semibold">{task.createdByName ?? 'A colleague'}</strong> asks you to take this on. Accept it to start, or say why you can’t.
+            </p>
+            {declining ? (
+              <>
+                <input className="field py-2.5 text-sm" placeholder="Why can’t you take it? (short)" value={reason} maxLength={280} onChange={(e) => setReason(e.target.value)} autoFocus />
+                <div className="flex gap-2">
+                  <button type="button" className="btn-ghost min-h-10 flex-1" onClick={() => setDeclining(false)}>
+                    Back
+                  </button>
+                  <button type="button" className="btn min-h-10 flex-1 bg-status-out/20 text-status-out" disabled={answering} onClick={() => void respond(false)}>
+                    {answering && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />} Decline
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="flex gap-2">
+                <button type="button" className="btn-primary min-h-10 flex-1" disabled={answering} onClick={() => void respond(true)}>
+                  {answering ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Check className="h-4 w-4" aria-hidden />} Accept
+                </button>
+                <button type="button" className="btn-ghost min-h-10 flex-1" onClick={() => (setDeclining(true), setReason(''))}>
+                  Can’t take it
+                </button>
+              </div>
+            )}
+          </section>
+        )}
+        {task && task.acceptance === 'declined' && task.createdById === me && (
+          <p className="rounded-2xl border border-status-out/40 bg-status-out/[0.07] px-4 py-3 text-sm text-ink">
+            <strong className="font-semibold text-status-out">{task.assigneeName ?? 'They'} declined.</strong> {task.declinedReason} Give it to someone else below, or remove it.
+          </p>
+        )}
+        {task && !done && !needsAnswer && onSetStatus && (task.assigneeId ?? task.createdById) === me && (
           // Where you are with it: the person who gave it sees this (Team tasks).
           <div className="flex gap-1 rounded-xl bg-surface-sunken p-1" role="radiogroup" aria-label="Progress">
             {(
@@ -284,7 +342,7 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, people, o
             </select>
           </Field>
           <Field id={`${uid}-assignee`} label="Assigned to">
-            {canAssign ? (
+            {canGive && (!task || task.createdById === me || canAssign) ? (
               <select id={`${uid}-assignee`} className="field" disabled={locked} value={d.assigneeId ?? me ?? ''} onChange={(e) => set('assigneeId', e.target.value === me ? null : e.target.value)}>
                 {people.map((p) => (
                   <option key={p.id} value={p.id}>
