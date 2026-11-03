@@ -5,7 +5,7 @@ import { WelcomeQuestion } from '../components/onboarding/WelcomeQuestion';
 import { useLocation } from 'react-router-dom';
 import { useLayoutContext } from '../components/layout/AppLayout';
 import { DeadlineCalendar } from '../components/dashboard/DeadlineCalendar';
-import { MyTasks } from '../components/dashboard/MyTasks';
+import { StaffTasks } from '../components/dashboard/StaffTasks';
 import { OverviewKpis } from '../components/dashboard/OverviewKpis';
 import { ProjectsTable } from '../components/dashboard/ProjectsTable';
 import { RecentActivity } from '../components/dashboard/RecentActivity';
@@ -85,7 +85,7 @@ export function HomePage() {
         <StockHealth stock={stock} />
       </Cell>
       <Cell className="order-3 md:col-span-2 xl:col-span-8" step={6}>
-        <MyTasks tasks={tasks} search={query} />
+        <StaffTasks search={query} />
       </Cell>
       <Cell className="order-4 xl:col-span-6" step={7}>
         <RecentActivity search={query} />

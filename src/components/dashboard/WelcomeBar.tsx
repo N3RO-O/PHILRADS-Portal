@@ -25,7 +25,7 @@ export function WelcomeBar() {
             </h2>
           </div>
         </div>
-        <Link to="/#my-tasks" className="btn-primary shrink-0 self-start md:self-center">
+        <Link to="/tasks" className="btn-primary shrink-0 self-start md:self-center">
           View my tasks <ArrowRight className="h-4 w-4" aria-hidden />
         </Link>
       </div>

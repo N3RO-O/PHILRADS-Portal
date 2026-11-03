@@ -64,7 +64,7 @@ export function ProfileMenu() {
             <Link to="/profile" className={itemClass} onClick={() => setOpen(false)}>
               <UserRound className="h-4 w-4 text-uplift" aria-hidden /> Your profile
             </Link>
-            <Link to="/#my-tasks" className={itemClass} onClick={() => setOpen(false)}>
+            <Link to="/tasks" className={itemClass} onClick={() => setOpen(false)}>
               <SquareCheckBig className="h-4 w-4 text-uplift" aria-hidden /> My tasks
             </Link>
             {/* After "Skip for now": bring the Get started list back, progress intact. */}

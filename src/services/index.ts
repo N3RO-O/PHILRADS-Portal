@@ -19,6 +19,7 @@ import { createSupabaseResourcesService, mockResourcesService } from './resource
 import type { ResourcesService } from './resources/types';
 import { createSupabaseStaffService, mockStaffService } from './staff/staffService';
 import type { StaffService } from './staff/types';
+import { createSupabaseStaffBoard, mockStaffBoard, type StaffBoardService } from './tasks/staffBoard';
 import { createOfflineTasks, type OfflineTasksService } from './tasks/offlineTasks';
 import { createSupabaseTasksService, mockTasksService } from './tasks/tasksService';
 
@@ -69,3 +70,6 @@ export const onboardingService: OnboardingService = live ? createSupabaseOnboard
 
 /** Statistics: PHILRADS projects and activities since 2023 (where, when, who was served). */
 export const activitiesService: ActivitiesService = withDeviceCopy(live ? createSupabaseActivitiesService(live) : mockActivitiesService, 'activities', ['list']);
+
+/** Staff Tasks: who is carrying what, accepting tasks and nudges. */
+export const staffBoardService: StaffBoardService = live ? createSupabaseStaffBoard(live) : mockStaffBoard;

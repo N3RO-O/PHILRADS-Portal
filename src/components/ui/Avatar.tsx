@@ -1,6 +1,6 @@
 interface AvatarProps {
   initials: string;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'hero';
   /** Profile picture (shown instead of the initials). */
   src?: string | null;
   /** Background of the initials badge (the person's chosen colour). */
@@ -9,7 +9,7 @@ interface AvatarProps {
   ring?: string;
 }
 
-const SIZES = { sm: 'h-8 w-8 text-[0.6875rem]', md: 'h-10 w-10 text-xs', lg: 'h-14 w-14 text-base', xl: 'h-28 w-28 text-3xl' };
+const SIZES = { sm: 'h-8 w-8 text-[0.6875rem]', md: 'h-10 w-10 text-xs', lg: 'h-14 w-14 text-base', xl: 'h-28 w-28 text-3xl', hero: 'h-28 w-28 text-3xl sm:h-36 sm:w-36 sm:text-4xl' };
 
 export function Avatar({ initials, size = 'md', src, color, ring = 'ring-2 ring-line' }: AvatarProps) {
   if (src)

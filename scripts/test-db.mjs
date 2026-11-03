@@ -83,7 +83,10 @@ await check('staff can edit own display name', () => as(B, `update public.profil
 const TASK = (title) => `(select id from public.tasks where title = '${title}')`;
 const xpOf = async (title) => (await db.query(`select points, base, on_time, subtasks, self_set, capped from public.task_xp_events where task_id = ${TASK(title)}`)).rows;
 await check('staff adds their own field task', () => as(B, `insert into public.tasks (title, list, work_setting, assignee_id, created_by) values ('Pack kits', 'relief', 'field', '${B}', '${B}') returning list, work_setting`).then(expectRows(1)));
-await check('staff cannot give a task to someone else', () => as(B, `insert into public.tasks (title, assignee_id, created_by) values ('For admin', '${A}', '${B}')`), true);
+await check('staff asks the admin to take a task: it waits to be accepted', () => as(B, `insert into public.tasks (title, assignee_id, created_by) values ('For admin', '${A}', '${B}') returning acceptance`).then((r) => {
+  if (r.rows[0]?.acceptance !== 'pending') throw new Error(JSON.stringify(r.rows));
+  return r.rows[0].acceptance;
+}));
 await check('unknown task lists are rejected', () => as(B, `insert into public.tasks (title, list, created_by) values ('Bad list', 'party', '${B}')`), true);
 await check('finishing a task from someone else earns 35 + 10 on time', async () => {
   await as(B, `update public.tasks set status = 'done' where id = ${TASK('Assigned to B')}`);
@@ -125,7 +128,10 @@ await check('finished subtasks add 2 XP each', async () => {
 });
 await check('staff cannot write XP directly', () => as(B, `insert into public.task_xp_events (task_id, user_id, points, base, self_set, day) values (${TASK('Pack kits')}, '${B}', 100, 100, false, current_date)`), true);
 await check('staff sees only their own XP', () => as(B, `select distinct user_id from public.task_xp_events`).then(expectRows(1)));
-await check('staff cannot give their own task to someone else later', () => as(B, `update public.tasks set assignee_id = '${A}' where id = ${TASK('Pack kits')}`), true);
+await check('staff passes their own task to the admin: it waits to be accepted', () => as(B, `update public.tasks set assignee_id = '${A}' where id = ${TASK('Pack kits')} returning acceptance`).then((r) => {
+  if (r.rows[0]?.acceptance !== 'pending') throw new Error(JSON.stringify(r.rows));
+  return r.rows[0].acceptance;
+}));
 await check('who created a task cannot be rewritten', () => as(A, `update public.tasks set created_by = '${A}' where id = ${TASK('Pack kits')}`), true);
 await check('admin can reassign a task', () => as(A, `update public.tasks set assignee_id = '${A}' where id = ${TASK('Pack kits')} returning title`).then(expectRows(1)));
 await check('staff cannot send kudos', () => as(B, `insert into public.task_kudos (to_user, message) values ('${A}', 'Thanks')`), true);
@@ -727,6 +733,51 @@ await check('a sync is all or nothing', async () => {
   }
   throw new Error('the broken sync was accepted');
 });
+
+// Staff Tasks: accepting by role, nudges, the board and phone notifications
+await check('admin gives staff a task: assigned straight away, with a bell note', async () => {
+  const r = await as(A, `insert into public.tasks (title, assignee_id, created_by) values ('From admin', '${B}', '${A}') returning acceptance`);
+  const n = await db.query(`select count(*)::int n from public.notifications where recipient_id = '${B}' and title like '%gave you “From admin”'`);
+  if (r.rows[0].acceptance !== 'accepted' || n.rows[0].n !== 1) throw new Error(JSON.stringify([r.rows, n.rows]));
+  return r.rows[0].acceptance;
+});
+await check('a task waiting to be accepted cannot be started', () => as(A, `update public.tasks set status = 'in_progress' where id = ${TASK('For admin')}`), true);
+await check('nobody can mark a task accepted by editing it', async () => {
+  await as(A, `update public.tasks set acceptance = 'accepted' where id = ${TASK('For admin')}`);
+  const r = await db.query(`select acceptance from public.tasks where id = ${TASK('For admin')}`);
+  if (r.rows[0].acceptance !== 'pending') throw new Error(r.rows[0].acceptance);
+  return r.rows[0].acceptance;
+});
+await check('only the person it is for can accept', () => as(B, `select public.accept_task(${TASK('For admin')}, true)`), true);
+await check('declining needs a reason', () => as(A, `select public.accept_task(${TASK('For admin')}, false, '')`), true);
+await check('the admin accepts; the giver is told', async () => {
+  await as(A, `select public.accept_task(${TASK('For admin')}, true)`);
+  const n = await db.query(`select count(*)::int n from public.notifications where recipient_id = '${B}' and title like '%accepted “For admin”'`);
+  const t = await db.query(`select acceptance, responded_at is not null answered from public.tasks where id = ${TASK('For admin')}`);
+  if (n.rows[0].n !== 1 || t.rows[0].acceptance !== 'accepted' || !t.rows[0].answered) throw new Error(JSON.stringify([n.rows, t.rows]));
+  return 'accepted';
+});
+await check('the giver nudges; the person gets a bell note', async () => {
+  await as(B, `select public.nudge_task(${TASK('For admin')}, 'Needed by Friday')`);
+  const n = await db.query(`select body from public.notifications where recipient_id = '${A}' and title like '%nudged you%'`);
+  if (n.rows.length !== 1 || n.rows[0].body !== 'Needed by Friday') throw new Error(JSON.stringify(n.rows));
+  return n.rows[0].body;
+});
+await check('one nudge an hour per task', () => as(B, `select public.nudge_task(${TASK('For admin')})`), true);
+await check('only the giver or a coordinator can nudge', () => as(B, `select public.nudge_task(${TASK('From admin')})`), true);
+await check('nudges cannot be written directly', () => as(B, `insert into public.task_nudges (task_id, from_id, to_id) values (${TASK('For admin')}, '${B}', '${A}')`), true);
+await check('staff see the Staff Tasks board', () => as(B, `select name, open_count from public.staff_task_board()`).then((r) => {
+  if (r.rows.length < 2) throw new Error(JSON.stringify(r.rows));
+  return r.rows.length;
+}));
+await check('a colleague sees tasks given to the admin, not the admin’s own', () => as(B, `select title from public.staff_tasks_of('${A}')`).then((r) => {
+  const titles = r.rows.map((x) => x.title);
+  if (!titles.includes('For admin') || titles.includes('Admin only')) throw new Error(JSON.stringify(titles));
+  return titles.length;
+}));
+await check('staff saves their phone for notifications', () => as(B, `insert into public.push_subscriptions (endpoint, p256dh, auth) values ('https://push.example.test/b', 'k', 'a') returning profile_id`).then(expectRows(1)));
+await check('nobody saves a phone for someone else', () => as(B, `insert into public.push_subscriptions (profile_id, endpoint, p256dh, auth) values ('${A}', 'https://push.example.test/a', 'k', 'a')`), true);
+await check('staff cannot see other people’s phones', () => as(A, `select id from public.push_subscriptions`).then(expectRows(0)));
 
 // Inactive account and signed-out visitors
 await check('inactive account sees no tasks', () => as(C, `select id from public.tasks`).then(expectRows(0)));
