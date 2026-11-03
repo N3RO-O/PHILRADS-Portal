@@ -361,8 +361,11 @@ await check('a file deleted in the portal is logged with who deleted it', async 
 
 // Profiles: describe yourself; a small picture; colleagues can see it, only you can change it
 await check('staff edit their own profile (position, phone, bio, picture, colour)', () =>
-  as(B, `update public.profiles set job_title = 'Field officer', phone = '+63 917 123 4567', bio = 'Relief logistics in Bicol.', avatar_data = 'data:image/jpeg;base64,AAAA', avatar_color = '#ec952a' where id = '${B}' returning job_title`).then(expectRows(1)));
-await check('colleagues can see a profile', () => as(A, `select bio, avatar_data from public.profiles where id = '${B}' and bio is not null`).then(expectRows(1)));
+  as(B, `update public.profiles set job_title = 'Field officer', phone = '+63 917 123 4567', bio = 'Relief logistics in Bicol.', avatar_data = 'data:image/jpeg;base64,AAAA', avatar_color = '#ec952a' where id = '${B}' returning id`).then(expectRows(1)));
+await check('colleagues can see a profile', () => as(A, `select public.view_profile('${B}') p`).then((r) => {
+  if (!r.rows[0].p?.bio) throw new Error(JSON.stringify(r.rows));
+  return r.rows[0].p.bio;
+}));
 await check('nobody can change someone else’s profile', async () => {
   await as(B, `update public.profiles set bio = 'hacked' where id = '${A}'`);
   const r = (await db.query(`select bio from public.profiles where id = '${A}'`)).rows[0];
@@ -778,6 +781,32 @@ await check('a colleague sees tasks given to the admin, not the admin’s own', 
 await check('staff saves their phone for notifications', () => as(B, `insert into public.push_subscriptions (endpoint, p256dh, auth) values ('https://push.example.test/b', 'k', 'a') returning profile_id`).then(expectRows(1)));
 await check('nobody saves a phone for someone else', () => as(B, `insert into public.push_subscriptions (profile_id, endpoint, p256dh, auth) values ('${A}', 'https://push.example.test/a', 'k', 'a')`), true);
 await check('staff cannot see other people’s phones', () => as(A, `select id from public.push_subscriptions`).then(expectRows(0)));
+
+// Profiles: public or private
+await check('a colleague cannot read phone or bio straight from the table', () => as(B, `select phone, bio from public.profiles where id = '${A}'`), true);
+await check('a public profile shows its details to colleagues', () => as(B, `update public.profiles set bio = 'Admin bio' where id = '${A}'`).then(() => as(B, `select public.view_profile('${A}') p`)).then((r) => {
+  const p = r.rows[0].p;
+  if (!p.details) throw new Error(JSON.stringify(p));
+  return p.details;
+}));
+await check('staff make their profile private', () => as(B, `update public.profiles set profile_public = false, bio = 'Staff bio' where id = '${B}' returning profile_public`).then(expectRows(1)));
+await check('a private profile shows only name, picture and role to colleagues', async () => {
+  await db.exec(`update public.profiles set is_active = true, role_key = 'coordinator' where id = '${E}'`);
+  const r = await as(E, `select public.view_profile('${B}') p, public.profile_task_stats('${B}') s`);
+  const { p, s } = r.rows[0];
+  if (p.details || p.bio !== null || p.phone !== null || s !== null || !p.display_name) throw new Error(JSON.stringify(r.rows[0]));
+  return 'private';
+});
+await check('the person still sees all of their own profile', () => as(B, `select public.view_profile('${B}') p`).then((r) => {
+  if (r.rows[0].p.bio !== 'Staff bio') throw new Error(JSON.stringify(r.rows[0]));
+  return r.rows[0].p.bio;
+}));
+await check('administrators still see a private profile', () => as(A, `select public.view_profile('${B}') p`).then((r) => {
+  if (r.rows[0].p.bio !== 'Staff bio') throw new Error(JSON.stringify(r.rows[0]));
+  return 'admin sees it';
+}));
+await check('names are still readable for assigning tasks', () => as(E, `select display_name, avatar_data from public.profiles where id = '${B}'`).then(expectRows(1)));
+await db.exec(`update public.profiles set profile_public = true where id = '${B}'`);
 
 // Inactive account and signed-out visitors
 await check('inactive account sees no tasks', () => as(C, `select id from public.tasks`).then(expectRows(0)));

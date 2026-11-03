@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Briefcase, Camera, Check, Loader2, Lock, Phone, Pipette, Trash2, UserRound } from 'lucide-react';
+import { Briefcase, Camera, Check, Globe2, Loader2, Lock, Phone, Pipette, Trash2, UserRound } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../components/auth/AuthProvider';
 import { BADGE_ICON, FRAME_RING, FRAME_TEXT } from '../components/tasks/taskMeta';
@@ -145,7 +145,21 @@ function ProfileCard({ person: p, progress, showLocked = false, narrow = false }
           )}
         </div>
 
+        {!p.details ? (
+          <div className="mt-4 flex flex-col items-center gap-2 rounded-xl border border-line/50 bg-surface-sunken px-4 py-8 text-center">
+            <span className="grid h-12 w-12 place-items-center rounded-full bg-white/[0.06] text-muted">
+              <Lock className="h-5 w-5" aria-hidden />
+            </span>
+            <p className="text-sm font-semibold text-ink">{p.displayName.split(' ')[0]} keeps their profile private</p>
+            <p className="max-w-xs text-xs text-muted">You can still give them tasks and see the tasks they’ve been given in the Active list.</p>
+          </div>
+        ) : (
         <div className="mt-4 flex flex-col gap-4 rounded-xl border border-line/50 bg-surface-sunken p-4">
+          {!p.isPublic && (
+            <p className="flex items-center gap-1.5 text-xs text-muted">
+              <Lock className="h-3.5 w-3.5" aria-hidden /> Private: only {showLocked ? 'you' : 'they'} and administrators see these details.
+            </p>
+          )}
           <Section title="About me">
             {p.bio ? <p className="whitespace-pre-line break-words text-sm leading-relaxed text-ink-soft">{p.bio}</p> : <p className="text-sm text-muted">No bio yet.</p>}
           </Section>
@@ -229,6 +243,7 @@ function ProfileCard({ person: p, progress, showLocked = false, narrow = false }
             </Section>
           )}
         </div>
+        )}
       </div>
       {shown && <BadgeDetails item={shown} mine={showLocked} onClose={() => setOpenBadge(null)} />}
     </article>
@@ -298,6 +313,7 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
       bio: person.bio ?? '',
       avatar: person.avatar,
       avatarColor: person.avatarColor,
+      isPublic: person.isPublic,
     }),
     [person],
   );
@@ -371,6 +387,34 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
             You’re editing {person.displayName}’s profile as an administrator.
           </p>
         )}
+
+        <section className="card flex flex-col gap-3">
+          <EditGroup title="Who can see your profile" note="Your name, picture and role are always shown, so colleagues can give you tasks.">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Who can see your profile">
+              {(
+                [
+                  [true, 'Public', 'Everyone at PHILRADS sees your position, office, phone, bio and badges.', Globe2],
+                  [false, 'Private', 'Only you and administrators see them. Colleagues see your name, picture and role.', Lock],
+                ] as const
+              ).map(([value, label, note, Icon]) => (
+                <button
+                  key={label}
+                  type="button"
+                  role="radio"
+                  aria-checked={d.isPublic === value}
+                  onClick={() => set('isPublic', value)}
+                  className={`press flex items-start gap-3 rounded-xl border p-3 text-left transition-colors ${d.isPublic === value ? 'border-uplift bg-uplift/10' : 'border-line hover:border-ink-mute'}`}
+                >
+                  <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${d.isPublic === value ? 'text-uplift' : 'text-muted'}`} aria-hidden />
+                  <span>
+                    <span className="block text-sm font-semibold text-ink">{label}</span>
+                    <span className="block text-xs leading-snug text-muted">{note}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </EditGroup>
+        </section>
 
         <section className="card flex flex-col gap-5">
           <EditGroup title="Profile picture">

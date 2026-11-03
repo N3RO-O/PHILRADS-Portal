@@ -41,7 +41,7 @@ const PresenceContext = createContext<PresenceValue>({
 const CHOICE_KEY = 'philrads.status';
 const IDLE_AFTER = 5 * 60_000;
 // Sample mode: made-up colleagues in each state.
-const SAMPLE: Record<string, Status> = { 'sample-ana': 'online', 'sample-maria': 'idle', 'sample-jun': 'dnd' };
+const SAMPLE: Record<string, Status> = { 'p-ana': 'online', 'p-maria': 'idle', 'p-jun': 'dnd' };
 
 const readChoice = (): Choice => {
   try {

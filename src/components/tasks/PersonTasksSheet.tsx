@@ -72,9 +72,14 @@ export function PersonTasks({ person, status, me, onClose, onChanged }: { person
         </span>
       }
       footer={
-        <Link to={mine ? '/tasks' : `/tasks?view=team`} className="btn-ghost h-12 w-full" onClick={onClose}>
-          {mine ? 'Open my tasks' : 'Open in Tasks'}
-        </Link>
+        <div className="grid grid-cols-2 gap-2">
+          <Link to={mine ? '/profile' : `/profile/${person.id}`} className="btn-primary h-12 px-3" onClick={onClose}>
+            {mine ? 'My profile' : 'View profile'}
+          </Link>
+          <Link to={mine ? '/tasks' : `/tasks?view=team`} className="btn-ghost h-12 px-3" onClick={onClose}>
+            {mine ? 'My tasks' : 'Open in Tasks'}
+          </Link>
+        </div>
       }
     >
       <div className="flex flex-col gap-4">

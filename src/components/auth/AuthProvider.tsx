@@ -58,17 +58,14 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 async function fetchProfile(client: SupabaseClient, userId: string): Promise<{ profile: StaffProfile | null; error?: string; network?: boolean }> {
-  const { data, error } = await client
-    .from('profiles')
-    .select('id, display_name, full_name, office, is_active, role_key, job_title, phone, bio, avatar_data, avatar_color, roles(name)')
-    .eq('id', userId)
-    .maybeSingle();
+  const { data: raw, error } = await client.rpc('view_profile', { p_id: userId });
+  const data = raw as Record<string, unknown> | null;
   if (error) {
     console.error('[auth] profile', error);
     return { profile: null, error: 'Your staff profile could not be loaded.', network: isNetworkError(error.message) };
   }
   if (!data) return { profile: null, error: 'No staff profile exists for this account yet.' };
-  const role = data.roles as unknown as { name?: string } | null;
+  const role = { name: (data.role_name as string | null) ?? undefined };
   const displayName = (data.display_name as string) || (data.full_name as string) || 'Staff member';
   return {
     profile: {

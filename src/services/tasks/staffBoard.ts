@@ -103,17 +103,17 @@ export function createSupabaseStaffBoard(client: SupabaseClient): StaffBoardServ
 const day = (n: number) => new Date(Date.now() + n * 86_400_000 + 8 * 3600_000).toISOString().slice(0, 10);
 const SAMPLE_BOARD: BoardPerson[] = [
   { id: demoProfile.id, name: demoProfile.displayName, roleKey: 'admin', roleName: 'Administrator', open: 4, inProgress: 1, overdue: 0, pending: 0, doneWeek: 3 },
-  { id: 'sample-ana', name: 'Ana Reyes', roleKey: 'coordinator', roleName: 'Coordinator', open: 3, inProgress: 2, overdue: 1, pending: 0, doneWeek: 5 },
-  { id: 'sample-jun', name: 'Jun Dela Cruz', roleKey: 'staff', roleName: 'Field staff', open: 5, inProgress: 1, overdue: 0, pending: 1, doneWeek: 2 },
-  { id: 'sample-maria', name: 'Maria Santos', roleKey: 'staff', roleName: 'Field staff', open: 2, inProgress: 0, overdue: 0, pending: 0, doneWeek: 6 },
-  { id: 'sample-leo', name: 'Leo Mendoza', roleKey: 'volunteer', roleName: 'Volunteer', open: 1, inProgress: 1, overdue: 1, pending: 0, doneWeek: 1 },
-  { id: 'sample-grace', name: 'Grace Lim', roleKey: 'staff', roleName: 'Field staff', open: 0, inProgress: 0, overdue: 0, pending: 0, doneWeek: 4 },
+  { id: 'p-ana', name: 'Ana Reyes', roleKey: 'coordinator', roleName: 'Coordinator', open: 3, inProgress: 2, overdue: 1, pending: 0, doneWeek: 5 },
+  { id: 'p-jun', name: 'Jun Dela Cruz', roleKey: 'staff', roleName: 'Field staff', open: 5, inProgress: 1, overdue: 0, pending: 1, doneWeek: 2 },
+  { id: 'p-maria', name: 'Maria Santos', roleKey: 'staff', roleName: 'Field staff', open: 2, inProgress: 0, overdue: 0, pending: 0, doneWeek: 6 },
+  { id: 'p-leo', name: 'Leo Mendoza', roleKey: 'volunteer', roleName: 'Volunteer', open: 1, inProgress: 1, overdue: 1, pending: 0, doneWeek: 1 },
+  { id: 'p-grace', name: 'Grace Lim', roleKey: 'staff', roleName: 'Field staff', open: 0, inProgress: 0, overdue: 0, pending: 0, doneWeek: 4 },
 ];
 const sampleTasks = (personId: string): BoardTask[] => {
   const base: BoardTask[] = [
-    { id: `${personId}-1`, title: 'Repack 200 hygiene kits for Glan', status: 'in_progress', priority: 'high', dueDate: day(1), acceptance: 'accepted', givenBy: 'Ana Reyes', givenById: 'sample-ana', completedAt: null, nudgedAt: null },
+    { id: `${personId}-1`, title: 'Repack 200 hygiene kits for Glan', status: 'in_progress', priority: 'high', dueDate: day(1), acceptance: 'accepted', givenBy: 'Ana Reyes', givenById: 'p-ana', completedAt: null, nudgedAt: null },
     { id: `${personId}-2`, title: 'Submit distribution photos to Documentation', status: 'todo', priority: 'medium', dueDate: day(-1), acceptance: 'accepted', givenBy: demoProfile.displayName, givenById: demoProfile.id, completedAt: null, nudgedAt: null },
-    { id: `${personId}-3`, title: 'Call the barangay captain about the venue', status: 'todo', priority: 'medium', dueDate: day(3), acceptance: 'pending', givenBy: 'Maria Santos', givenById: 'sample-maria', completedAt: null, nudgedAt: null },
+    { id: `${personId}-3`, title: 'Call the barangay captain about the venue', status: 'todo', priority: 'medium', dueDate: day(3), acceptance: 'pending', givenBy: 'Maria Santos', givenById: 'p-maria', completedAt: null, nudgedAt: null },
     { id: `${personId}-4`, title: 'Encode the beneficiary list (Batch 2)', status: 'done', priority: 'low', dueDate: day(-2), acceptance: 'accepted', givenBy: demoProfile.displayName, givenById: demoProfile.id, completedAt: new Date(Date.now() - 86_400_000).toISOString(), nudgedAt: null },
   ];
   const n = SAMPLE_BOARD.find((p) => p.id === personId);

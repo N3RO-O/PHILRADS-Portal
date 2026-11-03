@@ -26,6 +26,10 @@ export interface PersonProfile {
   isActive: boolean;
   /** When the account was made. */
   memberSince: string | null;
+  /** Public: colleagues see the whole profile. Private: only name, picture and role. */
+  isPublic: boolean;
+  /** False when this is someone else's private profile: the details and badges are hidden. */
+  details: boolean;
 }
 
 export interface ProfilePicture {
@@ -47,6 +51,7 @@ export interface ProfilePatch {
   bio: string;
   avatar: string | null;
   avatarColor: string | null;
+  isPublic: boolean;
 }
 
 /** Colours for the initials badge. */
@@ -63,7 +68,7 @@ export interface ProfileService {
   readonly source: DataSource;
   get(id: string): Promise<PersonProfile | null>;
   /** Level and badges: anyone on the team can see them. */
-  progress(id: string): Promise<ProfileProgress>;
+  progress(id: string): Promise<ProfileProgress | null>;
   /** Pictures and colours for several people at once (team lists, logs). */
   pictures(ids: string[]): Promise<Record<string, ProfilePicture>>;
   /** Your own profile. */
@@ -106,12 +111,10 @@ export function createSupabaseProfileService(client: SupabaseClient): ProfileSer
   return {
     source: 'supabase',
     async get(id) {
-      const { data, error } = await client
-        .from('profiles')
-        .select('id, full_name, display_name, office, is_active, created_at, job_title, phone, bio, avatar_data, avatar_color, roles(name)')
-        .eq('id', id)
-        .maybeSingle();
+      // view_profile leaves the details out of someone else's private profile (the database decides).
+      const { data: raw, error } = await client.rpc('view_profile', { p_id: id });
       if (error) throw new Error('This profile could not be loaded. Check the connection and try again.');
+      const data = raw as Record<string, unknown> | null;
       if (!data) return null;
       const displayName = ((data.display_name as string) || (data.full_name as string) || 'Staff member').trim();
       return {
@@ -119,7 +122,7 @@ export function createSupabaseProfileService(client: SupabaseClient): ProfileSer
         fullName: ((data.full_name as string) || displayName).trim(),
         displayName,
         initials: initialsOf(displayName),
-        roleName: (data.roles as unknown as { name?: string } | null)?.name ?? null,
+        roleName: (data.role_name as string | null) ?? null,
         office: (data.office as string | null) ?? null,
         jobTitle: (data.job_title as string | null) ?? null,
         phone: (data.phone as string | null) ?? null,
@@ -128,11 +131,15 @@ export function createSupabaseProfileService(client: SupabaseClient): ProfileSer
         avatarColor: (data.avatar_color as string | null) ?? null,
         isActive: Boolean(data.is_active),
         memberSince: (data.created_at as string | null) ?? null,
+        isPublic: data.profile_public !== false,
+        details: Boolean(data.details),
       };
     },
     async progress(id) {
       const { data, error } = await client.rpc('profile_task_stats', { p_id: id });
       if (error) throw new Error('Badges could not be loaded.');
+      // Someone else's private profile: no badges to show.
+      if (data === null) return null;
       const r = (data ?? {}) as Record<string, number> & { by_list?: TaskStats['byList'] };
       return {
         xp: r.xp ?? 0,
@@ -172,6 +179,7 @@ export function createSupabaseProfileService(client: SupabaseClient): ProfileSer
           bio: p.bio.trim() || null,
           avatar_data: p.avatar,
           avatar_color: p.avatarColor,
+          profile_public: p.isPublic,
         })
         .eq('id', id)
         .select('id');
@@ -184,11 +192,12 @@ export function createSupabaseProfileService(client: SupabaseClient): ProfileSer
 // ───────────────────────── Sample data ─────────────────────────
 
 const STORE = 'philrads.sample.profile.v1';
-const SAMPLE: Record<string, Omit<PersonProfile, 'initials' | 'memberSince'>> = {
+const SAMPLE: Record<string, Omit<PersonProfile, 'initials' | 'memberSince' | 'isPublic' | 'details'>> = {
   'p-maria': { id: 'p-maria', fullName: 'Maria Santos', displayName: 'Maria Santos', roleName: 'Coordinator', office: 'Naga field office', jobTitle: 'Relief operations coordinator', phone: '+63 917 555 0101', bio: 'Leads relief distributions in Bicol. Ask me about logistics and partner churches.', avatar: null, avatarColor: '#3f8f5b', isActive: true },
   'p-jun': { id: 'p-jun', fullName: 'Jun Dela Cruz', displayName: 'Jun Dela Cruz', roleName: 'Staff', office: 'Main office', jobTitle: 'Warehouse officer', phone: null, bio: null, avatar: null, avatarColor: '#3c5fa8', isActive: true },
   'p-ana': { id: 'p-ana', fullName: 'Ana Reyes', displayName: 'Ana Reyes', roleName: 'Coordinator', office: 'Main office', jobTitle: 'Livelihood program officer', phone: null, bio: 'Small-business coaching and monitoring.', avatar: null, avatarColor: '#a03f7a', isActive: true },
   'p-leo': { id: 'p-leo', fullName: 'Leo Mendoza', displayName: 'Leo Mendoza', roleName: 'Volunteer', office: null, jobTitle: 'Field volunteer', phone: null, bio: null, avatar: null, avatarColor: null, isActive: true },
+  'p-grace': { id: 'p-grace', fullName: 'Grace Lim', displayName: 'Grace Lim', roleName: 'Staff', office: 'Main office', jobTitle: 'Documentation officer', phone: null, bio: 'Photos, reports and the stories behind them.', avatar: null, avatarColor: '#2f7f8f', isActive: true },
 };
 const sampleStats = (n: number): ProfileProgress => ({
   xp: n * 23,
@@ -221,14 +230,20 @@ export const mockProfileService: ProfileService = {
   async get(id) {
     await new Promise((r) => setTimeout(r, 200));
     if (id === demoProfile.id) {
-      const base = { id, fullName: 'Demo User', displayName: demoProfile.displayName, roleName: demoProfile.roleName ?? null, office: demoProfile.office ?? null, jobTitle: null, phone: null, bio: null, avatar: null, avatarColor: null, isActive: true, memberSince: '2026-10-18T08:00:00+08:00' };
+      const base = { id, fullName: 'Demo User', displayName: demoProfile.displayName, roleName: demoProfile.roleName ?? null, office: demoProfile.office ?? null, jobTitle: null, phone: null, bio: null, avatar: null, avatarColor: null, isActive: true, memberSince: '2026-10-18T08:00:00+08:00', isPublic: true, details: true };
       const p = { ...base, ...readMine() };
       return { ...p, initials: initialsOf(p.displayName) };
     }
     const p = SAMPLE[id];
-    return p ? { ...p, initials: initialsOf(p.displayName), memberSince: '2026-10-20T08:00:00+08:00' } : null;
+    if (!p) return null;
+    // Sample: Jun keeps his profile private.
+    const isPublic = id !== 'p-jun';
+    return isPublic
+      ? { ...p, initials: initialsOf(p.displayName), memberSince: '2026-10-20T08:00:00+08:00', isPublic, details: true }
+      : { ...p, office: null, jobTitle: null, phone: null, bio: null, initials: initialsOf(p.displayName), memberSince: null, isPublic, details: false };
   },
   async progress(id) {
+    if (id === 'p-jun') return null;
     if (id !== demoProfile.id) return sampleStats(SAMPLE_PROGRESS[id] ?? 0);
     // The demo user's real sample tasks, scored the same way as on the Tasks page.
     const [tasks, p] = await Promise.all([mockTasksService.list(), mockTasksService.progress()]);
@@ -247,7 +262,7 @@ export const mockProfileService: ProfileService = {
     try {
       localStorage.setItem(
         STORE,
-        JSON.stringify({ fullName: p.fullName.trim(), displayName: p.displayName.trim(), jobTitle: p.jobTitle.trim() || null, phone: p.phone.trim() || null, bio: p.bio.trim() || null, avatar: p.avatar, avatarColor: p.avatarColor }),
+        JSON.stringify({ fullName: p.fullName.trim(), displayName: p.displayName.trim(), jobTitle: p.jobTitle.trim() || null, phone: p.phone.trim() || null, bio: p.bio.trim() || null, avatar: p.avatar, avatarColor: p.avatarColor, isPublic: p.isPublic }),
       );
     } catch {
       throw new ProfileRuleError('This device couldn’t keep the sample profile (storage is full or off).');
