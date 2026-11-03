@@ -45,6 +45,23 @@ const errorText = (e: unknown) => (e instanceof TaskRuleError ? e.message : !nav
 /** Tasks, Any.do style, for humanitarian work in the field and at the office, with levels, badges and a team goal. */
 export function TasksPage() {
   const { profile, can } = useAuth();
+  // Columns follow the room the page actually has (the sidebar and the Active list take some), not
+  // the screen: 3 from about 1080px of page, 2 from 760px, otherwise 1.
+  // A callback ref: the layout may appear after a loading state.
+  const [layoutEl, layoutRef] = useState<HTMLDivElement | null>(null);
+  const [cols, setCols] = useState<1 | 2 | 3>(1);
+  useEffect(() => {
+    const el = layoutEl;
+    if (!el) return;
+    const fit = () => {
+      const w = el.getBoundingClientRect().width;
+      setCols(w >= 1080 ? 3 : w >= 760 ? 2 : 1);
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [layoutEl]);
   const onboarding = useOnboarding();
   const online = useOnlineStatus();
   const canManage = can('tasks.manage');
@@ -425,9 +442,12 @@ export function TasksPage() {
       : [];
 
   return (
-    <div className="grid grid-cols-1 gap-4 pb-6 lg:grid-cols-[13.5rem_minmax(0,1fr)] xl:grid-cols-[13.5rem_minmax(0,1fr)_20rem] xl:items-start">
-      {/* Views and lists: a side menu on wide screens. */}
-      <nav aria-label="Task views" className="card sticky top-20 hidden flex-col gap-4 p-3 lg:flex">
+    <div
+      ref={layoutRef}
+      className={`grid gap-4 pb-6 ${cols === 3 ? 'grid-cols-[13.5rem_minmax(0,1fr)_20rem] items-start' : cols === 2 ? 'grid-cols-[13.5rem_minmax(0,1fr)]' : 'grid-cols-1'}`}
+    >
+      {/* Views and lists: a side menu when there's room. */}
+      <nav aria-label="Task views" className={`card sticky top-20 flex-col gap-4 p-3 ${cols >= 2 ? 'flex' : 'hidden'}`}>
         <ul className="flex flex-col gap-0.5">
           {(Object.keys(VIEW_META) as Exclude<View, 'list'>[])
             .filter((v) => (v !== 'delegated' || canManage || counts.delegated > 0) && (v !== 'team' || canManage))
@@ -451,13 +471,13 @@ export function TasksPage() {
       </nav>
 
       <div className="flex min-w-0 flex-col gap-4">
-        {/* Phones and tablets: progress first, then views as chips. */}
-        <div className="xl:hidden">
+        {/* Narrower: progress first, then views as chips. */}
+        <div className={cols === 3 ? 'hidden' : ''}>
           <ProgressPanel initials={profile?.initials ?? '?'} progress={progress} onOpen={(tab) => setParam({ rewards: tab })} />
         </div>
 
         <section className="card flex flex-col gap-4 p-4 sm:p-5">
-          <div className="flex flex-col gap-3 lg:hidden">
+          <div className={`flex flex-col gap-3 ${cols >= 2 ? 'hidden' : ''}`}>
             <div className="flex flex-wrap gap-2" role="group" aria-label="Task views">
               {(Object.keys(VIEW_META) as Exclude<View, 'list'>[])
                 .filter((v) => (v !== 'delegated' || canManage || counts.delegated > 0) && (v !== 'team' || canManage))
@@ -640,12 +660,12 @@ export function TasksPage() {
             ))}
         </section>
 
-        <div className="xl:hidden">
+        <div className={cols === 3 ? 'hidden' : ''}>
           <TeamGoalCard team={team} canManage={canManage} people={people} me={me} onSetGoal={setGoal} onKudos={sendKudos} />
         </div>
       </div>
 
-      <aside className="hidden flex-col gap-4 xl:sticky xl:top-20 xl:flex">
+      <aside className={`flex-col gap-4 sticky top-20 ${cols === 3 ? 'flex' : 'hidden'}`}>
         <ProgressPanel initials={profile?.initials ?? '?'} progress={progress} onOpen={(tab) => setParam({ rewards: tab })} />
         <TeamGoalCard team={team} canManage={canManage} people={people} me={me} onSetGoal={setGoal} onKudos={sendKudos} />
       </aside>
