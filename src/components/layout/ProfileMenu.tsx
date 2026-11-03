@@ -1,6 +1,7 @@
 import { useCallback, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, Download, Gift, LogOut, Rocket, SquareCheckBig, UserRound, UsersRound, Volume2 } from 'lucide-react';
+import { ChevronDown, Download, Fingerprint, Gift, LogOut, Rocket, SquareCheckBig, UserRound, UsersRound, Volume2 } from 'lucide-react';
+import { QuickUnlockSheet, useQuickUnlock } from '../auth/QuickUnlock';
 import { whatsNew } from '../../lib/whatsNew';
 import { errorSound, useErrorSound } from '../../lib/errorSound';
 import { Switch } from '../ui/Switch';
@@ -27,6 +28,8 @@ export function ProfileMenu() {
   useDismiss(open, wrap, close, button);
   const install = useInstallAvailability();
   const soundOn = useErrorSound();
+  const [unlockOpen, setUnlockOpen] = useState(false);
+  const quick = useQuickUnlock();
 
   if (!profile) return null;
 
@@ -105,6 +108,11 @@ export function ProfileMenu() {
               </span>
               <Switch checked={soundOn} labelledBy={`${panelId}-sound`} onChange={(next) => errorSound.set(next)} />
             </div>
+            <button type="button" className={itemClass} onClick={() => (setOpen(false), setUnlockOpen(true))}>
+              <Fingerprint className="h-4 w-4 text-uplift" aria-hidden />
+              <span className="flex-1">Quick unlock</span>
+              <span className={`rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold ${quick.enabled ? 'bg-status-in/15 text-status-in' : 'bg-white/[0.06] text-muted'}`}>{quick.enabled ? 'On' : 'Off'}</span>
+            </button>
             {install !== 'installed' && (
               <button type="button" className={itemClass} onClick={() => void onInstall()}>
                 <Download className="h-4 w-4 text-uplift" aria-hidden /> Install app
@@ -143,6 +151,7 @@ export function ProfileMenu() {
         </div>
       )}
       <InstallDialog open={installOpen} onClose={() => setInstallOpen(false)} />
+      <QuickUnlockSheet open={unlockOpen} onClose={() => setUnlockOpen(false)} />
     </div>
   );
 }

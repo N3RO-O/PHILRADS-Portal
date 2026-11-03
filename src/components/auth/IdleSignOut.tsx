@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Clock } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import { useLiveSharing } from '../map/LiveSharing';
+import { useQuickUnlock } from './QuickUnlock';
 import { IDLE_LIMIT_MS, IDLE_WARN_MS, lastActive, markActive, noteIdleSignOut } from '../../lib/idle';
 
 const ACTIVITY = ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart', 'scroll'] as const;
@@ -17,6 +18,8 @@ export function IdleSignOut() {
   const live = useLiveSharing();
   const signedIn = state.status === 'signed-in';
   const sharing = live.status === 'live' || live.status === 'starting';
+  // With quick unlock set up, idle locks the portal (PIN or fingerprint) instead of signing out.
+  const quick = useQuickUnlock();
   const [left, setLeft] = useState<number | null>(null);
   // This tab's own clock, for when storage is unavailable.
   const local = useRef(Date.now());
@@ -42,10 +45,15 @@ export function IdleSignOut() {
     const check = () => {
       if (leaving.current) return;
       if (sharing) return touch();
+      if (quick.locked) return setLeft(null);
       const idle = Date.now() - Math.max(lastActive() ?? 0, local.current);
       if (idle >= IDLE_LIMIT_MS) {
-        leaving.current = true;
         setLeft(null);
+        if (quick.enabled) {
+          quick.lock();
+          return;
+        }
+        leaving.current = true;
         noteIdleSignOut();
         void signOut();
       } else {
@@ -72,7 +80,7 @@ export function IdleSignOut() {
       document.removeEventListener('visibilitychange', onVisible);
       window.clearInterval(timer);
     };
-  }, [signedIn, sharing, signOut]);
+  }, [signedIn, sharing, signOut, quick]);
 
   const stay = () => {
     const now = Date.now();
@@ -96,7 +104,7 @@ export function IdleSignOut() {
             Still there?
           </h2>
           <p id="idle-desc" className="mt-1 text-sm text-muted">
-            For your account’s safety, the portal signs out after 10 minutes without activity.
+            For your account’s safety, the portal {quick.enabled ? 'locks' : 'signs out'} after 10 minutes without activity.
           </p>
         </div>
         <p className="font-display text-4xl tabular-nums tracking-wide" aria-live="polite">
@@ -104,7 +112,7 @@ export function IdleSignOut() {
         </p>
         <div className="flex w-full flex-col gap-2 sm:flex-row-reverse">
           <button type="button" className="btn-primary flex-1" onClick={stay} autoFocus>
-            Stay signed in
+            {quick.enabled ? 'Keep it open' : 'Stay signed in'}
           </button>
           <button
             type="button"

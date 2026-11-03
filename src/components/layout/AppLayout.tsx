@@ -6,6 +6,7 @@ import { formatLongDate } from '../../lib/format';
 import { LiveSharingProvider } from '../map/LiveSharing';
 import { PresenceProvider } from '../../lib/presence';
 import { NotificationToasts } from './NotificationToasts';
+import { QuickUnlockProvider } from '../auth/QuickUnlock';
 import { LiveSharingBubble } from '../map/LiveSharingBubble';
 import { IdleSignOut } from '../auth/IdleSignOut';
 import { OnboardingProvider } from '../onboarding/OnboardingProvider';
@@ -64,6 +65,7 @@ export function AppLayout() {
   return (
     <OnboardingProvider>
     <PresenceProvider>
+    <QuickUnlockProvider>
     <LiveSharingProvider>
     <div className="min-h-dvh">
       <a href="#main" className="sr-only z-50 rounded-xl bg-uplift px-4 py-2 font-semibold text-page focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
@@ -122,6 +124,7 @@ export function AppLayout() {
       <IdleSignOut />
     </div>
     </LiveSharingProvider>
+    </QuickUnlockProvider>
     </PresenceProvider>
     </OnboardingProvider>
   );

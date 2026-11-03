@@ -864,3 +864,12 @@
     }
   }
 }
+
+/* Wrong PIN: the boxes shake. */
+@keyframes shake {
+  0%, 100% { translate: 0; }
+  20% { translate: -10px; }
+  40% { translate: 9px; }
+  60% { translate: -6px; }
+  80% { translate: 3px; }
+}

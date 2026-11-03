@@ -7,6 +7,7 @@ import { initialsOf } from '../../lib/format';
 import { clearDeviceCopies } from '../../lib/deviceCopy';
 import { idbDelete } from '../../lib/idb';
 import { clearActive, markActive } from '../../lib/idle';
+import { markUnlocked } from '../../lib/quickUnlock';
 import { openedFromPasswordLink, supabase } from '../../lib/supabase';
 import type { StaffProfile } from '../../types';
 
@@ -216,7 +217,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // A fresh start for the inactivity clock (an old one left on this device would sign them straight out).
     markActive();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (!error) return null;
+    if (!error) {
+      markUnlocked();
+      return null;
+    }
     return error.message === 'Invalid login credentials' ? 'That email and password do not match.' : 'Sign-in failed. Please try again.';
   }, []);
 
