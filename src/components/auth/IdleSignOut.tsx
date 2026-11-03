@@ -17,12 +17,13 @@ const ACTIVITY = ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart'
 export function IdleSignOut() {
   const { state, signOut, profile } = useAuth();
   const live = useLiveSharing();
-  // Only roles that handle sensitive work time out (administrators, coordinators and staff);
-  // volunteers and viewers stay signed in.
-  const signedIn = state.status === 'signed-in' && ['admin', 'coordinator', 'staff'].includes(profile?.roleKey ?? '');
+  // Nobody is signed out for being idle any more. People who turned on quick unlock (PIN or
+  // fingerprint) still have the portal lock after 10 idle minutes, as they chose.
+  void profile;
   const sharing = live.status === 'live' || live.status === 'starting';
   // With quick unlock set up, idle locks the portal (PIN or fingerprint) instead of signing out.
   const quick = useQuickUnlock();
+  const signedIn = state.status === 'signed-in' && quick.enabled;
   const [left, setLeft] = useState<number | null>(null);
   // This tab's own clock, for when storage is unavailable.
   const local = useRef(Date.now());

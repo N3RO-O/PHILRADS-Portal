@@ -28,6 +28,8 @@ interface PresenceValue {
   setChoice: (c: Choice) => void;
   /** What you're shown as (your choice, with automatic idle). */
   mine: Status;
+  /** When someone last had the portal open (null if never seen). */
+  lastSeen: (id: string) => string | null;
 }
 
 const PresenceContext = createContext<PresenceValue>({
@@ -36,6 +38,7 @@ const PresenceContext = createContext<PresenceValue>({
   choice: 'online',
   setChoice: () => undefined,
   mine: 'online',
+  lastSeen: () => null,
 });
 
 const CHOICE_KEY = 'philrads.status';
@@ -63,6 +66,8 @@ export function PresenceProvider({ children }: { children: ReactNode }) {
   const [choice, setChoiceState] = useState<Choice>(readChoice);
   const [away, setAway] = useState(false);
   const [others, setOthers] = useState<Record<string, Status>>({});
+  // The heartbeat table: works even when Realtime can't connect.
+  const [beats, setBeats] = useState<Record<string, { status: Status; seenAt: string }>>({});
   const channelRef = useRef<ReturnType<NonNullable<typeof supabase>['channel']> | null>(null);
 
   // Idle on its own: nothing touched for 5 minutes, or the portal is in the background.
@@ -127,6 +132,42 @@ export function PresenceProvider({ children }: { children: ReactNode }) {
     }
   }, [mine, me, state.status]);
 
+  // Heartbeat: save your status about every 45 seconds (remove it when invisible), and read
+  // everyone's every 30 seconds. Seen in the last 2 minutes counts as on.
+  useEffect(() => {
+    if (!me || state.status !== 'signed-in' || !supabase) return;
+    const client = supabase;
+    const beat = () =>
+      mine === 'offline'
+        ? void client.from('staff_presence').delete().eq('profile_id', me).then(undefined, () => undefined)
+        : void client
+            .from('staff_presence')
+            .upsert({ profile_id: me, status: mine, seen_at: new Date().toISOString() }, { onConflict: 'profile_id' })
+            .then(undefined, () => undefined);
+    beat();
+    const t = setInterval(() => document.visibilityState === 'visible' && beat(), 45_000);
+    return () => clearInterval(t);
+  }, [me, state.status, mine]);
+  useEffect(() => {
+    if (!me || state.status !== 'signed-in' || !supabase) return;
+    const client = supabase;
+    let live = true;
+    const read = async () => {
+      const { data } = await client.from('staff_presence').select('profile_id, status, seen_at').limit(1000);
+      if (!live || !data) return;
+      setBeats(Object.fromEntries(data.map((r) => [r.profile_id as string, { status: r.status as Status, seenAt: r.seen_at as string }])));
+    };
+    void read();
+    const t = setInterval(() => document.visibilityState === 'visible' && void read(), 30_000);
+    const onVisible = () => document.visibilityState === 'visible' && void read();
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      live = false;
+      clearInterval(t);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [me, state.status]);
+
   const setChoice = useCallback((c: Choice) => {
     setChoiceState(c);
     try {
@@ -138,12 +179,17 @@ export function PresenceProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<PresenceValue>(() => {
     const live = state.status === 'signed-in' && Boolean(supabase);
+    const fresh = (id: string) => {
+      const b = beats[id];
+      return b && Date.now() - Date.parse(b.seenAt) < 2 * 60_000 ? b.status : null;
+    };
     const statusOf = (id: string): Status => {
       if (id === me) return mine;
-      return live ? (others[id] ?? 'offline') : (SAMPLE[id] ?? 'offline');
+      return live ? (others[id] ?? fresh(id) ?? 'offline') : (SAMPLE[id] ?? 'offline');
     };
-    return { statusOf, activeCount: (ids) => ids.filter((id) => statusOf(id) !== 'offline').length, choice, setChoice, mine };
-  }, [state.status, me, mine, others, choice, setChoice]);
+    const lastSeen = (id: string) => beats[id]?.seenAt ?? null;
+    return { statusOf, activeCount: (ids) => ids.filter((id) => statusOf(id) !== 'offline').length, choice, setChoice, mine, lastSeen };
+  }, [state.status, me, mine, others, beats, choice, setChoice]);
 
   return <PresenceContext.Provider value={value}>{children}</PresenceContext.Provider>;
 }

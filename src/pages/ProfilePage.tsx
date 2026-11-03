@@ -18,7 +18,7 @@ const DEFAULT_COLOR = '#7a0b0b';
 /** /profile: your own, editable with a live preview. /profile/:id: a colleague's profile card. */
 export function ProfilePage() {
   const { id } = useParams();
-  const { profile: me, can, updateProfile } = useAuth();
+  const { profile: me, updateProfile } = useAuth();
   const targetId = id ?? me?.id ?? null;
   const mine = Boolean(me && targetId === me.id);
   const [person, setPerson] = useState<PersonProfile | null | undefined>(undefined);
@@ -43,7 +43,8 @@ export function ProfilePage() {
         The account may have been removed.
       </EmptyState>
     );
-  if (mine || can('staff.manage'))
+  // Only the person edits their own profile (the database enforces it too).
+  if (mine)
     return (
       <EditProfile
         key={person.id}

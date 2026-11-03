@@ -822,6 +822,16 @@ await check('links must be web links', () => as(B, `insert into public.task_outp
 await check('an empty output is refused', () => as(B, `insert into public.task_outputs (task_id) values (${TASK('Photos of the distribution')})`), true);
 await check('outputs cannot be edited', () => as(B, `update public.task_outputs set note = 'changed'`), true);
 
+// Only the owner edits a profile
+await check('an administrator cannot edit someone else’s profile', () => as(A, `update public.profiles set bio = 'edited by admin' where id = '${B}'`), true);
+await check('an administrator still switches accounts and roles', () => as(A, `update public.profiles set role_key = 'staff', is_active = true where id = '${E}' returning id`).then(expectRows(1)));
+await check('the owner still edits their own profile', () => as(B, `update public.profiles set bio = 'My own words' where id = '${B}' returning id`).then(expectRows(1)));
+
+// Who's online (heartbeat)
+await check('staff share their status', () => as(B, `insert into public.staff_presence (status) values ('online') on conflict (profile_id) do update set status = excluded.status, seen_at = now() returning profile_id`).then(expectRows(1)));
+await check('colleagues see who is on', () => as(A, `select status from public.staff_presence where profile_id = '${B}'`).then(expectRows(1)));
+await check('nobody sets someone else’s status', () => as(A, `insert into public.staff_presence (profile_id, status) values ('${B}', 'dnd')`), true);
+
 // Inactive account and signed-out visitors
 await check('inactive account sees no tasks', () => as(C, `select id from public.tasks`).then(expectRows(0)));
 await check('inactive account still sees its own profile', () => as(C, `select id from public.profiles`).then(expectRows(1)));

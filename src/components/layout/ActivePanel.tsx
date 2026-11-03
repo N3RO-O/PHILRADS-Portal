@@ -3,6 +3,7 @@ import { ChevronsRight, Search, Users, X } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { useAsyncData } from '../../hooks/useAsyncData';
 import { STATUS_META, usePresence, type Status } from '../../lib/presence';
+import { timeAgo } from '../../lib/geo';
 import { staffBoardService } from '../../services';
 import type { BoardPerson } from '../../services/tasks/staffBoard';
 import { PersonTasks } from '../tasks/PersonTasksSheet';
@@ -127,7 +128,8 @@ export function ActivePanel({ onClose, variant }: { onClose: () => void; variant
                 {g.people.map((p, i) => {
                   const status = presence.statusOf(p.id);
                   const role = roleOf(p.roleKey);
-                  const line = lineOf(p, status);
+                  const seen = status === 'offline' ? presence.lastSeen(p.id) : null;
+                  const line = seen ? { text: `Last seen ${timeAgo(seen)}`, tone: 'text-muted' } : lineOf(p, status);
                   const me = p.id === profile?.id;
                   return (
                     <li key={p.id} className="animate-fade-up" style={{ animationDelay: `${Math.min(i, 10) * 25}ms` }}>
