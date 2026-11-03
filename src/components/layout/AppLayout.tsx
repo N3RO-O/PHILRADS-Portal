@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Outlet, useLocation, useOutletContext } from 'react-router-dom';
 import { CalendarDays } from 'lucide-react';
 import { moduleForPath } from '../../config/modules';
@@ -15,6 +15,7 @@ import { MobileDrawer } from './MobileDrawer';
 import { OfflineNotice, OnlinePill } from './OnlineStatus';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
+import { PullToRefresh } from '../ui/PullToRefresh';
 
 export interface LayoutContext {
   search: string;
@@ -61,6 +62,9 @@ export function AppLayout() {
 
   // Search anything: results show under the box; Home also filters its tasks and activity by it.
   const onSearch = (value: string) => setSearch(value);
+  // Pull to refresh (phones): the page loads its data again.
+  const [refreshKey, setRefreshKey] = useState(0);
+  const refreshPage = useCallback(() => setRefreshKey((k) => k + 1), []);
 
   return (
     <OnboardingProvider>
@@ -101,9 +105,11 @@ export function AppLayout() {
           </div>
           <OfflineNotice />
           {/* Keyed by page so each page change fades in smoothly. */}
-          <div key={location.pathname} className="animate-fade-in">
-            <Outlet context={{ search } satisfies LayoutContext} />
-          </div>
+          <PullToRefresh onRefresh={refreshPage}>
+            <div key={`${location.pathname}#${refreshKey}`} className="animate-fade-in">
+              <Outlet context={{ search } satisfies LayoutContext} />
+            </div>
+          </PullToRefresh>
         </main>
         <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-line/50 px-4 py-4 text-xs text-muted sm:px-6">
           <span>

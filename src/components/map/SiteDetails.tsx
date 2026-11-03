@@ -70,7 +70,9 @@ export function SiteDetails({ site, onClose, onCenter }: { site: ActivitySite; o
                   </span>
                   <ChevronDown className={`mt-1 h-4 w-4 shrink-0 text-muted transition-transform ${isOpen ? 'rotate-180' : ''}`} aria-hidden />
                 </button>
-                {isOpen && <RecordDetails a={a} showMapLink={false} className="border-t border-line/60 px-3 py-3" />}
+                <div className={`expand ${isOpen ? 'is-open' : ''}`}>
+                  <div>{isOpen && <RecordDetails a={a} showMapLink={false} className="border-t border-line/60 px-3 py-3" />}</div>
+                </div>
               </li>
             );
           })}

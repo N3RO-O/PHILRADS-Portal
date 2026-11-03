@@ -7,6 +7,7 @@ import { dashboardService } from '../../services';
 import type { SummaryKey } from '../../types';
 import { Card, LoadError, Skeleton } from '../ui/Card';
 import { TONES } from './labels';
+import { RollingNumber } from '../ui/RollingNumber';
 
 interface Meta {
   label: string;
@@ -65,7 +66,7 @@ export function OverviewKpis() {
                   {value === null ? (
                     <Skeleton className="mt-auto h-7 w-12" />
                   ) : (
-                    <span className="mt-auto text-2xl font-bold tracking-tight tabular-nums text-ink">{formatNumber(value)}</span>
+                    <RollingNumber value={formatNumber(value)} className="mt-auto text-2xl font-bold tracking-tight tabular-nums text-ink" />
                   )}
                   <span className="flex flex-col gap-0.5">
                     <span className="text-xs font-medium leading-tight text-ink-soft">{m.label}</span>

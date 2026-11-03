@@ -10,6 +10,7 @@ import { useAsyncData } from '../hooks/useAsyncData';
 import { formatNumber } from '../lib/format';
 import { activitiesService } from '../services';
 import { byNewest, PROGRAMS, programMeta, servedText, siteKey, withoutFunding, type ProgramActivity, type ProgramKey } from '../services/activities/types';
+import { RollingNumber } from '../components/ui/RollingNumber';
 
 const compact = (n: number) => new Intl.NumberFormat('en-PH', { notation: 'compact', maximumFractionDigits: 1 }).format(n);
 /** The program most of these activities belong to. */
@@ -260,7 +261,7 @@ function Kpi({ icon: Icon, label, value, note, glow, className = '' }: { icon: t
         <Icon className="h-[1.125rem] w-[1.125rem] text-ink" aria-hidden />
       </span>
       <div>
-        <p className="font-display text-2xl tabular-nums tracking-wide sm:text-3xl">{value}</p>
+        <p className="font-display text-2xl tabular-nums tracking-wide sm:text-3xl">{/\d/.test(value) ? <RollingNumber value={value} /> : value}</p>
         <p className="text-sm font-medium text-ink-soft">{label}</p>
         <p className="text-xs text-muted">{note}</p>
       </div>
@@ -380,7 +381,9 @@ function Record({ a }: { a: ProgramActivity }) {
         <span className="hidden shrink-0 text-right text-xs tabular-nums text-ink-soft sm:block">{served}</span>
         <ChevronDown className={`mt-1 h-4 w-4 shrink-0 text-muted transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden />
       </button>
-      {open && <RecordDetails a={a} className="px-5 pb-4 pl-[2.625rem]" />}
+      <div className={`expand ${open ? 'is-open' : ''}`} aria-hidden={!open}>
+        <div>{open && <RecordDetails a={a} className="px-5 pb-4 pl-[2.625rem]" />}</div>
+      </div>
     </li>
   );
 }

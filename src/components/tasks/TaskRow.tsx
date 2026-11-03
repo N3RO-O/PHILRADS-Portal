@@ -1,7 +1,8 @@
-import { Building2, Check, CloudOff, Flag, Hourglass, ListChecks, MapPin, Repeat, Sun, TriangleAlert } from 'lucide-react';
+import { Building2, CloudOff, Flag, Hourglass, ListChecks, MapPin, Repeat, Sun, TriangleAlert } from 'lucide-react';
 import { daysBetween, dueLabel, LIST_META } from '../../lib/tasks';
 import type { Task } from '../../services/tasks/types';
 import { LIST_STYLE } from './taskMeta';
+import { SuccessTick } from '../ui/SuccessTick';
 
 interface Props {
   /** Tasks being removed: they slide away (see LeavingRow). */
@@ -48,13 +49,11 @@ export function TaskRow({ task: t, today, me, onToggle, onOpen, onMyDay, flash, 
             onClick={() => (needsMe ? onOpen(t) : onToggle(t))}
             className="-m-2 grid h-10 w-10 shrink-0 place-items-center rounded-full"
           >
-            <span
-              className={`grid h-[1.375rem] w-[1.375rem] place-items-center rounded-full border-2 transition ${
-                done ? 'animate-pop-in border-uplift bg-uplift text-page' : `${style.ring} group-hover:bg-white/5`
-              }`}
-            >
-              {done && <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden />}
-            </span>
+            {done ? (
+              <SuccessTick className="h-[1.375rem] w-[1.375rem] text-uplift" />
+            ) : (
+              <span className={`grid h-[1.375rem] w-[1.375rem] place-items-center rounded-full border-2 transition ${style.ring} group-hover:bg-white/5`} />
+            )}
           </button>
 
           <button type="button" className="min-w-0 flex-1 text-left" onClick={() => onOpen(t)}>

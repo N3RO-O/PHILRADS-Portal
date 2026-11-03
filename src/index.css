@@ -873,3 +873,8 @@
   60% { translate: -6px; }
   80% { translate: 3px; }
 }
+
+/* 03 Rolling number: each digit's column slides to its value. */
+.roll-col {
+  transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+}

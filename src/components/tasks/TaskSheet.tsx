@@ -5,6 +5,7 @@ import { XP_RULES } from '../../lib/taskProgress';
 import { TASK_LISTS, type Assignee, type Recurrence, type Task, type TaskDraft, type TaskList } from '../../services/tasks/types';
 import { Sheet } from '../ui/Sheet';
 import { Switch } from '../ui/Switch';
+import { Reorderable } from '../ui/Reorderable';
 
 interface Props {
   open: boolean;
@@ -364,9 +365,13 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, canGive =
 
         <Field id={`${uid}-sub`} label="Subtasks" hint={d.subtasks.length ? `${d.subtasks.filter((s) => s.done).length} of ${d.subtasks.length} done` : 'Optional'}>
           {d.subtasks.length > 0 && (
-            <ul className="flex flex-col gap-1">
-              {d.subtasks.map((s) => (
-                <li key={s.id} className="flex items-center gap-2 rounded-lg bg-surface-sunken px-2 py-1">
+            <Reorderable
+              items={d.subtasks}
+              disabled={fixed}
+              onReorder={(next) => set('subtasks', next)}
+              render={(s, handle) => (
+                <div className="flex items-center gap-2 rounded-lg bg-surface-sunken px-2 py-1">
+                  {handle}
                   <button
                     type="button"
                     role="checkbox"
@@ -386,9 +391,9 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, canGive =
                       <X className="h-4 w-4" aria-hidden />
                     </button>
                   )}
-                </li>
-              ))}
-            </ul>
+                </div>
+              )}
+            />
           )}
           {!fixed && (
           <div className="flex gap-2">
