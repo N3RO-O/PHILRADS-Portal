@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { Bell, BellRing, CheckCheck, Gift, Hand, MoreHorizontal, Package, Smartphone, SquareCheckBig, Sun, ThumbsUp } from 'lucide-react';
+import { Bell, BellRing, Check, CheckCheck, Gift, Hand, MoreHorizontal, Package, Smartphone, SquareCheckBig, Sun, ThumbsUp, Trash2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { disablePush, enablePush, pushEnabled, pushSupported } from '../../lib/push';
 import type { PermissionKey } from '../../config/permissions';
@@ -87,7 +88,31 @@ export function NotificationsMenu() {
       portal: () => whatsNew.showNotes(),
     },
   ];
-  const list: Note[] = notes.status === 'success' ? [...portal, ...notes.data].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)) : portal;
+  const [hidden, setHidden] = useState<Set<string>>(() => new Set(readHidden()));
+  const [gone, setGone] = useState<Set<string>>(new Set());
+  const [confirmClear, setConfirmClear] = useState(false);
+  const list: Note[] = (notes.status === 'success' ? [...portal, ...notes.data].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)) : portal).filter(
+    (n) => !hidden.has(n.id) && !gone.has(n.id),
+  );
+  // Delete: gone from the list at once; the server catches up (it comes back if that fails).
+  const remove = async (ids: string[]) => {
+    const local = ids.filter((id) => id.startsWith('portal-'));
+    if (local.length) {
+      const next = new Set([...hidden, ...local]);
+      setHidden(next);
+      writeHidden([...next]);
+      if (local.includes(`portal-whats-new-${CURRENT.id}`)) whatsNew.markSeen(CURRENT.id);
+    }
+    const server = ids.filter((id) => !id.startsWith('portal-'));
+    if (!server.length) return;
+    setGone((g) => new Set([...g, ...server]));
+    try {
+      await dashboardService.deleteNotifications(server);
+      notes.reload();
+    } catch {
+      setGone((g) => new Set([...g].filter((id) => !server.includes(id))));
+    }
+  };
   const unread = list.filter((n) => !n.read);
 
   const markRead = async (ids: string[]) => {
@@ -178,6 +203,21 @@ export function NotificationsMenu() {
                   >
                     <Sun className="h-4 w-4 text-uplift" aria-hidden /> Open My Day
                   </button>
+                  {confirmClear ? (
+                    <div className="flex items-center gap-2 rounded-xl bg-status-out/10 px-3 py-2">
+                      <span className="flex-1 text-xs text-ink">Delete all notifications?</span>
+                      <button type="button" className="rounded-lg px-2 py-1 text-xs font-semibold text-muted hover:text-ink" onClick={() => setConfirmClear(false)}>
+                        No
+                      </button>
+                      <button type="button" className="rounded-lg bg-status-out/80 px-2.5 py-1 text-xs font-semibold text-white" onClick={() => (void remove(list.map((n) => n.id)), setConfirmClear(false), setMore(false))}>
+                        Delete
+                      </button>
+                    </div>
+                  ) : (
+                    <button type="button" className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-status-out hover:bg-status-out/10 disabled:opacity-50" disabled={!list.length} onClick={() => setConfirmClear(true)}>
+                      <Trash2 className="h-4 w-4" aria-hidden /> Clear all
+                    </button>
+                  )}
                   {phoneError && <p className="px-3 pb-2 pt-1 text-xs text-rose">{phoneError}</p>}
                 </div>
               )}
@@ -199,7 +239,7 @@ export function NotificationsMenu() {
           </div>
           {notes.status === 'loading' && <Skeleton className="mx-3 mt-3 h-24" />}
           {notes.status === 'error' && <LoadError message={notes.error.message} onRetry={notes.reload} />}
-          {notes.status === 'success' && <NoteGroups list={tab === 'unread' ? unread : list} unreadTab={tab === 'unread'} onOpen={openNote} onMyDay={() => (setOpen(false), navigate('/tasks?view=myday'))} />}
+          {notes.status === 'success' && <NoteGroups list={tab === 'unread' ? list.filter((n) => !n.read) : list} unreadTab={tab === 'unread'} onOpen={openNote} onRead={(n) => void markRead([n.id])} onDelete={(n) => void remove([n.id])} onMyDay={() => (setOpen(false), navigate('/tasks?view=myday'))} />}
         </div>
       )}
     </div>
@@ -231,7 +271,7 @@ const kindOf = (n: Note): { icon: LucideIcon; tint: string } => {
   return { icon: Bell, tint: 'bg-white/10 text-ink-soft' };
 };
 
-function NoteGroups({ list, unreadTab, onOpen, onMyDay }: { list: Note[]; unreadTab: boolean; onOpen: (n: Note) => void; onMyDay: () => void }) {
+function NoteGroups({ list, unreadTab, onOpen, onRead, onDelete, onMyDay }: { list: Note[]; unreadTab: boolean; onOpen: (n: Note) => void; onRead: (n: Note) => void; onDelete: (n: Note) => void; onMyDay: () => void }) {
   if (list.length === 0)
     return (
       <div className="flex flex-col items-center gap-2 px-6 py-8 text-center">
@@ -257,8 +297,8 @@ function NoteGroups({ list, unreadTab, onOpen, onMyDay }: { list: Note[]; unread
             {g.items.map((n, i) => {
               const k = kindOf(n);
               return (
-                <li key={n.id} className="animate-fade-up" style={{ animationDelay: `${Math.min(i, 8) * 35}ms` }}>
-                  <button type="button" onClick={() => onOpen(n)} className={`press flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-white/[0.05] ${n.read ? '' : 'bg-uplift/[0.05]'}`}>
+                <SwipeRow key={n.id} index={i} onDelete={() => onDelete(n)} menu={<NoteMenu note={n} onRead={() => onRead(n)} onDelete={() => onDelete(n)} />}>
+                  <button type="button" onClick={() => onOpen(n)} className={`press flex w-full items-center gap-3 rounded-xl py-2.5 pl-3 pr-11 text-left transition-colors hover:bg-white/[0.05] ${n.read ? 'bg-surface-raised' : 'bg-[color-mix(in_srgb,#ec952a_5%,#303137)]'}`}>
                     <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-full ${k.tint}`}>
                       <k.icon className="h-5 w-5" aria-hidden />
                     </span>
@@ -274,12 +314,124 @@ function NoteGroups({ list, unreadTab, onOpen, onMyDay }: { list: Note[]; unread
                     </span>
                     {!n.read && <span className="h-3 w-3 shrink-0 rounded-full bg-uplift" aria-hidden />}
                   </button>
-                </li>
+                </SwipeRow>
               );
             })}
           </ul>
         </section>
       ))}
     </div>
+  );
+}
+
+const HIDDEN_KEY = 'philrads.notes.hidden';
+const readHidden = (): string[] => {
+  try {
+    return JSON.parse(localStorage.getItem(HIDDEN_KEY) ?? '[]') as string[];
+  } catch {
+    return [];
+  }
+};
+const writeHidden = (ids: string[]) => {
+  try {
+    localStorage.setItem(HIDDEN_KEY, JSON.stringify(ids.slice(-50)));
+  } catch {
+    /* this visit only */
+  }
+};
+
+/**
+ * A notification you can swipe left to delete (phones): it follows the finger over a red Delete
+ * area and slides away past the mark. Its own ... menu does the same with a mouse.
+ */
+function SwipeRow({ index, onDelete, menu, children }: { index: number; onDelete: () => void; menu: ReactNode; children: ReactNode }) {
+  const [dx, setDx] = useState(0);
+  const [leaving, setLeaving] = useState(false);
+  const start = useRef<{ x: number; y: number; locked: 'x' | 'y' | null } | null>(null);
+  const THRESHOLD = 96;
+  const finish = () => {
+    if (!start.current) return;
+    start.current = null;
+    if (dx <= -THRESHOLD) {
+      setLeaving(true);
+      setDx(-480);
+      navigator.vibrate?.(15);
+      setTimeout(onDelete, 260);
+    } else setDx(0);
+  };
+  return (
+    <li
+      className="relative animate-fade-up overflow-hidden rounded-xl"
+      style={{ animationDelay: `${Math.min(index, 8) * 35}ms`, maxHeight: leaving ? 0 : 200, opacity: leaving ? 0 : 1, transition: leaving ? 'max-height 260ms 120ms ease, opacity 200ms 120ms ease' : undefined }}
+    >
+      {/* Behind the row: what letting go will do. */}
+      <span aria-hidden className={`absolute inset-0 flex items-center justify-end gap-2 rounded-xl pr-5 text-sm font-semibold text-white transition-colors ${dx <= -THRESHOLD ? 'bg-status-out' : 'bg-status-out/60'}`}>
+        <Trash2 className={`h-5 w-5 transition-transform ${dx <= -THRESHOLD ? 'scale-125' : ''}`} /> Delete
+      </span>
+      <div
+        className="relative"
+        style={{ transform: `translateX(${dx}px)`, transition: start.current ? 'none' : 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1)' }}
+        onTouchStart={(e) => (start.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, locked: null })}
+        onTouchMove={(e) => {
+          const s = start.current;
+          if (!s) return;
+          const mx = e.touches[0].clientX - s.x;
+          const my = e.touches[0].clientY - s.y;
+          // Decide once whether this is a swipe or a scroll.
+          if (!s.locked) s.locked = Math.abs(mx) > Math.abs(my) + 4 ? 'x' : Math.abs(my) > 6 ? 'y' : null;
+          if (s.locked === 'x') setDx(Math.min(0, mx));
+        }}
+        onTouchEnd={finish}
+        onTouchCancel={finish}
+      >
+        {children}
+        <span className="absolute right-2 top-1/2 -translate-y-1/2">{menu}</span>
+      </div>
+    </li>
+  );
+}
+
+/** The three dots on one notification: mark as read, or delete it. */
+function NoteMenu({ note, onRead, onDelete }: { note: Note; onRead: () => void; onDelete: () => void }) {
+  const [open, setOpen] = useState<{ top: number; right: number } | null>(null);
+  const wrap = useRef<HTMLSpanElement>(null);
+  const pop = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: PointerEvent) => !wrap.current?.contains(e.target as Node) && !pop.current?.contains(e.target as Node) && setOpen(null);
+    document.addEventListener('pointerdown', away);
+    return () => document.removeEventListener('pointerdown', away);
+  }, [open]);
+  return (
+    <span ref={wrap} className="relative block">
+      <button
+        type="button"
+        className="grid h-8 w-8 place-items-center rounded-full border border-line bg-surface-raised text-muted opacity-100 shadow-md transition hover:text-ink sm:opacity-0 sm:group-hover/note:opacity-100 sm:focus-visible:opacity-100 [li:hover_&]:opacity-100"
+        aria-label={`Options for: ${note.title}`}
+        aria-expanded={Boolean(open)}
+        onClick={(e) => {
+          e.stopPropagation();
+          // Floats over the panel (the row itself clips, for swiping).
+          const r = e.currentTarget.getBoundingClientRect();
+          setOpen((o) => (o ? null : { top: r.bottom + 4, right: window.innerWidth - r.right }));
+        }}
+      >
+        <MoreHorizontal className="h-4 w-4" aria-hidden />
+      </button>
+      {open &&
+        createPortal(
+        <span ref={pop} data-popover-child className="fixed z-[70] block w-48 origin-top-right animate-pop-in rounded-xl border border-line bg-surface-raised p-1 shadow-2xl shadow-black/60" style={{ top: open.top, right: open.right }}>
+          {!note.read && (
+            <button type="button" className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm hover:bg-white/[0.06]" onClick={() => (onRead(), setOpen(null))}>
+              <Check className="h-4 w-4 text-uplift" aria-hidden /> Mark as read
+            </button>
+          )}
+          <button type="button" className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-status-out hover:bg-status-out/10" onClick={() => (onDelete(), setOpen(null))}>
+            <Trash2 className="h-4 w-4" aria-hidden /> Delete
+          </button>
+        </span>,
+        document.body,
+      )}
+    </span>
   );
 }

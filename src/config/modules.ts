@@ -119,7 +119,7 @@ export const MODULES: ModuleConfig[] = [
   },
   {
     id: 'tasks',
-    label: 'Tasks',
+    label: 'Staff Tasks',
     path: '/tasks',
     icon: SquareCheckBig,
     group: 'Work',

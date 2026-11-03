@@ -24,4 +24,6 @@ export interface DashboardService {
   getWeeklyResponse(weeks?: number): Promise<WeeklyCount[]>;
   getNotifications(): Promise<NotificationItem[]>;
   markNotificationsRead(ids: string[]): Promise<void>;
+  /** Removes your own notifications for good. */
+  deleteNotifications(ids: string[]): Promise<void>;
 }

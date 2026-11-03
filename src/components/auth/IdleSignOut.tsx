@@ -8,15 +8,18 @@ import { IDLE_LIMIT_MS, IDLE_WARN_MS, lastActive, markActive, noteIdleSignOut } 
 const ACTIVITY = ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart', 'scroll'] as const;
 
 /**
- * Signs a staff account out after 10 minutes without activity, warning for the last minute.
+ * Signs an administrator, coordinator or staff account out after 10 minutes without activity
+ * (volunteers and viewers aren't timed out), warning for the last minute.
  * Activity in any tab counts (the time is kept in localStorage), and so does sharing a live
  * location, which runs hands-free. Coming back to a portal left open (or reopening the app)
  * after the limit signs out straight away. Sample-data mode has nothing to protect and skips it.
  */
 export function IdleSignOut() {
-  const { state, signOut } = useAuth();
+  const { state, signOut, profile } = useAuth();
   const live = useLiveSharing();
-  const signedIn = state.status === 'signed-in';
+  // Only roles that handle sensitive work time out (administrators, coordinators and staff);
+  // volunteers and viewers stay signed in.
+  const signedIn = state.status === 'signed-in' && ['admin', 'coordinator', 'staff'].includes(profile?.roleKey ?? '');
   const sharing = live.status === 'live' || live.status === 'starting';
   // With quick unlock set up, idle locks the portal (PIN or fingerprint) instead of signing out.
   const quick = useQuickUnlock();

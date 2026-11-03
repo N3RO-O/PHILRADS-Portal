@@ -10,6 +10,8 @@ export function useDismiss(
   useEffect(() => {
     if (!open) return;
     const onPointer = (e: PointerEvent) => {
+      // Menus a popover opens elsewhere in the page (portals) count as inside it.
+      if ((e.target as Element | null)?.closest?.('[data-popover-child]')) return;
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) onClose();
     };
     const onKey = (e: KeyboardEvent) => {

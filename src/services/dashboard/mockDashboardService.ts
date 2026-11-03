@@ -13,6 +13,8 @@ import type { DashboardService } from './types';
 const later = <T,>(value: T, ms = 180) => new Promise<T>((resolve) => setTimeout(() => resolve(value), ms));
 /** Sample notifications marked read in this tab. */
 const readSample = new Set<string>();
+// Sample notes deleted this visit.
+const goneSample = new Set<string>();
 
 export const mockDashboardService: DashboardService = {
   source: 'mock',
@@ -32,9 +34,13 @@ export const mockDashboardService: DashboardService = {
   getRecentActivity: (limit = 12) => later(mockActivity().slice(0, limit)),
   getStockLevels: () => later(mockStock()),
   getWeeklyResponse: (weeks = 8) => later(mockWeeklyResponse(weeks)),
-  getNotifications: () => later(mockNotifications().map((n) => (readSample.has(n.id) ? { ...n, read: true } : n))),
+  getNotifications: () => later(mockNotifications().filter((n) => !goneSample.has(n.id)).map((n) => (readSample.has(n.id) ? { ...n, read: true } : n))),
   markNotificationsRead: async (ids) => {
     ids.forEach((id) => readSample.add(id));
+    await later(null, 60);
+  },
+  deleteNotifications: async (ids) => {
+    ids.forEach((id) => goneSample.add(id));
     await later(null, 60);
   },
 };
