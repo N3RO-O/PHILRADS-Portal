@@ -310,8 +310,11 @@ export function LiveMapPage() {
         className={`card relative overflow-hidden p-0 lg:grid lg:grid-cols-[var(--panel)_minmax(0,1fr)] ${panel_.dragging ? 'select-none' : 'lg:transition-[grid-template-columns] lg:duration-300'} ${full === 'window' ? '' : 'isolate'}`}
         style={{ '--panel': panel_.collapsed ? '0px' : `${panel_.width}px` } as CSSProperties}
       >
-        {/* Desktop: list and layers beside the map; drag its edge to resize, or fold it away. */}
-        <aside className={`hidden h-[calc(100dvh-13rem)] min-h-[34rem] flex-col overflow-hidden border-r border-line/70 ${panel_.collapsed ? '' : 'lg:flex'}`}>
+        {/* Desktop: list and layers beside the map; drag its edge to resize, or fold it away. Folded,
+            it stays in the grid at no width (not removed), so the map keeps the second column. */}
+        <aside
+          className={`hidden h-[calc(100dvh-13rem)] min-h-[34rem] min-w-0 flex-col overflow-hidden lg:flex ${panel_.collapsed ? 'invisible' : 'border-r border-line/70'}`}
+        >
           <div className="flex items-center justify-between gap-2 border-b border-line/70 px-4 py-3">
             <h2 className="card-title flex items-center gap-2 whitespace-nowrap">
               <MapPin className="h-4 w-4 text-uplift" aria-hidden /> Places and team
@@ -368,7 +371,7 @@ export function LiveMapPage() {
           className={
             full === 'window'
               ? 'fixed inset-0 z-[1150] h-dvh bg-page'
-              : `relative h-[calc(100dvh-15.5rem)] min-h-[20rem] lg:h-[calc(100dvh-13rem)] lg:min-h-[34rem] ${full === 'screen' ? 'bg-page' : ''}`
+              : `relative h-[calc(100dvh-15.5rem)] min-h-[20rem] lg:col-start-2 lg:h-[calc(100dvh-13rem)] lg:min-h-[34rem] ${full === 'screen' ? 'bg-page' : ''}`
           }
         >
           {placesQ.status === 'error' ? (
