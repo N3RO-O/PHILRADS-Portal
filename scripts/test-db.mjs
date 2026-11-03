@@ -835,6 +835,13 @@ await check('nobody sets someone else’s status', () => as(A, `insert into publ
 // Inactive account and signed-out visitors
 await check('inactive account sees no tasks', () => as(C, `select id from public.tasks`).then(expectRows(0)));
 await check('inactive account still sees its own profile', () => as(C, `select id from public.profiles`).then(expectRows(1)));
+await check('role names are final (no placeholder or TBC)', async () => {
+  const { rows } = await db.query(`select name, description from public.roles where name like '%placeholder%' or description like '%TBC%'`);
+  if (rows.length) throw new Error(JSON.stringify(rows));
+  const admin = (await db.query(`select name from public.roles where key = 'admin'`)).rows[0];
+  if (admin?.name !== 'Administrator') throw new Error(admin?.name);
+});
+
 await db.exec(`set role anon`);
 await check('signed-out visitors cannot read tasks', () => db.query(`select * from public.tasks`), true);
 await check('signed-out visitors cannot call the dashboard summary', () => db.query(`select * from public.get_dashboard_summary()`), true);

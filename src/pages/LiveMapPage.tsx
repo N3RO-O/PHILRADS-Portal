@@ -14,6 +14,7 @@ import { SampleBadge } from '../components/ui/SampleBadge';
 import { Sheet } from '../components/ui/Sheet';
 import { Switch } from '../components/ui/Switch';
 import { useAsyncData } from '../hooks/useAsyncData';
+import { useElementSize } from '../hooks/useElementSize';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { currentPosition, distanceM, timeAgo, type LatLng } from '../lib/geo';
 import { formatNumber, initialsOf } from '../lib/format';
@@ -72,6 +73,9 @@ export function LiveMapPage() {
 
   const [layers, setLayers] = useState(readLayers);
   const panel_ = usePanelWidth();
+  // The panel's real width (it gives way so the map keeps at least 22rem): a narrow panel gets a compact header.
+  const [asideRef, asideSize] = useElementSize<HTMLElement>();
+  const compactHead = asideSize.width > 0 && asideSize.width < 340;
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Selected>(null);
   const [focus, setFocus] = useState<MapFocus | null>(null);
@@ -307,13 +311,23 @@ export function LiveMapPage() {
       {/* "isolate": the map's own layers stay under the top bar's menus. */}
       {/* Not isolated while the map fills the window, so it can sit above the sidebar and top bar. */}
       <section
-        className={`card relative overflow-hidden p-0 lg:grid lg:grid-cols-[var(--panel)_minmax(0,1fr)] ${panel_.dragging ? 'select-none' : 'lg:transition-[grid-template-columns] lg:duration-300'} ${full === 'window' ? '' : 'isolate'}`}
-        style={{ '--panel': panel_.collapsed ? '0px' : `${panel_.width}px` } as CSSProperties}
+        className={`card relative overflow-hidden p-0 lg:grid lg:grid-cols-[var(--panel-shown)_minmax(0,1fr)] ${panel_.dragging ? 'select-none' : 'lg:transition-[grid-template-columns] lg:duration-300'} ${full === 'window' ? '' : 'isolate'}`}
+        style={
+          {
+            '--panel': panel_.collapsed ? '0px' : `${panel_.width}px`,
+            // Never so wide that the map is squeezed (sidebar and Active list both open on a laptop).
+            '--panel-shown': 'min(var(--panel), max(0px, calc(100% - 22rem)))',
+          } as CSSProperties
+        }
       >
         {/* Desktop: list and layers beside the map; drag its edge to resize, or fold it away. Folded,
             it stays in the grid at no width (not removed), so the map keeps the second column. */}
+        {/* Opening, the contents fade in once the panel has (nearly) its width, so they don't squeeze and re-wrap on the way. */}
         <aside
-          className={`hidden h-[calc(100dvh-13rem)] min-h-[34rem] min-w-0 flex-col overflow-hidden lg:flex ${panel_.collapsed ? 'invisible' : 'border-r border-line/70'}`}
+          ref={asideRef}
+          className={`hidden h-[calc(100dvh-13rem)] min-h-[34rem] min-w-0 flex-col overflow-hidden lg:flex ${
+            panel_.collapsed ? 'invisible opacity-0' : `border-r border-line/70 opacity-100 ${panel_.dragging ? '' : 'transition-opacity delay-200 duration-200'}`
+          }`}
         >
           <div className="flex items-center justify-between gap-2 border-b border-line/70 px-4 py-3">
             <h2 className="card-title flex items-center gap-2 whitespace-nowrap">
@@ -321,8 +335,15 @@ export function LiveMapPage() {
               {mapService.source === 'mock' && <SampleBadge />}
             </h2>
             {canManage && (
-              <button type="button" className="btn-primary min-h-9 shrink-0 whitespace-nowrap px-3 text-xs" onClick={panelProps.onAdd} disabled={!online}>
-                <Plus className="h-4 w-4" aria-hidden /> Add place
+              <button
+                type="button"
+                className={`btn-primary min-h-9 shrink-0 whitespace-nowrap text-xs ${compactHead ? 'w-9 px-0' : 'px-3'}`}
+                onClick={panelProps.onAdd}
+                disabled={!online}
+                aria-label={compactHead ? 'Add place' : undefined}
+                title={compactHead ? 'Add place' : undefined}
+              >
+                <Plus className="h-4 w-4" aria-hidden /> {!compactHead && 'Add place'}
               </button>
             )}
           </div>
@@ -332,7 +353,10 @@ export function LiveMapPage() {
         </aside>
 
         {/* The panel's edge: drag to resize, double-click to reset, or fold the panel away. */}
-        <div className="pointer-events-none absolute inset-y-0 z-[650] hidden lg:block" style={{ left: 'var(--panel)' }}>
+        <div
+          className={`pointer-events-none absolute inset-y-0 z-[650] hidden lg:block ${panel_.dragging ? '' : 'transition-[left] duration-300'}`}
+          style={{ left: 'var(--panel-shown)' }}
+        >
           {!panel_.collapsed && (
             <div
               role="separator"
@@ -953,7 +977,7 @@ function PlacesPanel({ search, setSearch, layers, toggleLayer, places, shownPlac
 // ───────────────────────── Resizable panel ─────────────────────────
 
 const PANEL_KEY = 'philrads.map.panel';
-const PANEL_MIN = 280;
+const PANEL_MIN = 300;
 const PANEL_MAX = 640;
 const PANEL_DEFAULT = 384;
 
