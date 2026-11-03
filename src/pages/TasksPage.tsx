@@ -22,6 +22,8 @@ import { BUCKET_LABEL, BUCKETS, bucketOf, compareTasks, daysBetween, LIST_META, 
 import { computeProgress, LEVELS, type Level } from '../lib/taskProgress';
 import { useLeaving } from '../components/ui/LeavingRow';
 import { tasksService, staffBoardService } from '../services';
+import { FinishSheet } from '../components/tasks/FinishSheet';
+import type { OutputDraft } from '../services/tasks/staffBoard';
 import { TASK_LISTS, TaskRuleError, type Assignee, type Kudos, type Task, type TaskDraft, type TaskList, type TeamProgress, type XpAward } from '../services/tasks/types';
 
 type View = 'myday' | 'upcoming' | 'calendar' | 'assigned' | 'delegated' | 'team' | 'done' | 'list';
@@ -369,8 +371,10 @@ export function TasksPage() {
   const quickAction = params.get('action');
   useEffect(() => {
     if (quickAction !== 'create-task') return;
-    setSheet({ task: null, initial: null });
-    setParam({ action: null });
+    // "Give a task" from the Active list: the person is already chosen.
+    const forId = params.get('for');
+    setSheet({ task: null, initial: forId ? ({ assigneeId: forId } as TaskDraft) : null });
+    setParam({ action: null, for: null });
   }, [quickAction, setParam]);
 
   // Certificate: render it, then open the print dialog.
@@ -396,7 +400,19 @@ export function TasksPage() {
   } as const;
   const go = (v: View, l?: TaskList) => setParam({ view: v === 'myday' ? null : v, list: v === 'list' ? (l ?? listKey) : null, day: null });
   const syncOf = (t: Task) => (pending.has(t.id) ? (pending.get(t.id)!.error ? ('failed' as const) : ('waiting' as const)) : null);
-  const rowProps = { today, me, syncOf, leavingIds: leaving, onToggle: (t: Task) => void toggle(t), onOpen: (t: Task) => setSheet({ task: t, initial: null }), onMyDay: (t: Task) => void toggleMyDay(t) };
+  // Finishing a task someone gave you opens Finish (with an optional output); your own tick off at once.
+  const [finishing, setFinishing] = useState<Task | null>(null);
+  const tick = (t: Task) => (t.status !== 'done' && t.createdById && t.createdById !== me && t.assigneeId === me ? setFinishing(t) : void toggle(t));
+  const finish = async (t: Task, output: OutputDraft | null) => {
+    try {
+      if (output) await staffBoardService.submitOutput(t.id, output);
+      await toggle(t);
+      return null;
+    } catch (e) {
+      return errorText(e);
+    }
+  };
+  const rowProps = { today, me, syncOf, leavingIds: leaving, onToggle: tick, onOpen: (t: Task) => setSheet({ task: t, initial: null }), onMyDay: (t: Task) => void toggleMyDay(t) };
 
   const myDayDone = all.filter((t) => isMine(t) && whereOk(t) && doneToday(t));
   const plannedToday = shown.length + myDayDone.length;
@@ -646,11 +662,12 @@ export function TasksPage() {
         onRespond={respond}
         onClose={() => setSheet(null)}
         onSave={saveFromSheet}
-        onToggleDone={(t) => void toggle(t)}
+        onToggleDone={tick}
         onRemove={remove}
         onSendBack={sendBack}
         onSetStatus={(t, st) => void setStatus(t, st)}
       />
+      <FinishSheet task={finishing} onClose={() => setFinishing(null)} onFinish={finish} />
       <RewardsSheet tab={rewardsTab} progress={progress} kudos={kudos} onTab={(tab) => setParam({ rewards: tab })} onClose={() => setParam({ rewards: null })} onPrintCertificate={(l) => setPrintLevel(LEVELS.find((x) => x.level === l) ?? null)} />
       <LevelUpDialog level={levelUp} onClose={() => setLevelUp(null)} onViewRewards={() => (setLevelUp(null), setParam({ rewards: 'levels' }))} />
       {printLevel && <Certificate name={profile?.displayName ?? 'Staff member'} level={printLevel} tasksDone={progress.stats.total} />}

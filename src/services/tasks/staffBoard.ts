@@ -33,6 +33,22 @@ export interface BoardTask {
   nudgedAt: string | null;
 }
 
+/** What someone handed in when they finished a task. */
+export interface TaskOutput {
+  id: string;
+  authorName: string;
+  note: string | null;
+  links: string[];
+  /** Small JPEG data URLs. */
+  photos: string[];
+  createdAt: string;
+}
+export interface OutputDraft {
+  note: string;
+  links: string[];
+  photos: string[];
+}
+
 export interface StaffBoardService {
   board(): Promise<BoardPerson[]>;
   tasksOf(personId: string): Promise<BoardTask[]>;
@@ -40,6 +56,9 @@ export interface StaffBoardService {
   respond(taskId: string, accept: boolean, reason?: string): Promise<void>;
   /** A gentle reminder to the person a task is with (once an hour per task). */
   nudge(taskId: string, message?: string): Promise<void>;
+  /** Hand in an output for a task given to you (the giver is told). */
+  submitOutput(taskId: string, output: OutputDraft): Promise<void>;
+  outputsOf(taskId: string): Promise<TaskOutput[]>;
 }
 
 const friendly = (message: string) => {
@@ -95,6 +114,30 @@ export function createSupabaseStaffBoard(client: SupabaseClient): StaffBoardServ
       if (error) fail(error);
       flushPush();
     },
+    async submitOutput(taskId, o) {
+      const { error } = await client.from('task_outputs').insert({ task_id: taskId, note: o.note.trim() || null, links: o.links, photos: o.photos });
+      if (error) {
+        console.error('[outputs] submit', error);
+        throw new TaskRuleError(error.code === '42501' ? 'Only the person this task is for can hand in its output.' : 'The output couldn’t be sent. Check the connection and try again.');
+      }
+      flushPush();
+    },
+    async outputsOf(taskId) {
+      const { data, error } = await client
+        .from('task_outputs')
+        .select('id, note, links, photos, created_at, author:profiles!task_outputs_author_id_fkey(display_name)')
+        .eq('task_id', taskId)
+        .order('created_at', { ascending: false });
+      if (error) fail(error);
+      return (data ?? []).map((r) => ({
+        id: r.id as string,
+        authorName: ((r as Record<string, unknown>).author as { display_name?: string } | null)?.display_name ?? 'Staff member',
+        note: (r.note as string | null) ?? null,
+        links: (r.links as string[]) ?? [],
+        photos: (r.photos as string[]) ?? [],
+        createdAt: r.created_at as string,
+      }));
+    },
   };
 }
 
@@ -120,6 +163,7 @@ const sampleTasks = (personId: string): BoardTask[] => {
   return n && n.open + n.inProgress === 0 ? base.slice(3) : base;
 };
 const nudged = new Map<string, number>();
+const sampleOutputs = new Map<string, TaskOutput[]>();
 const later = <T,>(v: T) => new Promise<T>((r) => setTimeout(() => r(v), 250));
 
 export const mockStaffBoard: StaffBoardService = {
@@ -129,6 +173,11 @@ export const mockStaffBoard: StaffBoardService = {
     if (!accept && !reason?.trim()) throw new TaskRuleError('Say in a few words why you can’t take it.');
     await later(null);
   },
+  async submitOutput(id, o) {
+    sampleOutputs.set(id, [{ id: `out-${Date.now()}`, authorName: demoProfile.displayName, note: o.note.trim() || null, links: o.links, photos: o.photos, createdAt: new Date().toISOString() }, ...(sampleOutputs.get(id) ?? [])]);
+    await later(null);
+  },
+  outputsOf: (id) => later(sampleOutputs.get(id) ?? []),
   async nudge(id) {
     if (Date.now() - (nudged.get(id) ?? 0) < 3600_000) throw new TaskRuleError('They were nudged about this in the last hour. Give them a little time.');
     nudged.set(id, Date.now());

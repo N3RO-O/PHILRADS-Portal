@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BellRing, Check, CircleCheck, Clock, Hourglass, Loader2, TriangleAlert, X } from 'lucide-react';
+import { BellRing, Check, CircleCheck, Clock, Hourglass, Loader2, Plus, TriangleAlert, X } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { useAsyncData } from '../../hooks/useAsyncData';
 import { formatShortDate } from '../../lib/format';
@@ -27,7 +27,9 @@ const standing = (t: BoardTask, today: string) =>
 
 /** One person's tasks, with nudges (for whoever gave the task) and accept or decline (for yourself). */
 export function PersonTasks({ person, status, me, onClose, onChanged }: { person: BoardPerson; status: Status; me: string | null; onClose: () => void; onChanged: () => void }) {
-  const { can } = useAuth();
+  const { can, profile } = useAuth();
+  // Anyone from volunteer up can give tasks (from the same or a lower role they wait to be accepted).
+  const canGive = can('tasks.manage') || (profile?.roleKey !== undefined && profile.roleKey !== 'viewer');
   const tasks = useAsyncData(() => staffBoardService.tasksOf(person.id));
   const today = manilaToday();
   const mine = person.id === me;
@@ -72,9 +74,14 @@ export function PersonTasks({ person, status, me, onClose, onChanged }: { person
         </span>
       }
       footer={
-        <div className="grid grid-cols-2 gap-2">
-          <Link to={mine ? '/profile' : `/profile/${person.id}`} className="btn-primary h-12 px-3" onClick={onClose}>
-            {mine ? 'My profile' : 'View profile'}
+        <div className={`grid gap-2 ${!mine && canGive ? 'grid-cols-3' : 'grid-cols-2'}`}>
+          {!mine && canGive && (
+            <Link to={`/tasks?action=create-task&for=${person.id}`} className="btn-primary h-12 px-3" onClick={onClose}>
+              <Plus className="h-4 w-4" aria-hidden /> Give a task
+            </Link>
+          )}
+          <Link to={mine ? '/profile' : `/profile/${person.id}`} className={`${!mine && canGive ? 'btn-ghost' : 'btn-primary'} h-12 px-3`} onClick={onClose}>
+            {mine ? 'My profile' : 'Profile'}
           </Link>
           <Link to={mine ? '/tasks' : `/tasks?view=team`} className="btn-ghost h-12 px-3" onClick={onClose}>
             {mine ? 'My tasks' : 'Open in Tasks'}

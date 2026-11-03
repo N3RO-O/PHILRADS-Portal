@@ -808,6 +808,20 @@ await check('administrators still see a private profile', () => as(A, `select pu
 await check('names are still readable for assigning tasks', () => as(E, `select display_name, avatar_data from public.profiles where id = '${B}'`).then(expectRows(1)));
 await db.exec(`update public.profiles set profile_public = true where id = '${B}'`);
 
+// Task outputs
+await check('the person a task is for hands in an output; the giver is told', async () => {
+  await as(A, `insert into public.tasks (title, assignee_id, created_by) values ('Photos of the distribution', '${B}', '${A}')`);
+  await as(B, `insert into public.task_outputs (task_id, note, links, photos) values (${TASK('Photos of the distribution')}, 'All 200 families served', array['https://drive.google.com/x'], array['data:image/jpeg;base64,AAAA'])`);
+  const n = await db.query(`select body from public.notifications where recipient_id = '${A}' and title like '%sent their output%'`);
+  if (n.rows.length !== 1) throw new Error(JSON.stringify(n.rows));
+  return n.rows[0].body;
+});
+await check('the giver sees the output', () => as(A, `select note from public.task_outputs where task_id = ${TASK('Photos of the distribution')}`).then(expectRows(1)));
+await check('someone else cannot hand in an output for it', () => as(A, `insert into public.task_outputs (task_id, note) values (${TASK('Photos of the distribution')}, 'not mine')`), true);
+await check('links must be web links', () => as(B, `insert into public.task_outputs (task_id, links) values (${TASK('Photos of the distribution')}, array['javascript:alert(1)'])`), true);
+await check('an empty output is refused', () => as(B, `insert into public.task_outputs (task_id) values (${TASK('Photos of the distribution')})`), true);
+await check('outputs cannot be edited', () => as(B, `update public.task_outputs set note = 'changed'`), true);
+
 // Inactive account and signed-out visitors
 await check('inactive account sees no tasks', () => as(C, `select id from public.tasks`).then(expectRows(0)));
 await check('inactive account still sees its own profile', () => as(C, `select id from public.profiles`).then(expectRows(1)));
