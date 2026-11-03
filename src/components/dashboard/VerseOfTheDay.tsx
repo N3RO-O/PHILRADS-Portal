@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { BookOpen, Check, Copy } from 'lucide-react';
+import { BookOpen, BookOpenText, Check, Copy, HandHeart, Sparkles } from 'lucide-react';
+import { devotionalFor } from '../../config/devotionals';
 import { verseOfTheDay } from '../../config/verse';
+import { Sheet } from '../ui/Sheet';
 
 async function copyText(text: string) {
   try {
@@ -25,6 +27,8 @@ export function VerseOfTheDay() {
   const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle');
   // One verse a day (changes at midnight, Manila time).
   const verse = verseOfTheDay();
+  const devotional = devotionalFor(verse.reference);
+  const [reading, setReading] = useState(false);
 
   useEffect(() => {
     if (state === 'idle') return;
@@ -52,15 +56,52 @@ export function VerseOfTheDay() {
           <footer className="mt-2 text-sm font-medium text-ink-soft">— {verse.reference}</footer>
         </blockquote>
       </div>
-      <div className="flex shrink-0 items-center gap-3 md:flex-col md:items-end">
-        <button type="button" onClick={() => void onCopy()} className="btn-ghost min-h-10">
-          {state === 'copied' ? <Check className="h-4 w-4 text-uplift" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />}
-          {state === 'copied' ? 'Copied' : 'Copy verse'}
-        </button>
+      <div className="flex shrink-0 flex-wrap items-center gap-2 md:flex-col md:items-end">
+        <div className="flex flex-wrap gap-2">
+          {devotional && (
+            <button type="button" onClick={() => setReading(true)} className="btn-primary min-h-10 px-4">
+              <BookOpenText className="h-4 w-4" aria-hidden /> Read more
+            </button>
+          )}
+          <button type="button" onClick={() => void onCopy()} className="btn-ghost min-h-10">
+            {state === 'copied' ? <Check className="h-4 w-4 text-uplift" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />}
+            {state === 'copied' ? 'Copied' : 'Copy verse'}
+          </button>
+        </div>
         <span role="status" className="text-xs text-muted">
           {state === 'failed' ? 'Couldn’t copy. Select the verse and copy it manually.' : ''}
         </span>
       </div>
+      {devotional && (
+        <Sheet open={reading} onClose={() => setReading(false)} title={devotional.title} subtitle={`Reflection on ${verse.reference}`}>
+          <article className="flex flex-col gap-5">
+            <blockquote className="rounded-2xl border-l-2 border-l-uplift bg-uplift/[0.07] px-4 py-3">
+              <p className="font-serif text-lg leading-snug text-ink">“{verse.text}”</p>
+              <footer className="mt-1.5 text-xs font-medium text-ink-soft">— {verse.reference}</footer>
+            </blockquote>
+            {devotional.reflection.map((para, i) => (
+              <p key={i} className="animate-fade-up text-[0.95rem] leading-relaxed text-ink-soft" style={{ animationDelay: `${80 + i * 90}ms` }}>
+                {para}
+              </p>
+            ))}
+            <section className="tile flex gap-3 p-4">
+              <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-uplift" aria-hidden />
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-uplift">For today</h3>
+                <p className="mt-1 text-sm text-ink">{devotional.today}</p>
+              </div>
+            </section>
+            <section className="flex gap-3 rounded-2xl border border-line/70 p-4">
+              <HandHeart className="mt-0.5 h-4 w-4 shrink-0 text-rose" aria-hidden />
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-rose">Prayer</h3>
+                <p className="mt-1 font-serif text-base italic leading-relaxed text-ink">{devotional.prayer}</p>
+              </div>
+            </section>
+            <p className="text-[0.6875rem] text-muted">A short reflection written for PHILRADS staff and volunteers. Scripture from the New Living Translation (NLT).</p>
+          </article>
+        </Sheet>
+      )}
     </section>
   );
 }
