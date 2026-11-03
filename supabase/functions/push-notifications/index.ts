@@ -7,7 +7,8 @@
 //
 // Secrets (Edge Functions > Secrets): VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT.
 // SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided by Supabase.
-// Deployed with "Verify JWT" on: only signed-in portal users can call it.
+// Only signed-in portal users can call it: the function checks the caller's session itself
+// ("Verify JWT with legacy secret" is off, so it works with the project's current signing keys).
 import { createClient } from 'npm:@supabase/supabase-js@2.45.4';
 import webpush from 'npm:web-push@3.6.7';
 
@@ -25,6 +26,9 @@ Deno.serve(async (req) => {
   webpush.setVapidDetails(Deno.env.get('VAPID_SUBJECT') ?? 'https://philrads-portal.vercel.app', pub, priv);
 
   const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
+  const bearer = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
+  const { data: caller } = bearer ? await db.auth.getUser(bearer) : { data: { user: null } };
+  if (!caller?.user) return Response.json({ error: 'Sign in first.' }, { status: 401, headers: cors });
   const since = new Date(Date.now() - 15 * 60_000).toISOString();
   const { data: notes, error } = await db
     .from('notifications')
