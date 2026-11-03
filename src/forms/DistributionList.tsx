@@ -1,4 +1,4 @@
-import { amount, duplicateRows, In, Page, pagesOf, peso, useForm, useText } from './kit';
+import { amount, duplicateRows, In, Page, pagesOf, peso, useForm, useText, SignBox } from './kit';
 
 const CALIBRI = 'Calibri, Carlito, "Segoe UI", Arial, sans-serif';
 export const DISTRIBUTION_ROWS = 10;
@@ -89,7 +89,9 @@ export function DistributionList({ rows = DISTRIBUTION_ROWS }: { rows?: number }
                     <td style={td}><In k={`row.${n}.contact`} align="center" /></td>
                     <td style={td}><In k={`row.${n}.particulars`} align="center" /></td>
                     <td style={td}><In k={`row.${n}.amount`} align="right" numeric /></td>
-                    <td style={td} />
+                    <td style={{ ...td, position: 'relative' }}>
+                      <SignBox k={`row.${n}.sig`} hint="✎ Sign" />
+                    </td>
                   </tr>
                 );
               })}

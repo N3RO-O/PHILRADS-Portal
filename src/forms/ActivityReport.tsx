@@ -1,4 +1,4 @@
-import { Area, duplicateRows, In, Page, pagesOf, PhotoSlot, SignLine, useForm } from './kit';
+import { Area, duplicateRows, In, Page, pagesOf, PhotoSlot, SignLine, SignOver, useForm } from './kit';
 
 const CALIBRI = 'Calibri, Carlito, "Segoe UI", Arial, sans-serif';
 const PAD: [number, number, number, number] = [10, 25.4, 25.4, 25.4];
@@ -76,7 +76,8 @@ export function ActivityReport({ rows = ACTIVITY_BENEFICIARY_ROWS }: { rows?: nu
           ))}
         </div>
         <div style={{ marginTop: '12mm' }}>Prepared by:</div>
-        <div style={{ marginTop: '10mm', width: '70mm' }}>
+        <div style={{ marginTop: '10mm', width: '70mm', position: 'relative' }}>
+          <SignOver k="sig.prepared" />
           <In k="preparedBy" className="ff-line" align="center" placeholder="Name" />
         </div>
       </Page>

@@ -1,4 +1,4 @@
-import { Box, In, Line, Page } from './kit';
+import { Box, In, Line, Page, SignBox, SignOver } from './kit';
 
 const CALIBRI = 'Calibri, Carlito, "Segoe UI", Arial, sans-serif';
 
@@ -61,7 +61,12 @@ export function ConsentForm() {
       </div>
 
       <div style={{ position: 'relative', marginTop: '9mm', display: 'flex', gap: '1mm' }}>
-        <div style={{ width: '67mm', height: '41mm', border: '0.75pt solid #000', textAlign: 'center', paddingTop: '1mm', background: '#fff' }}>Signature or thumb print</div>
+        <div style={{ position: 'relative', width: '67mm', height: '41mm', border: '0.75pt solid #000', textAlign: 'center', paddingTop: '1mm', background: '#fff' }}>
+          Signature or thumb print
+          <span style={{ position: 'absolute', inset: '6mm 2mm 2mm' }}>
+            <SignBox k="sig.consent" />
+          </span>
+        </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5mm', width: '100mm', fontSize: '10pt' }}>
           {(
             [
@@ -79,7 +84,10 @@ export function ConsentForm() {
 
       <div style={{ position: 'relative', marginTop: '14mm', marginLeft: '-6mm', display: 'flex', alignItems: 'flex-end', gap: '1mm' }}>
         <span>Template reviewed and approved:</span>
-        <Line k="reviewedBy" w="38mm" />
+        <span style={{ position: 'relative', display: 'inline-block', width: '38mm' }}>
+          <SignOver k="sig.reviewed" />
+          <Line k="reviewedBy" w="38mm" />
+        </span>
       </div>
       <div style={{ position: 'relative', marginLeft: '58mm', display: 'flex', alignItems: 'flex-end', gap: '1mm' }}>
         <span>Date:</span>

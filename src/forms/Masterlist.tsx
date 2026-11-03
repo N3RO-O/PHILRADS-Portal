@@ -1,4 +1,4 @@
-import { Box, duplicateRows, In, Page, pagesOf, useForm, useText } from './kit';
+import { Box, duplicateRows, In, Page, pagesOf, useForm, useText, SignBox } from './kit';
 
 const CALIBRI = 'Calibri, Carlito, "Segoe UI", Arial, sans-serif';
 export const MASTERLIST_ROWS = 15;
@@ -84,7 +84,9 @@ function Row({ n, dupeOf }: { n: number; dupeOf?: number }) {
       <td style={{ ...td, textAlign: 'center' }}><Box k={r('photoYes')} /></td>
       <td style={{ ...td, textAlign: 'center' }}><Box k={r('photoNo')} /></td>
       <td style={td}><In k={r('contact')} align="center" /></td>
-      <td style={td} />
+      <td style={{ ...td, position: 'relative' }}>
+        <SignBox k={r('sig')} hint="✎ Sign" />
+      </td>
     </tr>
   );
 }

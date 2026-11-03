@@ -1,4 +1,4 @@
-import { amount, In, Page, peso, SignLine, useForm, useText, Area } from './kit';
+import { amount, In, Page, peso, SignLine, SignOver, useForm, useText, Area } from './kit';
 
 const ARIAL = 'Arial, Helvetica, sans-serif';
 const PINK = '#da9694';
@@ -132,7 +132,8 @@ export function CanvassForm() {
       <div style={{ display: 'flex', marginTop: '10mm', fontFamily: 'Calibri, Carlito, "Segoe UI", Arial, sans-serif', fontSize: '11pt' }}>
         <div style={{ width: '50%' }}>
           Prepared by:
-          <div style={{ marginTop: '6mm', marginLeft: '12.5mm', width: '50mm', textAlign: 'center' }}>
+          <div style={{ marginTop: '6mm', marginLeft: '12.5mm', width: '50mm', textAlign: 'center', position: 'relative' }}>
+            <SignOver k="sig.prepared" />
             <In k="preparedBy" align="center" className="ff-line" placeholder={prepared ? undefined : 'Name'} />
             <div style={{ textAlign: 'left' }}>Printed name and Signature</div>
           </div>

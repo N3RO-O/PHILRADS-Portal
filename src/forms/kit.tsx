@@ -134,14 +134,27 @@ export function Line({ k, w = '100%', align, placeholder, bold }: { k: string; w
  * sits on the line and prints with the form. Left empty, it prints as a blank line to sign on paper.
  */
 export function SignLine({ k, w = '60mm' }: { k: string; w?: string }) {
+  return (
+    <span className="ff-sign" style={{ width: w }}>
+      <SignArea k={k} variant="line" />
+    </span>
+  );
+}
+
+/**
+ * Where a signature goes, in three shapes: on a line (SignLine), just above a printed-name line
+ * ("Printed name and Signature", SignOver) and filling a box or table cell (SignBox; the parent
+ * needs position: relative). Tap to sign on screen; prints as the signature, or blank to sign on paper.
+ */
+function SignArea({ k, variant, hint = '✎ Tap to sign' }: { k: string; variant: 'line' | 'over' | 'box'; hint?: string }) {
   const { mode, sign, set } = useForm();
   const src = useText(k);
   const img = src ? <img src={src} alt="Signature" className="ff-sign-img" /> : null;
-  if (mode === 'print') return <span className="ff-sign" style={{ width: w }}>{img}</span>;
+  if (mode === 'print') return img ? <span className={`ff-sign-area ff-sign-${variant}`}>{img}</span> : null;
   return (
-    <span className="ff-sign ff-sign-edit" style={{ width: w }}>
+    <span className={`ff-sign-area ff-sign-${variant} ff-sign-edit`}>
       <button type="button" className="ff-sign-btn" onClick={() => sign?.(k)} aria-label={src ? 'Change signature' : 'Sign here'}>
-        {img ?? <span className="ff-sign-hint">✎ Tap to sign</span>}
+        {img ?? <span className="ff-sign-hint">{hint}</span>}
       </button>
       {src && (
         <button type="button" className="ff-sign-clear" onClick={() => set(k, '')} aria-label="Remove signature">
@@ -150,6 +163,16 @@ export function SignLine({ k, w = '60mm' }: { k: string; w?: string }) {
       )}
     </span>
   );
+}
+
+/** A signature just above a printed-name line; put it inside the line's (relative) wrapper. */
+export function SignOver({ k }: { k: string }) {
+  return <SignArea k={k} variant="over" />;
+}
+
+/** A signature filling its box or table cell (the parent must be position: relative). */
+export function SignBox({ k, hint }: { k: string; hint?: string }) {
+  return <SignArea k={k} variant="box" hint={hint} />;
 }
 
 /** Several lines of writing; grows as you type. */
