@@ -412,7 +412,7 @@ export function TasksPage() {
       return errorText(e);
     }
   };
-  const rowProps = { today, me, syncOf, leavingIds: leaving, onToggle: tick, onOpen: (t: Task) => setSheet({ task: t, initial: null }), onMyDay: (t: Task) => void toggleMyDay(t) };
+  const rowProps = { today, me, syncOf, leavingIds: leaving, onToggle: tick, onOpen: (t: Task) => setSheet({ task: t, initial: null }), onMyDay: (t: Task) => void toggleMyDay(t), onStart: (t: Task) => void setStatus(t, 'in_progress') };
 
   const myDayDone = all.filter((t) => isMine(t) && whereOk(t) && doneToday(t));
   const plannedToday = shown.length + myDayDone.length;

@@ -911,3 +911,9 @@
 .roll-col {
   transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
 }
+
+/* Break timer: the circles grow and shrink with a slow breath (4 s in, 4 s out). */
+@keyframes breathe {
+  0%, 100% { transform: scale(0.72); opacity: 0.55; }
+  50% { transform: scale(1); opacity: 1; }
+}

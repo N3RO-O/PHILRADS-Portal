@@ -13,6 +13,8 @@ interface Props {
   onToggle: (t: Task) => void;
   onOpen: (t: Task) => void;
   onMyDay?: (t: Task) => void;
+  /** Mark a task you're doing as in progress (Start). Finish goes through onToggle. */
+  onStart?: (t: Task) => void;
   /** "+30 XP" shown briefly after ticking it off. */
   flash?: number | null;
   /** Show which list it's in (not needed inside a list's own view). */
@@ -22,7 +24,7 @@ interface Props {
 }
 
 /** One task, Any.do style: a round checkbox in the list's colour, the title, and one line of details. */
-export function TaskRow({ task: t, today, me, onToggle, onOpen, onMyDay, flash, showList = true, syncOf, leavingIds }: Props) {
+export function TaskRow({ task: t, today, me, onToggle, onOpen, onMyDay, onStart, flash, showList = true, syncOf, leavingIds }: Props) {
   const leaving = leavingIds?.has(t.id) ?? false;
   const sync = syncOf?.(t) ?? null;
   const done = t.status === 'done';
@@ -103,6 +105,18 @@ export function TaskRow({ task: t, today, me, onToggle, onOpen, onMyDay, flash, 
               <span className="animate-pop-in rounded-full border border-uplift/50 bg-uplift/15 px-2 py-0.5 text-xs font-bold tabular-nums text-uplift">+{flash} XP</span>
             ) : (
               t.priority === 'high' && !done && <Flag className="h-4 w-4 fill-rose/30 text-rose" aria-label="High priority" />
+            )}
+            {/* Your task: Start it, then Finish it (finishing one from someone else asks for an output). */}
+            {onStart && !done && !pending && (t.assigneeId ?? t.createdById) === me && (
+              t.status === 'in_progress' ? (
+                <button type="button" className="press rounded-full border border-status-in/40 bg-status-in/10 px-2.5 py-1 text-xs font-semibold text-status-in hover:bg-status-in/20" onClick={() => onToggle(t)}>
+                  Finish
+                </button>
+              ) : (
+                <button type="button" className="press rounded-full border border-status-low/40 bg-status-low/10 px-2.5 py-1 text-xs font-semibold text-status-low hover:bg-status-low/20" onClick={() => onStart(t)}>
+                  Start
+                </button>
+              )
             )}
             {onMyDay && !done && (
               <button

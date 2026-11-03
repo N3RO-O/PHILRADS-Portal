@@ -16,6 +16,7 @@ import { OfflineNotice, OnlinePill } from './OnlineStatus';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { ActivePanel } from './ActivePanel';
+import { BreakNudge } from './BreakNudge';
 import { PullToRefresh } from '../ui/PullToRefresh';
 
 export interface LayoutContext {
@@ -175,6 +176,8 @@ export function AppLayout() {
           </div>
         </div>
       )}
+      {/* After long stretches of work: a suggestion to take a short break. */}
+      <BreakNudge />
       {/* New bell notes pop in as they arrive. */}
       <NotificationToasts />
       {/* Signed-in staff: signed out after 10 minutes without activity. */}
