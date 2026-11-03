@@ -140,7 +140,7 @@ export function CanvassForm() {
         <div style={{ width: '50%' }}>
           Selling Company:
           <div style={{ marginTop: '6mm', width: '52mm', textAlign: 'center' }}>
-            <SignLine w="52mm" />
+            <SignLine k="sig.seller" w="52mm" />
             <div style={{ textAlign: 'left' }}>Printed name and Signature</div>
           </div>
         </div>

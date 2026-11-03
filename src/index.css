@@ -490,10 +490,58 @@
   white-space: pre-wrap;
 }
 .ff-sign {
+  position: relative;
   display: inline-block;
   height: 1.1em;
   border-bottom: 0.75pt solid #000;
   vertical-align: bottom;
+}
+/* The signature sits on the line, rising above it like ink would. */
+.ff-sign-img {
+  position: absolute;
+  left: 50%;
+  bottom: -0.15em;
+  max-width: 100%;
+  height: 3.2em;
+  object-fit: contain;
+  translate: -50% 0;
+  pointer-events: none;
+}
+.ff-sign-edit .ff-sign-btn {
+  position: absolute;
+  inset: -2.4em 0 -0.2em;
+  display: grid;
+  place-items: end center;
+  border-radius: 2px;
+  background: rgba(236, 149, 42, 0.08);
+  cursor: pointer;
+}
+.ff-sign-edit .ff-sign-btn:hover {
+  background: rgba(236, 149, 42, 0.18);
+}
+.ff-sign-hint {
+  padding-bottom: 0.15em;
+  color: #b06a10;
+  font-size: 0.85em;
+  font-style: italic;
+}
+.ff-sign-clear {
+  position: absolute;
+  top: -2.4em;
+  right: -0.6em;
+  width: 1.5em;
+  height: 1.5em;
+  border-radius: 999px;
+  background: #fff;
+  color: #555;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  line-height: 1;
+}
+/* Text size for what's typed on a form (Forms toolbar): printed the same way. */
+.form-page .ff,
+.form-page .ff-print,
+.form-page .ff-print-area {
+  font-size: calc(1em * var(--ff-scale, 1));
 }
 .ff-check {
   display: inline-flex;

@@ -93,7 +93,7 @@ export function ActivityReport({ rows = ACTIVITY_BENEFICIARY_ROWS }: { rows?: nu
         <Logo />
         <div style={{ marginTop: '2mm' }}>Approved by:</div>
         <div style={{ marginTop: '12mm' }}>
-          <SignLine w="85mm" />
+          <SignLine k="sig.approved" w="85mm" />
         </div>
         <div style={{ marginTop: '2mm' }}>Program Manager/ President</div>
       </Page>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowLeft, Check, ChevronRight, Eraser, FileText, Plus, Printer } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -6,6 +6,7 @@ import { useAuth } from '../components/auth/AuthProvider';
 import { EmptyState } from '../components/ui/Card';
 import { FORMS, type FormDef } from '../forms/catalog';
 import { FormProvider, Sheets, type Values } from '../forms/kit';
+import { SignatureSheet } from '../components/forms/SignatureSheet';
 
 const key = (id: string) => `philrads.form.${id}.v1`;
 
@@ -72,6 +73,9 @@ function FormEditor({ form }: { form: FormDef }) {
     }
   });
   const rows = Math.max(form.rows?.initial ?? 0, Number(values.__rows) || 0);
+  // Size of the typed text (85% to 150%), kept with the draft and used when printing.
+  const scale = Math.min(1.5, Math.max(0.85, Number(values.__scale) || 1));
+  const [signing, setSigning] = useState<string | null>(null);
   const [saved, setSaved] = useState<'idle' | 'saved' | 'failed'>('idle');
   const [printing, setPrinting] = useState(false);
 
@@ -147,6 +151,17 @@ function FormEditor({ form }: { form: FormDef }) {
             <Plus className="h-4 w-4" aria-hidden /> 5 more {form.rows.label}
           </button>
         )}
+        <div className="flex items-center rounded-xl border border-line bg-surface-raised/60" role="group" aria-label="Text size">
+          <button type="button" className="icon-btn h-10 w-10 rounded-l-xl rounded-r-none" onClick={() => set('__scale', String(Math.max(0.85, +(scale - 0.1).toFixed(2))))} disabled={scale <= 0.85} aria-label="Smaller text">
+            <span className="text-xs font-bold">A−</span>
+          </button>
+          <span className="min-w-[3.25rem] text-center text-xs font-semibold tabular-nums text-ink-soft" aria-live="polite">
+            {Math.round(scale * 100)}%
+          </span>
+          <button type="button" className="icon-btn h-10 w-10 rounded-l-none rounded-r-xl" onClick={() => set('__scale', String(Math.min(1.5, +(scale + 0.1).toFixed(2))))} disabled={scale >= 1.5} aria-label="Bigger text">
+            <span className="text-base font-bold">A+</span>
+          </button>
+        </div>
         <button type="button" className="btn-ghost min-h-10 px-3 text-sm" onClick={clear}>
           <Eraser className="h-4 w-4" aria-hidden /> Clear
         </button>
@@ -155,13 +170,16 @@ function FormEditor({ form }: { form: FormDef }) {
         </button>
       </div>
 
-      <FormProvider mode="edit" values={values} set={set}>
-        <Sheets>{form.render(rows)}</Sheets>
-      </FormProvider>
+      <div style={{ '--ff-scale': scale } as CSSProperties}>
+        <FormProvider mode="edit" values={values} set={set} sign={setSigning}>
+          <Sheets>{form.render(rows)}</Sheets>
+        </FormProvider>
+      </div>
+      <SignatureSheet open={Boolean(signing)} onClose={() => setSigning(null)} onSign={(src) => signing && set(signing, src)} />
 
       {printing &&
         createPortal(
-          <div className="print-form">
+          <div className="print-form" style={{ '--ff-scale': scale } as CSSProperties}>
             <FormProvider mode="print" values={values} set={set}>
               {form.render(rows)}
             </FormProvider>

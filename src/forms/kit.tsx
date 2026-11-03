@@ -14,12 +14,14 @@ interface FormState {
   mode: Mode;
   values: Values;
   set: (key: string, value: string | boolean) => void;
+  /** Open the signature pad for a signature line. */
+  sign?: (key: string) => void;
 }
 
 const FormCtx = createContext<FormState>({ mode: 'print', values: {}, set: () => undefined });
 
-export function FormProvider({ mode, values, set, children }: FormState & { children: ReactNode }) {
-  return <FormCtx.Provider value={{ mode, values, set }}>{children}</FormCtx.Provider>;
+export function FormProvider({ mode, values, set, sign, children }: FormState & { children: ReactNode }) {
+  return <FormCtx.Provider value={{ mode, values, set, sign }}>{children}</FormCtx.Provider>;
 }
 
 export const useForm = () => useContext(FormCtx);
@@ -127,9 +129,27 @@ export function Line({ k, w = '100%', align, placeholder, bold }: { k: string; w
   return <In k={k} w={w} align={align} placeholder={placeholder} bold={bold} className="ff-line" />;
 }
 
-/** A blank line for a signature (signed on paper, never typed). */
-export function SignLine({ w = '60mm' }: { w?: string }) {
-  return <span className="ff-sign" style={{ width: w }} />;
+/**
+ * A signature line. On screen, tap it to sign (draw, or confirm with a fingerprint); the signature
+ * sits on the line and prints with the form. Left empty, it prints as a blank line to sign on paper.
+ */
+export function SignLine({ k, w = '60mm' }: { k: string; w?: string }) {
+  const { mode, sign, set } = useForm();
+  const src = useText(k);
+  const img = src ? <img src={src} alt="Signature" className="ff-sign-img" /> : null;
+  if (mode === 'print') return <span className="ff-sign" style={{ width: w }}>{img}</span>;
+  return (
+    <span className="ff-sign ff-sign-edit" style={{ width: w }}>
+      <button type="button" className="ff-sign-btn" onClick={() => sign?.(k)} aria-label={src ? 'Change signature' : 'Sign here'}>
+        {img ?? <span className="ff-sign-hint">✎ Tap to sign</span>}
+      </button>
+      {src && (
+        <button type="button" className="ff-sign-clear" onClick={() => set(k, '')} aria-label="Remove signature">
+          ×
+        </button>
+      )}
+    </span>
+  );
 }
 
 /** Several lines of writing; grows as you type. */

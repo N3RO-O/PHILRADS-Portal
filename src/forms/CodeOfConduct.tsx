@@ -107,7 +107,7 @@ export function CodeOfConduct() {
         <hr style={{ border: 0, borderTop: '0.75pt solid #999', margin: '4mm 0' }} />
         <p style={{ margin: 0 }}>By signing this, I agree to follow these rules and understand that any violation may lead to legal consequences and accountability for any harm caused.</p>
         <div style={{ marginTop: '3mm' }}>
-          Signed: <SignLine w="55mm" />
+          Signed: <SignLine k="sig.signer" w="55mm" />
         </div>
         <div>
           Date: <Line k="date" w="57mm" />
@@ -124,7 +124,7 @@ export function CodeOfConduct() {
           Sa pamamagitan ng pagpirma, ako ay sumasang-ayon na sundin ang mga alituntunin na ito at nauunawaan kong ang anumang paglabag ay maaaring magdulot ng legal na pananagutan para sa anumang pinsalang dulot nito.
         </p>
         <div style={{ marginTop: '3mm' }}>
-          Lagda: <SignLine w="60mm" />
+          Lagda: <SignLine k="sig.signer" w="60mm" />
         </div>
         <div>
           Petsa: <Line k="date" w="62mm" />
