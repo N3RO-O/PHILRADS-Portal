@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { CloudOff, CloudSun, Fullscreen, List, LocateFixed, Loader2, MapPin, Maximize2, Minimize2, Plus, Search, UserRound, X } from 'lucide-react';
+import { ChevronsLeft, ChevronsRight, CloudOff, CloudSun, Fullscreen, List, LocateFixed, Loader2, MapPin, Maximize2, Minimize2, Plus, Search, UserRound, X } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
 import { CheckInDetails, LiveDetails, PlaceDetails } from '../components/map/MapDetails';
 import { CheckInSheet, PlaceForm } from '../components/map/MapForms';
@@ -71,6 +71,7 @@ export function LiveMapPage() {
   }, [profile]);
 
   const [layers, setLayers] = useState(readLayers);
+  const panel_ = usePanelWidth();
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Selected>(null);
   const [focus, setFocus] = useState<MapFocus | null>(null);
@@ -305,9 +306,12 @@ export function LiveMapPage() {
     <div className="flex flex-col gap-4">
       {/* "isolate": the map's own layers stay under the top bar's menus. */}
       {/* Not isolated while the map fills the window, so it can sit above the sidebar and top bar. */}
-      <section className={`card relative overflow-hidden p-0 lg:grid lg:grid-cols-[24rem_minmax(0,1fr)] ${full === 'window' ? '' : 'isolate'}`}>
-        {/* Desktop: list and layers beside the map */}
-        <aside className="hidden h-[calc(100dvh-13rem)] min-h-[34rem] flex-col border-r border-line/70 lg:flex">
+      <section
+        className={`card relative overflow-hidden p-0 lg:grid lg:grid-cols-[var(--panel)_minmax(0,1fr)] ${panel_.dragging ? 'select-none' : 'lg:transition-[grid-template-columns] lg:duration-300'} ${full === 'window' ? '' : 'isolate'}`}
+        style={{ '--panel': panel_.collapsed ? '0px' : `${panel_.width}px` } as CSSProperties}
+      >
+        {/* Desktop: list and layers beside the map; drag its edge to resize, or fold it away. */}
+        <aside className={`hidden h-[calc(100dvh-13rem)] min-h-[34rem] flex-col overflow-hidden border-r border-line/70 ${panel_.collapsed ? '' : 'lg:flex'}`}>
           <div className="flex items-center justify-between gap-2 border-b border-line/70 px-4 py-3">
             <h2 className="card-title flex items-center gap-2 whitespace-nowrap">
               <MapPin className="h-4 w-4 text-uplift" aria-hidden /> Places and team
@@ -324,6 +328,39 @@ export function LiveMapPage() {
           </div>
         </aside>
 
+        {/* The panel's edge: drag to resize, double-click to reset, or fold the panel away. */}
+        <div className="pointer-events-none absolute inset-y-0 z-[650] hidden lg:block" style={{ left: 'var(--panel)' }}>
+          {!panel_.collapsed && (
+            <div
+              role="separator"
+              aria-orientation="vertical"
+              aria-label="Resize the places panel"
+              aria-valuemin={PANEL_MIN}
+              aria-valuemax={PANEL_MAX}
+              aria-valuenow={panel_.width}
+              tabIndex={0}
+              onPointerDown={panel_.startDrag}
+              onDoubleClick={panel_.reset}
+              onKeyDown={(e) => {
+                if (e.key === 'ArrowLeft') panel_.nudge(-24);
+                if (e.key === 'ArrowRight') panel_.nudge(24);
+              }}
+              className={`group pointer-events-auto absolute inset-y-0 -left-1.5 flex w-3 cursor-col-resize items-center justify-center focus:outline-none`}
+            >
+              <span className={`h-full w-0.5 transition-colors ${panel_.dragging ? 'bg-uplift' : 'bg-transparent group-hover:bg-uplift/60 group-focus-visible:bg-uplift'}`} />
+              <span className="absolute h-10 w-1.5 rounded-full bg-line transition-colors group-hover:bg-uplift" />
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={panel_.toggle}
+            className="press pointer-events-auto absolute left-0 top-1/2 grid h-14 w-6 -translate-y-1/2 place-items-center rounded-r-xl border border-l-0 border-line bg-surface-raised/95 text-ink-soft shadow-xl backdrop-blur-md hover:text-uplift"
+            aria-label={panel_.collapsed ? 'Show the places panel' : 'Hide the places panel'}
+            title={panel_.collapsed ? 'Show places and team' : 'Hide the panel'}
+          >
+            {panel_.collapsed ? <ChevronsRight className="h-4 w-4" aria-hidden /> : <ChevronsLeft className="h-4 w-4" aria-hidden />}
+          </button>
+        </div>
         {/* Phones: the map fills the rest of the screen below where it starts (which moves with the sharing banner). */}
         <div
           ref={mapBox}
@@ -908,4 +945,57 @@ function PlacesPanel({ search, setSearch, layers, toggleLayer, places, shownPlac
       </section>
     </div>
   );
+}
+
+// ───────────────────────── Resizable panel ─────────────────────────
+
+const PANEL_KEY = 'philrads.map.panel';
+const PANEL_MIN = 280;
+const PANEL_MAX = 640;
+const PANEL_DEFAULT = 384;
+
+/** The places panel's width (dragged, kept per device) and whether it's folded away. */
+function usePanelWidth() {
+  const [state, setState] = useState<{ width: number; collapsed: boolean }>(() => {
+    try {
+      const v = JSON.parse(localStorage.getItem(PANEL_KEY) ?? 'null') as { width: number; collapsed: boolean } | null;
+      if (v) return { width: Math.min(PANEL_MAX, Math.max(PANEL_MIN, v.width)), collapsed: Boolean(v.collapsed) };
+    } catch {
+      /* default */
+    }
+    return { width: PANEL_DEFAULT, collapsed: false };
+  });
+  const [dragging, setDragging] = useState(false);
+  const save = (next: { width: number; collapsed: boolean }) => setState(next);
+  // Kept per device once a drag ends (not on every pixel of it).
+  useEffect(() => {
+    if (dragging) return;
+    try {
+      localStorage.setItem(PANEL_KEY, JSON.stringify(state));
+    } catch {
+      /* this visit only */
+    }
+  }, [state, dragging]);
+  const startDrag = (e: ReactPointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const x0 = e.clientX;
+    const w0 = state.width;
+    setDragging(true);
+    const move = (ev: PointerEvent) => setState((s) => ({ ...s, width: Math.min(PANEL_MAX, Math.max(PANEL_MIN, w0 + ev.clientX - x0)) }));
+    const up = () => {
+      setDragging(false);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+  return {
+    ...state,
+    dragging,
+    startDrag,
+    reset: () => save({ width: PANEL_DEFAULT, collapsed: false }),
+    nudge: (d: number) => save({ width: Math.min(PANEL_MAX, Math.max(PANEL_MIN, state.width + d)), collapsed: false }),
+    toggle: () => save({ ...state, collapsed: !state.collapsed }),
+  };
 }
