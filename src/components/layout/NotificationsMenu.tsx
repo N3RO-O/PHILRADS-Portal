@@ -367,10 +367,17 @@ function SwipeRow({ index, onDelete, menu, children }: { index: number; onDelete
       className="relative animate-fade-up overflow-hidden rounded-xl"
       style={{ animationDelay: `${Math.min(index, 8) * 35}ms`, maxHeight: leaving ? 0 : 200, opacity: leaving ? 0 : 1, transition: leaving ? 'max-height 260ms 120ms ease, opacity 200ms 120ms ease' : undefined }}
     >
-      {/* Behind the row: what letting go will do. */}
-      <span aria-hidden className={`absolute inset-0 flex items-center justify-end gap-2 rounded-xl pr-5 text-sm font-semibold text-white transition-colors ${dx <= -THRESHOLD ? 'bg-status-out' : 'bg-status-out/60'}`}>
-        <Trash2 className={`h-5 w-5 transition-transform ${dx <= -THRESHOLD ? 'scale-125' : ''}`} /> Delete
-      </span>
+      {/* Only the strip the note uncovers turns red (the note itself is see-through), with what letting go will do. */}
+      {dx < 0 && (
+        <span
+          aria-hidden
+          className={`absolute inset-y-0 right-0 flex items-center justify-center gap-2 overflow-hidden whitespace-nowrap rounded-xl text-sm font-semibold text-white transition-colors ${dx <= -THRESHOLD ? 'bg-status-out' : 'bg-status-out/70'}`}
+          style={{ width: -dx }}
+        >
+          <Trash2 className={`h-5 w-5 shrink-0 transition-transform ${dx <= -THRESHOLD ? 'scale-125' : ''}`} />
+          {-dx >= THRESHOLD && 'Delete'}
+        </span>
+      )}
       <div
         className="relative"
         style={{ transform: `translateX(${dx}px)`, transition: start.current ? 'none' : 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1)' }}
@@ -388,7 +395,7 @@ function SwipeRow({ index, onDelete, menu, children }: { index: number; onDelete
         onTouchCancel={finish}
       >
         {children}
-        <span className="absolute right-2 top-1/2 -translate-y-1/2">{menu}</span>
+        {dx === 0 && <span className="absolute right-2 top-1/2 -translate-y-1/2">{menu}</span>}
       </div>
     </li>
   );

@@ -8,8 +8,6 @@ import { DeadlineCalendar } from '../components/dashboard/DeadlineCalendar';
 import { OverviewKpis } from '../components/dashboard/OverviewKpis';
 import { ProjectsTable } from '../components/dashboard/ProjectsTable';
 import { RecentActivity } from '../components/dashboard/RecentActivity';
-import { ResponseTrend } from '../components/dashboard/ResponseTrend';
-import { StockHealth } from '../components/dashboard/StockHealth';
 import { StockLevelsChart } from '../components/dashboard/StockLevelsChart';
 import { VerseOfTheDay } from '../components/dashboard/VerseOfTheDay';
 import { WelcomeBar } from '../components/dashboard/WelcomeBar';
@@ -21,8 +19,8 @@ import { dashboardService } from '../services';
  *  - phones: one column, ordered by what staff need first (`order-*`)
  *  - md–lg: two columns; wide cards span both
  *  - xl: 12 columns in aligned rows, in DOM order:
- *      verse (12) | welcome (12) | overview (8) + stock levels (4) | projects (8) + response (4)
- *      | stock health (4) + my tasks (8) | activity (6) + calendar (6)
+ *      verse (12) | welcome (12) | calendar (8) + activity (4) | overview (8) + stock levels (4) | projects (12)
+ * The calendar leads, right after the welcome, at every width.
  * The verse always comes first, at every width (one a day, changing at midnight).
  */
 function Cell({ className, step, children }: { className: string; step: number; children: ReactNode }) {
@@ -69,25 +67,19 @@ export function HomePage() {
         <WelcomeBar />
       </Cell>
       <Cell className="order-2 md:col-span-2 xl:col-span-8" step={1}>
-        <OverviewKpis />
+        <DeadlineCalendar tasks={tasks} />
       </Cell>
-      <Cell className="order-8 xl:col-span-4" step={2}>
-        <StockLevelsChart stock={stock} />
-      </Cell>
-      <Cell className="order-6 md:col-span-2 xl:col-span-8" step={3}>
-        <ProjectsTable />
-      </Cell>
-      <Cell className="order-9 xl:col-span-4" step={4}>
-        <ResponseTrend />
-      </Cell>
-      <Cell className="order-10 xl:col-span-4" step={5}>
-        <StockHealth stock={stock} />
-      </Cell>
-      <Cell className="order-4 xl:col-span-6" step={7}>
+      <Cell className="order-4 md:col-span-2 xl:col-span-4" step={2}>
         <RecentActivity search={query} />
       </Cell>
-      <Cell className="order-5 xl:col-span-6" step={8}>
-        <DeadlineCalendar tasks={tasks} />
+      <Cell className="order-3 md:col-span-2 xl:col-span-8" step={3}>
+        <OverviewKpis />
+      </Cell>
+      <Cell className="order-8 md:col-span-2 xl:col-span-4" step={4}>
+        <StockLevelsChart stock={stock} />
+      </Cell>
+      <Cell className="order-6 md:col-span-2 xl:col-span-12" step={5}>
+        <ProjectsTable />
       </Cell>
     </div>
     <GettingStartedBar />

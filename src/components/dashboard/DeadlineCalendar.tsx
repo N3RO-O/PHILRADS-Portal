@@ -18,7 +18,8 @@ interface Props {
 
 /**
  * Month view of your task due dates, with weekends set apart (Saturday blue, Sunday rose) and
- * Philippine holidays marked (src/config/holidays.ts).
+ * Philippine holidays marked (src/config/holidays.ts). It leads Home: with room (about 40rem of
+ * card), the days grow and an agenda sits beside them (the chosen day, what's next, the month's holidays).
  */
 export function DeadlineCalendar({ tasks }: Props) {
   const todayKey = manilaDayKey(new Date().toISOString());
@@ -53,11 +54,18 @@ export function DeadlineCalendar({ tasks }: Props) {
   };
 
   const selectedTasks = byDay.get(selected) ?? [];
+  // What's next: open due dates from today on, soonest first.
+  const upcoming = [...byDay.entries()]
+    .filter(([d]) => d >= todayKey)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .flatMap(([d, ts]) => ts.map((t) => ({ day: d, task: t })))
+    .slice(0, 5);
   const selectedHoliday = holidayOn(selected);
   const onThisMonth = prefix === todayKey.slice(0, 7);
 
   return (
-    <Card id="deadlines" title="Calendar" note="Your due dates and Philippine holidays" source={dashboardService.source} className="h-full">
+    <Card id="deadlines" title="Calendar" note="Your due dates and Philippine holidays" source={dashboardService.source} className="h-full ring-1 ring-uplift/25">
+      <div className="flex flex-col gap-4 [container-type:inline-size]">
       <div className="flex items-center justify-between gap-2">
         <p aria-live="polite" className="leading-tight">
           <span className="text-lg font-bold tracking-tight">{monthName}</span> <span className="text-lg font-medium text-muted">{year}</span>
@@ -84,7 +92,8 @@ export function DeadlineCalendar({ tasks }: Props) {
       {tasks.status === 'error' && <LoadError message={tasks.error.message} onRetry={tasks.reload} />}
       {tasks.status === 'loading' && <Skeleton className="h-64" />}
       {tasks.status === 'success' && (
-        <>
+        <div className="grid grid-cols-1 gap-4 [@container(min-width:40rem)]:grid-cols-[minmax(0,1fr)_15rem]">
+        <div className="flex min-w-0 flex-col gap-3">
           <div key={prefix} className="animate-fade-in overflow-hidden rounded-xl border border-line/60" role="grid" aria-label={`${monthName} ${year}`}>
             <div className="grid grid-cols-7 border-b border-line/60 bg-surface-sunken" role="row">
               {WEEKDAYS.map((d, i) => (
@@ -99,7 +108,7 @@ export function DeadlineCalendar({ tasks }: Props) {
             </div>
             <div className="grid grid-cols-7" role="rowgroup">
               {Array.from({ length: lead }, (_, i) => (
-                <span key={`b${i}`} aria-hidden className={`h-11 border-b border-r border-line/40 ${i === 5 ? 'bg-sky-300/[0.04]' : ''}`} />
+                <span key={`b${i}`} aria-hidden className={`h-11 border-b border-r border-line/40 [@container(min-width:40rem)]:h-16 ${i === 5 ? 'bg-sky-300/[0.04]' : ''}`} />
               ))}
               {Array.from({ length: daysInMonth }, (_, i) => {
                 const day = i + 1;
@@ -129,11 +138,11 @@ export function DeadlineCalendar({ tasks }: Props) {
                     title={holiday ? `${holiday.name} (${HOLIDAY_KIND_LABEL[holiday.kind]})` : undefined}
                     aria-label={`${fmt(key, { weekday: 'long', month: 'long', day: 'numeric' })}${isToday ? ', today' : ''}${holiday ? `, ${holiday.name}` : ''}${due.length ? `, ${due.length} due` : ''}`}
                     onClick={() => setSelected(key)}
-                    className={`relative flex h-11 flex-col items-center justify-center gap-0.5 border-b border-r border-line/40 transition-colors ${holidayBg || weekendBg} ${
+                    className={`relative flex h-11 flex-col items-center justify-center gap-0.5 border-b border-r border-line/40 transition-colors [@container(min-width:40rem)]:h-16 [@container(min-width:40rem)]:gap-1.5 ${holidayBg || weekendBg} ${
                       col === 6 ? 'border-r-0' : ''
                     } ${isSelected ? 'z-[1] outline outline-2 -outline-offset-2 outline-uplift' : 'hover:bg-white/[0.05]'}`}
                   >
-                    <span className={`grid h-6 w-6 place-items-center rounded-full text-xs font-semibold tabular-nums ${numberTone}`}>{day}</span>
+                    <span className={`grid h-6 w-6 place-items-center rounded-full text-xs font-semibold tabular-nums [@container(min-width:40rem)]:h-8 [@container(min-width:40rem)]:w-8 [@container(min-width:40rem)]:text-sm ${numberTone}`}>{day}</span>
                     <span className="flex h-1.5 items-center gap-0.5" aria-hidden>
                       {holiday && holiday.kind !== 'working' && <span className={`h-1.5 w-3 rounded-full ${HOLIDAY_STYLE[holiday.kind].dot}`} />}
                       {due.slice(0, 3).map((t) => (
@@ -153,6 +162,10 @@ export function DeadlineCalendar({ tasks }: Props) {
             <span className="flex items-center gap-1.5"><span className="h-1.5 w-3 rounded-full bg-uplift" /> Special non-working</span>
             <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-sky-300/30" /><span className="h-2.5 w-2.5 rounded-sm bg-rose/30" /> Weekend</span>
           </div>
+        </div>
+
+        {/* The agenda: beside the month with room, under it otherwise. */}
+        <div className="flex min-w-0 flex-col gap-3">
 
           <div className="tile flex flex-col gap-2 px-4 py-3" aria-live="polite">
             <p className="text-xs font-semibold text-ink">{fmt(selected, { weekday: 'long', month: 'long', day: 'numeric' })}</p>
@@ -176,6 +189,37 @@ export function DeadlineCalendar({ tasks }: Props) {
             )}
           </div>
 
+          <section aria-label="Coming up" className="flex flex-col gap-1.5">
+            <h3 className="text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-muted">Coming up</h3>
+            {upcoming.length === 0 ? (
+              <p className="px-2 text-xs text-muted">Nothing due from today on.</p>
+            ) : (
+              <ul className="flex flex-col gap-1">
+                {upcoming.map(({ day, task }) => (
+                  <li key={task.id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setYear(Number(day.slice(0, 4)));
+                        setMonth(Number(day.slice(5, 7)) - 1);
+                        setSelected(day);
+                      }}
+                      className="flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left text-xs hover:bg-white/[0.04]"
+                    >
+                      <span
+                        className={`min-w-14 shrink-0 whitespace-nowrap rounded-md border px-1.5 py-0.5 text-center font-semibold tabular-nums ${day === todayKey ? 'border-uplift/50 text-uplift' : 'border-line text-ink-soft'}`}
+                      >
+                        {day === todayKey ? 'Today' : fmt(day, { month: 'short', day: 'numeric' })}
+                      </span>
+                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${task.priority === 'high' ? 'bg-rose' : 'bg-ink-soft'}`} aria-hidden />
+                      <span className="min-w-0 flex-1 truncate text-ink">{task.title}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
           {holidays.length > 0 && (
             <section aria-label={`Holidays in ${monthName}`} className="flex flex-col gap-1.5">
               <h3 className="text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-muted">Holidays in {monthName}</h3>
@@ -187,19 +231,21 @@ export function DeadlineCalendar({ tasks }: Props) {
                       onClick={() => setSelected(h.date)}
                       className="flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left text-xs hover:bg-white/[0.04]"
                     >
-                      <span className={`w-14 shrink-0 rounded-md border px-1.5 py-0.5 text-center font-semibold tabular-nums ${HOLIDAY_STYLE[h.kind].chip}`}>
+                      <span className={`min-w-14 shrink-0 whitespace-nowrap rounded-md border px-1.5 py-0.5 text-center font-semibold tabular-nums ${HOLIDAY_STYLE[h.kind].chip}`}>
                         {fmt(h.date, { month: 'short', day: 'numeric' })}
                       </span>
                       <span className="min-w-0 flex-1 truncate text-ink">{h.name}</span>
-                      <span className="hidden shrink-0 text-muted sm:inline">{fmt(h.date, { weekday: 'short' })} · {HOLIDAY_KIND_LABEL[h.kind]}</span>
+                      <span className="hidden shrink-0 text-muted [@container(min-width:30rem)]:inline [@container(min-width:40rem)]:hidden">{fmt(h.date, { weekday: 'short' })} · {HOLIDAY_KIND_LABEL[h.kind]}</span>
                     </button>
                   </li>
                 ))}
               </ul>
             </section>
           )}
-        </>
+        </div>
+        </div>
       )}
+      </div>
     </Card>
   );
 }

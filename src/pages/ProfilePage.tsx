@@ -87,7 +87,20 @@ const memberSince = (iso: string | null) =>
  * overlapping it (ringed in their level's frame), badges beside it, then who they are.
  * `showLocked` lists badges not earned yet with their progress (your own profile only).
  */
-function ProfileCard({ person: p, progress, showLocked = false, narrow = false }: { person: PersonProfile; progress: ProfileProgress | null; showLocked?: boolean; narrow?: boolean }) {
+function ProfileCard({
+  person: p,
+  progress,
+  showLocked = false,
+  narrow = false,
+  onPhoto,
+}: {
+  person: PersonProfile;
+  progress: ProfileProgress | null;
+  showLocked?: boolean;
+  narrow?: boolean;
+  /** Your own profile: the picture is the button to change it. */
+  onPhoto?: () => void;
+}) {
   const strip = narrow ? 5 : 8;
   const color = p.avatarColor ?? DEFAULT_COLOR;
   const level = progress ? levelFor(progress.xp) : null;
@@ -108,9 +121,16 @@ function ProfileCard({ person: p, progress, showLocked = false, narrow = false }
 
       <div className="relative px-4 pb-4 sm:px-5">
         <div className="flex items-end justify-between gap-3">
-          <div className="-mt-14 rounded-full bg-surface p-1.5">
-            <Avatar initials={p.initials} src={p.avatar} color={p.avatarColor} size="xl" ring={`ring-4 ${FRAME_RING[level?.frame ?? 'none']}`} />
-          </div>
+          {onPhoto ? (
+            <button type="button" onClick={onPhoto} className="group relative -mt-14 rounded-full bg-surface p-1.5" aria-label="Change your photo" title="Change your photo">
+              <Avatar initials={p.initials} src={p.avatar} color={p.avatarColor} size="xl" ring={`ring-4 ${FRAME_RING[level?.frame ?? 'none']}`} />
+              <PhotoOverlay />
+            </button>
+          ) : (
+            <div className="-mt-14 rounded-full bg-surface p-1.5">
+              <Avatar initials={p.initials} src={p.avatar} color={p.avatarColor} size="xl" ring={`ring-4 ${FRAME_RING[level?.frame ?? 'none']}`} />
+            </div>
+          )}
           {earned.length > 0 && (
             <ul className="mb-1 flex max-w-[60%] flex-wrap justify-end gap-1 rounded-xl border border-line/70 bg-surface-sunken p-1.5" aria-label="Badges">
               {earned.slice(0, strip).map(({ badge }) => {
@@ -372,17 +392,19 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
   };
 
   const customColor = d.avatarColor && !AVATAR_COLORS.includes(d.avatarColor);
+  const choosePhoto = () => file.current?.click();
 
   return (
+    <div className="mx-auto w-full max-w-5xl [container-type:inline-size]">
     <form
-      className="mx-auto grid w-full max-w-5xl grid-cols-1 gap-6 pb-24 lg:grid-cols-[minmax(0,1fr)_26rem]"
+      className="grid grid-cols-1 gap-6 pb-24 [@container(min-width:50rem)]:grid-cols-[minmax(0,1fr)_22rem] [@container(min-width:60rem)]:grid-cols-[minmax(0,1fr)_26rem]"
       onSubmit={(e) => {
         e.preventDefault();
         if (dirty) void save();
       }}
       noValidate
     >
-      <div className="flex min-w-0 flex-col gap-4">
+      <div className="flex min-w-0 flex-col gap-4 [container-type:inline-size]">
         {!mine && (
           <p className="rounded-xl border border-uplift/30 bg-uplift/10 px-4 py-3 text-sm text-ink-soft">
             You’re editing {person.displayName}’s profile as an administrator.
@@ -391,7 +413,7 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
 
         <section className="card flex flex-col gap-3">
           <EditGroup title="Who can see your profile" note="Your name, picture and role are always shown, so colleagues can give you tasks.">
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Who can see your profile">
+            <div className="grid grid-cols-1 gap-2 [@container(min-width:30rem)]:grid-cols-2" role="radiogroup" aria-label="Who can see your profile">
               {(
                 [
                   [true, 'Public', 'Everyone at PHILRADS sees your position, office, phone, bio and badges.', Globe2],
@@ -407,7 +429,7 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
                   className={`press flex items-start gap-3 rounded-xl border p-3 text-left transition-colors ${d.isPublic === value ? 'border-uplift bg-uplift/10' : 'border-line hover:border-ink-mute'}`}
                 >
                   <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${d.isPublic === value ? 'text-uplift' : 'text-muted'}`} aria-hidden />
-                  <span>
+                  <span className="min-w-0">
                     <span className="block text-sm font-semibold text-ink">{label}</span>
                     <span className="block text-xs leading-snug text-muted">{note}</span>
                   </span>
@@ -420,13 +442,23 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
         <section className="card flex flex-col gap-5">
           <EditGroup title="Profile picture">
             <input ref={file} type="file" accept="image/*" className="sr-only" onChange={(e) => (void pick(e.target.files?.[0]), (e.target.value = ''))} />
-            <div className="flex flex-wrap gap-2">
-              <button type="button" className="btn-primary min-h-11 px-4" onClick={() => file.current?.click()} disabled={picBusy}>
-                {picBusy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Camera className="h-4 w-4" aria-hidden />} {d.avatar ? 'Change photo' : 'Upload a photo'}
+            <div className="flex items-center gap-4">
+              {/* The picture is the button: tap it to choose a new one. */}
+              <button
+                type="button"
+                className="group relative shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-uplift focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+                onClick={choosePhoto}
+                disabled={picBusy}
+                aria-label={d.avatar ? 'Change your photo' : 'Add a photo'}
+                title={d.avatar ? 'Change your photo' : 'Add a photo'}
+              >
+                <Avatar initials={preview.initials} src={d.avatar} color={d.avatarColor} size="lg" ring="ring-2 ring-line" />
+                <PhotoOverlay busy={picBusy} small />
               </button>
+              <p className="min-w-0 flex-1 text-xs text-muted">{d.avatar ? 'Tap your photo to change it.' : 'Tap to add a photo, so the team knows you in Active.'}</p>
               {d.avatar && (
-                <button type="button" className="btn-ghost min-h-11 px-4" onClick={() => set('avatar', null)}>
-                  <Trash2 className="h-4 w-4" aria-hidden /> Remove photo
+                <button type="button" className="icon-btn h-10 w-10 shrink-0 text-muted hover:text-status-out" onClick={() => set('avatar', null)} aria-label="Remove photo" title="Remove photo">
+                  <Trash2 className="h-[1.125rem] w-[1.125rem]" aria-hidden />
                 </button>
               )}
             </div>
@@ -464,7 +496,7 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
         </section>
 
         <section className="card flex flex-col gap-4">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 [@container(min-width:32rem)]:grid-cols-2">
             <Field id={`${uid}-display`} label="Name on the portal">
               <input id={`${uid}-display`} className="field" maxLength={60} value={d.displayName} onChange={(e) => set('displayName', e.target.value)} autoComplete="nickname" />
             </Field>
@@ -472,7 +504,7 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
               <input id={`${uid}-full`} className="field" maxLength={120} value={d.fullName} onChange={(e) => set('fullName', e.target.value)} autoComplete="name" />
             </Field>
           </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 [@container(min-width:32rem)]:grid-cols-2">
             <Field id={`${uid}-job`} label="Position" hint="Optional">
               <span className="relative block">
                 <Briefcase className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
@@ -505,11 +537,14 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
         </section>
       </div>
 
-      <aside className="order-first flex flex-col gap-2 lg:order-none lg:sticky lg:top-24 lg:self-start" aria-label="Preview">
+      <aside
+        className="order-first mx-auto flex w-full max-w-xl flex-col gap-2 [@container(min-width:50rem)]:mx-0 [@container(min-width:50rem)]:max-w-none [@container(min-width:50rem)]:sticky [@container(min-width:50rem)]:top-24 [@container(min-width:50rem)]:order-none [@container(min-width:50rem)]:self-start"
+        aria-label="Preview"
+      >
         <p className="flex items-center gap-2 text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-ink-soft">
           Preview {profileService.source === 'mock' && <SampleBadge />}
         </p>
-        <ProfileCard person={preview} progress={progress} showLocked={mine} narrow />
+        <ProfileCard person={preview} progress={progress} showLocked={mine} narrow onPhoto={choosePhoto} />
       </aside>
 
       <PhotoCropper
@@ -535,6 +570,22 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
         </button>
       </div>
     </form>
+    </div>
+  );
+}
+
+/** The camera badge on a picture you can change (and a dim veil on hover). */
+function PhotoOverlay({ busy = false, small = false }: { busy?: boolean; small?: boolean }) {
+  return (
+    <>
+      <span aria-hidden className="pointer-events-none absolute inset-0 rounded-full bg-black/0 transition-colors group-hover:bg-black/35" />
+      <span
+        aria-hidden
+        className={`pointer-events-none absolute grid place-items-center rounded-full border-2 border-surface bg-uplift text-page shadow-lg transition-transform group-hover:scale-110 group-active:scale-95 ${small ? '-bottom-0.5 -right-0.5 h-6 w-6' : 'bottom-0 right-0 h-8 w-8'}`}
+      >
+        {busy ? <Loader2 className={`${small ? 'h-3 w-3' : 'h-4 w-4'} animate-spin`} /> : <Camera className={small ? 'h-3 w-3' : 'h-4 w-4'} />}
+      </span>
+    </>
   );
 }
 
