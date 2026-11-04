@@ -1,5 +1,8 @@
-import type { CSSProperties, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import type { AvatarFrameId } from '../../lib/avatarFrames';
+import { between, Blur, Comet, GlowFilter, polar, seeded, Sparkle, type Vars } from './avatarFrameKit';
+import { MOVING_FRAMES } from './avatarFrameMoving';
+import { STILL_FRAMES } from './avatarFrameStill';
 
 /**
  * The full, detailed frames (profile, picker): layered rings, glow and particles. Same geometry
@@ -9,59 +12,6 @@ import type { AvatarFrameId } from '../../lib/avatarFrames';
  * every device. Each one runs a CSS animation (src/index.css, ".avp-*") with its own path,
  * duration and a negative delay, so they are already mid-flight when the frame appears.
  */
-
-/** A small fixed-seed random generator (mulberry32). */
-const seeded = (seed: number) => () => {
-  seed = (seed + 0x6d2b79f5) | 0;
-  let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-};
-const between = (rnd: () => number, a: number, b: number) => a + (b - a) * rnd();
-const polar = (r: number, deg: number) => [r * Math.cos((deg * Math.PI) / 180), r * Math.sin((deg * Math.PI) / 180)] as const;
-
-type Vars = CSSProperties & Record<`--${string}`, string>;
-
-const C = 2 * Math.PI * 55;
-
-/** A comet round the ring at radius 55: bright head, fading tail (spin its group). */
-const Comet = ({ color, length, width }: { color: string; length: number; width: number }) => (
-  <>
-    {[1, 0.55, 0.25].map((k, i) => {
-      const len = C * length * [0.22, 0.5, 1][i];
-      return (
-        <circle
-          key={i}
-          r="55"
-          fill="none"
-          stroke={color}
-          strokeWidth={width * [1, 0.8, 0.6][i]}
-          strokeLinecap="round"
-          opacity={k}
-          strokeDasharray={`${len} ${C}`}
-          strokeDashoffset={-(C * length - len)}
-        />
-      );
-    })}
-  </>
-);
-
-const Blur = ({ id, d }: { id: string; d: number }) => (
-  <filter id={id} x="-50%" y="-50%" width="200%" height="200%">
-    <feGaussianBlur stdDeviation={d} />
-  </filter>
-);
-
-/** A soft glow behind sharp shapes: the shapes blurred, then the shapes again on top. */
-const GlowFilter = ({ id, d }: { id: string; d: number }) => (
-  <filter id={id} x="-50%" y="-50%" width="200%" height="200%">
-    <feGaussianBlur in="SourceGraphic" stdDeviation={d} result="b" />
-    <feMerge>
-      <feMergeNode in="b" />
-      <feMergeNode in="SourceGraphic" />
-    </feMerge>
-  </filter>
-);
 
 // ───────────────────────── Ember ─────────────────────────
 // Embers lift off the ring and rise, cooling from white-gold to red as they fade.
@@ -183,9 +133,6 @@ const STAR_LAYERS = (() => {
   return { far: layer(16, 0.35, 0.7, 0, 0), mid: layer(9, 0.8, 1.2, 0, 0), near: layer(5, 0, 0, 2.6, 3.8) };
 })();
 
-const Sparkle = ({ s, fill }: { s: number; fill: string }) => (
-  <path d={`M0 ${-s}Q0.5 -0.5 ${s} 0Q0.5 0.5 0 ${s}Q-0.5 0.5 ${-s} 0Q-0.5 -0.5 0 ${-s}Z`} fill={fill} />
-);
 
 const galaxy = (k: string) => (
   <>
@@ -349,4 +296,4 @@ const sakura = (k: string) => (
   </>
 );
 
-export const FULL_FRAMES: Partial<Record<AvatarFrameId, (k: string) => ReactNode>> = { ember, galaxy, sakura };
+export const FULL_FRAMES: Record<AvatarFrameId, (k: string) => ReactNode> = { ...STILL_FRAMES, ...MOVING_FRAMES, ember, galaxy, sakura };

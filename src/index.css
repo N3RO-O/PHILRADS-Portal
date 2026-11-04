@@ -969,6 +969,21 @@
 .avp-fall { animation: avp-fall 4.5s ease-in-out infinite; }
 .avp-shoot { opacity: 0; animation: avp-shoot 7s ease-out infinite; }
 .avp-flicker { animation: avp-flicker 1s ease-in-out infinite; }
+.avp-bubble { animation: avp-bubble 3s ease-in-out infinite; }
+.avp-neon { animation: avp-neon 5s linear infinite; }
+@keyframes avp-bubble {
+  0% { transform: translate(0, 0); opacity: 0; }
+  15% { opacity: 1; }
+  50% { transform: translate(calc(var(--dx) * -0.5), calc(var(--dy) * 0.5)); }
+  85% { opacity: 0.8; }
+  100% { transform: translate(var(--dx), var(--dy)); opacity: 0; }
+}
+@keyframes avp-neon {
+  0%, 41%, 43%, 46%, 78%, 80%, 100% { opacity: 1; }
+  42% { opacity: 0.35; }
+  45% { opacity: 0.55; }
+  79% { opacity: 0.45; }
+}
 @keyframes avp-flicker {
   0%, 100% { transform: scale(0.75, 0.6) skewX(0deg); opacity: 0.75; }
   30% { transform: scale(1.05, 1.15) skewX(-6deg); opacity: 1; }
@@ -995,14 +1010,17 @@
   100% { transform: translateX(26px); opacity: 0; }
 }
 
-/* Lists: still until hovered (the picture or its row); anywhere: paused off screen. */
-.av-framed[data-motion='hover'] .av-frame *,
+/* Anywhere: paused off screen. Lists, with a mouse: still until hovered (the picture or its
+   row). Phones and tablets have no hover, so there they always move. */
 .av-framed[data-off] .av-frame * { animation-play-state: paused; }
-.group:hover .av-framed[data-motion='hover']:not([data-off]) .av-frame *,
-.av-framed[data-motion='hover']:not([data-off]):hover .av-frame * { animation-play-state: running; }
+@media (hover: hover) and (pointer: fine) {
+  .av-framed[data-motion='hover'] .av-frame * { animation-play-state: paused; }
+  .group:hover .av-framed[data-motion='hover']:not([data-off]) .av-frame *,
+  .av-framed[data-motion='hover']:not([data-off]):hover .av-frame * { animation-play-state: running; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .av-frame * { animation: none !important; }
   .avf-flash { opacity: 1; }
-  .avp-rise, .avp-fall, .avp-shoot { display: none; }
+  .avp-rise, .avp-fall, .avp-shoot, .avp-bubble { display: none; }
 }
