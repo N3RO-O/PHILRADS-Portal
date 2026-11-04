@@ -1,16 +1,16 @@
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Briefcase, Camera, Check, Globe2, Loader2, Lock, Phone, Pipette, Trash2, UserRound } from 'lucide-react';
+import { Briefcase, Camera, Check, ChevronDown, Globe2, Loader2, Lock, Phone, Pipette, Trash2, UserRound } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../components/auth/AuthProvider';
 import { BADGE_ICON, FRAME_RING, FRAME_TEXT } from '../components/tasks/taskMeta';
 import { Avatar } from '../components/ui/Avatar';
 import { AvatarFrame } from '../components/ui/AvatarFrame';
-import { AVATAR_FRAMES } from '../lib/avatarFrames';
+import { AVATAR_FRAMES, frameUnlocked, type AvatarFrameInfo } from '../lib/avatarFrames';
 import { EmptyState, LoadError, Skeleton } from '../components/ui/Card';
 import { SampleBadge } from '../components/ui/SampleBadge';
 import { Dialog } from '../components/ui/Dialog';
 import { formatNumber, initialsOf } from '../lib/format';
-import { badgesFor, levelFor } from '../lib/taskProgress';
+import { BADGES, badgesFor, levelFor } from '../lib/taskProgress';
 import { profileService } from '../services';
 import { PhotoCropper } from '../components/profile/PhotoCropper';
 import { AVATAR_COLORS, openPicture, type PersonProfile, type ProfilePatch, type ProfileProgress } from '../services/profiles/profileService';
@@ -505,28 +505,12 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
 
           <hr className="border-line/70" />
 
-          <EditGroup title="Avatar frame" note="An animated ring around your picture, wherever it shows: Active, tasks, your profile.">
-            <div className="grid grid-cols-4 gap-1.5 [@container(min-width:26rem)]:grid-cols-5 [@container(min-width:34rem)]:grid-cols-7" role="radiogroup" aria-label="Avatar frame">
-              {[{ id: null, name: 'None' }, ...AVATAR_FRAMES].map((f) => {
-                const on = (d.avatarFrame ?? null) === f.id;
-                return (
-                  <button
-                    key={f.id ?? 'none'}
-                    type="button"
-                    role="radio"
-                    aria-checked={on}
-                    onClick={() => set('avatarFrame', f.id)}
-                    className={`press flex min-w-0 flex-col items-center gap-2 rounded-xl border px-1 pb-2 pt-3 transition-colors ${on ? 'border-uplift bg-uplift/10' : 'border-transparent hover:bg-white/[0.04]'}`}
-                  >
-                    <AvatarFrame frame={f.id}>
-                      <Avatar initials={preview.initials} src={d.avatar} color={d.avatarColor} size="md" ring="ring-0" />
-                    </AvatarFrame>
-                    <span className={`w-full truncate text-center text-[0.6875rem] font-semibold ${on ? 'text-uplift' : 'text-muted'}`}>{f.name}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </EditGroup>
+          <FramePicker
+            value={d.avatarFrame ?? null}
+            onChange={(f) => set('avatarFrame', f)}
+            progress={progress}
+            avatar={<Avatar initials={preview.initials} src={d.avatar} color={d.avatarColor} size="md" ring="ring-0" />}
+          />
         </section>
 
         <section className="card flex flex-col gap-4">
@@ -620,6 +604,95 @@ function PhotoOverlay({ busy = false, small = false }: { busy?: boolean; small?:
         {busy ? <Loader2 className={`${small ? 'h-3 w-3' : 'h-4 w-4'} animate-spin`} /> : <Camera className={small ? 'h-3 w-3' : 'h-4 w-4'} />}
       </span>
     </>
+  );
+}
+
+const unlockText = (f: AvatarFrameInfo) =>
+  !f.unlock ? '' : 'level' in f.unlock ? `Reach Level ${f.unlock.level}` : `Earn “${BADGES.find((b) => b.id === (f.unlock as { badge: string }).badge)?.name ?? 'a badge'}”`;
+
+/**
+ * Avatar frame: folded to the one you wear, opened to change it. Still and moving ones; some are
+ * earned with a level or a badge (shown locked, with what unlocks them, until then).
+ */
+function FramePicker({ value, onChange, progress, avatar }: { value: string | null; onChange: (f: string | null) => void; progress: ProfileProgress | null; avatar: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const level = progress ? levelFor(progress.xp).level : 1;
+  const badges = useMemo(() => new Set(progress ? badgesFor(progress.stats).filter((b) => b.earned).map((b) => b.badge.id) : []), [progress]);
+  const current = AVATAR_FRAMES.find((f) => f.id === value) ?? null;
+  const groups: [string, AvatarFrameInfo[]][] = [
+    ['Still', AVATAR_FRAMES.filter((f) => !f.animated)],
+    ['Moving', AVATAR_FRAMES.filter((f) => f.animated)],
+  ];
+  const unlockedCount = AVATAR_FRAMES.filter((f) => frameUnlocked(f, level, badges)).length;
+
+  const Option = ({ f }: { f: AvatarFrameInfo | null }) => {
+    const id = f?.id ?? null;
+    const on = value === id;
+    const locked = Boolean(f && !frameUnlocked(f, level, badges));
+    return (
+      <button
+        type="button"
+        role="radio"
+        aria-checked={on}
+        aria-disabled={locked}
+        title={locked && f ? `${f.name}: ${unlockText(f)}` : f?.name ?? 'No frame'}
+        onClick={() => !locked && onChange(id)}
+        className={`press flex min-w-0 flex-col items-center gap-2.5 rounded-xl border px-1 pb-2 pt-3.5 transition-colors ${
+          on ? 'border-uplift bg-uplift/10' : locked ? 'cursor-not-allowed border-transparent' : 'border-transparent hover:bg-white/[0.04]'
+        }`}
+      >
+        <span className={`relative ${locked ? 'opacity-40 grayscale' : ''}`}>
+          <AvatarFrame frame={id}>{avatar}</AvatarFrame>
+        </span>
+        <span className={`flex w-full min-w-0 items-center justify-center gap-1 text-[0.6875rem] font-semibold ${on ? 'text-uplift' : 'text-muted'}`}>
+          {locked && <Lock className="h-3 w-3 shrink-0" aria-hidden />}
+          <span className="truncate">{f?.name ?? 'None'}</span>
+        </span>
+        {locked && f && <span className="-mt-1.5 w-full truncate text-center text-[0.625rem] leading-tight text-muted">{unlockText(f)}</span>}
+      </button>
+    );
+  };
+
+  return (
+    <EditGroup title="Avatar frame" note="A ring around your picture wherever it shows: Active, tasks, your profile.">
+      <button
+        type="button"
+        className="press flex items-center gap-4 rounded-xl border border-line px-3 py-3 text-left transition-colors hover:bg-white/[0.04]"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+      >
+        <span className="grid h-14 w-14 shrink-0 place-items-center">
+          <AvatarFrame frame={value}>{avatar}</AvatarFrame>
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-semibold">{current?.name ?? 'No frame'}</span>
+          <span className="block text-xs text-muted">
+            {unlockedCount} of {AVATAR_FRAMES.length} unlocked
+          </span>
+        </span>
+        <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-uplift">
+          {open ? 'Done' : 'Change'}
+          <ChevronDown className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden />
+        </span>
+      </button>
+      {open && (
+        <div className="flex flex-col gap-3" role="radiogroup" aria-label="Avatar frame">
+          <div className="grid grid-cols-4 gap-1.5 [@container(min-width:26rem)]:grid-cols-5 [@container(min-width:34rem)]:grid-cols-7">
+            <Option f={null} />
+          </div>
+          {groups.map(([title, frames]) => (
+            <div key={title} className="flex flex-col gap-1.5">
+              <p className="text-[0.625rem] font-bold uppercase tracking-[0.08em] text-muted">{title}</p>
+              <div className="grid grid-cols-4 gap-1.5 [@container(min-width:26rem)]:grid-cols-5 [@container(min-width:34rem)]:grid-cols-7">
+                {frames.map((f) => (
+                  <Option key={f.id} f={f} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </EditGroup>
   );
 }
 

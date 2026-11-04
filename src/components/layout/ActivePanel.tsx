@@ -42,7 +42,7 @@ function Givers({ ids, nameOf, me }: { ids: string[]; nameOf: (id: string) => st
   return (
     <span className="flex shrink-0 items-center" title={`Tasks from ${names.join(', ')}`} aria-label={`Tasks from ${names.join(', ')}`}>
       {ids.map((id, i) => (
-        <span key={id} className={`rounded-full ring-2 ring-page ${i ? '-ml-1.5' : ''}`} style={{ zIndex: ids.length - i }}>
+        <span key={id} className={`grid place-items-center rounded-full leading-none ring-2 ring-page ${i ? '-ml-1.5' : ''}`} style={{ zIndex: ids.length - i }}>
           <PersonAvatar id={id} name={nameOf(id)} size="xs" ring="ring-0" frame={false} />
         </span>
       ))}

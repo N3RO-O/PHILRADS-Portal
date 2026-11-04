@@ -918,169 +918,52 @@
   50% { transform: scale(1); opacity: 1; }
 }
 
-/* ───────── Avatar frames (src/lib/avatarFrames.ts) ─────────
-   An overlay a little larger than the picture. Its ::before and ::after are cut to a ring
-   (--ring of the overlay's radius) unless a frame turns the mask off for dots or a halo. */
+/* ───────── Avatar frames (src/components/ui/AvatarFrame.tsx) ─────────
+   The wrapper hugs the picture (never stretched by a flex or grid parent), so the SVG over it,
+   128% of its size, stays centred on the picture. Shapes turn about the picture's centre (the
+   SVG's 0 0); twinkles scale about themselves. Easing is gentle; nothing flashes faster than ~1 s. */
 .av-framed {
   position: relative;
   display: inline-grid;
   place-items: center;
-  flex-shrink: 0;
+  flex: none;
+  width: fit-content;
+  height: fit-content;
+  align-self: center;
+  justify-self: center;
+  line-height: 0;
+  vertical-align: middle;
   isolation: isolate;
 }
 .av-frame {
-  --ring: 14%;
   position: absolute;
-  inset: -8%;
-  border-radius: 9999px;
+  inset: -14%;
+  width: 128%;
+  height: 128%;
+  overflow: visible;
   pointer-events: none;
   z-index: 1;
 }
-.av-frame::before,
-.av-frame::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - var(--ring)), #000 calc(100% - var(--ring) + 1px));
-  mask: radial-gradient(farthest-side, transparent calc(100% - var(--ring)), #000 calc(100% - var(--ring) + 1px));
-}
-@keyframes av-spin { to { transform: rotate(1turn); } }
-@keyframes av-spin-rev { to { transform: rotate(-1turn); } }
-@keyframes av-pulse { 0%, 100% { opacity: 0.55; transform: scale(0.97); } 50% { opacity: 1; transform: scale(1.03); } }
-@keyframes av-beat { 0%, 60%, 100% { transform: scale(1); } 12% { transform: scale(1.09); } 26% { transform: scale(1); } 40% { transform: scale(1.06); } }
-@keyframes av-blink { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
-@keyframes av-flicker { 0%, 100% { opacity: 1; } 6% { opacity: 0.35; } 9% { opacity: 1; } 52% { opacity: 0.9; } 54% { opacity: 0.25; } 57% { opacity: 1; } }
-@keyframes av-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7%); } }
-@keyframes av-rise { 0% { transform: translateY(18%); opacity: 0; } 25% { opacity: 1; } 100% { transform: translateY(-55%); opacity: 0; } }
-@keyframes av-ripple { from { transform: scale(0.92); opacity: 0.85; } to { transform: scale(1.3); opacity: 0; } }
-
-/* 1 Ember: flames chasing round, with their glow. */
-.f-ember::before, .f-ember::after { background: conic-gradient(#ff3d00, #ffb300, #ff6d00, #ff1744, #ffca28, #ff3d00); animation: av-spin 2.4s linear infinite; }
-.f-ember::after { filter: blur(5px); opacity: 0.8; }
-/* 2 Aurora: northern lights, two layers turning apart. */
-.f-aurora::before, .f-aurora::after { background: conic-gradient(#00e5a0, #00b3ff, #9b5cff, #ff5ccb, #00e5a0); }
-.f-aurora::before { animation: av-spin 6s linear infinite; }
-.f-aurora::after { filter: blur(6px); opacity: 0.65; animation: av-spin-rev 9s linear infinite; }
-/* 3 Neon: a cyan tube that hums. */
-.f-neon { --ring: 9%; animation: av-pulse 1.8s ease-in-out infinite; }
-.f-neon::before { background: #22e4ff; }
-.f-neon::after { background: #22e4ff; filter: blur(6px); }
-/* 4 Sakura: a soft pink ring with petals drifting round. */
-.f-sakura { --ring: 8%; }
-.f-sakura::before { background: conic-gradient(#ffc2d9, #ff8fb8, #ffe3ee, #ff8fb8, #ffc2d9); animation: av-spin 10s linear infinite; }
-.f-sakura::after {
-  -webkit-mask: none; mask: none;
-  background:
-    radial-gradient(circle at 50% 3%, #ffb7d5 0 6%, transparent 7%),
-    radial-gradient(circle at 97% 50%, #ffd1e3 0 5%, transparent 6%),
-    radial-gradient(circle at 50% 97%, #ff9ec4 0 6%, transparent 7%),
-    radial-gradient(circle at 3% 50%, #ffd1e3 0 5%, transparent 6%);
-  animation: av-spin 6s linear infinite;
-}
-/* 5 Orbit: a little moon going round. */
-.f-orbit { --ring: 4%; }
-.f-orbit::before { background: rgba(255, 255, 255, 0.28); }
-.f-orbit::after { -webkit-mask: none; mask: none; background: radial-gradient(circle at 50% 3%, #ffd166 0 7%, transparent 8%); filter: drop-shadow(0 0 3px #ffd166); animation: av-spin 2.2s linear infinite; }
-/* 6 Twin moons: two, opposite each other. */
-.f-twin { --ring: 4%; }
-.f-twin::before { background: rgba(167, 139, 250, 0.4); }
-.f-twin::after {
-  -webkit-mask: none; mask: none;
-  background: radial-gradient(circle at 50% 3%, #7dd3fc 0 7%, transparent 8%), radial-gradient(circle at 50% 97%, #f9a8d4 0 7%, transparent 8%);
-  filter: drop-shadow(0 0 3px #c4b5fd);
-  animation: av-spin 3s linear infinite;
-}
-/* 7 Rainbow: every colour, cycling. */
-.f-rainbow::before, .f-rainbow::after { background: conic-gradient(#ff004d, #ff9a00, #ffe600, #2bff88, #00c8ff, #7b5cff, #ff00c8, #ff004d); animation: av-spin 4s linear infinite; }
-.f-rainbow::after { filter: blur(4px); opacity: 0.6; }
-/* 8 Ocean: a turning tide and a ripple going out. */
-.f-ocean::before { background: conic-gradient(#023e8a, #00b4d8, #90e0ef, #0077b6, #023e8a); animation: av-spin 5s linear infinite; }
-.f-ocean::after { -webkit-mask: none; mask: none; border: 2px solid #48cae4; animation: av-ripple 2.4s ease-out infinite; }
-/* 9 Sunrise: golden rays turning slowly over a warm glow. */
-.f-sunrise { --ring: 16%; }
-.f-sunrise::before { background: repeating-conic-gradient(#ffd166 0 7deg, transparent 7deg 18deg); animation: av-spin 12s linear infinite; }
-.f-sunrise::after { background: conic-gradient(#ff9f1c, #ffd166, #ff9f1c); filter: blur(3px); opacity: 0.5; }
-/* 10 Frost: an icy crown turning back. */
-.f-frost { --ring: 11%; }
-.f-frost::before { background: repeating-conic-gradient(#e0fbff 0 10deg, #7dd3fc 10deg 14deg, transparent 14deg 24deg); animation: av-spin-rev 8s linear infinite; }
-.f-frost::after { background: #bae6fd; filter: blur(5px); opacity: 0.45; }
-/* 11 Heartbeat: a pink ring that beats. */
-.f-heartbeat { animation: av-beat 1.4s ease-in-out infinite; }
-.f-heartbeat::before { background: conic-gradient(#ff4d8d, #ff8fab, #ff2e63, #ff4d8d); }
-.f-heartbeat::after { background: #ff4d8d; filter: blur(6px); opacity: 0.55; }
-/* 12 Sparkle: stars that twinkle as they go round. */
-.f-sparkle { --ring: 4%; }
-.f-sparkle::before { background: rgba(255, 255, 255, 0.3); }
-.f-sparkle::after {
-  -webkit-mask: none; mask: none;
-  background:
-    radial-gradient(circle at 50% 2%, #fff 0 3.5%, transparent 4.5%),
-    radial-gradient(circle at 92% 28%, #fff7c2 0 2.5%, transparent 3.5%),
-    radial-gradient(circle at 88% 78%, #fff 0 3%, transparent 4%),
-    radial-gradient(circle at 40% 98%, #fff7c2 0 2.5%, transparent 3.5%),
-    radial-gradient(circle at 6% 68%, #fff 0 3%, transparent 4%),
-    radial-gradient(circle at 12% 18%, #fff7c2 0 2.5%, transparent 3.5%);
-  filter: drop-shadow(0 0 2px #fff);
-  animation: av-spin 14s linear infinite, av-blink 1.6s ease-in-out infinite;
-}
-/* 13 Halo: a golden halo floating above. */
-.f-halo { --ring: 4%; }
-.f-halo::before {
-  -webkit-mask: none; mask: none;
-  inset: -12% 20% 80% 20%;
-  border: 3px solid #ffe08a;
-  box-shadow: 0 0 8px #ffd166, inset 0 0 4px #ffd166;
-  animation: av-float 2.6s ease-in-out infinite;
-}
-.f-halo::after { background: #ffe08a; opacity: 0.45; }
-/* 14 Thunder: a crackling yellow ring. */
-.f-thunder::before, .f-thunder::after { background: conic-gradient(#fff176, #ffd600, #fffde7, #ffab00, #fff176); animation: av-flicker 2.2s linear infinite; }
-.f-thunder::after { filter: blur(6px); }
-/* 15 Royal: gold and amethyst, with a dotted inner band. */
-.f-royal { --ring: 10%; }
-.f-royal::before { background: conic-gradient(#ffd166, #b8860b, #ffd166, #7b2cbf, #ffd166); animation: av-spin 8s linear infinite; }
-.f-royal::after { inset: -4%; background: repeating-conic-gradient(#c77dff 0 4deg, transparent 4deg 12deg); --ring: 4%; animation: av-spin-rev 12s linear infinite; }
-/* 16 Radar: a sweep going round. */
-.f-radar { --ring: 22%; }
-.f-radar::before { background: rgba(74, 222, 128, 0.25); }
-.f-radar::after { background: conic-gradient(rgba(74, 222, 128, 0.8), transparent 28%); animation: av-spin 2s linear infinite; }
-/* 17 Bubbles: rising from below. */
-.f-bubbles { --ring: 5%; }
-.f-bubbles::before { background: rgba(103, 232, 249, 0.35); }
-.f-bubbles::after {
-  -webkit-mask: none; mask: none;
-  background:
-    radial-gradient(circle at 18% 85%, transparent 0 3%, #a5f3fc 3.5% 4.5%, transparent 5%),
-    radial-gradient(circle at 82% 92%, transparent 0 4%, #67e8f9 4.5% 5.5%, transparent 6%),
-    radial-gradient(circle at 50% 100%, transparent 0 2.5%, #cffafe 3% 4%, transparent 4.5%);
-  animation: av-rise 2.8s ease-in infinite;
-}
-/* 18 Evergreen: leaves turning round. */
-.f-leaf { --ring: 12%; }
-.f-leaf::before { background: repeating-conic-gradient(#4ade80 0 9deg, #166534 9deg 13deg, transparent 13deg 30deg); animation: av-spin 9s linear infinite; }
-.f-leaf::after { background: #22c55e; filter: blur(5px); opacity: 0.4; }
-/* 19 Galaxy: deep space with stars drifting. */
-.f-galaxy::before { background: conic-gradient(#1a0b3d, #5b21b6, #c026d3, #1e3a8a, #1a0b3d); animation: av-spin 10s linear infinite; }
-.f-galaxy::after {
-  -webkit-mask: none; mask: none;
-  background:
-    radial-gradient(circle at 50% 4%, #fff 0 1.8%, transparent 2.5%),
-    radial-gradient(circle at 95% 40%, #e9d5ff 0 1.5%, transparent 2.2%),
-    radial-gradient(circle at 70% 95%, #fff 0 1.8%, transparent 2.5%),
-    radial-gradient(circle at 8% 70%, #e9d5ff 0 1.5%, transparent 2.2%),
-    radial-gradient(circle at 20% 10%, #fff 0 1.2%, transparent 2%);
-  animation: av-spin-rev 16s linear infinite;
-}
-/* 20 PHILRADS: burgundy and orange, breathing. */
-.f-philrads { animation: av-pulse 2.4s ease-in-out infinite; }
-.f-philrads::before, .f-philrads::after { background: conic-gradient(#7a0b0b, #ec952a, #7a0b0b, #f5b562, #7a0b0b); animation: av-spin 5s linear infinite; }
-.f-philrads::after { filter: blur(5px); opacity: 0.7; }
+.av-frame * { transform-origin: 0 0; }
+.avf-spin { animation: avf-spin var(--d, 8s) linear infinite; }
+.avf-spin-rev { animation: avf-spin var(--d, 8s) linear infinite reverse; }
+.avf-ripple { animation: avf-ripple 3s cubic-bezier(0.22, 0.61, 0.36, 1) infinite; }
+.avf-hum { animation: avf-hum 3.2s ease-in-out infinite; }
+.avf-beat { animation: avf-beat 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+.avf-float { animation: avf-float 3.6s ease-in-out infinite; }
+.avf-sway { animation: avf-sway 2.8s ease-in-out infinite alternate; }
+.avf-twinkle { transform-box: fill-box; transform-origin: center; animation: avf-twinkle 2.6s ease-in-out infinite; }
+.avf-flash { opacity: 0; animation: avf-flash 2.1s ease-out infinite; }
+@keyframes avf-spin { to { transform: rotate(360deg); } }
+@keyframes avf-ripple { from { transform: scale(1); opacity: 0.7; } to { transform: scale(1.13); opacity: 0; } }
+@keyframes avf-hum { 0%, 100% { opacity: 0.72; } 50% { opacity: 1; } }
+@keyframes avf-beat { 0%, 45%, 100% { transform: scale(1); } 10% { transform: scale(1.045); } 22% { transform: scale(1.005); } 32% { transform: scale(1.03); } }
+@keyframes avf-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3.5px); } }
+@keyframes avf-sway { from { transform: rotate(-18deg); } to { transform: rotate(18deg); } }
+@keyframes avf-twinkle { 0%, 100% { transform: scale(0.55); opacity: 0.35; } 50% { transform: scale(1); opacity: 1; } }
+@keyframes avf-flash { 0%, 60%, 100% { opacity: 0; } 64% { opacity: 1; } 70% { opacity: 0.3; } 74% { opacity: 1; } 88% { opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .av-frame,
-  .av-frame::before,
-  .av-frame::after {
-    animation: none !important;
-  }
+  .av-frame * { animation: none !important; }
+  .avf-flash { opacity: 1; }
 }
