@@ -1,5 +1,6 @@
-import { useId, type ReactNode } from 'react';
+import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { isAvatarFrame, type AvatarFrameId } from '../../lib/avatarFrames';
+import { FULL_FRAMES } from './avatarFrameArt';
 
 /**
  * A picture in its chosen frame (src/lib/avatarFrames.ts). No frame, or an unknown one: just the picture.
@@ -7,19 +8,54 @@ import { isAvatarFrame, type AvatarFrameId } from '../../lib/avatarFrames';
  * Each frame is an SVG laid over the picture, 128% of its size, in a viewBox centred on the
  * picture's centre where the picture's edge is radius 50. Rings sit between 51 and 60, so every
  * frame is concentric with the picture at any size. Motion classes are in src/index.css (".avf-*").
+ *
+ * `detail`: "full" (profile, picker) adds the particles and extra layers where a frame has them
+ * (./avatarFrameArt.tsx); "lite" (lists, small pictures) is the clean ring alone.
+ * `motion`: "hover" keeps it still until the pointer is on it or on its row (".group"), like
+ * Discord's lists. Frames off screen pause either way.
  */
-export function AvatarFrame({ frame, children }: { frame: string | null | undefined; children: ReactNode }) {
+export function AvatarFrame({
+  frame,
+  detail = 'full',
+  motion = 'always',
+  children,
+}: {
+  frame: string | null | undefined;
+  detail?: 'full' | 'lite';
+  motion?: 'always' | 'hover';
+  children: ReactNode;
+}) {
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
-  if (!isAvatarFrame(frame)) return <>{children}</>;
+  const ref = useRef<HTMLSpanElement>(null);
+  const known = isAvatarFrame(frame);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    watch(el);
+    return () => unwatch(el);
+  }, [known]);
+  if (!known) return <>{children}</>;
+  const art = (detail === 'full' && FULL_FRAMES[frame]) || FRAMES[frame];
   return (
-    <span className="av-framed">
+    <span ref={ref} className="av-framed" data-motion={motion}>
       {children}
       <svg aria-hidden className="av-frame" viewBox="-64 -64 128 128">
-        {FRAMES[frame](`f${uid}`)}
+        {art(`f${uid}`)}
       </svg>
     </span>
   );
 }
+
+// One observer for every frame on the page: off screen, the animations pause.
+let observer: IntersectionObserver | null = null;
+const watch = (el: Element) => {
+  if (typeof IntersectionObserver === 'undefined') return;
+  observer ??= new IntersectionObserver((entries) => {
+    for (const e of entries) (e.target as HTMLElement).toggleAttribute('data-off', !e.isIntersecting);
+  });
+  observer.observe(el);
+};
+const unwatch = (el: Element) => observer?.unobserve(el);
 
 const C = 2 * Math.PI * 55; // the ring at radius 55, for dashes
 

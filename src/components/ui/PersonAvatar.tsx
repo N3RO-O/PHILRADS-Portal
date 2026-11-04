@@ -46,5 +46,13 @@ export function PersonAvatar({ id, name, size, ring, frame = true }: { id: strin
   }, [id, own]);
   const pic = own ? { avatar: profile!.avatar ?? null, color: profile!.avatarColor ?? null, frame: profile!.avatarFrame ?? null } : id ? cache.get(id) : undefined;
   const avatar = <Avatar initials={initialsOf(name || '?')} src={pic?.avatar} color={pic?.color} size={size} ring={ring} />;
-  return frame ? <AvatarFrame frame={pic?.frame}>{avatar}</AvatarFrame> : avatar;
+  // Big pictures get the full frame, moving; small ones in lists a clean ring that moves on hover.
+  const big = size === 'lg' || size === 'xl' || size === 'hero';
+  return frame ? (
+    <AvatarFrame frame={pic?.frame} detail={big ? 'full' : 'lite'} motion={big ? 'always' : 'hover'}>
+      {avatar}
+    </AvatarFrame>
+  ) : (
+    avatar
+  );
 }
