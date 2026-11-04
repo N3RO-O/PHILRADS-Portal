@@ -418,34 +418,6 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
           </p>
         )}
 
-        <section className="card flex flex-col gap-3">
-          <EditGroup title="Who can see your profile" note="Your name, picture and role are always shown, so colleagues can give you tasks.">
-            <div className="grid grid-cols-1 gap-2 [@container(min-width:30rem)]:grid-cols-2" role="radiogroup" aria-label="Who can see your profile">
-              {(
-                [
-                  [true, 'Public', 'Everyone at PHILRADS sees your position, office, phone, bio and badges.', Globe2],
-                  [false, 'Private', 'Only you and administrators see them. Colleagues see your name, picture and role.', Lock],
-                ] as const
-              ).map(([value, label, note, Icon]) => (
-                <button
-                  key={label}
-                  type="button"
-                  role="radio"
-                  aria-checked={d.isPublic === value}
-                  onClick={() => set('isPublic', value)}
-                  className={`press flex items-start gap-3 rounded-xl border p-3 text-left transition-colors ${d.isPublic === value ? 'border-uplift bg-uplift/10' : 'border-line hover:border-ink-mute'}`}
-                >
-                  <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${d.isPublic === value ? 'text-uplift' : 'text-muted'}`} aria-hidden />
-                  <span className="min-w-0">
-                    <span className="block text-sm font-semibold text-ink">{label}</span>
-                    <span className="block text-xs leading-snug text-muted">{note}</span>
-                  </span>
-                </button>
-              ))}
-            </div>
-          </EditGroup>
-        </section>
-
         <section className="card flex flex-col gap-5">
           <EditGroup title="Profile picture">
             <input ref={file} type="file" accept="image/*" className="sr-only" onChange={(e) => (void pick(e.target.files?.[0]), (e.target.value = ''))} />
@@ -547,6 +519,27 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
               placeholder="A few words about you and your work with PHILRADS."
             />
           </Field>
+          {/* Visibility: one small switch at the end, not a card of its own. */}
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 border-t border-line/70 pt-4">
+            <span className="flex min-w-0 items-center gap-2 text-xs text-muted">
+              {d.isPublic ? <Globe2 className="h-3.5 w-3.5 shrink-0" aria-hidden /> : <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden />}
+              {d.isPublic ? 'Everyone sees your details.' : 'Colleagues see only your name, picture and role.'}
+            </span>
+            <span className="flex shrink-0 rounded-lg border border-line p-0.5" role="radiogroup" aria-label="Who can see your profile">
+              {([[true, 'Public'], [false, 'Private']] as const).map(([value, label]) => (
+                <button
+                  key={label}
+                  type="button"
+                  role="radio"
+                  aria-checked={d.isPublic === value}
+                  onClick={() => set('isPublic', value)}
+                  className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors ${d.isPublic === value ? 'bg-uplift/15 text-uplift' : 'text-muted hover:text-ink'}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </span>
+          </div>
           {message && (
             <p role={message.error ? 'alert' : 'status'} className={`rounded-xl border px-4 py-3 text-sm ${message.error ? 'border-status-out/40 bg-status-out/10' : 'border-status-in/40 bg-status-in/10'}`}>
               {message.text}
