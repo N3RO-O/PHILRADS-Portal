@@ -36,6 +36,20 @@ function lineOf(p: BoardPerson, status: Status) {
  * (online, idle or do not disturb) are grouped by role from the top of the hierarchy down; everyone
  * else is under Offline. Tap a person for the tasks they've been given (nudge, or accept your own).
  */
+/** Small overlapping pictures of who gave someone their open tasks (latest on top). */
+function Givers({ ids, nameOf, me }: { ids: string[]; nameOf: (id: string) => string; me: string | null }) {
+  const names = ids.map((id) => (id === me ? 'you' : nameOf(id)));
+  return (
+    <span className="flex shrink-0 items-center" title={`Tasks from ${names.join(', ')}`} aria-label={`Tasks from ${names.join(', ')}`}>
+      {ids.map((id, i) => (
+        <span key={id} className={`rounded-full ring-2 ring-page ${i ? '-ml-1.5' : ''}`} style={{ zIndex: ids.length - i }}>
+          <PersonAvatar id={id} name={nameOf(id)} size="xs" ring="ring-0" frame={false} />
+        </span>
+      ))}
+    </span>
+  );
+}
+
 export function ActivePanel({ onClose, variant }: { onClose: () => void; variant: 'docked' | 'drawer' }) {
   const { profile } = useAuth();
   const presence = usePresence();
@@ -77,6 +91,8 @@ export function ActivePanel({ onClose, variant }: { onClose: () => void; variant
   }, [people, presence, profile?.id]);
 
   const activeCount = presence.activeCount(people.map((p) => p.id));
+  const everyone = board.status === 'success' ? board.data : [];
+  const nameOf = (id: string) => everyone.find((x) => x.id === id)?.name ?? 'a former colleague';
   const person = people.find((p) => p.id === openId) ?? null;
 
   return (
@@ -152,6 +168,9 @@ export function ActivePanel({ onClose, variant }: { onClose: () => void; variant
                           </span>
                           <span className={`block truncate text-[0.6875rem] ${line.tone}`}>{line.text}</span>
                         </span>
+                        {p.givers.length > 0 && (
+                          <Givers ids={p.givers} nameOf={nameOf} me={profile?.id ?? null} />
+                        )}
                         {p.open + p.inProgress > 0 && !g.offline && (
                           <span className="shrink-0 rounded-md bg-white/[0.06] px-1.5 py-0.5 text-[0.625rem] font-bold tabular-nums text-ink-soft group-hover:bg-white/[0.1]">{p.open + p.inProgress}</span>
                         )}

@@ -773,6 +773,14 @@ await check('staff see the Staff Tasks board', () => as(B, `select name, open_co
   if (r.rows.length < 2) throw new Error(JSON.stringify(r.rows));
   return r.rows.length;
 }));
+await check('the board shows who gave someone their open tasks', () => as(A, `select givers from public.staff_task_board() where profile_id = '${B}'`).then((r) => {
+  // B was given "From admin" by A, and it's still open.
+  if (!r.rows[0]?.givers?.includes(A)) throw new Error(JSON.stringify(r.rows));
+  return r.rows[0].givers.length;
+}));
+await check('your own tasks don’t count as given to you', () => as(A, `select givers from public.staff_task_board() where profile_id = '${A}'`).then((r) => {
+  if (r.rows[0]?.givers?.includes(A)) throw new Error(JSON.stringify(r.rows));
+}));
 await check('a colleague sees tasks given to the admin, not the admin’s own', () => as(B, `select title from public.staff_tasks_of('${A}')`).then((r) => {
   const titles = r.rows.map((x) => x.title);
   if (!titles.includes('For admin') || titles.includes('Admin only')) throw new Error(JSON.stringify(titles));

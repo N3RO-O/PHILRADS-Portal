@@ -17,6 +17,8 @@ export interface BoardPerson {
   /** Given to them and not answered yet. */
   pending: number;
   doneWeek: number;
+  /** Who gave them their open tasks: up to three, the latest first. */
+  givers: string[];
 }
 
 /** A task as the Staff Tasks board shows it (only tasks given by others, unless it's you or you can see everything). */
@@ -86,6 +88,8 @@ export function createSupabaseStaffBoard(client: SupabaseClient): StaffBoardServ
         overdue: Number(r.overdue),
         pending: Number(r.pending),
         doneWeek: Number(r.done_week),
+        // Missing before the board_givers migration: no pictures, nothing else changes.
+        givers: (r.givers as string[] | null | undefined) ?? [],
       }));
     },
     async tasksOf(personId) {
@@ -145,12 +149,12 @@ export function createSupabaseStaffBoard(client: SupabaseClient): StaffBoardServ
 
 const day = (n: number) => new Date(Date.now() + n * 86_400_000 + 8 * 3600_000).toISOString().slice(0, 10);
 const SAMPLE_BOARD: BoardPerson[] = [
-  { id: demoProfile.id, name: demoProfile.displayName, roleKey: 'admin', roleName: 'Administrator', open: 4, inProgress: 1, overdue: 0, pending: 0, doneWeek: 3 },
-  { id: 'p-ana', name: 'Ana Reyes', roleKey: 'coordinator', roleName: 'Coordinator', open: 3, inProgress: 2, overdue: 1, pending: 0, doneWeek: 5 },
-  { id: 'p-jun', name: 'Jun Dela Cruz', roleKey: 'staff', roleName: 'Field staff', open: 5, inProgress: 1, overdue: 0, pending: 1, doneWeek: 2 },
-  { id: 'p-maria', name: 'Maria Santos', roleKey: 'staff', roleName: 'Field staff', open: 2, inProgress: 0, overdue: 0, pending: 0, doneWeek: 6 },
-  { id: 'p-leo', name: 'Leo Mendoza', roleKey: 'volunteer', roleName: 'Volunteer', open: 1, inProgress: 1, overdue: 1, pending: 0, doneWeek: 1 },
-  { id: 'p-grace', name: 'Grace Lim', roleKey: 'staff', roleName: 'Field staff', open: 0, inProgress: 0, overdue: 0, pending: 0, doneWeek: 4 },
+  { id: demoProfile.id, name: demoProfile.displayName, roleKey: 'admin', roleName: 'Administrator', open: 4, inProgress: 1, overdue: 0, pending: 0, doneWeek: 3, givers: ['p-ana', 'p-maria'] },
+  { id: 'p-ana', name: 'Ana Reyes', roleKey: 'coordinator', roleName: 'Coordinator', open: 3, inProgress: 2, overdue: 1, pending: 0, doneWeek: 5, givers: [demoProfile.id] },
+  { id: 'p-jun', name: 'Jun Dela Cruz', roleKey: 'staff', roleName: 'Field staff', open: 5, inProgress: 1, overdue: 0, pending: 1, doneWeek: 2, givers: ['p-ana', demoProfile.id, 'p-maria'] },
+  { id: 'p-maria', name: 'Maria Santos', roleKey: 'staff', roleName: 'Field staff', open: 2, inProgress: 0, overdue: 0, pending: 0, doneWeek: 6, givers: [demoProfile.id] },
+  { id: 'p-leo', name: 'Leo Mendoza', roleKey: 'volunteer', roleName: 'Volunteer', open: 1, inProgress: 1, overdue: 1, pending: 0, doneWeek: 1, givers: ['p-maria'] },
+  { id: 'p-grace', name: 'Grace Lim', roleKey: 'staff', roleName: 'Field staff', open: 0, inProgress: 0, overdue: 0, pending: 0, doneWeek: 4, givers: [] },
 ];
 const sampleTasks = (personId: string): BoardTask[] => {
   const base: BoardTask[] = [

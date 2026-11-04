@@ -146,7 +146,12 @@ export function PersonTasks({ person, status, me, onClose, onChanged }: { person
                             <Clock className="h-3 w-3" aria-hidden /> {formatShortDate(t.dueDate)}
                           </span>
                         )}
-                        {t.givenBy && <span>from {t.givenById === me ? 'you' : t.givenBy}</span>}
+                        {t.givenBy && (
+                          <span className="inline-flex items-center gap-1">
+                            <PersonAvatar id={t.givenById} name={t.givenBy} size="xs" ring="ring-0" frame={false} />
+                            from {t.givenById === me ? 'you' : t.givenBy}
+                          </span>
+                        )}
                       </p>
                     </div>
                     {canNudge &&

@@ -34,7 +34,7 @@ const request = (id: string) => {
 };
 
 /** Someone's profile picture (or initials in their colour). Your own follows your profile straight away. */
-export function PersonAvatar({ id, name, size, ring, frame = true }: { id: string | null | undefined; name: string; size?: 'sm' | 'md' | 'lg' | 'xl' | 'hero'; ring?: string; frame?: boolean }) {
+export function PersonAvatar({ id, name, size, ring, frame = true }: { id: string | null | undefined; name: string; size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'hero'; ring?: string; frame?: boolean }) {
   const { profile } = useAuth();
   const [, rerender] = useReducer((n: number) => n + 1, 0);
   const own = Boolean(profile && id === profile.id);
