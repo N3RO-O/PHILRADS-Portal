@@ -601,7 +601,7 @@ function PhotoOverlay({ busy = false, small = false }: { busy?: boolean; small?:
 }
 
 const unlockText = (f: AvatarFrameInfo) =>
-  !f.unlock ? '' : 'level' in f.unlock ? `Reach Level ${f.unlock.level}` : `Earn “${BADGES.find((b) => b.id === (f.unlock as { badge: string }).badge)?.name ?? 'a badge'}”`;
+  !f.unlock ? '' : 'role' in f.unlock ? 'Administrators only' : 'level' in f.unlock ? `Reach Level ${f.unlock.level}` : `Earn “${BADGES.find((b) => b.id === (f.unlock as { badge: string }).badge)?.name ?? 'a badge'}”`;
 
 /**
  * Avatar frame: folded to the one you wear, opened to change it. Still and moving ones; some are
@@ -609,19 +609,24 @@ const unlockText = (f: AvatarFrameInfo) =>
  */
 function FramePicker({ value, onChange, progress, avatar }: { value: string | null; onChange: (f: string | null) => void; progress: ProfileProgress | null; avatar: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const role = useAuth().profile?.roleKey;
   const level = progress ? levelFor(progress.xp).level : 1;
   const badges = useMemo(() => new Set(progress ? badgesFor(progress.stats).filter((b) => b.earned).map((b) => b.badge.id) : []), [progress]);
   const current = AVATAR_FRAMES.find((f) => f.id === value) ?? null;
+  const exclusive = (f: AvatarFrameInfo) => Boolean(f.unlock && 'role' in f.unlock);
   const groups: [string, AvatarFrameInfo[]][] = [
-    ['Still', AVATAR_FRAMES.filter((f) => !f.animated)],
-    ['Moving', AVATAR_FRAMES.filter((f) => f.animated)],
+    ['Exclusive', AVATAR_FRAMES.filter((f) => exclusive(f) && frameUnlocked(f, level, badges, role))],
+    ['Still', AVATAR_FRAMES.filter((f) => !exclusive(f) && !f.animated)],
+    ['Moving', AVATAR_FRAMES.filter((f) => !exclusive(f) && f.animated)],
   ];
-  const unlockedCount = AVATAR_FRAMES.filter((f) => frameUnlocked(f, level, badges)).length;
+  // Frames for other roles aren't shown or counted.
+  const offered = AVATAR_FRAMES.filter((f) => !exclusive(f) || frameUnlocked(f, level, badges, role));
+  const unlockedCount = offered.filter((f) => frameUnlocked(f, level, badges, role)).length;
 
   const Option = ({ f }: { f: AvatarFrameInfo | null }) => {
     const id = f?.id ?? null;
     const on = value === id;
-    const locked = Boolean(f && !frameUnlocked(f, level, badges));
+    const locked = Boolean(f && !frameUnlocked(f, level, badges, role));
     return (
       <button
         type="button"
@@ -660,7 +665,7 @@ function FramePicker({ value, onChange, progress, avatar }: { value: string | nu
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-semibold">{current?.name ?? 'No frame'}</span>
           <span className="block text-xs text-muted">
-            {unlockedCount} of {AVATAR_FRAMES.length} unlocked
+            {unlockedCount} of {offered.length} unlocked
           </span>
         </span>
         <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-uplift">
@@ -673,7 +678,7 @@ function FramePicker({ value, onChange, progress, avatar }: { value: string | nu
           <div className="grid grid-cols-4 gap-1.5 [@container(min-width:26rem)]:grid-cols-5 [@container(min-width:34rem)]:grid-cols-7">
             <Option f={null} />
           </div>
-          {groups.map(([title, frames]) => (
+          {groups.filter(([, frames]) => frames.length).map(([title, frames]) => (
             <div key={title} className="flex flex-col gap-1.5">
               <p className="text-[0.625rem] font-bold uppercase tracking-[0.08em] text-muted">{title}</p>
               <div className="grid grid-cols-4 gap-1.5 [@container(min-width:26rem)]:grid-cols-5 [@container(min-width:34rem)]:grid-cols-7">

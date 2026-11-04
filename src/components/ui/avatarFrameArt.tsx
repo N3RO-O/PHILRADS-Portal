@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { AvatarFrameId } from '../../lib/avatarFrames';
 import { between, Blur, Comet, GlowFilter, polar, seeded, Sparkle, type Vars } from './avatarFrameKit';
+import { admin } from './avatarFrameAdmin';
 import { MOVING_FRAMES } from './avatarFrameMoving';
 import { STILL_FRAMES } from './avatarFrameStill';
 
@@ -296,4 +297,4 @@ const sakura = (k: string) => (
   </>
 );
 
-export const FULL_FRAMES: Record<AvatarFrameId, (k: string) => ReactNode> = { ...STILL_FRAMES, ...MOVING_FRAMES, ember, galaxy, sakura };
+export const FULL_FRAMES: Record<AvatarFrameId, (k: string) => ReactNode> = { ...STILL_FRAMES, ...MOVING_FRAMES, ember, galaxy, sakura, admin };

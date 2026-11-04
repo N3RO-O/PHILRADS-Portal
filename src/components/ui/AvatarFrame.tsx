@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { isAvatarFrame, type AvatarFrameId } from '../../lib/avatarFrames';
+import { adminLite } from './avatarFrameAdmin';
 import { FULL_FRAMES } from './avatarFrameArt';
 
 /**
@@ -110,6 +111,7 @@ const Star = ({ x, y, s, fill }: { x: number; y: number; s: number; fill: string
 );
 
 const FRAMES: Record<AvatarFrameId, (k: string) => ReactNode> = {
+  admin: adminLite,
   // ───────── Still ─────────
   classic: () => (
     <>

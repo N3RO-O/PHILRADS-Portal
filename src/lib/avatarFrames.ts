@@ -2,9 +2,10 @@
  * Avatar frames: rings around a profile picture, like Discord's decorations. Each one is drawn in
  * SVG (src/components/ui/AvatarFrame.tsx) on the picture's own centre, so it lines up at any size;
  * a profile stores only the id (avatar_frame). Some are still, some move (still for anyone who
- * prefers reduced motion), and some are earned: a level, or a badge from finished tasks.
+ * prefers reduced motion), and some are earned: a level, or a badge from finished tasks. One is
+ * for administrators only (the database enforces that one: 20261112000000_admin_frame.sql).
  */
-export type FrameUnlock = { level: number } | { badge: string };
+export type FrameUnlock = { level: number } | { badge: string } | { role: string };
 
 export interface AvatarFrameInfo {
   id: string;
@@ -15,6 +16,8 @@ export interface AvatarFrameInfo {
 }
 
 export const AVATAR_FRAMES = [
+  // Exclusive
+  { id: 'admin', name: 'PHILRADS Admin', animated: true, unlock: { role: 'admin' } },
   // Still
   { id: 'classic', name: 'Classic', animated: false },
   { id: 'rose', name: 'Rose gold', animated: false },
@@ -45,6 +48,6 @@ export type AvatarFrameId = (typeof AVATAR_FRAMES)[number]['id'];
 const IDS = new Set<string>(AVATAR_FRAMES.map((f) => f.id));
 export const isAvatarFrame = (id: string | null | undefined): id is AvatarFrameId => Boolean(id && IDS.has(id));
 
-/** Whether someone at this level, with these badges, may wear the frame. */
-export const frameUnlocked = (f: AvatarFrameInfo, level: number, badges: ReadonlySet<string>) =>
-  !f.unlock || ('level' in f.unlock ? level >= f.unlock.level : badges.has(f.unlock.badge));
+/** Whether someone with this role, at this level, with these badges, may wear the frame. */
+export const frameUnlocked = (f: AvatarFrameInfo, level: number, badges: ReadonlySet<string>, role: string | null | undefined) =>
+  !f.unlock || ('role' in f.unlock ? role === f.unlock.role : 'level' in f.unlock ? level >= f.unlock.level : badges.has(f.unlock.badge));

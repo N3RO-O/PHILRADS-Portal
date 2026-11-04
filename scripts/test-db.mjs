@@ -883,6 +883,16 @@ await check('view_profile includes the frame', () => as(A, `select public.view_p
   if (r.rows[0]?.f !== 'aurora') throw new Error(JSON.stringify(r.rows));
 }));
 await check('nobody changes someone else’s frame', () => as(A, `update public.profiles set avatar_frame = 'ember' where id = '${B}'`), true);
+await check('only administrators wear the PHILRADS Admin frame', () => as(B, `update public.profiles set avatar_frame = 'admin' where id = '${B}'`), true);
+await check('an administrator wears it', () => as(A, `update public.profiles set avatar_frame = 'admin' where id = '${A}' returning avatar_frame`).then(expectRows(1)));
+await check('it comes off when someone stops being an administrator', async () => {
+  await db.query(`update public.profiles set role_key = 'admin' where id = '${B}'`);
+  await as(B, `update public.profiles set avatar_frame = 'admin' where id = '${B}'`);
+  await as(A, `update public.profiles set role_key = 'staff' where id = '${B}'`);
+  const r = (await db.query(`select role_key, avatar_frame from public.profiles where id = '${B}'`)).rows[0];
+  if (r.role_key !== 'staff' || r.avatar_frame !== null) throw new Error(JSON.stringify(r));
+  return r;
+});
 await check('frame names are checked', () => as(B, `update public.profiles set avatar_frame = 'x; drop' where id = '${B}'`), true);
 await check('an administrator still switches accounts and roles', () => as(A, `update public.profiles set role_key = 'staff', is_active = true where id = '${E}' returning id`).then(expectRows(1)));
 await check('the owner still edits their own profile', () => as(B, `update public.profiles set bio = 'My own words' where id = '${B}' returning id`).then(expectRows(1)));
