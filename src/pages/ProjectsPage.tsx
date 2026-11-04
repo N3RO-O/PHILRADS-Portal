@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   ArrowLeft,
+  Banknote,
+  BarChart3,
   CalendarClock,
   Check,
   CheckCircle2,
@@ -24,7 +26,7 @@ import { useAuth } from '../components/auth/AuthProvider';
 import { ProjectSheet } from '../components/projects/ProjectSheet';
 import { EmptyState, LoadError, Skeleton } from '../components/ui/Card';
 import { SampleBadge } from '../components/ui/SampleBadge';
-import { formatDateTime, formatNumber, formatShortDate } from '../lib/format';
+import { formatDateTime, formatNumber, formatPeso, formatShortDate } from '../lib/format';
 import { todayKey } from '../lib/inventory';
 import { daysBetween } from '../lib/tasks';
 import { documentationService, projectsService, tasksService } from '../services';
@@ -81,6 +83,7 @@ export function ProjectsPage() {
   const { can, profile } = useAuth();
   const me = profile?.id ?? null;
   const canCreate = can('projects.manage');
+  const canCost = can('funding.read');
   const [projects, setProjects] = useState<Project[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [people, setPeople] = useState<{ id: string; name: string }[]>([]);
@@ -122,23 +125,23 @@ export function ProjectsPage() {
         projects === null ? (
           <Skeleton className="h-96" />
         ) : project ? (
-          <ProjectDetail project={project} me={me} canManage={canManage(project)} canSetLead={canCreate} people={people} onChanged={load} onEdit={() => setSheet({ project })} />
+          <ProjectDetail project={project} me={me} canManage={canManage(project)} canSetLead={canCreate} canCost={canCost} people={people} onChanged={load} onEdit={() => setSheet({ project })} />
         ) : (
           <EmptyState icon={FolderKanban} title="This project isn’t here" action={<Link to="/projects" className="btn-ghost min-h-10 px-4 text-sm">All projects</Link>}>
             It may have been removed, or the link is wrong.
           </EmptyState>
         )
       ) : (
-        <ProjectList projects={projects} me={me} canCreate={canCreate} onNew={() => setSheet({ project: null })} />
+        <ProjectList projects={projects} me={me} canCreate={canCreate} canCost={canCost} onNew={() => setSheet({ project: null })} />
       )}
-      <ProjectSheet open={Boolean(sheet)} project={sheet?.project ?? null} people={people} canSetLead={canCreate} onClose={() => setSheet(null)} onSave={save} />
+      <ProjectSheet open={Boolean(sheet)} project={sheet?.project ?? null} people={people} canSetLead={canCreate} canCost={canCost && Boolean(sheet && (!sheet.project || canManage(sheet.project)))} onClose={() => setSheet(null)} onSave={save} />
     </>
   );
 }
 
 // ───────────────────────── List ─────────────────────────
 
-function ProjectList({ projects, me, canCreate, onNew }: { projects: Project[] | null; me: string | null; canCreate: boolean; onNew: () => void }) {
+function ProjectList({ projects, me, canCreate, canCost, onNew }: { projects: Project[] | null; me: string | null; canCreate: boolean; canCost: boolean; onNew: () => void }) {
   const [filter, setFilter] = useState<Filter>('active');
   const [mine, setMine] = useState(false);
   const [search, setSearch] = useState('');
@@ -153,6 +156,8 @@ function ProjectList({ projects, me, canCreate, onNew }: { projects: Project[] |
       (!needle || [p.name, p.programArea, p.donor, p.partner, p.location, p.leadName].some((s) => s?.toLowerCase().includes(needle))),
   );
   const count = (f: Filter) => all.filter((p) => (f === 'all' ? p.status !== 'cancelled' : p.status === f)).length;
+  const costed = shown.filter((p) => p.totalCost != null);
+  const totalCost = costed.reduce((sum, p) => sum + (p.totalCost ?? 0), 0);
 
   return (
     <section className="card flex flex-col gap-4 p-4 sm:p-5">
@@ -181,6 +186,16 @@ function ProjectList({ projects, me, canCreate, onNew }: { projects: Project[] |
         <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
         <input type="search" className="field pl-10" placeholder="Search: name, type, donor, partner, place, lead…" value={search} onChange={(e) => setSearch(e.target.value)} />
       </label>
+      {canCost && costed.length > 0 && (
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-line bg-white/[0.03] px-4 py-3 text-sm text-ink-soft">
+          <Banknote className="h-4 w-4 shrink-0 text-uplift" aria-hidden />
+          <span>Total cost of the projects shown</span>
+          <strong className="text-base tabular-nums text-ink">{formatPeso(totalCost)}</strong>
+          <span className="text-xs text-muted">
+            {costed.length === shown.length ? `${shown.length} project${shown.length === 1 ? '' : 's'}` : `${costed.length} of ${shown.length} have a cost`}
+          </span>
+        </p>
+      )}
 
       {projects === null ? (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3" aria-busy="true" aria-label="Loading projects">
@@ -206,7 +221,7 @@ function ProjectList({ projects, me, canCreate, onNew }: { projects: Project[] |
         <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
           {shown.map((p) => (
             <li key={p.id}>
-              <ProjectCard project={p} today={today} />
+              <ProjectCard project={p} today={today} canCost={canCost} />
             </li>
           ))}
         </ul>
@@ -215,7 +230,7 @@ function ProjectList({ projects, me, canCreate, onNew }: { projects: Project[] |
   );
 }
 
-function ProjectCard({ project: p, today }: { project: Project; today: string }) {
+function ProjectCard({ project: p, today, canCost }: { project: Project; today: string; canCost: boolean }) {
   const next = nextDeadline(p);
   const due = next ? dueText(next, today) : null;
   const done = p.milestones.filter((m) => m.done).length;
@@ -257,7 +272,11 @@ function ProjectCard({ project: p, today }: { project: Project; today: string })
             'No lead yet'
           )}
         </span>
-        {dateRange(p) && <span className="shrink-0 tabular-nums">{dateRange(p)}</span>}
+        {canCost && p.totalCost != null ? (
+          <span className="shrink-0 font-semibold tabular-nums text-ink-soft">{formatPeso(p.totalCost)}</span>
+        ) : (
+          dateRange(p) && <span className="shrink-0 tabular-nums">{dateRange(p)}</span>
+        )}
       </div>
     </Link>
   );
@@ -270,12 +289,13 @@ interface DetailProps {
   me: string | null;
   canManage: boolean;
   canSetLead: boolean;
+  canCost: boolean;
   people: { id: string; name: string }[];
   onChanged: () => Promise<void> | void;
   onEdit: () => void;
 }
 
-function ProjectDetail({ project: p, me, canManage, people, onChanged, onEdit }: DetailProps) {
+function ProjectDetail({ project: p, me, canManage, canCost, people, onChanged, onEdit }: DetailProps) {
   const today = todayKey();
   const onTeam = canManage || (Boolean(me) && (p.leadId === me || p.members.some((m) => m.profileId === me)));
   const [error, setError] = useState<string | null>(null);
@@ -314,6 +334,7 @@ function ProjectDetail({ project: p, me, canManage, people, onChanged, onEdit }:
 
   const done = p.milestones.filter((m) => m.done).length;
   const facts: [ReactNode, string][] = [];
+  if (canCost && p.totalCost != null) facts.push([<Banknote key="i" className="h-4 w-4 text-uplift" aria-hidden />, `Total cost: ${formatPeso(p.totalCost)}`]);
   if (p.donor) facts.push([<Landmark key="i" className="h-4 w-4 text-uplift" aria-hidden />, `Donor: ${p.donor}`]);
   if (p.partner) facts.push([<HandHeart key="i" className="h-4 w-4 text-uplift" aria-hidden />, `Partner: ${p.partner}`]);
   if (p.location) facts.push([<MapPin key="i" className="h-4 w-4 text-uplift" aria-hidden />, p.location]);
@@ -365,6 +386,15 @@ function ProjectDetail({ project: p, me, canManage, people, onChanged, onEdit }:
               </li>
             ))}
           </ul>
+        )}
+        {p.status === 'completed' && (
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-status-in/30 bg-status-in/10 px-4 py-2.5 text-sm">
+            <BarChart3 className="h-4 w-4 shrink-0 text-status-in" aria-hidden />
+            <span>Completed, so it’s counted in Statistics{canCost ? ' with its total cost' : ''}.</span>
+            <Link to="/statistics" className="link">
+              Open Statistics
+            </Link>
+          </p>
         )}
         {p.description && <p className="max-w-3xl whitespace-pre-line text-sm leading-relaxed text-ink-soft">{p.description}</p>}
         <PeopleToReach project={p} canManage={canManage} busy={busy} act={act} />

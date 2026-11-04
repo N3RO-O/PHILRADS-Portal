@@ -737,6 +737,49 @@ await check('a sync is all or nothing', async () => {
   throw new Error('the broken sync was accepted');
 });
 
+// Projects: a private total cost; a completed project becomes one statistics record
+const STAT = `(select id from public.program_activities where project_id = ${PRJ} and source = 'Projects module')`;
+await check('staff (even the lead) cannot set the project cost', () => as(B, `insert into public.project_costs (project_id, total_cost) values (${PRJ}, 1)`), true);
+await check('a coordinator or admin sets the project cost', () => as(A, `insert into public.project_costs (project_id, total_cost) values (${PRJ}, 1250000) returning total_cost`).then(expectRows(1)));
+await check('staff cannot see the project cost', () => as(B, `select total_cost from public.project_costs`).then(expectRows(0)));
+await check('the cost cannot be negative', () => as(A, `update public.project_costs set total_cost = -1 where project_id = ${PRJ}`), true);
+await check('an open project is not in the statistics', async () => {
+  const n = (await db.query(`select count(*)::int n from public.program_activities where project_id = ${PRJ}`)).rows[0].n;
+  if (n) throw new Error(`${n} record(s)`);
+  return 'not there';
+});
+await check('the lead completes the project: it is in the statistics with people reached, cost and donor', async () => {
+  await as(B, `update public.projects set status = 'completed' where id = ${PRJ}`);
+  const r = (await db.query(`select a.program, a.site, a.individuals_target, a.individuals_served, a.served_note, a.partner, a.status, a.is_active, f.funding::int, f.donors
+    from public.program_activities a left join public.program_activity_funding f on f.activity_id = a.id where a.id = ${STAT}`)).rows;
+  const x = r[0];
+  if (r.length !== 1 || x.program !== 'emergency' || x.site !== 'Naga City' || x.individuals_served !== 5500 || x.funding !== 1250000 || x.donors !== 'Donor Foundation' || !x.is_active)
+    throw new Error(JSON.stringify(r));
+  return { served: x.individuals_served, note: x.served_note, funding: x.funding };
+});
+await check('staff see the record but not its funding', async () => {
+  const seen = (await as(B, `select id from public.program_activities where id = ${STAT}`)).rows.length;
+  const fund = (await as(B, `select funding from public.program_activity_funding where activity_id = ${STAT}`)).rows.length;
+  if (seen !== 1 || fund !== 0) throw new Error(JSON.stringify({ seen, fund }));
+  return 'record only';
+});
+await check('a cost change on a completed project updates the statistics', async () => {
+  await as(A, `update public.project_costs set total_cost = 1300000 where project_id = ${PRJ}`);
+  const f = (await db.query(`select funding::int from public.program_activity_funding where activity_id = ${STAT}`)).rows[0].funding;
+  if (f !== 1300000) throw new Error(String(f));
+  return f;
+});
+await check('reopening hides the record; completing again brings the same one back', async () => {
+  await as(B, `update public.projects set status = 'active' where id = ${PRJ}`);
+  const hidden = (await db.query(`select is_active from public.program_activities where id = ${STAT}`)).rows[0].is_active;
+  await as(B, `update public.projects set status = 'completed', beneficiaries_additional = 400 where id = ${PRJ}`);
+  const r = (await db.query(`select is_active, individuals_served from public.program_activities where project_id = ${PRJ}`)).rows;
+  if (hidden || r.length !== 1 || !r[0].is_active || r[0].individuals_served !== 5600) throw new Error(JSON.stringify({ hidden, r }));
+  await as(B, `update public.projects set status = 'on_hold', beneficiaries_additional = 300 where id = ${PRJ}`);
+  return 'one record';
+});
+await check('nobody calls the statistics function directly', () => as(A, `select public.project_to_statistics(${PRJ})`), true);
+
 // Staff Tasks: accepting by role, nudges, the board and phone notifications
 await check('admin gives staff a task: assigned straight away, with a bell note', async () => {
   const r = await as(A, `insert into public.tasks (title, assignee_id, created_by) values ('From admin', '${B}', '${A}') returning acceptance`);

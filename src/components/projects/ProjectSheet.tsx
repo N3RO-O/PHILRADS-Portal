@@ -18,7 +18,8 @@ const EMPTY: ProjectDraft = {
   beneficiariesAdditional: 0,
 };
 
-export const draftOf = (p: Project): ProjectDraft => ({
+/** `withCost`: the person can see costs (funding.read), so the form carries the total cost. */
+export const draftOf = (p: Project, withCost = false): ProjectDraft => ({
   id: p.id,
   name: p.name,
   description: p.description ?? '',
@@ -32,6 +33,7 @@ export const draftOf = (p: Project): ProjectDraft => ({
   location: p.location ?? '',
   beneficiariesTarget: p.beneficiariesTarget,
   beneficiariesAdditional: p.beneficiariesAdditional,
+  ...(withCost && { totalCost: p.totalCost }),
 });
 
 interface Props {
@@ -40,13 +42,15 @@ interface Props {
   people: { id: string; name: string }[];
   /** Coordinators/admins: the lead can be changed (a lead can't hand the project on). */
   canSetLead: boolean;
+  /** Administrators and coordinators (funding.read): the total project cost. */
+  canCost: boolean;
   onClose: () => void;
   /** Resolves to an error message, or null when saved. */
   onSave: (d: ProjectDraft) => Promise<string | null>;
 }
 
 /** Start a project, or edit one: name, what it is, who leads it, when, where and for whom. */
-export function ProjectSheet({ open, project, people, canSetLead, onClose, onSave }: Props) {
+export function ProjectSheet({ open, project, people, canSetLead, canCost, onClose, onSave }: Props) {
   const uid = useId();
   const [d, setD] = useState<ProjectDraft>(EMPTY);
   const [base, setBase] = useState<ProjectDraft>(EMPTY);
@@ -54,11 +58,11 @@ export function ProjectSheet({ open, project, people, canSetLead, onClose, onSav
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     if (!open) return;
-    const start = project ? draftOf(project) : EMPTY;
+    const start = project ? draftOf(project, canCost) : canCost ? { ...EMPTY, totalCost: null } : EMPTY;
     setD(start);
     setBase(start);
     setError(null);
-  }, [open, project]);
+  }, [open, project, canCost]);
   const set = <K extends keyof ProjectDraft>(k: K, v: ProjectDraft[K]) => setD((x) => ({ ...x, [k]: v }));
   const dirty = JSON.stringify(d) !== JSON.stringify(base);
 
@@ -137,6 +141,21 @@ export function ProjectSheet({ open, project, people, canSetLead, onClose, onSav
             <input id={`${uid}-partner`} className="field" maxLength={200} value={d.partner} onChange={(e) => set('partner', e.target.value)} />
           </Field>
         </div>
+        {canCost && (
+          <Field id={`${uid}-cost`} label="Total project cost (₱)" hint="Only admins and coordinators see this">
+            <input
+              id={`${uid}-cost`}
+              type="number"
+              inputMode="decimal"
+              min={0}
+              step="0.01"
+              className="field"
+              value={d.totalCost ?? ''}
+              onChange={(e) => set('totalCost', e.target.value === '' ? null : Math.max(0, Number(e.target.value)))}
+              placeholder="e.g. 1250000"
+            />
+          </Field>
+        )}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field id={`${uid}-target`} label="People to reach" hint="Can change later">
             <input

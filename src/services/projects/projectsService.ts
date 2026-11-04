@@ -72,6 +72,8 @@ export interface Project {
   beneficiariesTarget: number | null;
   /** People reached beyond the plan. */
   beneficiariesAdditional: number;
+  /** Total project cost in pesos; only funding.read sees it (null for everyone else). */
+  totalCost: number | null;
   members: ProjectMember[];
   milestones: Milestone[];
   updatedAt: string;
@@ -91,6 +93,8 @@ export interface ProjectDraft {
   location: string;
   beneficiariesTarget: number | null;
   beneficiariesAdditional: number;
+  /** Left out when the person can't see costs: the saved cost stays as it is. */
+  totalCost?: number | null;
 }
 
 export interface MilestoneDraft {
@@ -146,6 +150,7 @@ const validate = (d: ProjectDraft) => {
   if (d.name.trim().length > 200) throw new ProjectRuleError('Keep the name under 200 characters.');
   if (d.startDate && d.endDate && d.endDate < d.startDate) throw new ProjectRuleError('The end date is before the start date.');
   checkPeople(d.beneficiariesTarget, d.beneficiariesAdditional);
+  if (d.totalCost != null && !(Number.isFinite(d.totalCost) && d.totalCost >= 0 && d.totalCost < 1e12)) throw new ProjectRuleError('The total cost is an amount in pesos, 0 or more.');
 };
 
 // ───────────────────────── Supabase ─────────────────────────
@@ -181,6 +186,7 @@ export function createSupabaseProjectsService(client: SupabaseClient): ProjectsS
     location: (r.location as string | null) ?? null,
     beneficiariesTarget: r.beneficiaries_target == null ? null : Number(r.beneficiaries_target),
     beneficiariesAdditional: Number(r.beneficiaries_additional ?? 0),
+    totalCost: null,
     members: ((r.members as Record<string, unknown>[]) ?? []).map((m) => ({ profileId: m.profile_id as string, name: name(m.person) ?? 'Staff member', role: m.member_role as 'lead' | 'member' })),
     milestones: ((r.milestones as Record<string, unknown>[]) ?? []).map((m) => ({
       id: m.id as string,
@@ -199,9 +205,17 @@ export function createSupabaseProjectsService(client: SupabaseClient): ProjectsS
   return {
     source: 'supabase',
     async list() {
-      const { data, error } = await client.from('projects').select(COLUMNS).order('updated_at', { ascending: false }).limit(500);
+      const [{ data, error }, costs] = await Promise.all([
+        client.from('projects').select(COLUMNS).order('updated_at', { ascending: false }).limit(500),
+        // Empty for anyone without funding.read, and before the project-cost migration.
+        client.from('project_costs').select('project_id, total_cost').limit(1000),
+      ]);
       if (error) fail('load projects', error);
-      return (data ?? []).map((r) => map(r as unknown as Record<string, unknown>));
+      const cost = new Map((costs.data ?? []).map((c) => [c.project_id as string, c.total_cost == null ? null : Number(c.total_cost)]));
+      return (data ?? []).map((r) => {
+        const p = map(r as unknown as Record<string, unknown>);
+        return { ...p, totalCost: cost.get(p.id) ?? null };
+      });
     },
     async save(d) {
       validate(d);
@@ -222,7 +236,13 @@ export function createSupabaseProjectsService(client: SupabaseClient): ProjectsS
       const q = d.id ? client.from('projects').update(row).eq('id', d.id) : client.from('projects').insert(row);
       const { data, error } = await q.select('id').single();
       if (error) fail('save the project', error);
-      return (data as { id: string }).id;
+      const id = (data as { id: string }).id;
+      if (d.totalCost !== undefined) {
+        const { error: costError } = await client.from('project_costs').upsert({ project_id: id, total_cost: d.totalCost }, { onConflict: 'project_id' });
+        if (costError?.code === '42P01' || costError?.code === 'PGRST205') throw new ProjectRuleError('Saved, but the total cost isn’t switched on yet. Ask an administrator to run the latest update.');
+        if (costError) fail('save the total cost', costError);
+      }
+      return id;
     },
     async setStatus(id, status) {
       const { error } = await client.from('projects').update({ status }).eq('id', id);
@@ -324,6 +344,7 @@ const sample: Project[] = [
     location: 'Naga City and Pili, Camarines Sur',
     beneficiariesTarget: 4500,
     beneficiariesAdditional: 320,
+    totalCost: 1850000,
     members: [
       { profileId: 'p-maria', name: 'Maria Santos', role: 'lead' },
       { profileId: 'p-jun', name: 'Jun Dela Cruz', role: 'member' },
@@ -348,6 +369,7 @@ const sample: Project[] = [
     location: 'Quezon City',
     beneficiariesTarget: 60,
     beneficiariesAdditional: 0,
+    totalCost: 420000,
     members: [
       { profileId: 'p-ana', name: 'Ana Reyes', role: 'lead' },
       { profileId: 'p-leo', name: 'Leo Mendoza', role: 'member' },
@@ -371,6 +393,7 @@ const sample: Project[] = [
     location: 'Quezon City',
     beneficiariesTarget: 2500,
     beneficiariesAdditional: 0,
+    totalCost: null,
     members: [],
     milestones: [],
     updatedAt: new Date(Date.now() - 3 * 86_400_000).toISOString(),
@@ -426,6 +449,7 @@ export const mockProjectsService: ProjectsService = {
       location: d.location.trim() || null,
       beneficiariesTarget: d.beneficiariesTarget,
       beneficiariesAdditional: d.beneficiariesAdditional,
+      ...(d.totalCost !== undefined && { totalCost: d.totalCost }),
       updatedAt: new Date().toISOString(),
     };
     if (d.id) {
@@ -433,7 +457,7 @@ export const mockProjectsService: ProjectsService = {
       return later(d.id);
     }
     const id = `prj-${Date.now()}`;
-    sample.unshift({ id, progress: 0, members: [], milestones: [], ...fields });
+    sample.unshift({ id, progress: 0, totalCost: null, members: [], milestones: [], ...fields });
     return later(id);
   },
   async setStatus(id, status) {

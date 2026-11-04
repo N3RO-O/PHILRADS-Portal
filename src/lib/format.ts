@@ -1,6 +1,7 @@
 const TZ = 'Asia/Manila';
 
 export const formatNumber = (n: number) => new Intl.NumberFormat('en-PH').format(n);
+export const formatPeso = (n: number) => new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 0 }).format(n);
 
 export const formatLongDate = (d: Date = new Date()) =>
   new Intl.DateTimeFormat('en-PH', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: TZ }).format(d);
