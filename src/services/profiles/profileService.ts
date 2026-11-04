@@ -23,6 +23,8 @@ export interface PersonProfile {
   bio: string | null;
   avatar: string | null;
   avatarColor: string | null;
+  /** Animated frame around the picture (src/lib/avatarFrames.ts). */
+  avatarFrame: string | null;
   isActive: boolean;
   /** When the account was made. */
   memberSince: string | null;
@@ -35,6 +37,7 @@ export interface PersonProfile {
 export interface ProfilePicture {
   avatar: string | null;
   color: string | null;
+  frame?: string | null;
 }
 
 /** What someone's level and badges are worked out from (src/lib/taskProgress.ts). */
@@ -51,6 +54,7 @@ export interface ProfilePatch {
   bio: string;
   avatar: string | null;
   avatarColor: string | null;
+  avatarFrame: string | null;
   isPublic: boolean;
 }
 
@@ -107,6 +111,9 @@ export function cropPicture(img: HTMLImageElement, x: number, y: number, side: n
 
 // ───────────────────────── Supabase ─────────────────────────
 
+/** The column isn't there (a database that hasn't had a migration yet). */
+const missingColumn = (e: { code?: string; message?: string }) => e.code === '42703' || e.code === 'PGRST204' || /avatar_frame/.test(e.message ?? '');
+
 export function createSupabaseProfileService(client: SupabaseClient): ProfileService {
   return {
     source: 'supabase',
@@ -129,6 +136,7 @@ export function createSupabaseProfileService(client: SupabaseClient): ProfileSer
         bio: (data.bio as string | null) ?? null,
         avatar: (data.avatar_data as string | null) ?? null,
         avatarColor: (data.avatar_color as string | null) ?? null,
+        avatarFrame: (data.avatar_frame as string | null) ?? null,
         isActive: Boolean(data.is_active),
         memberSince: (data.created_at as string | null) ?? null,
         isPublic: data.profile_public !== false,
@@ -161,28 +169,35 @@ export function createSupabaseProfileService(client: SupabaseClient): ProfileSer
     async pictures(ids) {
       const out: Record<string, ProfilePicture> = {};
       for (let i = 0; i < ids.length; i += 100) {
-        const { data, error } = await client.from('profiles').select('id, avatar_data, avatar_color').in('id', ids.slice(i, i + 100));
+        const slice = ids.slice(i, i + 100);
+        const read = (cols: string) => client.from('profiles').select(cols).in('id', slice).returns<Record<string, unknown>[]>();
+        let { data, error } = await read('id, avatar_data, avatar_color, avatar_frame');
+        // A database without frames yet: the pictures still load.
+        if (error && missingColumn(error)) ({ data, error } = await read('id, avatar_data, avatar_color'));
         if (error) throw new Error('Profile pictures could not be loaded.');
-        for (const r of data ?? []) out[r.id as string] = { avatar: (r.avatar_data as string | null) ?? null, color: (r.avatar_color as string | null) ?? null };
+        for (const r of data ?? [])
+          out[r.id as string] = { avatar: (r.avatar_data as string | null) ?? null, color: (r.avatar_color as string | null) ?? null, frame: (r.avatar_frame as string | null) ?? null };
       }
       return out;
     },
     async save(id, p) {
       validate(p);
-      const { data, error } = await client
-        .from('profiles')
-        .update({
-          full_name: p.fullName.trim(),
-          display_name: p.displayName.trim(),
-          job_title: p.jobTitle.trim() || null,
-          phone: p.phone.trim() || null,
-          bio: p.bio.trim() || null,
-          avatar_data: p.avatar,
-          avatar_color: p.avatarColor,
-          profile_public: p.isPublic,
-        })
-        .eq('id', id)
-        .select('id');
+      const fields = {
+        full_name: p.fullName.trim(),
+        display_name: p.displayName.trim(),
+        job_title: p.jobTitle.trim() || null,
+        phone: p.phone.trim() || null,
+        bio: p.bio.trim() || null,
+        avatar_data: p.avatar,
+        avatar_color: p.avatarColor,
+        profile_public: p.isPublic,
+      };
+      let { data, error } = await client.from('profiles').update({ ...fields, avatar_frame: p.avatarFrame }).eq('id', id).select('id');
+      // A database without frames yet: save the rest, and say so if a frame was chosen.
+      if (error && missingColumn(error)) {
+        ({ data, error } = await client.from('profiles').update(fields).eq('id', id).select('id'));
+        if (!error && p.avatarFrame) throw new ProfileRuleError('Saved, but frames aren’t switched on yet. Try the frame again later.');
+      }
       if (error) throw new ProfileRuleError(error.code?.startsWith('23') ? 'Check the details: one of them isn’t accepted.' : 'Your profile could not be saved. Check the connection and try again.');
       if (!data?.length) throw new ProfileRuleError('You can only change your own profile.');
     },
@@ -193,11 +208,11 @@ export function createSupabaseProfileService(client: SupabaseClient): ProfileSer
 
 const STORE = 'philrads.sample.profile.v1';
 const SAMPLE: Record<string, Omit<PersonProfile, 'initials' | 'memberSince' | 'isPublic' | 'details'>> = {
-  'p-maria': { id: 'p-maria', fullName: 'Maria Santos', displayName: 'Maria Santos', roleName: 'Coordinator', office: 'Naga field office', jobTitle: 'Relief operations coordinator', phone: '+63 917 555 0101', bio: 'Leads relief distributions in Bicol. Ask me about logistics and partner churches.', avatar: null, avatarColor: '#3f8f5b', isActive: true },
-  'p-jun': { id: 'p-jun', fullName: 'Jun Dela Cruz', displayName: 'Jun Dela Cruz', roleName: 'Staff', office: 'Main office', jobTitle: 'Warehouse officer', phone: null, bio: null, avatar: null, avatarColor: '#3c5fa8', isActive: true },
-  'p-ana': { id: 'p-ana', fullName: 'Ana Reyes', displayName: 'Ana Reyes', roleName: 'Coordinator', office: 'Main office', jobTitle: 'Livelihood program officer', phone: null, bio: 'Small-business coaching and monitoring.', avatar: null, avatarColor: '#a03f7a', isActive: true },
-  'p-leo': { id: 'p-leo', fullName: 'Leo Mendoza', displayName: 'Leo Mendoza', roleName: 'Volunteer', office: null, jobTitle: 'Field volunteer', phone: null, bio: null, avatar: null, avatarColor: null, isActive: true },
-  'p-grace': { id: 'p-grace', fullName: 'Grace Lim', displayName: 'Grace Lim', roleName: 'Staff', office: 'Main office', jobTitle: 'Documentation officer', phone: null, bio: 'Photos, reports and the stories behind them.', avatar: null, avatarColor: '#2f7f8f', isActive: true },
+  'p-maria': { id: 'p-maria', fullName: 'Maria Santos', displayName: 'Maria Santos', roleName: 'Coordinator', office: 'Naga field office', jobTitle: 'Relief operations coordinator', phone: '+63 917 555 0101', bio: 'Leads relief distributions in Bicol. Ask me about logistics and partner churches.', avatar: null, avatarColor: '#3f8f5b', avatarFrame: 'aurora', isActive: true },
+  'p-jun': { id: 'p-jun', fullName: 'Jun Dela Cruz', displayName: 'Jun Dela Cruz', roleName: 'Staff', office: 'Main office', jobTitle: 'Warehouse officer', phone: null, bio: null, avatar: null, avatarColor: '#3c5fa8', avatarFrame: null, isActive: true },
+  'p-ana': { id: 'p-ana', fullName: 'Ana Reyes', displayName: 'Ana Reyes', roleName: 'Coordinator', office: 'Main office', jobTitle: 'Livelihood program officer', phone: null, bio: 'Small-business coaching and monitoring.', avatar: null, avatarColor: '#a03f7a', avatarFrame: 'sakura', isActive: true },
+  'p-leo': { id: 'p-leo', fullName: 'Leo Mendoza', displayName: 'Leo Mendoza', roleName: 'Volunteer', office: null, jobTitle: 'Field volunteer', phone: null, bio: null, avatar: null, avatarColor: null, avatarFrame: 'orbit', isActive: true },
+  'p-grace': { id: 'p-grace', fullName: 'Grace Lim', displayName: 'Grace Lim', roleName: 'Staff', office: 'Main office', jobTitle: 'Documentation officer', phone: null, bio: 'Photos, reports and the stories behind them.', avatar: null, avatarColor: '#2f7f8f', avatarFrame: null, isActive: true },
 };
 const sampleStats = (n: number): ProfileProgress => ({
   xp: n * 23,
@@ -230,7 +245,7 @@ export const mockProfileService: ProfileService = {
   async get(id) {
     await new Promise((r) => setTimeout(r, 200));
     if (id === demoProfile.id) {
-      const base = { id, fullName: 'Demo User', displayName: demoProfile.displayName, roleName: demoProfile.roleName ?? null, office: demoProfile.office ?? null, jobTitle: null, phone: null, bio: null, avatar: null, avatarColor: null, isActive: true, memberSince: '2026-10-18T08:00:00+08:00', isPublic: true, details: true };
+      const base = { id, fullName: 'Demo User', displayName: demoProfile.displayName, roleName: demoProfile.roleName ?? null, office: demoProfile.office ?? null, jobTitle: null, phone: null, bio: null, avatar: null, avatarColor: null, avatarFrame: null, isActive: true, memberSince: '2026-10-18T08:00:00+08:00', isPublic: true, details: true };
       const p = { ...base, ...readMine() };
       return { ...p, initials: initialsOf(p.displayName) };
     }
@@ -253,7 +268,12 @@ export const mockProfileService: ProfileService = {
   async pictures(ids) {
     const mine = readMine();
     return Object.fromEntries(
-      ids.map((id) => [id, id === demoProfile.id ? { avatar: mine.avatar ?? null, color: mine.avatarColor ?? null } : { avatar: SAMPLE[id]?.avatar ?? null, color: SAMPLE[id]?.avatarColor ?? null }]),
+      ids.map((id) => [
+        id,
+        id === demoProfile.id
+          ? { avatar: mine.avatar ?? null, color: mine.avatarColor ?? null, frame: mine.avatarFrame ?? null }
+          : { avatar: SAMPLE[id]?.avatar ?? null, color: SAMPLE[id]?.avatarColor ?? null, frame: SAMPLE[id]?.avatarFrame ?? null },
+      ]),
     );
   },
   async save(id, p) {
@@ -262,7 +282,7 @@ export const mockProfileService: ProfileService = {
     try {
       localStorage.setItem(
         STORE,
-        JSON.stringify({ fullName: p.fullName.trim(), displayName: p.displayName.trim(), jobTitle: p.jobTitle.trim() || null, phone: p.phone.trim() || null, bio: p.bio.trim() || null, avatar: p.avatar, avatarColor: p.avatarColor, isPublic: p.isPublic }),
+        JSON.stringify({ fullName: p.fullName.trim(), displayName: p.displayName.trim(), jobTitle: p.jobTitle.trim() || null, phone: p.phone.trim() || null, bio: p.bio.trim() || null, avatar: p.avatar, avatarColor: p.avatarColor, avatarFrame: p.avatarFrame, isPublic: p.isPublic }),
       );
     } catch {
       throw new ProfileRuleError('This device couldn’t keep the sample profile (storage is full or off).');

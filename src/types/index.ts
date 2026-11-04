@@ -36,6 +36,8 @@ export interface StaffProfile {
   avatar?: string | null;
   /** Colour of the initials badge when there's no picture. */
   avatarColor?: string | null;
+  /** Animated frame around the picture (src/lib/avatarFrames.ts), or none. */
+  avatarFrame?: string | null;
 }
 
 export type TaskPriority = 'low' | 'medium' | 'high';

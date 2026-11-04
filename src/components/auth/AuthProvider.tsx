@@ -82,6 +82,7 @@ async function fetchProfile(client: SupabaseClient, userId: string): Promise<{ p
       bio: (data.bio as string | null) ?? null,
       avatar: (data.avatar_data as string | null) ?? null,
       avatarColor: (data.avatar_color as string | null) ?? null,
+      avatarFrame: (data.avatar_frame as string | null) ?? null,
     },
   };
 }

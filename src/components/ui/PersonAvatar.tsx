@@ -4,6 +4,7 @@ import { profileService } from '../../services';
 import type { ProfilePicture } from '../../services/profiles/profileService';
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from './Avatar';
+import { AvatarFrame } from './AvatarFrame';
 
 // People's pictures, fetched together (one request for a whole team list) and kept for the visit.
 const cache = new Map<string, ProfilePicture>();
@@ -33,7 +34,7 @@ const request = (id: string) => {
 };
 
 /** Someone's profile picture (or initials in their colour). Your own follows your profile straight away. */
-export function PersonAvatar({ id, name, size, ring }: { id: string | null | undefined; name: string; size?: 'sm' | 'md' | 'lg' | 'xl' | 'hero'; ring?: string }) {
+export function PersonAvatar({ id, name, size, ring, frame = true }: { id: string | null | undefined; name: string; size?: 'sm' | 'md' | 'lg' | 'xl' | 'hero'; ring?: string; frame?: boolean }) {
   const { profile } = useAuth();
   const [, rerender] = useReducer((n: number) => n + 1, 0);
   const own = Boolean(profile && id === profile.id);
@@ -43,6 +44,7 @@ export function PersonAvatar({ id, name, size, ring }: { id: string | null | und
     request(id);
     return () => void listeners.delete(rerender);
   }, [id, own]);
-  const pic = own ? { avatar: profile!.avatar ?? null, color: profile!.avatarColor ?? null } : id ? cache.get(id) : undefined;
-  return <Avatar initials={initialsOf(name || '?')} src={pic?.avatar} color={pic?.color} size={size} ring={ring} />;
+  const pic = own ? { avatar: profile!.avatar ?? null, color: profile!.avatarColor ?? null, frame: profile!.avatarFrame ?? null } : id ? cache.get(id) : undefined;
+  const avatar = <Avatar initials={initialsOf(name || '?')} src={pic?.avatar} color={pic?.color} size={size} ring={ring} />;
+  return frame ? <AvatarFrame frame={pic?.frame}>{avatar}</AvatarFrame> : avatar;
 }

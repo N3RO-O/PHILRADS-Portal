@@ -824,6 +824,15 @@ await check('outputs cannot be edited', () => as(B, `update public.task_outputs 
 
 // Only the owner edits a profile
 await check('an administrator cannot edit someone else’s profile', () => as(A, `update public.profiles set bio = 'edited by admin' where id = '${B}'`), true);
+await check('staff choose their own avatar frame', () => as(B, `update public.profiles set avatar_frame = 'aurora' where id = '${B}' returning avatar_frame`).then(expectRows(1)));
+await check('colleagues see the frame with the picture', () => as(A, `select avatar_frame from public.profiles where id = '${B}'`).then((r) => {
+  if (r.rows[0]?.avatar_frame !== 'aurora') throw new Error(JSON.stringify(r.rows));
+}));
+await check('view_profile includes the frame', () => as(A, `select public.view_profile('${B}') ->> 'avatar_frame' f`).then((r) => {
+  if (r.rows[0]?.f !== 'aurora') throw new Error(JSON.stringify(r.rows));
+}));
+await check('nobody changes someone else’s frame', () => as(A, `update public.profiles set avatar_frame = 'ember' where id = '${B}'`), true);
+await check('frame names are checked', () => as(B, `update public.profiles set avatar_frame = 'x; drop' where id = '${B}'`), true);
 await check('an administrator still switches accounts and roles', () => as(A, `update public.profiles set role_key = 'staff', is_active = true where id = '${E}' returning id`).then(expectRows(1)));
 await check('the owner still edits their own profile', () => as(B, `update public.profiles set bio = 'My own words' where id = '${B}' returning id`).then(expectRows(1)));
 

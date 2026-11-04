@@ -4,6 +4,8 @@ import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../components/auth/AuthProvider';
 import { BADGE_ICON, FRAME_RING, FRAME_TEXT } from '../components/tasks/taskMeta';
 import { Avatar } from '../components/ui/Avatar';
+import { AvatarFrame } from '../components/ui/AvatarFrame';
+import { AVATAR_FRAMES } from '../lib/avatarFrames';
 import { EmptyState, LoadError, Skeleton } from '../components/ui/Card';
 import { SampleBadge } from '../components/ui/SampleBadge';
 import { Dialog } from '../components/ui/Dialog';
@@ -53,7 +55,7 @@ export function ProfilePage() {
         mine={mine}
         onSaved={(p) => {
           setPerson(p);
-          if (mine) updateProfile({ displayName: p.displayName, fullName: p.fullName, jobTitle: p.jobTitle, phone: p.phone, bio: p.bio, avatar: p.avatar, avatarColor: p.avatarColor });
+          if (mine) updateProfile({ displayName: p.displayName, fullName: p.fullName, jobTitle: p.jobTitle, phone: p.phone, bio: p.bio, avatar: p.avatar, avatarColor: p.avatarColor, avatarFrame: p.avatarFrame });
         }}
       />
     );
@@ -123,12 +125,16 @@ function ProfileCard({
         <div className="flex items-end justify-between gap-3">
           {onPhoto ? (
             <button type="button" onClick={onPhoto} className="group relative -mt-14 rounded-full bg-surface p-1.5" aria-label="Change your photo" title="Change your photo">
-              <Avatar initials={p.initials} src={p.avatar} color={p.avatarColor} size="xl" ring={`ring-4 ${FRAME_RING[level?.frame ?? 'none']}`} />
+              <AvatarFrame frame={p.avatarFrame}>
+                <Avatar initials={p.initials} src={p.avatar} color={p.avatarColor} size="xl" ring={`ring-4 ${FRAME_RING[level?.frame ?? 'none']}`} />
+              </AvatarFrame>
               <PhotoOverlay />
             </button>
           ) : (
             <div className="-mt-14 rounded-full bg-surface p-1.5">
-              <Avatar initials={p.initials} src={p.avatar} color={p.avatarColor} size="xl" ring={`ring-4 ${FRAME_RING[level?.frame ?? 'none']}`} />
+              <AvatarFrame frame={p.avatarFrame}>
+                <Avatar initials={p.initials} src={p.avatar} color={p.avatarColor} size="xl" ring={`ring-4 ${FRAME_RING[level?.frame ?? 'none']}`} />
+              </AvatarFrame>
             </div>
           )}
           {earned.length > 0 && (
@@ -334,6 +340,7 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
       bio: person.bio ?? '',
       avatar: person.avatar,
       avatarColor: person.avatarColor,
+      avatarFrame: person.avatarFrame,
       isPublic: person.isPublic,
     }),
     [person],
@@ -452,7 +459,9 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
                 aria-label={d.avatar ? 'Change your photo' : 'Add a photo'}
                 title={d.avatar ? 'Change your photo' : 'Add a photo'}
               >
-                <Avatar initials={preview.initials} src={d.avatar} color={d.avatarColor} size="lg" ring="ring-2 ring-line" />
+                <AvatarFrame frame={d.avatarFrame}>
+                  <Avatar initials={preview.initials} src={d.avatar} color={d.avatarColor} size="lg" ring="ring-2 ring-line" />
+                </AvatarFrame>
                 <PhotoOverlay busy={picBusy} small />
               </button>
               <p className="min-w-0 flex-1 text-xs text-muted">{d.avatar ? 'Tap your photo to change it.' : 'Tap to add a photo, so the team knows you in Active.'}</p>
@@ -491,6 +500,31 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
                 <span className="sr-only">Choose any colour</span>
                 <input type="color" className="absolute inset-0 cursor-pointer opacity-0" value={d.avatarColor ?? DEFAULT_COLOR} onChange={(e) => set('avatarColor', e.target.value)} />
               </label>
+            </div>
+          </EditGroup>
+
+          <hr className="border-line/70" />
+
+          <EditGroup title="Avatar frame" note="An animated ring around your picture, wherever it shows: Active, tasks, your profile.">
+            <div className="grid grid-cols-4 gap-1.5 [@container(min-width:26rem)]:grid-cols-5 [@container(min-width:34rem)]:grid-cols-7" role="radiogroup" aria-label="Avatar frame">
+              {[{ id: null, name: 'None' }, ...AVATAR_FRAMES].map((f) => {
+                const on = (d.avatarFrame ?? null) === f.id;
+                return (
+                  <button
+                    key={f.id ?? 'none'}
+                    type="button"
+                    role="radio"
+                    aria-checked={on}
+                    onClick={() => set('avatarFrame', f.id)}
+                    className={`press flex min-w-0 flex-col items-center gap-2 rounded-xl border px-1 pb-2 pt-3 transition-colors ${on ? 'border-uplift bg-uplift/10' : 'border-transparent hover:bg-white/[0.04]'}`}
+                  >
+                    <AvatarFrame frame={f.id}>
+                      <Avatar initials={preview.initials} src={d.avatar} color={d.avatarColor} size="md" ring="ring-0" />
+                    </AvatarFrame>
+                    <span className={`w-full truncate text-center text-[0.6875rem] font-semibold ${on ? 'text-uplift' : 'text-muted'}`}>{f.name}</span>
+                  </button>
+                );
+              })}
             </div>
           </EditGroup>
         </section>
