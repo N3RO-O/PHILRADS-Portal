@@ -624,24 +624,27 @@ function FramePicker({ value, onChange, progress, avatar }: { value: string | nu
   const offered = AVATAR_FRAMES.filter((f) => !exclusive(f) || frameUnlocked(f, level, badges, role, all));
   const unlockedCount = offered.filter((f) => frameUnlocked(f, level, badges, role, all)).length;
 
-  const Option = ({ f }: { f: AvatarFrameInfo | null }) => {
+  // A plain render function, not a component made inside this one: a component defined here would be
+  // a new type on every render, so each pick would rebuild every tile (pictures, filters, motion).
+  const option = (f: AvatarFrameInfo | null) => {
     const id = f?.id ?? null;
     const on = value === id;
     const locked = Boolean(f && !frameUnlocked(f, level, badges, role, all));
     return (
       <button
+        key={id ?? 'none'}
         type="button"
         role="radio"
         aria-checked={on}
         aria-disabled={locked}
         title={locked && f ? `${f.name}: ${unlockText(f)}` : f?.name ?? 'No frame'}
         onClick={() => !locked && onChange(id)}
-        className={`press flex min-w-0 flex-col items-center gap-2.5 rounded-xl border px-1 pb-2 pt-3.5 transition-colors ${
+        className={`press group flex min-w-0 flex-col items-center gap-2.5 rounded-xl border px-1 pb-2 pt-3.5 transition-colors ${
           on ? 'border-burgundy-400 bg-burgundy-500/25' : locked ? 'cursor-not-allowed border-transparent' : 'border-transparent hover:bg-ink/[0.04]'
         }`}
       >
         <span className={`relative ${locked ? 'opacity-40 grayscale' : ''}`}>
-          <AvatarFrame frame={id}>{avatar}</AvatarFrame>
+          <AvatarFrame frame={id} motion={on ? 'always' : 'hover'}>{avatar}</AvatarFrame>
         </span>
         <span className={`flex w-full min-w-0 items-center justify-center gap-1 text-[0.6875rem] font-semibold ${on ? 'text-uplift' : 'text-muted'}`}>
           {locked && <Lock className="h-3 w-3 shrink-0" aria-hidden />}
@@ -677,15 +680,13 @@ function FramePicker({ value, onChange, progress, avatar }: { value: string | nu
       {open && (
         <div className="flex flex-col gap-3" role="radiogroup" aria-label="Avatar frame">
           <div className="grid grid-cols-4 gap-1.5 [@container(min-width:26rem)]:grid-cols-5 [@container(min-width:34rem)]:grid-cols-7">
-            <Option f={null} />
+            {option(null)}
           </div>
           {groups.filter(([, frames]) => frames.length).map(([title, frames]) => (
             <div key={title} className="flex flex-col gap-1.5">
               <p className="text-[0.625rem] font-bold uppercase tracking-[0.08em] text-muted">{title}</p>
               <div className="grid grid-cols-4 gap-1.5 [@container(min-width:26rem)]:grid-cols-5 [@container(min-width:34rem)]:grid-cols-7">
-                {frames.map((f) => (
-                  <Option key={f.id} f={f} />
-                ))}
+                {frames.map((f) => option(f))}
               </div>
             </div>
           ))}
