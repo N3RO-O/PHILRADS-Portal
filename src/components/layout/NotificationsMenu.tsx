@@ -1,6 +1,6 @@
+import { useSmoothNavigate } from '../../lib/smoothNavigate';
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate } from 'react-router-dom';
 import { Bell, BellRing, Check, CheckCheck, Gift, Hand, MoreHorizontal, Package, Smartphone, SquareCheckBig, Sun, ThumbsUp, Trash2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { disablePush, enablePush, pushEnabled, pushSupported } from '../../lib/push';
@@ -30,7 +30,7 @@ export function NotificationsMenu() {
   const wrap = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
   const panelId = useId();
-  const navigate = useNavigate();
+  const navigate = useSmoothNavigate();
   const close = useCallback(() => setOpen(false), []);
   useDismiss(open, wrap, close, button);
   const notes = useAsyncData(() => dashboardService.getNotifications());

@@ -1,5 +1,5 @@
+import { useSmoothNavigate } from '../../lib/smoothNavigate';
 import { useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   Bell,
   BellRing,
@@ -89,7 +89,7 @@ export function WhatsNew() {
   const { view } = useWhatsNew();
   const { can } = useAuth();
   const online = useOnlineStatus();
-  const navigate = useNavigate();
+  const navigate = useSmoothNavigate();
   const ref = useRef<HTMLDialogElement>(null);
   const backdrop = useBackdropClose(ref, whatsNew.close);
 

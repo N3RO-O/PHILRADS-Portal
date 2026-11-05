@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { welcome } from '../../lib/welcome';
 import type { Session, SupabaseClient } from '@supabase/supabase-js';
 import { dataSource, env } from '../../config/env';
 import { DEMO_ROLES, PLACEHOLDER_ROLE_PERMISSIONS, type PermissionKey } from '../../config/permissions';
@@ -217,6 +218,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (!error) {
       markUnlocked();
+      welcome.queue();
       return null;
     }
     return error.message === 'Invalid login credentials' ? 'That email and password do not match.' : 'Sign-in failed. Please try again.';

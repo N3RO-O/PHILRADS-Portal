@@ -1,5 +1,5 @@
+import { useSmoothNavigate } from '../../lib/smoothNavigate';
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { BellRing, X } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { usePresence } from '../../lib/presence';
@@ -22,7 +22,7 @@ const SHOW_MS = 7000;
  */
 export function NotificationToasts() {
   const { state, profile } = useAuth();
-  const navigate = useNavigate();
+  const navigate = useSmoothNavigate();
   const [toasts, setToasts] = useState<Toast[]>([]);
   const me = profile?.id ?? null;
   const { mine } = usePresence();

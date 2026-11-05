@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-11-05.4",
+    "version": "1.7.0",
+    "date": "2026-11-05",
+    "title": "A warm welcome",
+    "items": [
+      {
+        "icon": "sparkles",
+        "title": "Good to have you here!",
+        "body": "Signing in now opens with a short welcome: a little dance, a hello by name, and the time of day. Tap Let’s go to start, or Don’t show this again to turn it off on this device."
+      },
+      {
+        "icon": "bell",
+        "title": "Notifications glide to their page",
+        "body": "Opening a notification, a pop-up note or a release note now moves to its page with a soft fade, while the menu and top bar stay put."
+      }
+    ]
+  },
+  {
     "id": "2026-11-05.3",
     "version": "1.6.1",
     "date": "2026-11-05",

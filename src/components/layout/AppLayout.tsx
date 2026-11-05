@@ -17,6 +17,7 @@ import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { ActivePanel } from './ActivePanel';
 import { BreakNudge } from './BreakNudge';
+import { Welcomer } from '../onboarding/Welcomer';
 import { PullToRefresh } from '../ui/PullToRefresh';
 
 export interface LayoutContext {
@@ -123,7 +124,7 @@ export function AppLayout() {
           onOpenMenu={() => setMenuOpen(true)}
           hideMobileSearch={current?.id === 'inventory'}
         />
-        <main id="main" className="mx-auto w-full max-w-[100rem] flex-1 px-4 pb-10 sm:px-6">
+        <main id="main" className="mx-auto w-full max-w-[100rem] flex-1 px-4 pb-10 sm:px-6" style={{ viewTransitionName: 'page' }}>
           <div className="flex flex-wrap items-end justify-between gap-3 pb-6 pt-3">
             <div className="min-w-0">
               {current && (
@@ -178,6 +179,7 @@ export function AppLayout() {
       )}
       {/* After long stretches of work: a suggestion to take a short break. */}
       <BreakNudge />
+      <Welcomer />
       {/* New bell notes pop in as they arrive. */}
       <NotificationToasts />
       {/* Signed-in staff: signed out after 10 minutes without activity. */}
