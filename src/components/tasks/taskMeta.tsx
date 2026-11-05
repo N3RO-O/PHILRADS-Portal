@@ -22,16 +22,20 @@ import {
 import type { Badge, Frame } from '../../lib/taskProgress';
 import type { TaskList } from '../../services/tasks/types';
 
-/** Icon and colour for each task list: the dot, the checkbox ring and the list's chip. */
+/**
+ * Icon for each task list. Lists are told apart by icon and name, not colour (docs/design-system.md),
+ * so every list shares the same neutral text, checkbox ring and chip.
+ */
+const N = { text: 'text-ink-soft', ring: 'border-ink-mute', soft: 'bg-surface-raised' } as const;
 export const LIST_STYLE: Record<TaskList, { icon: LucideIcon; text: string; ring: string; soft: string }> = {
-  relief: { icon: HeartHandshake, text: 'text-emerald-300', ring: 'border-emerald-300/70', soft: 'bg-emerald-300/10' },
-  assessment: { icon: ClipboardList, text: 'text-sky-300', ring: 'border-sky-300/70', soft: 'bg-sky-300/10' },
-  logistics: { icon: Truck, text: 'text-amber-300', ring: 'border-amber-300/70', soft: 'bg-amber-300/10' },
-  beneficiaries: { icon: Users, text: 'text-violet-300', ring: 'border-violet-300/70', soft: 'bg-violet-300/10' },
-  reports: { icon: FileText, text: 'text-rose', ring: 'border-rose/70', soft: 'bg-rose/10' },
-  volunteers: { icon: GraduationCap, text: 'text-teal-300', ring: 'border-teal-300/70', soft: 'bg-teal-300/10' },
-  coordination: { icon: Handshake, text: 'text-indigo-300', ring: 'border-indigo-300/70', soft: 'bg-indigo-300/10' },
-  office: { icon: Briefcase, text: 'text-slate-300', ring: 'border-slate-300/70', soft: 'bg-slate-300/10' },
+  relief: { icon: HeartHandshake, text: N.text, ring: N.ring, soft: N.soft },
+  assessment: { icon: ClipboardList, text: N.text, ring: N.ring, soft: N.soft },
+  logistics: { icon: Truck, text: N.text, ring: N.ring, soft: N.soft },
+  beneficiaries: { icon: Users, text: N.text, ring: N.ring, soft: N.soft },
+  reports: { icon: FileText, text: N.text, ring: N.ring, soft: N.soft },
+  volunteers: { icon: GraduationCap, text: N.text, ring: N.ring, soft: N.soft },
+  coordination: { icon: Handshake, text: N.text, ring: N.ring, soft: N.soft },
+  office: { icon: Briefcase, text: N.text, ring: N.ring, soft: N.soft },
 };
 
 export const BADGE_ICON: Record<Badge['icon'], LucideIcon> = {

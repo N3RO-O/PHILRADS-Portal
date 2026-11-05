@@ -1,5 +1,5 @@
 import { useEffect, useId, useState, type FormEvent, type KeyboardEvent, type ReactNode } from 'react';
-import { Check, CheckCircle2, Lock, Loader2, Plus, RotateCcw, Sparkles, Sun, Trash2, Undo2, X } from 'lucide-react';
+import { Camera, Check, CheckCircle2, Lock, Loader2, Plus, RotateCcw, Sparkles, Sun, Trash2, Undo2, X } from 'lucide-react';
 import { addDays, LIST_META, RECURRENCE_LABEL, weekday } from '../../lib/tasks';
 import { XP_RULES } from '../../lib/taskProgress';
 import { TASK_LISTS, type Assignee, type Recurrence, type Task, type TaskDraft, type TaskList } from '../../services/tasks/types';
@@ -44,6 +44,7 @@ const EMPTY: TaskDraft = {
   recurrence: 'none',
   location: '',
   assigneeId: null,
+  requiresPhoto: false,
 };
 
 export const draftOf = (t: Task): TaskDraft => ({
@@ -61,9 +62,10 @@ export const draftOf = (t: Task): TaskDraft => ({
   location: t.location ?? '',
   assigneeId: t.assigneeId,
   projectId: t.projectId,
+  requiresPhoto: t.requiresPhoto ?? false,
 });
 
-/** Add or edit a task with everything Any.do offers: list, Field/Office, due date and time, My Day, repeat, subtasks. */
+/** Add or edit a task with everything Any.do offers: list, Field/Office, due date and time, today’s plan, repeat, subtasks. */
 export function TaskSheet({ open, task, initial, today, me, canAssign, canGive = canAssign, people, onRespond, onClose, onSave, onToggleDone, onRemove, onSendBack, onSetStatus }: Props) {
   const uid = useId();
   const [d, setD] = useState<TaskDraft>(EMPTY);
@@ -93,7 +95,7 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, canGive =
   const worth = forSelf ? XP_RULES.self : XP_RULES.base[d.priority];
   // Given to me by someone else: what the task is stays theirs to change (the database enforces this too).
   const given = Boolean(task && task.createdById !== me && !canAssign);
-  // Finished: locked until re-opened (My Day can still be planned).
+  // Finished: locked until re-opened (it can still be planned for today).
   const locked = done;
   const fixed = locked || given;
   // Given to you by someone of the same or a lower role: answer it first.
@@ -202,7 +204,7 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, canGive =
           </p>
         )}
         {needsAnswer && task && (
-          <section className="flex animate-pop-in flex-col gap-3 rounded-2xl border border-sky-300/40 bg-sky-300/[0.07] p-4" aria-label="Accept this task">
+          <section className="flex animate-pop-in flex-col gap-3 rounded-2xl border border-line bg-surface-sunken p-4" aria-label="Accept this task">
             <p className="text-sm text-ink">
               <strong className="font-semibold">{task.createdByName ?? 'A colleague'}</strong> asks you to take this on. Accept it to start, or say why you can’t.
             </p>
@@ -263,15 +265,15 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, canGive =
           </div>
         )}
         {(locked || given) && (
-          <p className="flex items-start gap-2 rounded-xl border border-line/70 bg-white/[0.03] px-4 py-3 text-xs text-ink-soft">
+          <p className="flex items-start gap-2 rounded-xl border border-line/70 bg-ink/[0.03] px-4 py-3 text-xs text-ink-soft">
             <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted" aria-hidden />
             {locked
               ? 'Finished, so it’s locked. Re-open it to make changes (its XP is taken back until it’s done again).'
-              : `Set by ${task?.createdByName ?? 'a coordinator'}. You can tick off its steps, add notes and plan it in My Day; ask them to change the title, due date or priority.`}
+              : `Set by ${task?.createdByName ?? 'a coordinator'}. You can tick off its steps, add notes and plan it for today; ask them to change the title, due date or priority.`}
           </p>
         )}
         {canSendBack && (
-          <section className="flex flex-col gap-2 rounded-xl border border-uplift/30 bg-uplift/[0.06] p-4" aria-labelledby={`${uid}-back`}>
+          <section className="flex flex-col gap-2 rounded-xl border border-line bg-surface-sunken p-4" aria-labelledby={`${uid}-back`}>
             <h3 id={`${uid}-back`} className="text-sm font-semibold">
               Not really done?
             </h3>
@@ -323,10 +325,10 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, canGive =
 
         <label className="tap flex min-h-12 cursor-pointer items-center justify-between gap-4 rounded-xl border border-line/70 px-4">
           <span className="flex items-center gap-3">
-            <Sun className={`h-5 w-5 ${d.myDay === today ? 'text-uplift' : 'text-muted'}`} aria-hidden />
+            <Sun className={`h-5 w-5 ${d.myDay === today ? 'text-ink' : 'text-muted'}`} aria-hidden />
             <span>
-              <span className="block text-sm font-semibold">Add to My Day</span>
-              <span className="block text-xs text-muted">Plan it for today.</span>
+              <span className="block text-sm font-semibold">Do it today</span>
+              <span className="block text-xs text-muted">It goes on your Today list.</span>
             </span>
           </span>
           <Switch checked={d.myDay === today} onChange={(on) => set('myDay', on ? today : null)} />
@@ -359,6 +361,14 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, canGive =
           </Field>
         </div>
 
+        <PhotoToggle
+          on={Boolean(d.requiresPhoto)}
+          // Only the person giving the task (or a coordinator) decides; the database checks this too.
+          disabled={locked || Boolean(task && task.createdById !== me && !canAssign)}
+          forSelf={forSelf}
+          onChange={(on) => set('requiresPhoto', on)}
+        />
+
         <Field id={`${uid}-place`} label="Place" hint="Optional">
           <input id={`${uid}-place`} className="field" disabled={locked} value={d.location} onChange={(e) => set('location', e.target.value)} maxLength={200} placeholder="Barangay, evacuation centre, warehouse…" />
         </Field>
@@ -381,7 +391,7 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, canGive =
                     disabled={locked}
                     onClick={() => set('subtasks', d.subtasks.map((x) => (x.id === s.id ? { ...x, done: !x.done } : x)))}
                   >
-                    <span className={`grid h-5 w-5 place-items-center rounded-md border-2 ${s.done ? 'border-uplift bg-uplift text-page' : 'border-ink-mute'}`}>
+                    <span className={`grid h-5 w-5 place-items-center rounded-md border-2 ${s.done ? 'border-burgundy-400 bg-burgundy-500 text-cloud' : 'border-ink-mute'}`}>
                       {s.done && <Check className="h-3 w-3" strokeWidth={3} aria-hidden />}
                     </span>
                   </button>
@@ -409,8 +419,8 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, canGive =
           <textarea id={`${uid}-notes`} className="field min-h-24" rows={3} disabled={locked} value={d.notes} onChange={(e) => set('notes', e.target.value)} maxLength={4000} />
         </Field>
 
-        <p className="flex items-start gap-2 rounded-xl border border-uplift/25 bg-uplift/[0.06] px-4 py-3 text-xs text-ink-soft">
-          <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-uplift" aria-hidden />
+        <p className="flex items-start gap-2 rounded-xl border border-line bg-surface-sunken px-4 py-3 text-xs text-ink-soft">
+          <Sparkles className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <span>
             {forSelf ? (
               <>
@@ -466,3 +476,34 @@ function Segmented<T extends string>({ value, onChange, options, label }: { valu
   );
 }
 
+
+/** Needs a photo: a task that can only be finished with a photo sent. Off, a photo still earns a little extra. */
+function PhotoToggle({ on, disabled, forSelf, onChange }: { on: boolean; disabled: boolean; forSelf: boolean; onChange: (on: boolean) => void }) {
+  return (
+    <label
+      className={`tap relative flex min-h-16 cursor-pointer items-center justify-between gap-4 overflow-hidden rounded-2xl border px-4 py-3 transition-colors duration-300 ${
+        on ? 'border-uplift/50 bg-gradient-to-br from-uplift/[0.16] via-burgundy-500/[0.12] to-transparent' : 'border-line/70'
+      } ${disabled ? 'cursor-default opacity-70' : ''}`}
+    >
+      <span className="flex items-center gap-3">
+        <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl transition-all duration-300 ${on ? 'premium text-onaccent' : 'bg-surface-sunken text-muted'}`}>
+          <Camera className="h-5 w-5" aria-hidden />
+        </span>
+        <span>
+          <span className="flex items-center gap-2 text-sm font-semibold">
+            Needs a photo
+            {on && <span className="rounded-full bg-uplift/15 px-2 text-[0.6875rem] font-bold uppercase tracking-wide text-uplift">Required</span>}
+          </span>
+          <span className="block text-xs text-muted">
+            {on
+              ? forSelf
+                ? 'You’ll add a photo when you finish it.'
+                : 'They can only finish it after sending a photo.'
+              : `Optional. A photo sent anyway earns +${XP_RULES.photo} XP.`}
+          </span>
+        </span>
+      </span>
+      <Switch checked={on} onChange={onChange} disabled={disabled} />
+    </label>
+  );
+}

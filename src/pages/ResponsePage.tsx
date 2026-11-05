@@ -21,7 +21,7 @@ const TYPE_LABEL: Record<string, string> = {
 };
 const STATUS_TONE: Record<ImsEvent['status'], string> = {
   active: 'border-status-in/40 bg-status-in/10 text-status-in',
-  upcoming: 'border-sky-300/40 bg-sky-300/10 text-sky-300',
+  upcoming: 'border-line text-ink-soft',
   planned: 'border-line text-ink-soft',
   completed: 'border-line text-muted',
   cancelled: 'border-status-out/40 text-status-out',
@@ -107,10 +107,10 @@ function ImsEvents() {
 
           {pending.length > 0 && <PendingEvents events={pending} canApprove={canApprove && Boolean(imsUrl)} onReview={review} blocked={blocked} />}
 
-          <section className="card flex flex-col gap-4 p-4 sm:p-5">
+          <section className="card flex flex-col gap-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="card-title flex items-center gap-2">
-                <Users className="h-4 w-4 text-uplift" aria-hidden /> Relief events and beneficiaries
+                <Users className="h-4 w-4" aria-hidden /> Relief events and beneficiaries
               </h2>
               <div className="flex flex-wrap items-center gap-2">
               {canRecord && imsUrl && (
@@ -119,7 +119,7 @@ function ImsEvents() {
                 </button>
               )}
               <div role="group" aria-label="Show" className="relative flex gap-1 rounded-xl bg-surface-sunken p-1">
-                <SlidingPill className="rounded-lg bg-surface-raised shadow-sm shadow-black/30 ring-1 ring-inset ring-white/[0.06]" />
+                <SlidingPill className="rounded-lg bg-surface-raised shadow-sm shadow-black/30 ring-1 ring-inset ring-ink/[0.06]" />
                 {(
                   [
                     ['open', 'Open'],
@@ -228,7 +228,7 @@ function EventCard({ event: e, canRecord, onAdd }: { event: ImsEvent; canRecord:
           )}
         </div>
         <div
-          className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-white/[0.06]"
+          className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-ink/[0.06]"
           role="progressbar"
           aria-valuemin={0}
           aria-valuemax={100}
@@ -281,9 +281,9 @@ function EventCard({ event: e, canRecord, onAdd }: { event: ImsEvent; canRecord:
 /** New events waiting for their 2 administrator approvals (and ones rejected lately). */
 function PendingEvents({ events, canApprove, onReview, blocked }: { events: ImsPendingEvent[]; canApprove: boolean; onReview: (e: ImsPendingEvent) => void; blocked: string | null }) {
   return (
-    <section className="card flex flex-col gap-3 p-4 sm:p-5" aria-labelledby="pending-events">
+    <section className="card flex flex-col gap-3" aria-labelledby="pending-events">
       <h2 id="pending-events" className="card-title flex items-center gap-2">
-        <Clock className="h-4 w-4 text-uplift" aria-hidden /> Waiting for approval
+        <Clock className="h-4 w-4" aria-hidden /> Waiting for approval
         <span className="text-sm font-normal text-muted">{events.filter((e) => e.status !== 'rejected').length}</span>
       </h2>
       <ul className="flex flex-col gap-2">
@@ -322,7 +322,7 @@ function PendingEvents({ events, canApprove, onReview, blocked }: { events: ImsP
                   <ExternalLink className="h-4 w-4" aria-hidden /> Review
                 </button>
               ) : (
-                <span className="shrink-0 self-start rounded-md border border-uplift/40 bg-uplift/10 px-2 py-0.5 text-[0.6875rem] font-semibold text-uplift sm:self-center">
+                <span className="shrink-0 self-start rounded-md border border-line bg-surface-sunken px-2 py-0.5 text-[0.6875rem] font-semibold text-uplift sm:self-center">
                   {approved.length} of 2
                 </span>
               )}

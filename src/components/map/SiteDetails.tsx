@@ -46,7 +46,7 @@ export function SiteDetails({ site, onClose, onCenter }: { site: ActivitySite; o
             ['Households', site.households],
             ['People', site.individuals],
           ].map(([k, v]) => (
-            <div key={k} className="tile px-2 py-3">
+            <div key={k} className="px-2 py-3">
               <p className="font-display text-xl tabular-nums tracking-wide">{formatNumber(v as number)}</p>
               <p className="text-xs text-muted">{k}</p>
             </div>
@@ -58,7 +58,7 @@ export function SiteDetails({ site, onClose, onCenter }: { site: ActivitySite; o
             const isOpen = open === a.id;
             return (
               <li key={a.id} className="overflow-hidden rounded-xl border border-line/70">
-                <button type="button" className="flex w-full items-start gap-3 px-3 py-3 text-left hover:bg-white/[0.03]" onClick={() => setOpen(isOpen ? null : a.id)} aria-expanded={isOpen}>
+                <button type="button" className="flex w-full items-start gap-3 px-3 py-3 text-left hover:bg-ink/[0.03]" onClick={() => setOpen(isOpen ? null : a.id)} aria-expanded={isOpen}>
                   <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: p.color }} aria-hidden />
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm font-semibold leading-snug">{a.activity}</span>

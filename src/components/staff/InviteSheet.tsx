@@ -131,10 +131,10 @@ export function InviteSheet({ open, existing, onClose, onInvite, onDone }: Props
             <label
               key={r.key}
               className={`tap flex min-h-12 cursor-pointer items-start gap-3 rounded-xl border px-4 py-3 transition-colors ${
-                roleKey === r.key ? 'border-uplift bg-uplift/10' : 'border-line/70 hover:border-ink-mute'
+                roleKey === r.key ? 'border-burgundy-400 bg-burgundy-500/25' : 'border-line/70 hover:border-ink-mute'
               }`}
             >
-              <input type="radio" name={`${uid}-role`} className="mt-0.5 h-4 w-4 accent-uplift" checked={roleKey === r.key} onChange={() => setRoleKey(r.key)} />
+              <input type="radio" name={`${uid}-role`} className="mt-0.5 h-4 w-4 accent-burgundy-500" checked={roleKey === r.key} onChange={() => setRoleKey(r.key)} />
               <span>
                 <span className="block text-sm font-semibold">{r.label}</span>
                 <span className="block text-xs text-muted">{r.description}</span>

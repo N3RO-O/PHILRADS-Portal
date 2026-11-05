@@ -118,7 +118,7 @@ export function StaffPage() {
 
   if (!can('staff.manage'))
     return (
-      <p className="card text-sm text-ink-soft" role="alert" data-quiet>
+      <p className="notice text-ink-soft" role="alert" data-quiet>
         Only administrators can manage staff and volunteer accounts.
       </p>
     );
@@ -181,11 +181,11 @@ export function StaffPage() {
 
   return (
     <div className="flex flex-col gap-4 pb-24 md:pb-0">
-      <section className="card flex flex-col gap-4 p-4 sm:p-5">
+      <section className="card flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
             <h2 className="card-title flex items-center gap-2">
-              <UsersRound className="h-4 w-4 text-uplift" aria-hidden /> Portal accounts
+              <UsersRound className="h-4 w-4" aria-hidden /> Portal accounts
               {staffService.source === 'mock' && <SampleBadge />}
             </h2>
             <p className="card-note">
@@ -272,7 +272,7 @@ export function StaffPage() {
                         <div className="min-w-0">
                           <p className="flex flex-wrap items-center gap-2 font-semibold">
                             <span className="truncate">{m.name}</span>
-                            {self && <span className="badge border-uplift/50 text-uplift">You</span>}
+                            {self && <span className="badge border-line text-ink-soft">You</span>}
                             {m.archivedAt && <span className="badge border-line text-muted">{roleLabel(m.roleKey)}</span>}
                           </p>
                           <p className="truncate text-xs text-ink-soft">{m.email}</p>
@@ -340,7 +340,7 @@ export function StaffPage() {
         type="button"
         onClick={() => setInviteOpen(true)}
         disabled={!online}
-        className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-4 z-30 flex h-14 items-center gap-2 rounded-full bg-uplift pl-4 pr-5 text-sm font-bold text-page shadow-xl shadow-black/50 transition active:scale-95 disabled:opacity-60 md:hidden"
+        className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-4 z-30 flex h-14 items-center gap-2 rounded-full premium pl-4 pr-5 text-sm font-bold text-onaccent shadow-xl shadow-black/50 transition active:scale-95 disabled:opacity-60 md:hidden"
       >
         <MailPlus className="h-6 w-6" aria-hidden /> Invite
       </button>

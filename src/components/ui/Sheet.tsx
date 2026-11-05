@@ -39,11 +39,11 @@ export function Sheet({ open, title, subtitle, onClose, children, footer, dirty 
       aria-labelledby={titleId}
       onClose={onClose}
       {...backdrop.handlers}
-      className={`fixed inset-x-0 bottom-0 top-auto m-0 flex max-h-[92dvh] w-full max-w-none animate-sheet-up flex-col rounded-t-3xl glass p-0 text-ink ring-uplift/60 transition-shadow backdrop:animate-fade-in backdrop:bg-black/60 open:flex md:inset-y-0 md:left-auto md:right-0 md:h-dvh md:max-h-none md:w-[32rem] md:animate-sheet-left md:rounded-none md:rounded-l-3xl [&:not([open])]:hidden ${
+      className={`fixed inset-x-0 bottom-0 top-auto m-0 flex max-h-[92dvh] w-full max-w-none animate-sheet-up flex-col rounded-t-3xl floating p-0 text-ink ring-uplift/60 transition-shadow backdrop:animate-fade-in backdrop:bg-black/60 open:flex md:inset-y-0 md:left-auto md:right-0 md:h-dvh md:max-h-none md:w-[32rem] md:animate-sheet-left md:rounded-none md:rounded-l-3xl [&:not([open])]:hidden ${
         backdrop.nudge ? 'ring-2' : ''
       }`}
     >
-      <span className="mx-auto mt-2.5 h-1.5 w-10 shrink-0 rounded-full bg-white/15 md:hidden" aria-hidden />
+      <span className="mx-auto mt-2.5 h-1.5 w-10 shrink-0 rounded-full bg-ink/15 md:hidden" aria-hidden />
       <header className="flex shrink-0 items-start justify-between gap-3 border-b border-line/70 px-5 pb-4 pt-3 md:pt-5">
         <div className="min-w-0 flex-1">
           <h2 id={titleId} className="text-lg font-semibold leading-tight">

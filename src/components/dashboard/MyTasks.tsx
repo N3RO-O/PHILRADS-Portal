@@ -6,7 +6,7 @@ import { formatShortDate } from '../../lib/format';
 import { dashboardService } from '../../services';
 import type { TaskStatus, TaskSummary } from '../../types';
 import { Card, EmptyState, LoadError, Skeleton } from '../ui/Card';
-import { PRIORITY_BADGE, PRIORITY_LABEL, STATUS_DOT, STATUS_LABEL, matchesSearch, moduleLabel } from './labels';
+import { PRIORITY_BADGE, PRIORITY_LABEL, STATUS_LABEL, STATUS_TEXT, matchesSearch, moduleLabel } from './labels';
 
 const FILTERS: { value: TaskStatus | ''; label: string }[] = [
   { value: '', label: 'All' },
@@ -114,10 +114,7 @@ export function MyTasks({ tasks, search }: Props) {
                     <span>
                       <span className={`badge ${PRIORITY_BADGE[t.priority]}`}>{PRIORITY_LABEL[t.priority]}</span>
                     </span>
-                    <span className="flex items-center gap-1.5 text-xs text-ink-soft">
-                      <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[t.status]}`} aria-hidden />
-                      {STATUS_LABEL[t.status]}
-                    </span>
+                    <span className={`text-xs font-medium ${STATUS_TEXT[t.status]}`}>{STATUS_LABEL[t.status]}</span>
                   </div>
                 </li>
               ))}

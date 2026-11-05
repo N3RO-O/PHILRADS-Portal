@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import SignaturePad from 'signature_pad';
-import { Eraser, Fingerprint, Loader2, PenLine, Undo2 } from 'lucide-react';
+import { Eraser, Fingerprint, Loader2, PenLine, Undo2, X } from 'lucide-react';
 import { biometricAvailable, biometricSetUp, setUpBiometric, verifyBiometric } from '../../lib/biometric';
 import { useAuth } from '../auth/AuthProvider';
 import { Sheet } from '../ui/Sheet';
@@ -106,11 +106,11 @@ export function SignatureSheet({ open, onClose, onSign }: { open: boolean; onClo
 
         {tab === 'draw' ? (
           <>
-            <div className="relative overflow-hidden rounded-2xl border-2 border-dashed border-uplift/40 bg-white">
+            <div className="relative overflow-hidden rounded-2xl border-2 border-dashed border-ink-mute bg-white">
               <canvas ref={canvas} className="block h-56 w-full touch-none" aria-label="Signature pad: draw with your finger or a stylus" />
               <span className="pointer-events-none absolute inset-x-8 bottom-12 border-b border-slate-400" aria-hidden />
-              <span className="pointer-events-none absolute bottom-4 left-8 text-xs text-slate-400" aria-hidden>
-                ✕ Sign above the line
+              <span className="pointer-events-none absolute bottom-4 left-8 flex items-center gap-1 text-xs text-slate-500" aria-hidden>
+                <X className="h-3.5 w-3.5" /> Sign above the line
               </span>
             </div>
             <div className="flex gap-2">
@@ -131,10 +131,9 @@ export function SignatureSheet({ open, onClose, onSign }: { open: boolean; onClo
               type="button"
               onClick={() => void signWithFinger()}
               disabled={state === 'busy' || bio === false}
-              className={`press relative grid h-28 w-28 place-items-center rounded-full border-2 transition-colors ${state === 'ok' ? 'border-status-in bg-status-in/10 text-status-in' : state === 'failed' ? 'border-rose bg-rose/10 text-rose' : 'border-uplift/60 bg-uplift/10 text-uplift'}`}
+              className={`press relative grid h-28 w-28 place-items-center rounded-full border-2 transition-colors ${state === 'ok' ? 'border-status-in bg-status-in/10 text-status-in' : state === 'failed' ? 'border-rose bg-rose/10 text-rose' : 'border-line text-ink-soft'}`}
               aria-label="Sign with fingerprint or face"
             >
-              {state !== 'ok' && state !== 'busy' && <span className="absolute inset-0 animate-ping rounded-full border-2 border-uplift/30" aria-hidden />}
               {state === 'busy' ? <Loader2 className="h-10 w-10 animate-spin" aria-hidden /> : state === 'ok' ? <SuccessTick className="h-14 w-14" /> : <Fingerprint className="h-14 w-14" aria-hidden />}
             </button>
             <div>
@@ -189,6 +188,6 @@ function stamp(name: string): string {
   g.font = '600 26px system-ui, sans-serif';
   g.fillStyle = '#1f6f3f';
   const when = new Date().toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Manila' });
-  g.fillText(`✓ E-signed with fingerprint · ${when}`, 22, 205);
+  g.fillText(`E-signed with fingerprint · ${when}`, 22, 205);
   return c.toDataURL('image/png');
 }

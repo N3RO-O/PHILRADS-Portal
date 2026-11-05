@@ -132,14 +132,14 @@ export function UploadSheet({ open, onClose, onUpload, events, places, projects,
         <button
           type="button"
           onClick={() => input.current?.click()}
-          className="tap flex min-h-28 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-line px-4 py-6 text-center transition hover:border-uplift/60 hover:bg-uplift/[0.04]"
+          className="tap flex min-h-28 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-line px-4 py-6 text-center transition hover:border-ink-mute hover:bg-surface-raised"
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {
             e.preventDefault();
             add(e.dataTransfer.files);
           }}
         >
-          <ImagePlus className="h-7 w-7 text-uplift" aria-hidden />
+          <ImagePlus className="h-7 w-7" aria-hidden />
           <span className="text-sm font-semibold">{picked.length ? 'Add more' : `Choose ${category === 'Photos' ? 'photos' : category === 'Videos' ? 'videos' : 'files'}`}</span>
           <span className="text-xs text-muted">From your phone’s gallery or camera, or drag them here. Any size, big videos too.</span>
         </button>

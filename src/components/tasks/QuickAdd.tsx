@@ -6,7 +6,7 @@ import { LIST_STYLE } from './taskMeta';
 
 interface Props {
   today: string;
-  /** Defaults from the view being looked at (a list, Field/Office, My Day). */
+  /** Defaults from the view being looked at (a list, Field/Office, Today). */
   defaults: { list: TaskList; setting: WorkSetting; myDay: boolean; dueDate?: string | null };
   onAdd: (draft: TaskDraft) => Promise<boolean>;
   /** Open the full form with what was typed so far. */
@@ -29,7 +29,7 @@ export function QuickAdd({ today, defaults, onAdd, onMore, disabled }: Props) {
     priority: parsed.priority ?? 'medium',
     dueDate: parsed.dueDate ?? defaults.dueDate ?? (defaults.myDay ? today : null),
     dueTime: parsed.dueTime,
-    // Added from My Day: planned for today, unless another day was typed.
+    // Added from Today: planned for today, unless another day was typed.
     myDay: (defaults.myDay && !parsed.dueDate) || (parsed.dueDate ?? defaults.dueDate) === today ? today : null,
     subtasks: [],
     recurrence: 'none',
@@ -58,7 +58,7 @@ export function QuickAdd({ today, defaults, onAdd, onMore, disabled }: Props) {
           <label htmlFor={`${uid}-q`} className="sr-only">
             Add a task
           </label>
-          <Plus className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-uplift" aria-hidden />
+          <Plus className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2" aria-hidden />
           <input
             id={`${uid}-q`}
             data-quick-add
@@ -92,13 +92,13 @@ export function QuickAdd({ today, defaults, onAdd, onMore, disabled }: Props) {
             {d.setting === 'field' ? 'Field' : 'Office'}
           </span>
           {due && (
-            <span className="badge gap-1 border-uplift/40 bg-uplift/10 text-uplift">
+            <span className="badge gap-1 border-line text-ink-soft">
               <CalendarDays className="h-3 w-3" aria-hidden /> {due}
             </span>
           )}
           {d.myDay && (
-            <span className="badge gap-1 border-uplift/40 text-uplift">
-              <Sun className="h-3 w-3" aria-hidden /> My Day
+            <span className="badge gap-1 border-line text-ink-soft">
+              <Sun className="h-3 w-3" aria-hidden /> Today
             </span>
           )}
           {d.priority !== 'medium' && (

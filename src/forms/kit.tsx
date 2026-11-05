@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { PenLine } from 'lucide-react';
 
 /**
  * A tiny kit for PHILRADS paper forms (Forms module): each form is drawn once, on sheets the
@@ -146,7 +147,7 @@ export function SignLine({ k, w = '60mm' }: { k: string; w?: string }) {
  * ("Printed name and Signature", SignOver) and filling a box or table cell (SignBox; the parent
  * needs position: relative). Tap to sign on screen; prints as the signature, or blank to sign on paper.
  */
-function SignArea({ k, variant, hint = '✎ Tap to sign' }: { k: string; variant: 'line' | 'over' | 'box'; hint?: string }) {
+function SignArea({ k, variant, hint = 'Tap to sign' }: { k: string; variant: 'line' | 'over' | 'box'; hint?: string }) {
   const { mode, sign, set } = useForm();
   const src = useText(k);
   const img = src ? <img src={src} alt="Signature" className="ff-sign-img" /> : null;
@@ -154,7 +155,11 @@ function SignArea({ k, variant, hint = '✎ Tap to sign' }: { k: string; variant
   return (
     <span className={`ff-sign-area ff-sign-${variant} ff-sign-edit`}>
       <button type="button" className="ff-sign-btn" onClick={() => sign?.(k)} aria-label={src ? 'Change signature' : 'Sign here'}>
-        {img ?? <span className="ff-sign-hint">{hint}</span>}
+        {img ?? (
+          <span className="ff-sign-hint">
+            <PenLine aria-hidden className="inline h-[1em] w-[1em] align-[-0.125em]" /> {hint}
+          </span>
+        )}
       </button>
       {src && (
         <button type="button" className="ff-sign-clear" onClick={() => set(k, '')} aria-label="Remove signature">
@@ -190,7 +195,7 @@ export function Area({ k, minH = '12mm', placeholder, className = '', style }: {
   return <textarea ref={ref} className={`ff ff-area ${className}`} style={{ minHeight: minH, ...style }} value={v} placeholder={placeholder} aria-label={placeholder ?? k} data-k={k} rows={1} onChange={(e) => set(k, e.target.value)} />;
 }
 
-/** A tick box (☐ / ☑) with its label. */
+/** A tick box with its label. */
 export function Box({ k, children, size = '3.4mm', className = '' }: { k: string; children?: ReactNode; size?: string; className?: string }) {
   const { mode, values, set } = useForm();
   const on = values[k] === true;

@@ -27,7 +27,7 @@ export interface Task {
   dueDate: string | null;
   /** HH:MM or null. */
   dueTime: string | null;
-  /** The day the assignee planned it for (My Day), YYYY-MM-DD. */
+  /** The day the assignee planned to do it (the Today list), YYYY-MM-DD. */
   myDay: string | null;
   subtasks: Subtask[];
   recurrence: Recurrence;
@@ -45,6 +45,8 @@ export interface Task {
   /** Given by someone of the same or a lower role: waits for the person to accept (missing = accepted). */
   acceptance?: 'pending' | 'accepted' | 'declined';
   declinedReason?: string | null;
+  /** Can only be finished with a photo sent with it. Set by the person who gives the task. */
+  requiresPhoto?: boolean;
 }
 
 export interface TaskDraft {
@@ -69,9 +71,10 @@ export interface TaskDraft {
   assigneeId: string | null;
   /** The project it belongs to (kept when editing). */
   projectId?: string | null;
+  requiresPhoto?: boolean;
 }
 
-/** Small changes saved straight away (My Day, a subtask ticked). */
+/** Small changes saved straight away (planned for today, a subtask ticked). */
 export type TaskPatch = Partial<Pick<Task, 'myDay' | 'subtasks' | 'priority' | 'dueDate'>> & {
   /** Started or not (finishing goes through complete(), which awards XP). */
   status?: 'todo' | 'in_progress';
@@ -85,6 +88,8 @@ export interface XpAward {
   base: number;
   onTime: number;
   subtasks: number;
+  /** +5 for a photo sent with a task that didn't need one. */
+  photo?: number;
   /** Set by the person who did it: counts toward the daily cap. */
   selfSet: boolean;
   /** Fewer points than earned because the daily cap for self-set tasks was reached. */
@@ -94,6 +99,13 @@ export interface XpAward {
   /** YYYY-MM-DD (Manila). */
   day: string;
   awardedAt: string;
+}
+
+/** XP for finishing a task on every working day (Monday to Friday) of a week. */
+export interface WeekBonus {
+  /** The Monday, YYYY-MM-DD. */
+  weekStart: string;
+  points: number;
 }
 
 export interface Kudos {
@@ -152,7 +164,7 @@ export interface TasksService {
   /** Cancels the task; history and XP records stay. */
   remove(id: string): Promise<void>;
   /** The signed-in person's XP and kudos. */
-  progress(): Promise<{ awards: XpAward[]; kudos: Kudos[] }>;
+  progress(): Promise<{ awards: XpAward[]; kudos: Kudos[]; weekBonuses: WeekBonus[] }>;
   team(): Promise<TeamProgress>;
   /** tasks.manage only. */
   setTeamGoal(goal: number): Promise<void>;

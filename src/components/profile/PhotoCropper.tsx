@@ -124,7 +124,7 @@ export function PhotoCropper({ image, onCancel, onApply }: Props) {
               style={{ width: w * scale, height: h * scale, transform: `translate(${pos.x}px, ${pos.y}px)` }}
             />
             {/* Everything outside the circle is dimmed: that part isn't kept. */}
-            <div className="pointer-events-none absolute inset-0 rounded-full shadow-[0_0_0_999px_rgba(0,0,0,0.6)] ring-2 ring-white/80" aria-hidden />
+            <div className="pointer-events-none absolute inset-0 rounded-full shadow-[0_0_0_999px_rgba(0,0,0,0.6)] ring-2 ring-ink/80" aria-hidden />
           </div>
 
           <p className="flex items-center gap-1.5 text-xs text-muted">

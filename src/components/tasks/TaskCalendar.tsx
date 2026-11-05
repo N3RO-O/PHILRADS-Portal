@@ -106,14 +106,10 @@ export function TaskCalendar({ tasks, today, selected, onSelect, children }: Pro
             holiday?.kind === 'regular'
               ? 'bg-status-out/[0.08] hover:bg-status-out/[0.14]'
               : holiday?.kind === 'special'
-                ? 'bg-uplift/[0.07] hover:bg-uplift/[0.12]'
-                : col === 5
-                  ? 'bg-sky-300/[0.06] hover:bg-sky-300/[0.1]'
-                  : col === 6
-                    ? 'bg-rose/[0.07] hover:bg-rose/[0.12]'
-                    : 'bg-surface-sunken hover:bg-surface-raised';
+                ? 'bg-surface-raised/60 hover:bg-surface-raised'
+                : 'bg-surface-sunken hover:bg-surface-raised';
           const numberTone = isToday
-            ? 'bg-uplift text-page'
+            ? 'bg-uplift text-onaccent'
             : overdue
               ? 'text-rose'
               : offDay
@@ -137,7 +133,7 @@ export function TaskCalendar({ tasks, today, selected, onSelect, children }: Pro
               }${open.length ? `, ${open.length} open` : ''}${due.length - open.length ? `, ${due.length - open.length} done` : ''}`}
               onClick={() => onSelect(key)}
               className={`flex min-h-[3.25rem] min-w-0 flex-col items-stretch gap-1 rounded-lg border p-1 text-left transition-colors md:min-h-[5.5rem] md:p-1.5 xl:min-h-[3.25rem] xl:p-1 2xl:min-h-[5.5rem] 2xl:p-1.5 ${
-                isSelected ? 'border-uplift bg-uplift/10' : `border-transparent ${base}`
+                isSelected ? 'border-burgundy-400 bg-burgundy-500/25' : `border-transparent ${base}`
               }`}
             >
               <span className={`grid h-6 w-6 shrink-0 place-items-center self-center rounded-full text-xs font-semibold tabular-nums md:self-start xl:self-center 2xl:self-start ${numberTone}`}>

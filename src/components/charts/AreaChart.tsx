@@ -72,9 +72,9 @@ export function AreaChart({ labels, series, ariaLabel, minHeight = 170 }: AreaCh
             return (
               <g key={s.name}>
                 <path d={`${line} L${x(s.values.length - 1)},${baseline} L${x(0)},${baseline} Z`} fill={`url(#${gid}-${si})`} />
-                <path d={line} fill="none" stroke={s.color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+                <path d={line} fill="none" style={{ stroke: s.color }} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
                 {s.values.map((v, i) => (
-                  <circle key={i} cx={x(i)} cy={y(v)} r={hover === i ? 4.5 : 3} fill="#26272c" stroke={s.color} strokeWidth="2" />
+                  <circle key={i} cx={x(i)} cy={y(v)} r={hover === i ? 4.5 : 3} style={{ fill: 'rgb(var(--surface))', stroke: s.color }} strokeWidth="2" />
                 ))}
               </g>
             );

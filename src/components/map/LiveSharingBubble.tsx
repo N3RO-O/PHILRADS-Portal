@@ -117,7 +117,7 @@ export function LiveSharingBubble() {
         <span className={`relative block rounded-full p-[3px] shadow-[0_10px_30px_-6px_rgba(0,0,0,0.7)] ${paused ? 'bg-status-low' : 'bg-status-in'}`}>
           <Avatar initials={profile.initials} src={profile.avatar} color={profile.avatarColor} size="lg" ring="ring-2 ring-page" />
         </span>
-        <span className={`absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full px-1.5 py-px text-[0.5625rem] font-bold tracking-wider text-page ${paused ? 'bg-status-low' : 'bg-status-in'}`} aria-hidden>
+        <span className={`absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full px-1.5 py-px text-[0.5625rem] font-bold tracking-wider text-onaccent ${paused ? 'bg-status-low' : 'bg-status-in'}`} aria-hidden>
           {paused ? 'PAUSED' : 'LIVE'}
         </span>
       </button>
@@ -146,7 +146,7 @@ export function LiveSharingBubble() {
           {live.error && <p className="mt-2 text-xs text-status-out">{live.error}</p>}
 
           <label className="mt-3 flex cursor-pointer items-center gap-3 rounded-xl bg-surface-sunken px-3 py-2.5">
-            <Sun className="h-4 w-4 shrink-0 text-uplift" aria-hidden />
+            <Sun className="h-4 w-4 shrink-0" aria-hidden />
             <span className="min-w-0 flex-1 text-sm">Keep screen on</span>
             <Switch checked={live.keepAwake} onChange={live.setKeepAwake} />
           </label>

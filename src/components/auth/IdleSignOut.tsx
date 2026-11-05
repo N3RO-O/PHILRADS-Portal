@@ -98,9 +98,9 @@ export function IdleSignOut() {
   const mm = Math.floor(left / 60);
   const ss = String(left % 60).padStart(2, '0');
   return (
-    <div className="fixed inset-0 z-[70] grid animate-fade-in place-items-center bg-black/60 p-4 backdrop-blur-sm">
-      <div role="alertdialog" aria-modal="true" aria-labelledby="idle-title" aria-describedby="idle-desc" className="card w-full max-w-sm animate-pop-in items-center gap-4 text-center shadow-2xl shadow-black/40">
-        <span className="grid h-14 w-14 place-items-center rounded-2xl bg-uplift/15 text-uplift">
+    <div className="fixed inset-0 z-[70] grid animate-fade-in place-items-center bg-black/60 p-4">
+      <div role="alertdialog" aria-modal="true" aria-labelledby="idle-title" aria-describedby="idle-desc" className="floating w-full max-w-sm rounded-2xl p-5 animate-pop-in items-center gap-4 text-center shadow-2xl shadow-black/40">
+        <span className="grid h-14 w-14 place-items-center rounded-2xl text-ink-soft">
           <Clock className="h-7 w-7" aria-hidden />
         </span>
         <div>

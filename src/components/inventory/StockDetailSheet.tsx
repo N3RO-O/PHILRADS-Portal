@@ -36,7 +36,7 @@ export function StockDetailSheet({ row, rows, snapshot, movements, onClose, onOp
             {(
               [
                 ['donations.php', 'Receive', ArrowDownToLine, 'text-status-in'],
-                ['transactions.php', 'Release', ArrowUpFromLine, 'text-uplift'],
+                ['transactions.php', 'Release', ArrowUpFromLine, 'text-ink-soft'],
                 ['inventory.php', 'View in IMS', ExternalLink, 'text-ink-soft'],
               ] as const
             ).map(([page, label, Icon, tone]) => (
@@ -55,7 +55,7 @@ export function StockDetailSheet({ row, rows, snapshot, movements, onClose, onOp
             <Stat label={row.location?.name ?? 'Not stocked anywhere'} value={`${formatNumber(row.usable)} ${row.item.unit}`}>
               <StockBadge status={row.stock} />
             </Stat>
-            <Stat label="Reorder level (per location)" value={`${formatNumber(row.item.reorderLevel)} ${row.item.unit}`}>
+            <Stat label="Low-stock level (per location)" value={`${formatNumber(row.item.reorderLevel)} ${row.item.unit}`}>
               {row.expiredQty > 0 && <span className="text-xs text-status-expired">{formatNumber(row.expiredQty)} expired, not usable</span>}
             </Stat>
           </div>
@@ -65,13 +65,13 @@ export function StockDetailSheet({ row, rows, snapshot, movements, onClose, onOp
               Lots here <span className="font-normal text-muted">(first-expiry-first-out order)</span>
             </h3>
             {row.batches.length === 0 ? (
-              <p className="tile px-4 py-3 text-sm text-muted">No stock at this location.</p>
+              <p className="py-3 text-sm text-muted">No stock at this location.</p>
             ) : (
               <ul className="flex flex-col gap-2">
                 {row.batches.map((b) => {
                   const exp = expiryStatus(b.expiryDate);
                   return (
-                    <li key={b.id} className="tile flex items-center justify-between gap-3 px-4 py-3">
+                    <li key={b.id} className="flex items-center justify-between gap-3 border-t border-line py-3 first:border-t-0">
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold">{b.lotNumber ?? 'No lot no.'}</p>
                         <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted">
@@ -97,7 +97,7 @@ export function StockDetailSheet({ row, rows, snapshot, movements, onClose, onOp
               <ul className="flex flex-col divide-y divide-line/70 rounded-xl border border-line/70">
                 {elsewhere.map((r) => (
                   <li key={r.key}>
-                    <button type="button" onClick={() => onOpenRow(r)} className="tap flex min-h-12 w-full items-center justify-between gap-3 px-4 py-2 text-left text-sm hover:bg-white/[0.03]">
+                    <button type="button" onClick={() => onOpenRow(r)} className="tap flex min-h-12 w-full items-center justify-between gap-3 px-4 py-2 text-left text-sm hover:bg-ink/[0.03]">
                       <span className="min-w-0 truncate">{r.location?.name}</span>
                       <span className="flex shrink-0 items-center gap-2">
                         <span className="font-semibold tabular-nums">{formatNumber(r.usable)}</span>
@@ -115,7 +115,7 @@ export function StockDetailSheet({ row, rows, snapshot, movements, onClose, onOp
               Recent movements here
             </h3>
             {history.length === 0 ? (
-              <p className="tile px-4 py-3 text-sm text-muted">No movements recorded yet.</p>
+              <p className="py-3 text-sm text-muted">No movements recorded yet.</p>
             ) : (
               <ol className="flex flex-col gap-2">
                 {history.map((m) => {
@@ -154,7 +154,7 @@ export function StockDetailSheet({ row, rows, snapshot, movements, onClose, onOp
 
 function Stat({ label, value, children }: { label: string; value: string; children?: ReactNode }) {
   return (
-    <div className="tile flex flex-col gap-1.5 px-4 py-3">
+    <div className="flex flex-col gap-1.5 border-t border-line pt-3">
       <span className="truncate text-xs text-muted">{label}</span>
       <span className="text-xl font-bold tabular-nums">{value}</span>
       {children}

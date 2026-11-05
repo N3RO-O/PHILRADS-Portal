@@ -36,11 +36,8 @@ export function Card({ id, title, note, action, source, className = '', children
 
 export function LoadError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <div role="alert" className="tile flex flex-col items-center gap-2 px-4 py-6 text-center text-sm">
-      <p className="flex items-center gap-2 text-muted">
-        <span className="h-1.5 w-1.5 rounded-full bg-rose" aria-hidden />
-        {message}
-      </p>
+    <div role="alert" className="flex flex-col items-center gap-2 px-4 py-6 text-center text-sm">
+      <p className="text-ink-soft">{message}</p>
       <button type="button" onClick={onRetry} className="link">
         <RefreshCw className="h-3.5 w-3.5" aria-hidden /> Try again
       </button>
@@ -54,10 +51,8 @@ export function LoadError({ message, onRetry }: { message: string; onRetry: () =
  */
 export function EmptyState({ icon: Icon, title, children, action, tone = 'text-muted', className = '' }: { icon: LucideIcon; title: string; children?: ReactNode; action?: ReactNode; tone?: string; className?: string }) {
   return (
-    <div className={`tile flex flex-col items-center gap-3 px-4 py-10 text-center ${className}`}>
-      <span className="icon-chip h-11 w-11" aria-hidden>
-        <Icon className={`h-5 w-5 ${tone}`} />
-      </span>
+    <div className={`flex flex-col items-center gap-3 px-4 py-10 text-center ${className}`}>
+      <Icon className={`h-6 w-6 ${tone}`} aria-hidden />
       <div className="max-w-sm">
         <p className="text-sm font-semibold text-ink">{title}</p>
         {children && <p className="mt-1 text-xs text-muted">{children}</p>}

@@ -4,9 +4,9 @@ import { MODULES } from '../../config/modules';
 export const PRIORITY_LABEL: Record<TaskPriority, string> = { high: 'High', medium: 'Medium', low: 'Low' };
 
 export const PRIORITY_BADGE: Record<TaskPriority, string> = {
-  high: 'border-rose/40 bg-rose/10 text-rose',
-  medium: 'border-uplift/40 bg-uplift/10 text-uplift',
-  low: 'border-line bg-surface-raised text-ink-soft',
+  high: 'border-status-out/40 text-status-out',
+  medium: 'border-line text-ink-soft',
+  low: 'border-line text-muted',
 };
 
 export const STATUS_LABEL: Record<TaskStatus, string> = {
@@ -17,20 +17,21 @@ export const STATUS_LABEL: Record<TaskStatus, string> = {
   cancelled: 'Cancelled',
 };
 
-export const STATUS_DOT: Record<TaskStatus, string> = {
-  todo: 'bg-ink-mute',
-  in_progress: 'bg-uplift',
-  review: 'bg-rose',
-  done: 'bg-emerald-400',
-  cancelled: 'bg-line',
+/** Task status as a word in its state colour (docs/design-system.md): no dot. */
+export const STATUS_TEXT: Record<TaskStatus, string> = {
+  todo: 'text-ink-soft',
+  in_progress: 'text-ink',
+  review: 'text-ink-soft',
+  done: 'text-status-in',
+  cancelled: 'text-muted line-through',
 };
 
-/** The three accent tones used for KPI tiles, table rows and badges, in rotation. */
-export const TONES = [
-  { text: 'text-uplift', bar: 'bg-uplift', badge: 'border-uplift/40 bg-uplift/10 text-uplift', soft: 'bg-uplift/10 text-uplift', glow: 'rgba(236, 149, 42, 0.16)' },
-  { text: 'text-rose', bar: 'bg-rose', badge: 'border-rose/40 bg-rose/10 text-rose', soft: 'bg-rose/10 text-rose', glow: 'rgba(217, 123, 123, 0.17)' },
-  { text: 'text-ink-soft', bar: 'bg-ink-soft', badge: 'border-ink-mute/40 bg-white/5 text-ink-soft', soft: 'bg-white/5 text-ink-soft', glow: 'rgba(196, 198, 205, 0.1)' },
-] as const;
+/**
+ * Figures, rows and badges are neutral; only a progress bar takes the accent. Kept as a list so
+ * older callers that pick a tone by index still work, but every entry is the same.
+ */
+const NEUTRAL = { text: 'text-ink-soft', bar: 'bg-uplift', badge: 'border-line text-ink-soft', soft: 'text-ink-soft' } as const;
+export const TONES = [NEUTRAL, NEUTRAL, NEUTRAL] as const;
 
 export const moduleLabel = (id: ModuleId | null) => (id ? MODULES.find((m) => m.id === id)?.label ?? '' : '');
 

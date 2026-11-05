@@ -40,13 +40,13 @@ export function WelcomeQuestion({ open, onAnswer, onSkip }: Props) {
               className="tap group flex min-h-16 items-center gap-4 rounded-2xl border border-line/70 bg-surface-sunken px-4 py-3 text-left transition hover:border-uplift/60 hover:bg-uplift/[0.06] focus-visible:border-uplift"
             >
               <span className="icon-chip h-10 w-10" aria-hidden>
-                <Icon className="h-5 w-5 text-uplift" />
+                <Icon className="h-5 w-5" />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-semibold text-ink">{label}</span>
                 <span className="block text-xs text-muted">{note}</span>
               </span>
-              <ArrowRight className="h-4 w-4 shrink-0 text-muted transition group-hover:translate-x-0.5 group-hover:text-uplift" aria-hidden />
+              <ArrowRight className="h-4 w-4 shrink-0 text-muted transition group-hover:translate-x-0.5 group-hover:" aria-hidden />
             </button>
           );
         })}

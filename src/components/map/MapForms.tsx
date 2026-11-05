@@ -121,7 +121,7 @@ export function PlaceForm({ draft: d, snapshot, onChange, onPick, onSave, onRemo
             {PLACE_KINDS.map((k) => (
               <label
                 key={k.key}
-                className={`tap flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm leading-tight transition-colors ${d.kind === k.key ? 'border-uplift bg-uplift/10 font-semibold' : 'border-line/70 hover:border-ink-mute'}`}
+                className={`tap flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm leading-tight transition-colors ${d.kind === k.key ? 'border-burgundy-400 bg-burgundy-500/25 font-semibold' : 'border-line/70 hover:border-ink-mute'}`}
               >
                 <input type="radio" name={`${uid}-kind`} className="sr-only" checked={d.kind === k.key} onChange={() => set({ kind: k.key })} />
                 <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: k.color }} aria-hidden />
@@ -134,7 +134,7 @@ export function PlaceForm({ draft: d, snapshot, onChange, onPick, onSave, onRemo
         <div className="flex flex-col gap-2">
           <span className="text-sm font-semibold text-ink-soft">Where it is</span>
           <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-sm ${spotError ? 'border-status-out/60' : 'border-line/70'}`}>
-            <MapPin className={`h-4 w-4 shrink-0 ${hasSpot ? 'text-uplift' : 'text-muted'}`} aria-hidden />
+            <MapPin className={`h-4 w-4 shrink-0 ${hasSpot ? 'text-ink' : 'text-muted'}`} aria-hidden />
             <span className={hasSpot ? 'tabular-nums' : 'text-muted'}>{hasSpot ? formatLatLng(d) : 'Not set yet'}</span>
           </div>
           {spotError && <p className="text-xs font-medium text-status-out">{spotError}</p>}
@@ -259,10 +259,10 @@ export function CheckInSheet({ places, onClose, onShare }: CheckInProps) {
       }
     >
       <div className="flex flex-col gap-5">
-        <div className="tile flex items-center gap-3 p-4" aria-live="polite">
+        <div className="flex items-center gap-3 py-2" aria-live="polite">
           {!pos ? (
             <>
-              <Loader2 className="h-5 w-5 shrink-0 animate-spin text-uplift" aria-hidden />
+              <Loader2 className="h-5 w-5 shrink-0 animate-spin" aria-hidden />
               <span className="text-sm">Finding your location…</span>
             </>
           ) : pos.ok ? (
@@ -297,7 +297,7 @@ export function CheckInSheet({ places, onClose, onShare }: CheckInProps) {
           <input id={`${uid}-note`} className="field" maxLength={200} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Distribution day 2, 150 families so far" />
         </div>
         <p className="flex items-start gap-2 text-xs text-muted">
-          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-uplift" aria-hidden />
+          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           Only PHILRADS staff see it, and it disappears after 24 hours. Your location is shared only when you tap the button; it’s never tracked in the background.
         </p>
       </div>

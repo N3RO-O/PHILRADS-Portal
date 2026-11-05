@@ -35,7 +35,7 @@ export function PairedBars({ pairs, aName, bName, bClass, unitOf, minHeight = 17
         {pairs.map((p, i) => (
           <div
             key={p.key}
-            className={`flex h-full flex-1 items-end justify-center gap-1 rounded-t-lg transition-colors ${hover === i ? 'bg-white/[0.04]' : ''}`}
+            className={`flex h-full flex-1 items-end justify-center gap-1 rounded-t-lg transition-colors ${hover === i ? 'bg-ink/[0.04]' : ''}`}
             onMouseEnter={() => setHover(i)}
             onMouseLeave={() => setHover(null)}
           >

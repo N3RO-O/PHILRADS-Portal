@@ -9,7 +9,7 @@ import { useAsyncData } from '../../hooks/useAsyncData';
 import { useDismiss } from '../../hooks/useDismiss';
 import { formatTime } from '../../lib/format';
 import { useLiveRefresh } from '../../lib/imsActions';
-import { CURRENT, useWhatsNew, whatsNew } from '../../lib/whatsNew';
+import { RELEASES, useWhatsNew, whatsNew } from '../../lib/whatsNew';
 import { dashboardService } from '../../services';
 import type { NotificationItem } from '../../types';
 import { LoadError, Skeleton } from '../ui/Card';
@@ -65,7 +65,8 @@ export function NotificationsMenu() {
   };
   const { can } = useAuth();
   const news = useWhatsNew();
-  const newsItems = CURRENT.items.filter((i) => !i.permission || can(i.permission as PermissionKey));
+  const allowed = (items: (typeof RELEASES)[number]['items']) => items.filter((i) => !i.permission || can(i.permission as PermissionKey));
+  const NEWS = 'portal-whats-new-';
   const portal: Note[] = [
     ...(news.updateReady
       ? [
@@ -79,17 +80,18 @@ export function NotificationsMenu() {
           },
         ]
       : []),
-    {
-      id: `portal-whats-new-${CURRENT.id}`,
-      title: `What’s new: ${CURRENT.title}`,
-      body: newsItems
+    // Every version's news, one note each (newest first), with its version number.
+    ...RELEASES.map((r) => ({
+      id: `${NEWS}${r.id}`,
+      title: `${r.version ? `Version ${r.version}: ` : 'What’s new: '}${r.title}`,
+      body: allowed(r.items)
         .slice(0, 3)
         .map((i) => i.title)
         .join(' · '),
-      createdAt: `${CURRENT.date}T08:00:00+08:00`,
-      read: news.seen === CURRENT.id,
-      portal: () => whatsNew.showNotes(),
-    },
+      createdAt: `${r.date}T08:00:00+08:00`,
+      read: news.read.includes(r.id) || whatsNew.isRead(r.id),
+      portal: () => (whatsNew.markRead([r.id]), whatsNew.showNotes([r])),
+    })),
   ];
   const [hidden, setHidden] = useState<Set<string>>(() => new Set(readHidden()));
   const [gone, setGone] = useState<Set<string>>(new Set());
@@ -104,7 +106,8 @@ export function NotificationsMenu() {
       const next = new Set([...hidden, ...local]);
       setHidden(next);
       writeHidden([...next]);
-      if (local.includes(`portal-whats-new-${CURRENT.id}`)) whatsNew.markSeen(CURRENT.id);
+      const releases = local.filter((id) => id.startsWith(NEWS)).map((id) => id.slice(NEWS.length));
+      if (releases.length) whatsNew.markRead(releases);
     }
     const server = ids.filter((id) => !id.startsWith('portal-'));
     if (!server.length) return;
@@ -119,7 +122,8 @@ export function NotificationsMenu() {
   const unread = list.filter((n) => !n.read);
 
   const markRead = async (ids: string[]) => {
-    if (ids.includes(`portal-whats-new-${CURRENT.id}`)) whatsNew.markSeen(CURRENT.id);
+    const releases = ids.filter((id) => id.startsWith(NEWS)).map((id) => id.slice(NEWS.length));
+    if (releases.length) whatsNew.markRead(releases);
     ids = ids.filter((id) => !id.startsWith('portal-'));
     if (!ids.length) return;
     try {
@@ -181,30 +185,30 @@ export function NotificationsMenu() {
                 <div className="absolute right-0 top-10 z-10 w-64 origin-top-right animate-pop-in rounded-2xl border border-line bg-surface-raised p-1.5 shadow-2xl shadow-black/50">
                   <button
                     type="button"
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-white/[0.05] disabled:opacity-50"
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-ink/[0.05] disabled:opacity-50"
                     disabled={!unread.length}
                     onClick={() => (void markRead(unread.map((n) => n.id)), setMore(false))}
                   >
-                    <CheckCheck className="h-4 w-4 text-uplift" aria-hidden /> Mark all as read
+                    <CheckCheck className="h-4 w-4" aria-hidden /> Mark all as read
                   </button>
                   {pushSupported() && (
-                    <button type="button" className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-white/[0.05]" disabled={phone === 'busy'} onClick={() => void togglePhone()}>
-                      <Smartphone className="h-4 w-4 text-uplift" aria-hidden />
+                    <button type="button" className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-ink/[0.05]" disabled={phone === 'busy'} onClick={() => void togglePhone()}>
+                      <Smartphone className="h-4 w-4" aria-hidden />
                       <span className="flex-1">Phone notifications</span>
-                      <span className={`rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold ${phone === 'on' ? 'bg-status-in/15 text-status-in' : 'bg-white/[0.06] text-muted'}`}>
+                      <span className={`rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold ${phone === 'on' ? 'bg-status-in/15 text-status-in' : 'bg-ink/[0.06] text-muted'}`}>
                         {phone === 'busy' ? '…' : phone === 'on' ? 'On' : 'Off'}
                       </span>
                     </button>
                   )}
                   <button
                     type="button"
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-white/[0.05]"
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-ink/[0.05]"
                     onClick={() => {
                       setOpen(false);
                       navigate('/tasks?view=myday');
                     }}
                   >
-                    <Sun className="h-4 w-4 text-uplift" aria-hidden /> Open My Day
+                    <Sun className="h-4 w-4" aria-hidden /> Open today’s tasks
                   </button>
                   {confirmClear ? (
                     <div className="flex items-center gap-2 rounded-xl bg-status-out/10 px-3 py-2">
@@ -234,7 +238,7 @@ export function NotificationsMenu() {
                 role="tab"
                 aria-selected={tab === t}
                 onClick={() => setTab(t)}
-                className={`press rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${tab === t ? 'bg-uplift/20 text-uplift' : 'bg-white/[0.07] text-ink-soft hover:bg-white/[0.1]'}`}
+                className={`press rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${tab === t ? 'text-ink-soft' : 'bg-ink/[0.07] text-ink-soft hover:bg-ink/[0.1]'}`}
               >
                 {t === 'all' ? 'All' : `Unread${unread.length ? ` (${unread.length})` : ''}`}
               </button>
@@ -265,13 +269,13 @@ const ago = (iso: string) => {
 /** A picture for each kind of note, from what it says. */
 const kindOf = (n: Note): { icon: LucideIcon; tint: string } => {
   const t = n.title.toLowerCase();
-  if (n.portal) return { icon: Gift, tint: 'bg-uplift/20 text-uplift' };
-  if (t.includes('nudged')) return { icon: BellRing, tint: 'bg-uplift/20 text-uplift' };
-  if (t.includes('accepted') || t.includes('kudos')) return { icon: ThumbsUp, tint: 'bg-status-in/20 text-status-in' };
-  if (t.includes('declined') || t.includes('sent back')) return { icon: Hand, tint: 'bg-rose/20 text-rose' };
-  if (t.includes('task') || t.includes('gave you') || t.includes('asks you')) return { icon: SquareCheckBig, tint: 'bg-sky-400/20 text-sky-300' };
-  if (t.includes('stock') || t.includes('release') || t.includes('item')) return { icon: Package, tint: 'bg-violet-400/20 text-violet-300' };
-  return { icon: Bell, tint: 'bg-white/10 text-ink-soft' };
+  if (n.portal) return { icon: Gift, tint: 'text-ink-soft' };
+  if (t.includes('nudged')) return { icon: BellRing, tint: 'text-ink-soft' };
+  if (t.includes('accepted') || t.includes('kudos')) return { icon: ThumbsUp, tint: 'text-ink-soft' };
+  if (t.includes('declined') || t.includes('sent back')) return { icon: Hand, tint: 'text-ink-soft' };
+  if (t.includes('task') || t.includes('gave you') || t.includes('asks you')) return { icon: SquareCheckBig, tint: 'text-ink-soft' };
+  if (t.includes('stock') || t.includes('release') || t.includes('item')) return { icon: Package, tint: 'text-ink-soft' };
+  return { icon: Bell, tint: 'text-ink-soft' };
 };
 
 function NoteGroups({ list, unreadTab, onOpen, onRead, onDelete, onMyDay }: { list: Note[]; unreadTab: boolean; onOpen: (n: Note) => void; onRead: (n: Note) => void; onDelete: (n: Note) => void; onMyDay: () => void }) {
@@ -282,7 +286,7 @@ function NoteGroups({ list, unreadTab, onOpen, onRead, onDelete, onMyDay }: { li
         <p className="text-sm font-semibold text-ink">{unreadTab ? 'Nothing unread' : 'You’re all caught up'}</p>
         <p className="max-w-[16rem] text-xs text-muted">Tasks given to you, nudges and news from the IMS show here.</p>
         <button type="button" className="btn-ghost mt-1 min-h-9 px-4 text-xs" onClick={onMyDay}>
-          Open My Day
+          Open today’s tasks
         </button>
       </div>
     );
@@ -301,7 +305,7 @@ function NoteGroups({ list, unreadTab, onOpen, onRead, onDelete, onMyDay }: { li
               const k = kindOf(n);
               return (
                 <SwipeRow key={n.id} index={i} onDelete={() => onDelete(n)} menu={<NoteMenu note={n} onRead={() => onRead(n)} onDelete={() => onDelete(n)} />}>
-                  <button type="button" onClick={() => onOpen(n)} className={`press flex w-full items-center gap-3 rounded-xl py-2.5 pl-3 pr-11 text-left transition-colors hover:bg-white/[0.05] ${n.read ? 'bg-surface-raised' : 'bg-[color-mix(in_srgb,#ec952a_5%,#303137)]'}`}>
+                  <button type="button" onClick={() => onOpen(n)} className={`press flex w-full items-center gap-3 rounded-xl py-2.5 pl-3 pr-11 text-left transition-colors hover:bg-ink/[0.05] bg-surface-raised`}>
                     <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-full ${k.tint}`}>
                       <k.icon className="h-5 w-5" aria-hidden />
                     </span>
@@ -311,11 +315,15 @@ function NoteGroups({ list, unreadTab, onOpen, onRead, onDelete, onMyDay }: { li
                         {!n.read && <span className="sr-only"> (unread)</span>}
                       </span>
                       {n.body && <span className="line-clamp-1 text-xs text-muted">{n.body}</span>}
-                      <span className={`text-xs ${n.read ? 'text-muted' : 'font-semibold text-uplift'}`} title={formatTime(n.createdAt)}>
+                      <span className={`text-xs ${n.read ? 'text-muted' : 'font-semibold text-ink'}`} title={formatTime(n.createdAt)}>
                         {ago(n.createdAt)}
                       </span>
                     </span>
-                    {!n.read && <span className="h-3 w-3 shrink-0 rounded-full bg-uplift" aria-hidden />}
+                    {!n.read && (
+                      <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-ink" title="Unread">
+                        <span className="sr-only">Unread</span>
+                      </span>
+                    )}
                   </button>
                 </SwipeRow>
               );
@@ -432,8 +440,8 @@ function NoteMenu({ note, onRead, onDelete }: { note: Note; onRead: () => void; 
         createPortal(
         <span ref={pop} data-popover-child className="fixed z-[70] block w-48 origin-top-right animate-pop-in rounded-xl border border-line bg-surface-raised p-1 shadow-2xl shadow-black/60" style={{ top: open.top, right: open.right }}>
           {!note.read && (
-            <button type="button" className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm hover:bg-white/[0.06]" onClick={() => (onRead(), setOpen(null))}>
-              <Check className="h-4 w-4 text-uplift" aria-hidden /> Mark as read
+            <button type="button" className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm hover:bg-ink/[0.06]" onClick={() => (onRead(), setOpen(null))}>
+              <Check className="h-4 w-4" aria-hidden /> Mark as read
             </button>
           )}
           <button type="button" className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-status-out hover:bg-status-out/10" onClick={() => (onDelete(), setOpen(null))}>

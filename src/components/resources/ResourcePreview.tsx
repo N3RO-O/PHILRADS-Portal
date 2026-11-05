@@ -45,7 +45,7 @@ export function ResourcePreview({ resource, googleAccount, onClose }: Props) {
       // Escape closes the dialog natively; it also reports "closed" after `resource` went null, so ignore that.
       onClose={() => open && onClose()}
       {...backdrop.handlers}
-      className="fixed inset-0 m-0 flex h-dvh max-h-none w-full max-w-none animate-fade-in flex-col bg-page p-0 text-ink backdrop:animate-fade-in backdrop:bg-black/70 md:m-auto md:h-[90dvh] md:w-[min(72rem,92vw)] md:animate-pop-in md:overflow-hidden md:rounded-3xl md:border md:border-line/70 md:glass [&:not([open])]:hidden"
+      className="fixed inset-0 m-0 flex h-dvh max-h-none w-full max-w-none animate-fade-in flex-col bg-page p-0 text-ink backdrop:animate-fade-in backdrop:bg-black/70 md:m-auto md:h-[90dvh] md:w-[min(72rem,92vw)] md:animate-pop-in md:overflow-hidden md:rounded-3xl md:border md:border-line/70 md:floating [&:not([open])]:hidden"
     >
       {resource && link?.previewUrl && (
         <>

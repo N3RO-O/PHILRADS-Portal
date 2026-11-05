@@ -1,6 +1,154 @@
 [
   {
+    "id": "2026-11-05",
+    "version": "1.5.0",
+    "date": "2026-11-05",
+    "title": "Light mode, a clearer look and a better calendar",
+    "items": [
+      {
+        "icon": "moon",
+        "title": "Light or dark",
+        "body": "Choose Dark, Light or Auto (follows your device) in your profile or the account menu.",
+        "path": "/profile"
+      },
+      {
+        "icon": "palette",
+        "title": "A calmer, clearer look",
+        "body": "One main colour, one accent and plain icons everywhere. The welcome band is back at the top of Home with its moving background, and the main buttons shine when you point at them and press in when you tap."
+      },
+      {
+        "icon": "calendar",
+        "title": "A better calendar",
+        "body": "Full weeks, today and your chosen day stand out, tasks show on their dates, and the agenda sits beside it. Swipe or use the arrow keys to change month.",
+        "path": "/"
+      },
+      {
+        "icon": "camera",
+        "title": "Tasks that need a photo",
+        "body": "Whoever gives a task can switch on “Needs a photo”: it can only be finished with a photo sent. On any other task, a photo earns +5 XP.",
+        "path": "/tasks"
+      },
+      {
+        "icon": "calendar-check",
+        "title": "Your week in seven circles",
+        "body": "Staff Tasks shows Monday to Sunday, filled on each day you finished a task. Finish one every working day for +25 XP.",
+        "path": "/tasks"
+      },
+      {
+        "icon": "sun",
+        "title": "Simpler words",
+        "body": "“My Day” is now “Today”: the tasks you plan to do today.",
+        "path": "/tasks"
+      },
+      {
+        "icon": "bell-ring",
+        "title": "A ting for notifications",
+        "body": "A soft sound when a new notification arrives. Turn it off in the account menu."
+      },
+      {
+        "icon": "package",
+        "title": "Inventory words match the IMS",
+        "body": "Stock is “running low” at or under its low-stock level, as the IMS says it.",
+        "path": "/inventory"
+      },
+      {
+        "icon": "gift",
+        "title": "Every update in the bell",
+        "body": "Each version’s news now has its own note in the bell, with its version number."
+      }
+    ]
+  },
+  {
+    "id": "2026-11-04",
+    "version": "1.4.0",
+    "date": "2026-11-04",
+    "title": "Avatar frames and a tidier profile",
+    "items": [
+      {
+        "icon": "sparkles",
+        "title": "Avatar frames",
+        "body": "20 animated rings for your profile picture. Some are earned with levels, and administrators wear the PHILRADS Admin crown.",
+        "path": "/profile"
+      },
+      {
+        "icon": "lock",
+        "title": "Public or private profile",
+        "body": "A small switch at the end of your profile decides who sees your details.",
+        "path": "/profile"
+      },
+      {
+        "icon": "user",
+        "title": "Profile fits its space",
+        "body": "Tap your photo to change it. Home leads with a bigger calendar.",
+        "path": "/profile"
+      },
+      {
+        "icon": "kanban",
+        "title": "Project costs",
+        "body": "Projects show their total cost, and completed projects count in Statistics.",
+        "path": "/projects"
+      },
+      {
+        "icon": "users",
+        "title": "Who gave each task",
+        "body": "The Active list shows who gave each person their tasks."
+      }
+    ]
+  },
+  {
+    "id": "2026-11-03",
+    "version": "1.3.0",
+    "date": "2026-11-03",
+    "title": "Search, who’s online and Staff Tasks",
+    "items": [
+      {
+        "icon": "search",
+        "title": "Search anything",
+        "body": "Pages, people, tasks, projects, statistics and resources, from the top bar."
+      },
+      {
+        "icon": "circle-dot",
+        "title": "Your status",
+        "body": "Online, idle, do not disturb or invisible, and the Active list of who’s on, by role, beside every page."
+      },
+      {
+        "icon": "list-checks",
+        "title": "Give and finish tasks",
+        "body": "Give a task to anyone; tasks from the same or a lower role are accepted or declined first. Start and Finish on each row, with an optional note, links and photos.",
+        "path": "/tasks"
+      },
+      {
+        "icon": "bell",
+        "title": "Notifications",
+        "body": "All or Unread, Today and Earlier, pop-ups as notes arrive, and notifications on your phone."
+      },
+      {
+        "icon": "fingerprint",
+        "title": "Quick unlock",
+        "body": "A 6-digit PIN and fingerprint or face on this device."
+      },
+      {
+        "icon": "pen",
+        "title": "Sign forms on screen",
+        "body": "Every signature spot can be signed on screen, and typed text can be made bigger or smaller.",
+        "path": "/forms"
+      },
+      {
+        "icon": "sparkles",
+        "title": "Smoother motion",
+        "body": "Pull to refresh, rolling numbers, drag to reorder and a success tick."
+      },
+      {
+        "icon": "messages",
+        "title": "Verse of the Day",
+        "body": "Read more opens a short reflection, something to do today and a prayer.",
+        "path": "/"
+      }
+    ]
+  },
+  {
     "id": "2026-10-31",
+    "version": "1.2.0",
     "date": "2026-10-31",
     "title": "Private funding, spreadsheet sync and smoother motion",
     "items": [
@@ -52,6 +200,7 @@
   },
   {
     "id": "2026-10-28",
+    "version": "1.1.0",
     "date": "2026-10-28",
     "title": "Statistics and a new app icon",
     "items": [
@@ -81,6 +230,7 @@
   },
   {
     "id": "2026-10-27",
+    "version": "1.0.0",
     "date": "2026-10-27",
     "title": "Forms, Projects and profiles",
     "items": [

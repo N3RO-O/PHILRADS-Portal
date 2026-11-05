@@ -4,6 +4,7 @@ import { BellRing, X } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { usePresence } from '../../lib/presence';
 import { supabase } from '../../lib/supabase';
+import { notificationSound } from '../../lib/notificationSound';
 import { dashboardService } from '../../services';
 
 interface Toast {
@@ -32,6 +33,7 @@ export function NotificationToasts() {
     window.dispatchEvent(new Event('philrads:notification'));
     if (dndRef.current) return;
     setToasts((ts) => [t, ...ts.filter((x) => x.id !== t.id)].slice(0, 3));
+    notificationSound.play();
     navigator.vibrate?.(30);
   };
 
@@ -76,7 +78,7 @@ export function NotificationToasts() {
         <div
           key={t.id}
           role="status"
-          className="toast-in pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-2xl border border-uplift/30 bg-surface-raised/95 p-3 pr-2 shadow-2xl shadow-black/60 backdrop-blur-xl"
+          className="toast-in pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-2xl border border-line bg-surface-raised p-3 pr-2 shadow-2xl shadow-black/60"
           style={{ opacity: 1 - i * 0.12, transform: `scale(${1 - i * 0.03})` }}
           onTouchStart={(e) => ((e.currentTarget as HTMLElement).dataset.x = String(e.touches[0].clientX))}
           onTouchEnd={(e) => {
@@ -85,8 +87,7 @@ export function NotificationToasts() {
           }}
         >
           <button type="button" className="flex min-w-0 flex-1 items-start gap-3 text-left" onClick={() => open(t)}>
-            <span className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full bg-uplift/20 text-uplift">
-              <span className="absolute inset-0 animate-ping rounded-full bg-uplift/20" aria-hidden />
+            <span className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full text-ink-soft">
               <BellRing className="h-5 w-5 animate-[wiggle_0.6s_ease-in-out_0.3s]" aria-hidden />
             </span>
             <span className="min-w-0 pt-0.5">
@@ -94,7 +95,7 @@ export function NotificationToasts() {
               {t.body && <span className="line-clamp-1 text-xs text-muted">{t.body}</span>}
             </span>
           </button>
-          <button type="button" className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted hover:bg-white/[0.06] hover:text-ink" onClick={() => dismiss(t.id)} aria-label="Dismiss">
+          <button type="button" className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted hover:bg-ink/[0.06] hover:text-ink" onClick={() => dismiss(t.id)} aria-label="Dismiss">
             <X className="h-4 w-4" aria-hidden />
           </button>
         </div>

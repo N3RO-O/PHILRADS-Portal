@@ -262,7 +262,7 @@ export const mockProfileService: ProfileService = {
     if (id !== demoProfile.id) return sampleStats(SAMPLE_PROGRESS[id] ?? 0);
     // The demo user's real sample tasks, scored the same way as on the Tasks page.
     const [tasks, p] = await Promise.all([mockTasksService.list(), mockTasksService.progress()]);
-    const r = computeProgress({ awards: p.awards, kudos: p.kudos, tasks, userId: id });
+    const r = computeProgress({ awards: p.awards, kudos: p.kudos, weekBonuses: p.weekBonuses, tasks, userId: id });
     return { xp: r.xp, stats: r.stats };
   },
   async pictures(ids) {

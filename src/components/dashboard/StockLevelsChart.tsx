@@ -18,7 +18,7 @@ export function StockLevelsChart({ stock }: Props) {
     <Card
       id="stock-levels"
       title="Stock levels"
-      note="On hand vs reorder level"
+      note="On hand vs low-stock level"
       source={dashboardService.source}
       className="h-full"
       action={
@@ -31,7 +31,7 @@ export function StockLevelsChart({ stock }: Props) {
       {stock.status === 'error' && <LoadError message={stock.error.message} onRetry={stock.reload} />}
       {stock.status === 'success' &&
         (items.length === 0 ? (
-          <p className="tile py-8 text-center text-sm text-muted">No inventory items yet.</p>
+          <p className="py-8 text-center text-sm text-muted">No inventory items yet.</p>
         ) : (
           <>
             <PairedBars
@@ -41,28 +41,28 @@ export function StockLevelsChart({ stock }: Props) {
                 fullLabel: `${s.item} · ${s.location}`,
                 a: s.onHand,
                 b: s.reorderLevel,
-                aClass: s.onHand < s.reorderLevel ? 'bg-rose' : 'bg-uplift',
+                aClass: s.onHand <= s.reorderLevel ? 'bg-status-low' : 'bg-ink-soft',
               }))}
               aName="On hand"
-              bName="Reorder level"
-              bClass="bg-[#4a4b52]"
+              bName="Low-stock level"
+              bClass="bg-ink-mute/40"
               unitOf={(p) => items.find((s) => s.id === p.key)?.unit ?? ''}
             />
             <ul className="sr-only">
               {items.map((s) => (
                 <li key={s.id}>
-                  {s.item}, {s.location}: {s.onHand} {s.unit} on hand, reorder level {s.reorderLevel}
-                  {s.onHand < s.reorderLevel ? ', below reorder level' : ''}
+                  {s.item}, {s.location}: {s.onHand} {s.unit} on hand, low-stock level {s.reorderLevel}
+                  {s.onHand <= s.reorderLevel ? ', running low' : ''}
                 </li>
               ))}
             </ul>
             <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 border-t border-line/70 pt-3 text-[0.6875rem] text-muted" aria-hidden>
-              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-uplift" /> On hand</span>
-              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-rose" /> Below reorder level</span>
-              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#4a4b52]" /> Reorder level</span>
+              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-ink-soft" /> On hand</span>
+              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-status-low" /> Running low</span>
+              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-ink-mute/40" /> Low-stock level</span>
             </div>
             <p className="sr-only">
-              {formatNumber(items.filter((s) => s.onHand < s.reorderLevel).length)} of {formatNumber(items.length)} items are below their reorder level.
+              {formatNumber(items.filter((s) => s.onHand <= s.reorderLevel).length)} of {formatNumber(items.length)} items are running low.
             </p>
           </>
         ))}

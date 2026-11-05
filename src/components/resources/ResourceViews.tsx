@@ -13,7 +13,7 @@ import { copy, KIND_ICON, TYPE_ICON, TYPE_TONE } from './ResourceCard';
  */
 
 const iconOf = (r: Resource) => (r.fileType ? TYPE_ICON[r.fileType] : KIND_ICON[r.kind]);
-const toneOf = (r: Resource) => (r.fileType && TYPE_TONE[r.fileType]) || 'bg-white/5 text-ink-soft';
+const toneOf = (r: Resource) => (r.fileType && TYPE_TONE[r.fileType]) || 'bg-ink/5 text-ink-soft';
 const typeLabel = (r: Resource) => r.fileType ?? LINK_KIND_LABEL[r.kind];
 
 /** Lists for the compact views (Extra large and Large use the card grid). */
@@ -32,7 +32,7 @@ export const CARD_LIST: Record<'xl' | 'large', string> = {
 
 function Tick({ on }: { on: boolean }) {
   return (
-    <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border-2 ${on ? 'border-uplift bg-uplift text-page' : 'border-ink-mute'}`} aria-hidden>
+    <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border-2 ${on ? 'border-burgundy-400 bg-burgundy-500 text-cloud' : 'border-ink-mute'}`} aria-hidden>
       {on && <Check className="h-3 w-3" strokeWidth={3} />}
     </span>
   );
@@ -69,7 +69,7 @@ interface ItemProps {
 export function ResourceItem({ resource: r, view, selecting, selected, focused, compact, onClick, onDoubleClick }: ItemProps) {
   const Icon = iconOf(r);
   const base = 'tap group w-full text-left outline-none focus-visible:ring-2 focus-visible:ring-uplift';
-  const rowState = selected ? 'bg-uplift/10 ring-1 ring-inset ring-uplift/60' : focused ? 'bg-surface-raised' : 'hover:bg-white/[0.04]';
+  const rowState = selected ? 'bg-burgundy-500/25 ring-1 ring-inset ring-burgundy-400' : focused ? 'bg-surface-raised' : 'hover:bg-ink/[0.04]';
   const props = {
     type: 'button' as const,
     onClick,
@@ -78,7 +78,7 @@ export function ResourceItem({ resource: r, view, selecting, selected, focused, 
     'aria-pressed': selecting ? selected : undefined,
     title: r.title,
   };
-  const pin = r.pinned && <Pin className="h-3 w-3 shrink-0 text-uplift" aria-label="Pinned" />;
+  const pin = r.pinned && <Pin className="h-3 w-3 shrink-0" aria-label="Pinned" />;
 
   if (view === 'medium')
     return (
@@ -136,7 +136,7 @@ export function ResourceItem({ resource: r, view, selecting, selected, focused, 
     return (
       <button
         {...props}
-        className={`${base} flex items-center gap-3 rounded-xl border p-2.5 ${selected ? 'border-uplift/60 bg-uplift/10' : focused ? 'border-ink-mute/60 bg-surface-raised' : 'border-line/60 hover:bg-white/[0.04]'}`}
+        className={`${base} flex items-center gap-3 rounded-xl border p-2.5 ${selected ? 'border-burgundy-400 bg-burgundy-500/25' : focused ? 'border-ink-mute/60 bg-surface-raised' : 'border-line/60 hover:bg-ink/[0.04]'}`}
       >
         {selecting && <Tick on={selected} />}
         <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-xl ${toneOf(r)}`}>
@@ -233,7 +233,7 @@ export function ResourceSidePane({
         )}
         <div>
           <p className="flex items-start gap-1.5 break-words font-semibold leading-snug">
-            {r.pinned && <Pin className="mt-1 h-3.5 w-3.5 shrink-0 text-uplift" aria-label="Pinned" />}
+            {r.pinned && <Pin className="mt-1 h-3.5 w-3.5 shrink-0" aria-label="Pinned" />}
             {r.title}
           </p>
           {mode === 'preview' && !link?.previewUrl && <p className="mt-1 text-xs text-muted">This link can’t be previewed here. Open it instead.</p>}

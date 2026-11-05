@@ -40,7 +40,7 @@ export function ImsApprovalsPanel({ releases, imsUrl, sample }: Props) {
   return (
     <div className="flex flex-col gap-3">
       <p className="flex items-start gap-2 rounded-xl border border-line/70 px-4 py-3 text-xs text-ink-soft">
-        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-uplift" aria-hidden />
+        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
         <span>
           Each release needs two different IMS administrators. Approving opens PHILRADS IMS, where you sign in with your IMS account and confirm. Stock is
           released on the second approval.

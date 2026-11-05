@@ -90,7 +90,7 @@ export function DistributionList({ rows = DISTRIBUTION_ROWS }: { rows?: number }
                     <td style={td}><In k={`row.${n}.particulars`} align="center" /></td>
                     <td style={td}><In k={`row.${n}.amount`} align="right" numeric /></td>
                     <td style={{ ...td, position: 'relative' }}>
-                      <SignBox k={`row.${n}.sig`} hint="✎ Sign" />
+                      <SignBox k={`row.${n}.sig`} hint="Sign" />
                     </td>
                   </tr>
                 );

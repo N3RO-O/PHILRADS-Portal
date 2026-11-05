@@ -12,21 +12,21 @@ import { Skeleton } from '../ui/Card';
 import { StatusDot } from '../ui/StatusDot';
 
 /** Highest first, like the role hierarchy. */
-const ROLES: { key: string; label: string; color: string }[] = [
-  { key: 'admin', label: 'Administrator', color: '#ec952a' },
-  { key: 'coordinator', label: 'Coordinator', color: '#7cb7f7' },
-  { key: 'staff', label: 'Staff', color: '#5ad08c' },
-  { key: 'volunteer', label: 'Volunteer', color: '#c4b5fd' },
-  { key: 'viewer', label: 'Viewer', color: '#a3a3ad' },
+const ROLES: { key: string; label: string }[] = [
+  { key: 'admin', label: 'Administrator' },
+  { key: 'coordinator', label: 'Coordinator' },
+  { key: 'staff', label: 'Staff' },
+  { key: 'volunteer', label: 'Volunteer' },
+  { key: 'viewer', label: 'Viewer' },
 ];
 const roleOf = (k: string) => ROLES.find((r) => r.key === k) ?? ROLES[2];
 
 /** What shows under a name: the status when away or busy, otherwise what they're carrying. */
 function lineOf(p: BoardPerson, status: Status) {
-  if (status === 'dnd') return { text: 'Do not disturb', tone: 'text-[#f23f43]' };
-  if (status === 'idle') return { text: 'Idle', tone: 'text-[#f0b232]' };
+  if (status === 'dnd') return { text: 'Do not disturb', tone: 'text-status-out' };
+  if (status === 'idle') return { text: 'Idle', tone: 'text-status-low' };
   if (p.overdue) return { text: `${p.overdue} overdue · ${p.open + p.inProgress} open`, tone: 'text-rose' };
-  if (p.pending) return { text: `${p.pending} to accept`, tone: 'text-sky-300' };
+  if (p.pending) return { text: `${p.pending} to accept`, tone: 'text-ink-soft' };
   if (p.open + p.inProgress) return { text: `${p.open + p.inProgress} open${p.inProgress ? ` · ${p.inProgress} in progress` : ''}`, tone: 'text-muted' };
   return { text: p.doneWeek ? `All clear · ${p.doneWeek} done this week` : 'All clear', tone: 'text-muted' };
 }
@@ -96,12 +96,12 @@ export function ActivePanel({ onClose, variant }: { onClose: () => void; variant
   const person = people.find((p) => p.id === openId) ?? null;
 
   return (
-    <aside aria-label="Active" className={`flex h-full w-64 flex-col border-l border-line/70 bg-page/95 backdrop-blur-xl ${variant === 'drawer' ? 'shadow-2xl shadow-black/60' : ''}`}>
-      <div className="flex h-16 shrink-0 items-center gap-2 border-b border-white/[0.05] px-4">
-        <Users className="h-[1.125rem] w-[1.125rem] text-uplift" aria-hidden />
+    <aside aria-label="Active" className={`flex h-full w-64 flex-col border-l border-line/70 bg-page ${variant === 'drawer' ? 'shadow-2xl shadow-black/60' : ''}`}>
+      <div className="flex h-16 shrink-0 items-center gap-2 border-b border-ink/[0.05] px-4">
+        <Users className="h-[1.125rem] w-[1.125rem]" aria-hidden />
         <h2 className="flex-1 font-display text-base tracking-wide text-ink">Active</h2>
-        <span className="flex items-center gap-1.5 text-xs font-semibold text-[#23a55a]" title="Online, idle or busy">
-          <span className="h-2 w-2 rounded-full bg-[#23a55a]" aria-hidden />
+        <span className="flex items-center gap-1.5 text-xs font-semibold text-status-in" title="Online, idle or busy">
+          <span className="h-2 w-2 rounded-full bg-status-in" aria-hidden />
           {activeCount}
         </span>
         <button type="button" className="icon-btn h-9 w-9" onClick={onClose} aria-label="Hide the Active list" title="Hide the Active list">
@@ -152,16 +152,16 @@ export function ActivePanel({ onClose, variant }: { onClose: () => void; variant
                       <button
                         type="button"
                         onClick={() => setOpenId(p.id)}
-                        className={`press group flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-white/[0.06] ${g.offline ? 'opacity-45 hover:opacity-90' : ''}`}
+                        className={`press group flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-ink/[0.06] ${g.offline ? 'opacity-45 hover:opacity-90' : ''}`}
                         aria-label={`${p.name}${me ? ' (you)' : ''}, ${role.label}, ${STATUS_META[status].label}, ${line.text}`}
                       >
                         <span className="relative shrink-0">
                           <PersonAvatar id={p.id} name={p.name} size="sm" ring="ring-0" />
-                          <StatusDot status={status} size={14} ring="#1c1d21" className="absolute -bottom-0.5 -right-0.5" />
+                          <StatusDot status={status} size={14} ring="rgb(var(--page))" className="absolute -bottom-0.5 -right-0.5" />
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="flex items-center gap-1.5">
-                            <span className="truncate text-sm font-semibold" style={{ color: g.offline ? undefined : role.color }}>
+                            <span className="truncate text-sm font-semibold text-ink">
                               {p.name}
                             </span>
                             {me && <span className="shrink-0 text-[0.625rem] text-muted">(you)</span>}
@@ -172,7 +172,7 @@ export function ActivePanel({ onClose, variant }: { onClose: () => void; variant
                           <Givers ids={p.givers} nameOf={nameOf} me={profile?.id ?? null} />
                         )}
                         {p.open + p.inProgress > 0 && !g.offline && (
-                          <span className="shrink-0 rounded-md bg-white/[0.06] px-1.5 py-0.5 text-[0.625rem] font-bold tabular-nums text-ink-soft group-hover:bg-white/[0.1]">{p.open + p.inProgress}</span>
+                          <span className="shrink-0 rounded-md bg-ink/[0.06] px-1.5 py-0.5 text-[0.625rem] font-bold tabular-nums text-ink-soft group-hover:bg-ink/[0.1]">{p.open + p.inProgress}</span>
                         )}
                       </button>
                     </li>

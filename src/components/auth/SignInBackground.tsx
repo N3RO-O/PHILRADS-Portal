@@ -27,7 +27,7 @@ export function SignInBackground() {
       )}
       {/* Darken and warm it, so the photos stay in the background and the card stays easy to read. */}
       <div className="absolute inset-0 bg-page/40" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(28,29,33,0.15)_0%,rgba(28,29,33,0.75)_85%)]" />
+      <div className="absolute inset-0 bg-page/30" />
       <div className="absolute inset-0 bg-burgundy/25 mix-blend-multiply" />
     </div>
   );

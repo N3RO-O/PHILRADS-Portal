@@ -1,7 +1,7 @@
 /**
  * A short reflection for each Verse of the Day ("Read more"), written for PHILRADS staff and
- * volunteers: what the verse says, what it means for relief and development work, one thing to do
- * today, and a short prayer. Original text, keyed by the verse's reference in config/verse.ts.
+ * volunteers: what the verse says, what it means for work and for the rest of life (home, family,
+ * friendship, rest, grief, health), one thing to do today, and a short prayer. Original text, keyed by the verse's reference in config/verse.ts.
  */
 export interface Devotional {
   title: string;
@@ -199,6 +199,230 @@ export const DEVOTIONALS: Record<string, Devotional> = {
     ],
     today: 'Take a real break today and spend part of it in prayer.',
     prayer: 'Jesus, I come to you tired. Give me your rest. Amen.',
+  },  'Philippians 4:6–7 (NLT)': {
+    title: 'Trading worry for prayer',
+    reflection: [
+      'Worry rarely stays in one corner of life. A bill, a sick parent, a child far from home, a decision we keep putting off: it follows us to bed and wakes up with us.',
+      'Paul does not say our worries are small. He gives them somewhere to go. Name what you need, thank God for what he has already done, and let his peace stand guard over your heart.',
+    ],
+    today: 'Write down one worry, pray about it by name, and thank God for one thing beside it.',
+    prayer: 'Lord, I give you what I keep carrying. Guard my heart and mind with your peace. Amen.',
+  },
+  'Proverbs 3:5–6 (NLT)': {
+    title: 'When the way isn’t clear',
+    reflection: [
+      'Some choices have no obvious answer: where to live, whether to change paths, how to help someone we love. We think, ask, list pros and cons, and still don’t know.',
+      'Trusting God doesn’t mean switching off our minds. It means bringing every part of the decision to him, and believing he will light the next step even when we can’t see the whole road.',
+    ],
+    today: 'Bring one decision you are facing to God in prayer before you decide.',
+    prayer: 'Father, I don’t see the whole path. Show me the next step, and help me trust you with the rest. Amen.',
+  },
+  '1 Corinthians 13:4–5 (NLT)': {
+    title: 'Love in ordinary moments',
+    reflection: [
+      'These words are read at weddings, but they are meant for Tuesday afternoons: the long queue, the tired spouse, the sibling who forgot again, the friend who said the wrong thing.',
+      'Love here is less a feeling than a set of choices. Being patient one more time. Letting a small wrong go instead of keeping score. Every home and every friendship grows on choices like these.',
+    ],
+    today: 'Choose one person today and practise one line of this passage with them.',
+    prayer: 'God of love, make me patient and kind at home and wherever I go today. Amen.',
+  },
+  'Psalm 23:1–3 (NLT)': {
+    title: 'A shepherd who leads to rest',
+    reflection: [
+      'A shepherd does not drive the sheep until they drop. He leads them to grass and still water, because rest is part of the journey, not a reward at the end of it.',
+      'Whatever this season holds, a full house, an empty one, a hard diagnosis or simply a busy week, the psalm reminds us we are cared for. Rest is a gift we are allowed to receive.',
+    ],
+    today: 'Make room for one quiet moment today: a walk, a slow meal, or ten minutes without your phone.',
+    prayer: 'Good Shepherd, lead me to rest and renew my strength. Amen.',
+  },
+  'Jeremiah 29:11 (NLT)': {
+    title: 'A future and a hope',
+    reflection: [
+      'God spoke these words to people far from home, in exile, told to settle in and wait. The promise came in the middle of a hard chapter, not after it.',
+      'When life feels stuck, a job search, an illness, a family situation that won’t change, we can still hold on to this: God’s plans for us are for good, and he has not forgotten our future.',
+    ],
+    today: 'Tell someone who is waiting on something that you are praying for them.',
+    prayer: 'Lord, in the waiting, remind me that you hold my future and my hope. Amen.',
+  },
+  'Ephesians 4:32 (NLT)': {
+    title: 'Tenderhearted',
+    reflection: [
+      'It is easy to be kind to strangers and short with the people closest to us. Home is where we are most tired, and where small hurts pile up the fastest.',
+      'Paul roots our kindness in what God has done for us. We forgive because we have been forgiven, not because the other person has earned it.',
+    ],
+    today: 'Say a kind word at home today, especially to someone you have been short with.',
+    prayer: 'Father, soften my heart and help me forgive as you have forgiven me. Amen.',
+  },
+  'Psalm 34:18 (NLT)': {
+    title: 'Close to the brokenhearted',
+    reflection: [
+      'Grief does not keep office hours. The loss of a parent, a friend, a pregnancy, a marriage or a dream can sit with us for a long time, even while life goes on around us.',
+      'This verse does not tell the brokenhearted to cheer up. It tells them God is near: right there, in the middle of it.',
+    ],
+    today: 'Reach out to someone you know is grieving, even with a short message.',
+    prayer: 'Lord, be close to everyone whose heart is broken today, and to me when mine is. Amen.',
+  },
+  '1 Thessalonians 5:16–18 (NLT)': {
+    title: 'Thankful in all things',
+    reflection: [
+      'Paul says thankful in all circumstances, not for all circumstances. We don’t have to pretend a hard day is good to find something good within it.',
+      'Gratitude is a habit more than a mood: a meal shared, a text from a friend, the rain stopping in time. Noticing these turns ordinary days into prayer.',
+    ],
+    today: 'Before you sleep tonight, name three things you are thankful for.',
+    prayer: 'God, open my eyes to your gifts in today, the big ones and the small ones. Amen.',
+  },
+  'Romans 8:28 (NLT)': {
+    title: 'Woven together for good',
+    reflection: [
+      'This verse does not say everything is good. Some things are simply painful. It says God is at work in all of it, weaving even the hard threads into something good.',
+      'Looking back, many of us can see how a closed door or a hard year shaped us. That memory helps us trust him with the chapter we are in now.',
+    ],
+    today: 'Remember one hard season God brought you through, and thank him for it.',
+    prayer: 'Lord, I trust you to work in all things, even the ones I don’t understand yet. Amen.',
+  },
+  'John 3:16 (NLT)': {
+    title: 'This is how God loved',
+    reflection: [
+      'Before it is about anything we do, the Christian faith is about what God has done. He loved the world, not in general, but enough to give his Son.',
+      'On days we feel unseen or not enough, this is the place to start again. We are loved first, fully and on purpose.',
+    ],
+    today: 'Spend a moment simply thanking God for his love, without asking for anything.',
+    prayer: 'Father, thank you for loving me first and giving your Son for me. Amen.',
+  },
+  'Psalm 118:24 (NLT)': {
+    title: 'This day, as it is',
+    reflection: [
+      'It is tempting to wait for a better day to be glad: after payday, after the exams, after the rainy season. The psalmist rejoices in this day, the one we actually have.',
+      'Joy here is not denial. It is choosing to see today as a gift from God, with its ordinary moments of bread, sunlight and the people around us.',
+    ],
+    today: 'Do one small thing today purely for joy, and thank God for it.',
+    prayer: 'Lord, thank you for today. Help me rejoice in it. Amen.',
+  },
+  'Proverbs 17:17 (NLT)': {
+    title: 'Friends in time of need',
+    reflection: [
+      'Good friends show up when life falls apart: the ride to the hospital, the meal after a funeral, the call that comes just at the right time.',
+      'We all need friends like that, and we can all be one. Loyalty is built in small acts long before the crisis comes.',
+    ],
+    today: 'Check in on a friend you haven’t talked to in a while.',
+    prayer: 'God, thank you for my friends. Make me a loyal friend too. Amen.',
+  },
+  'Matthew 6:34 (NLT)': {
+    title: 'One day at a time',
+    reflection: [
+      'Many of our worries live in a tomorrow that hasn’t happened yet: what if the money runs out, what if the test results are bad, what if the children struggle.',
+      'Jesus doesn’t promise tomorrow will be easy. He invites us to live today with today’s strength, trusting God will give tomorrow’s strength when tomorrow comes.',
+    ],
+    today: 'When a worry about tomorrow comes up today, pray about it and set it down.',
+    prayer: 'Jesus, help me live today well and trust you with tomorrow. Amen.',
+  },
+  '1 Peter 5:7 (NLT)': {
+    title: 'He cares about you',
+    reflection: [
+      'Some cares are too heavy to carry alone, and some feel too small to mention. Peter says give them all to God, the heavy ones and the little ones.',
+      'The reason is simple: he cares about you. Not just about the world or the church, but about you, and about what is weighing on you today.',
+    ],
+    today: 'Tell God plainly what is on your mind, the big and the small.',
+    prayer: 'Father, I hand you my worries today, because you care for me. Amen.',
+  },
+  'Romans 12:12 (NLT)': {
+    title: 'Hope, patience and prayer',
+    reflection: [
+      'Three short instructions for any season of life. Rejoice, because our hope is sure. Be patient, because trouble doesn’t last for ever. Keep praying, because God is listening.',
+      'When a situation at home or in our health drags on, these three keep us steady while we wait.',
+    ],
+    today: 'Pick one long-running concern and keep praying for it today, even if nothing has changed yet.',
+    prayer: 'Lord, keep my hope bright, my heart patient and my prayers going. Amen.',
+  },
+  'Psalm 46:10 (NLT)': {
+    title: 'Be still',
+    reflection: [
+      'Our days are full of noise: notifications, traffic, news, the hum of our own thoughts. Being still can feel almost impossible.',
+      'God invites us to stop and remember who he is. Stillness is not doing nothing. It is making room to know him.',
+    ],
+    today: 'Sit quietly for two minutes today, breathe slowly and remember that God is God.',
+    prayer: 'Lord, quiet my heart so I can know you are near. Amen.',
+  },
+  'Colossians 3:13 (NLT)': {
+    title: 'Making allowance',
+    reflection: [
+      'Everyone we live with has faults, and so do we. Families, friendships and teams only last when we make room for each other’s weak spots.',
+      'Forgiveness is not pretending the hurt didn’t happen. It is choosing not to hold it against the other person, because we have been forgiven far more.',
+    ],
+    today: 'Is there someone you need to forgive? Take one step toward it today.',
+    prayer: 'Lord, as you have forgiven me, help me forgive others. Amen.',
+  },
+  'Psalm 139:14 (NLT)': {
+    title: 'Wonderfully made',
+    reflection: [
+      'Many of us are hard on ourselves: our looks, our pace, our mistakes. The psalmist looks at himself and gives thanks, because he is God’s workmanship.',
+      'You are not an accident or a project to be fixed. You are made with care, by a God who knows you completely and loves you still.',
+    ],
+    today: 'Thank God for one thing about how he made you.',
+    prayer: 'Creator God, thank you for making me. Help me see myself as you do. Amen.',
+  },
+  'Isaiah 26:3 (NLT)': {
+    title: 'Perfect peace',
+    reflection: [
+      'Peace often feels like something that depends on circumstances: when the house is quiet, when the bills are paid, when the storm has passed.',
+      'Isaiah points to a deeper peace that comes from where our thoughts rest. When our minds turn back to God, again and again, he keeps us steady.',
+    ],
+    today: 'When your mind races today, turn your thoughts to God with a short prayer.',
+    prayer: 'Lord, keep my mind fixed on you and my heart in your peace. Amen.',
+  },
+  'Psalm 133:1 (NLT)': {
+    title: 'Living in harmony',
+    reflection: [
+      'Harmony doesn’t mean everyone is the same. In music it means different notes sounding well together. Families and communities are like that too.',
+      'It takes work: listening, apologising, making room. But the psalm says it is worth it: wonderful and pleasant.',
+    ],
+    today: 'Do one thing today to bring peace to a strained relationship.',
+    prayer: 'God of peace, help my family and community live in harmony. Amen.',
+  },
+  'Romans 15:13 (NLT)': {
+    title: 'Overflowing hope',
+    reflection: [
+      'Paul prays that we would be filled, completely, with joy and peace, so full that hope spills over to others.',
+      'We can’t make that by trying harder. It comes from trusting God. And a hopeful person changes the room, at home, among friends and wherever they go.',
+    ],
+    today: 'Pray this verse for someone by name today.',
+    prayer: 'God of hope, fill me with joy and peace, and let it overflow to others. Amen.',
+  },
+  'Mark 6:31 (NLT)': {
+    title: 'Come away and rest',
+    reflection: [
+      'Jesus noticed his friends were too busy to eat, and his answer was rest. Not more effort, not a better schedule, but a quiet place and time together.',
+      'Rest is not laziness. It is how God made us. Sleep, a day off and time with people we love are part of a faithful life.',
+    ],
+    today: 'Plan one real rest this week and keep it.',
+    prayer: 'Jesus, when I am too busy, call me away to rest with you. Amen.',
+  },
+  'Proverbs 15:1 (NLT)': {
+    title: 'A gentle answer',
+    reflection: [
+      'Arguments at home or online often turn on a single reply. A sharp word adds fuel; a gentle one takes the heat out.',
+      'Gentleness is not weakness. It takes strength to answer softly when we feel attacked, and it often opens the door to real understanding.',
+    ],
+    today: 'The next time you feel provoked today, pause and answer gently.',
+    prayer: 'Lord, guard my words and make them gentle. Amen.',
+  },
+  'Psalm 30:5 (NLT)': {
+    title: 'Joy comes with the morning',
+    reflection: [
+      'There are nights of weeping: hospital corridors, long talks after bad news, silent tears no one else sees. The psalmist does not rush past them.',
+      'But the night is not the end. God’s favour lasts a lifetime, and joy comes with the morning, sometimes slowly, but surely.',
+    ],
+    today: 'If today is a night season for you, tell one trusted person how you are really doing.',
+    prayer: 'Lord, in my nights of weeping, hold me until your morning comes. Amen.',
+  },
+  '3 John 1:2 (NLT)': {
+    title: 'Body and spirit',
+    reflection: [
+      'John prays for his friend’s health as well as his soul. God cares about our bodies: our sleep, our meals, our check-ups, our tired backs.',
+      'Looking after our health is not selfish. It is part of caring for the life God gave us, so we can keep loving the people around us.',
+    ],
+    today: 'Do one thing for your health today: drink water, take a walk, or book that check-up.',
+    prayer: 'Father, thank you for my body. Help me care for it, and give health to those who are sick. Amen.',
   },
 };
 

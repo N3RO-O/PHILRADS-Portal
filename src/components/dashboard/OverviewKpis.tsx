@@ -1,4 +1,3 @@
-import type { CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowUpRight, CalendarClock, FileText, FolderKanban, LifeBuoy, SquareCheckBig, TriangleAlert, type LucideIcon } from 'lucide-react';
 import { useAsyncData } from '../../hooks/useAsyncData';
@@ -6,7 +5,6 @@ import { formatNumber } from '../../lib/format';
 import { dashboardService } from '../../services';
 import type { SummaryKey } from '../../types';
 import { Card, LoadError, Skeleton } from '../ui/Card';
-import { TONES } from './labels';
 import { RollingNumber } from '../ui/RollingNumber';
 
 interface Meta {
@@ -18,16 +16,15 @@ interface Meta {
   cta: string;
   icon: LucideIcon;
   to: string;
-  tone: 0 | 1 | 2;
 }
 
 const META: Record<SummaryKey, Meta> = {
-  active_projects: { label: 'Open projects', window: 'Planned, active or on hold', empty: 'No open projects right now', cta: 'View projects', icon: FolderKanban, to: '/projects', tone: 0 },
-  pending_tasks: { label: 'Pending tasks', window: 'Assigned to your teams', empty: 'Nothing pending for your teams', cta: 'Create a task', icon: SquareCheckBig, to: '/tasks', tone: 2 },
-  inventory_alerts: { label: 'Inventory alerts', window: 'Low or out of stock', empty: 'All items above reorder level', cta: 'View inventory', icon: TriangleAlert, to: '/inventory', tone: 1 },
-  response_activities: { label: 'Relief responses', window: 'Open in the IMS', empty: 'No open relief events', cta: 'Open Response', icon: LifeBuoy, to: '/response', tone: 0 },
-  documentation_updates: { label: 'Documentation updates', window: 'Last 7 days', empty: 'No uploads in the last 7 days', cta: 'Upload a file', icon: FileText, to: '/documentation', tone: 2 },
-  upcoming_deadlines: { label: 'Upcoming deadlines', window: 'Next 14 days', empty: 'Nothing due in the next 14 days', cta: 'Open Tasks', icon: CalendarClock, to: '/tasks', tone: 1 },
+  active_projects: { label: 'Open projects', window: 'Planned, active or on hold', empty: 'No open projects right now', cta: 'View projects', icon: FolderKanban, to: '/projects' },
+  pending_tasks: { label: 'Pending tasks', window: 'Assigned to your teams', empty: 'Nothing pending for your teams', cta: 'Create a task', icon: SquareCheckBig, to: '/tasks' },
+  inventory_alerts: { label: 'Inventory alerts', window: 'Low or out of stock', empty: 'Nothing is running low', cta: 'View inventory', icon: TriangleAlert, to: '/inventory' },
+  response_activities: { label: 'Relief responses', window: 'Open in the IMS', empty: 'No open relief events', cta: 'Open Response', icon: LifeBuoy, to: '/response' },
+  documentation_updates: { label: 'Documentation updates', window: 'Last 7 days', empty: 'No uploads in the last 7 days', cta: 'Upload a file', icon: FileText, to: '/documentation' },
+  upcoming_deadlines: { label: 'Upcoming deadlines', window: 'Next 14 days', empty: 'Nothing due in the next 14 days', cta: 'Open Tasks', icon: CalendarClock, to: '/tasks' },
 };
 
 const ZERO_LINK: Partial<Record<SummaryKey, string>> = {
@@ -48,18 +45,16 @@ export function OverviewKpis() {
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {rows.map(({ key, value }) => {
             const m = META[key];
-            const tone = TONES[m.tone];
             const isEmpty = value === 0;
             return (
               <li key={key}>
                 <Link
                   to={isEmpty ? ZERO_LINK[key] ?? m.to : m.to}
-                  style={{ '--glow': tone.glow } as CSSProperties}
-                  className="kpi-tile group flex h-full min-h-[8.5rem] flex-col gap-2 p-4 transition hover:-translate-y-0.5 hover:border-white/[0.12] hover:bg-surface-raised"
+                  className="kpi-tile group flex h-full min-h-[8.5rem] flex-col gap-2 p-4 transition-colors hover:border-ink-mute/50 hover:bg-surface-raised"
                 >
                   <span className="flex items-start justify-between">
-                    <span className={`icon-chip ${tone.text}`}>
-                      <m.icon className="h-[1.125rem] w-[1.125rem]" aria-hidden />
+                    <span className="icon-chip -ml-2 -mt-2">
+                      <m.icon className="h-5 w-5" aria-hidden />
                     </span>
                     <ArrowUpRight className="h-4 w-4 text-muted opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" aria-hidden />
                   </span>
@@ -70,7 +65,7 @@ export function OverviewKpis() {
                   )}
                   <span className="flex flex-col gap-0.5">
                     <span className="text-xs font-medium leading-tight text-ink-soft">{m.label}</span>
-                    <span className={`text-[0.6875rem] leading-tight ${isEmpty ? 'text-muted' : tone.text}`}>{isEmpty ? m.empty : m.window}</span>
+                    <span className="text-[0.6875rem] leading-tight text-muted">{isEmpty ? m.empty : m.window}</span>
                     {isEmpty && <span className="mt-0.5 text-[0.6875rem] font-semibold text-uplift">{m.cta} →</span>}
                   </span>
                 </Link>

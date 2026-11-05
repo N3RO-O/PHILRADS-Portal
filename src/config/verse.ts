@@ -1,6 +1,7 @@
 /**
  * Verses shown on Home: one a day, chosen from the date (Manila time), so everyone sees the same
  * verse all day and it changes at midnight, never repeating the day before's.
+ * About all of life (faith, family, friendship, rest, worry, grief, joy, health) as well as service.
  * New Living Translation (NLT), exact wording from Tyndale's official NLT API (api.nlt.to). Tyndale allows up to
  * 500 verses in non-salable media with "(NLT)" after each quotation; the full notice is: Scripture quotations are
  * taken from the Holy Bible, New Living Translation, copyright © 1996, 2004, 2015 by Tyndale House Foundation.
@@ -35,6 +36,32 @@ export const VERSES: Verse[] = [
   { text: 'But those who trust in the LORD will find new strength. They will soar high on wings like eagles. They will run and not grow weary. They will walk and not faint.', reference: 'Isaiah 40:31 (NLT)' },
   { text: 'The faithful love of the LORD never ends! His mercies never cease. Great is his faithfulness; his mercies begin afresh each morning.', reference: 'Lamentations 3:22–23 (NLT)' },
   { text: 'Then Jesus said, ‘Come to me, all of you who are weary and carry heavy burdens, and I will give you rest.’', reference: 'Matthew 11:28 (NLT)' },
+  // All of life, not only work: worry, love, family, friendship, rest, grief, forgiveness, joy, health.
+  { text: 'Don’t worry about anything; instead, pray about everything. Tell God what you need, and thank him for all he has done. Then you will experience God’s peace, which exceeds anything we can understand. His peace will guard your hearts and minds as you live in Christ Jesus.', reference: 'Philippians 4:6–7 (NLT)' },
+  { text: 'Trust in the LORD with all your heart; do not depend on your own understanding. Seek his will in all you do, and he will show you which path to take.', reference: 'Proverbs 3:5–6 (NLT)' },
+  { text: 'Love is patient and kind. Love is not jealous or boastful or proud or rude. It does not demand its own way. It is not irritable, and it keeps no record of being wronged.', reference: '1 Corinthians 13:4–5 (NLT)' },
+  { text: 'The LORD is my shepherd; I have all that I need. He lets me rest in green meadows; he leads me beside peaceful streams. He renews my strength. He guides me along right paths, bringing honor to his name.', reference: 'Psalm 23:1–3 (NLT)' },
+  { text: '‘For I know the plans I have for you,’ says the LORD. ‘They are plans for good and not for disaster, to give you a future and a hope.’', reference: 'Jeremiah 29:11 (NLT)' },
+  { text: 'Instead, be kind to each other, tenderhearted, forgiving one another, just as God through Christ has forgiven you.', reference: 'Ephesians 4:32 (NLT)' },
+  { text: 'The LORD is close to the brokenhearted; he rescues those whose spirits are crushed.', reference: 'Psalm 34:18 (NLT)' },
+  { text: 'Always be joyful. Never stop praying. Be thankful in all circumstances, for this is God’s will for you who belong to Christ Jesus.', reference: '1 Thessalonians 5:16–18 (NLT)' },
+  { text: 'And we know that God causes everything to work together for the good of those who love God and are called according to his purpose for them.', reference: 'Romans 8:28 (NLT)' },
+  { text: 'For this is how God loved the world: He gave his one and only Son, so that everyone who believes in him will not perish but have eternal life.', reference: 'John 3:16 (NLT)' },
+  { text: 'This is the day the LORD has made. We will rejoice and be glad in it.', reference: 'Psalm 118:24 (NLT)' },
+  { text: 'A friend is always loyal, and a brother is born to help in time of need.', reference: 'Proverbs 17:17 (NLT)' },
+  { text: 'So don’t worry about tomorrow, for tomorrow will bring its own worries. Today’s trouble is enough for today.', reference: 'Matthew 6:34 (NLT)' },
+  { text: 'Give all your worries and cares to God, for he cares about you.', reference: '1 Peter 5:7 (NLT)' },
+  { text: 'Rejoice in our confident hope. Be patient in trouble, and keep on praying.', reference: 'Romans 12:12 (NLT)' },
+  { text: 'Be still, and know that I am God! I will be honored by every nation. I will be honored throughout the world.', reference: 'Psalm 46:10 (NLT)' },
+  { text: 'Make allowance for each other’s faults, and forgive anyone who offends you. Remember, the Lord forgave you, so you must forgive others.', reference: 'Colossians 3:13 (NLT)' },
+  { text: 'Thank you for making me so wonderfully complex! Your workmanship is marvelous—how well I know it.', reference: 'Psalm 139:14 (NLT)' },
+  { text: 'You will keep in perfect peace all who trust in you, all whose thoughts are fixed on you!', reference: 'Isaiah 26:3 (NLT)' },
+  { text: 'How wonderful and pleasant it is when brothers live together in harmony!', reference: 'Psalm 133:1 (NLT)' },
+  { text: 'I pray that God, the source of hope, will fill you completely with joy and peace because you trust in him. Then you will overflow with confident hope through the power of the Holy Spirit.', reference: 'Romans 15:13 (NLT)' },
+  { text: 'Then Jesus said, ‘Let’s go off by ourselves to a quiet place and rest awhile.’ He said this because there were so many people coming and going that Jesus and his apostles didn’t even have time to eat.', reference: 'Mark 6:31 (NLT)' },
+  { text: 'A gentle answer deflects anger, but harsh words make tempers flare.', reference: 'Proverbs 15:1 (NLT)' },
+  { text: 'For his anger lasts only a moment, but his favor lasts a lifetime! Weeping may last through the night, but joy comes with the morning.', reference: 'Psalm 30:5 (NLT)' },
+  { text: 'Dear friend, I hope all is well with you and that you are as healthy in body as you are strong in spirit.', reference: '3 John 1:2 (NLT)' },
 ];
 
 /** Small seeded random generator (mulberry32): the same seed always gives the same sequence. */

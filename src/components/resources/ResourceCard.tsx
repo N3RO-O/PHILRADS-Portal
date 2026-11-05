@@ -39,11 +39,11 @@ export const KIND_ICON: Record<LinkKind, LucideIcon> = {
   web: Globe,
 };
 export const TYPE_TONE: Partial<Record<ResourceFileType, string>> = {
-  PDF: 'bg-status-out/10 text-status-out',
-  Word: 'bg-sky-300/10 text-sky-300',
-  Excel: 'bg-status-in/10 text-status-in',
-  PowerPoint: 'bg-uplift/10 text-uplift',
-  Folder: 'bg-status-low/10 text-status-low',
+  PDF: 'text-ink-soft',
+  Word: 'text-ink-soft',
+  Excel: 'text-ink-soft',
+  PowerPoint: 'text-ink-soft',
+  Folder: 'text-ink-soft',
 };
 
 export async function copy(text: string) {
@@ -78,7 +78,7 @@ export function ResourceCard({ resource: r, canManage, onEdit, onPreview, select
   }, [copied]);
 
   const Icon = r.fileType ? TYPE_ICON[r.fileType] : KIND_ICON[r.kind];
-  const tone = (r.fileType && TYPE_TONE[r.fileType]) || 'bg-white/5 text-ink-soft';
+  const tone = (r.fileType && TYPE_TONE[r.fileType]) || 'bg-ink/5 text-ink-soft';
   const source = r.kind === 'drive_file' && r.fileType ? `${r.fileType} in Google Drive` : LINK_KIND_LABEL[r.kind];
   const action = 'btn-ghost min-h-11 flex-1 px-3 text-xs sm:flex-none';
 
@@ -91,7 +91,7 @@ export function ResourceCard({ resource: r, canManage, onEdit, onPreview, select
     >
       <div className="flex items-start gap-3">
         {selecting && (
-          <span className={`mt-3 grid h-5 w-5 shrink-0 place-items-center rounded-md border-2 ${selected ? 'border-uplift bg-uplift text-page' : 'border-ink-mute'}`} aria-hidden>
+          <span className={`mt-3 grid h-5 w-5 shrink-0 place-items-center rounded-md border-2 ${selected ? 'border-burgundy-400 bg-burgundy-500 text-cloud' : 'border-ink-mute'}`} aria-hidden>
             {selected && <Check className="h-3 w-3" strokeWidth={3} />}
           </span>
         )}
@@ -100,7 +100,7 @@ export function ResourceCard({ resource: r, canManage, onEdit, onPreview, select
         </span>
         <div className="min-w-0 flex-1">
           <h3 className="flex items-start gap-1.5 font-semibold leading-snug text-ink">
-            {r.pinned && <Pin className="mt-1 h-3.5 w-3.5 shrink-0 text-uplift" aria-label="Pinned" />}
+            {r.pinned && <Pin className="mt-1 h-3.5 w-3.5 shrink-0" aria-label="Pinned" />}
             <span className="min-w-0">{r.title}</span>
           </h3>
           <p className="mt-0.5 text-xs text-muted">
@@ -119,11 +119,11 @@ export function ResourceCard({ resource: r, canManage, onEdit, onPreview, select
       </p>
       <div className={`mt-auto flex flex-wrap gap-2 ${selecting ? 'hidden' : ''}`}>
         {link?.previewUrl ? (
-          <button type="button" className={`${action} border-uplift/40 text-uplift`} onClick={() => onPreview(r)}>
+          <button type="button" className={`${action} border-line text-ink-soft`} onClick={() => onPreview(r)}>
             <Eye className="h-4 w-4" aria-hidden /> Preview
           </button>
         ) : (
-          <a className={`${action} border-uplift/40 text-uplift`} href={link?.openUrl ?? r.url} target="_blank" rel="noopener noreferrer">
+          <a className={`${action} border-line text-ink-soft`} href={link?.openUrl ?? r.url} target="_blank" rel="noopener noreferrer">
             <ExternalLink className="h-4 w-4" aria-hidden /> Open
           </a>
         )}

@@ -89,7 +89,7 @@ export function PrintReport({ rows, snapshot, pendingTransfers, filtersLabel, pr
             <th>Location</th>
             <th className="num">Usable on hand</th>
             <th>Unit</th>
-            <th className="num">Reorder at</th>
+            <th className="num">Low-stock level</th>
             <th>Status</th>
             <th>Nearest expiry</th>
           </tr>

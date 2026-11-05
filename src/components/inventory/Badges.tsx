@@ -55,15 +55,15 @@ export function ExpiryBadge({ status, date, compact = false }: { status: ExpiryS
 
 export const MOVEMENT_META: Record<MovementType, { label: string; verb: string; icon: LucideIcon; cls: string }> = {
   receipt: { label: 'Received', verb: 'Receive', icon: ArrowDownToLine, cls: 'text-status-in' },
-  release: { label: 'Released', verb: 'Release', icon: ArrowUpFromLine, cls: 'text-uplift' },
-  transfer: { label: 'Transfer', verb: 'Transfer', icon: ArrowLeftRight, cls: 'text-sky-300' },
+  release: { label: 'Released', verb: 'Release', icon: ArrowUpFromLine, cls: 'text-ink-soft' },
+  transfer: { label: 'Transfer', verb: 'Transfer', icon: ArrowLeftRight, cls: 'text-ink-soft' },
   adjustment: { label: 'Adjustment', verb: 'Adjust', icon: SlidersHorizontal, cls: 'text-status-expiring' },
 };
 
 const STATUS_META: Record<Exclude<MovementStatus, 'applied'>, { label: string; icon: LucideIcon; cls: string }> = {
   pending_approval: { label: 'Awaiting approval', icon: Clock, cls: 'border-status-low/40 bg-status-low/10 text-status-low' },
   rejected: { label: 'Rejected', icon: XCircle, cls: 'border-status-out/40 bg-status-out/10 text-status-out' },
-  pending_sync: { label: 'Waiting to sync', icon: CloudOff, cls: 'border-sky-300/40 bg-sky-300/10 text-sky-300' },
+  pending_sync: { label: 'Waiting to sync', icon: CloudOff, cls: 'border-line text-ink-soft' },
   sync_failed: { label: 'Sync failed', icon: CircleAlert, cls: 'border-status-out/50 bg-status-out/15 text-status-out' },
 };
 

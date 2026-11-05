@@ -150,7 +150,7 @@ export function LogsPage() {
 
   if (!allowed)
     return (
-      <p className="card text-sm text-ink-soft" role="alert" data-quiet>
+      <p className="notice text-ink-soft" role="alert" data-quiet>
         The admin log is for administrators. Ask an administrator if you need something from it.
       </p>
     );
@@ -161,7 +161,7 @@ export function LogsPage() {
   return (
     <div className="flex flex-col gap-4">
       <p className="flex items-start gap-2 rounded-2xl border border-line/70 bg-surface px-4 py-3 text-sm text-ink-soft">
-        <Lock className="mt-0.5 h-4 w-4 shrink-0 text-uplift" aria-hidden />
+        <Lock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
         <span>
           Newest first. Entries are written by the database itself, so nobody, admins included, can add, change or delete them.{' '}
           {auditService.source === 'mock' && <SampleBadge />}
@@ -171,12 +171,12 @@ export function LogsPage() {
       {/* The last 7 days at a glance; each opens its entries. */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <CountTile icon={<Flag className="h-4 w-4" aria-hidden />} tone="text-status-low" label="Flags to look at" value={counts?.flags} onClick={() => set({ category: 'flags', period: '7d' })} />
-        <CountTile icon={<LogIn className="h-4 w-4" aria-hidden />} tone="text-sky-300" label="Sign-ins" value={counts?.signIns} onClick={() => set({ category: 'signins', period: '7d' })} />
+        <CountTile icon={<LogIn className="h-4 w-4" aria-hidden />} tone="text-ink-soft" label="Sign-ins" value={counts?.signIns} onClick={() => set({ category: 'signins', period: '7d' })} />
         <CountTile icon={<CheckCircle2 className="h-4 w-4" aria-hidden />} tone="text-status-in" label="Tasks finished" value={counts?.finished} onClick={() => set({ category: 'tasks', period: '7d', search: '' })} />
-        <CountTile icon={<RotateCcw className="h-4 w-4" aria-hidden />} tone="text-uplift" label="Tasks sent back" value={counts?.sentBack} onClick={() => (setSearchText('sent back'), set({ category: 'tasks', period: '7d' }))} />
+        <CountTile icon={<RotateCcw className="h-4 w-4" aria-hidden />} tone="text-ink-soft" label="Tasks sent back" value={counts?.sentBack} onClick={() => (setSearchText('sent back'), set({ category: 'tasks', period: '7d' }))} />
       </div>
 
-      <section className="card flex flex-col gap-4 p-4 sm:p-5">
+      <section className="card flex flex-col gap-4">
         <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Show">
           {LOG_CATEGORIES.map((c) => (
             <button key={c.key} type="button" role="radio" aria-checked={query.category === c.key} className="chip" aria-pressed={query.category === c.key} onClick={() => set({ category: c.key as LogCategory })}>
@@ -249,7 +249,7 @@ export function LogsPage() {
                 <ul className="flex flex-col divide-y divide-line/50">
                   {g.items.map((e) => (
                     <li key={e.id}>
-                      <button type="button" className="tap flex w-full items-start gap-3 rounded-xl px-2 py-2.5 text-left hover:bg-white/[0.03]" onClick={() => setOpen(e)}>
+                      <button type="button" className="tap flex w-full items-start gap-3 rounded-xl px-2 py-2.5 text-left hover:bg-ink/[0.03]" onClick={() => setOpen(e)}>
                         <PersonAvatar id={e.actorId} name={e.actorName} size="sm" />
                         <span className="min-w-0 flex-1">
                           <span className="block text-sm leading-snug">{e.summary}</span>
@@ -263,7 +263,7 @@ export function LogsPage() {
                               </span>
                             )}
                             {e.audience === 'admins' && !isFlag(e) && (
-                              <span className="inline-flex items-center gap-1 rounded-md bg-white/[0.06] px-1.5 py-0.5 font-semibold text-ink-soft">
+                              <span className="inline-flex items-center gap-1 rounded-md bg-ink/[0.06] px-1.5 py-0.5 font-semibold text-ink-soft">
                                 <Lock className="h-3 w-3" aria-hidden /> Admins only
                               </span>
                             )}
@@ -291,7 +291,7 @@ export function LogsPage() {
 
 function CountTile({ icon, tone, label, value, onClick }: { icon: ReactNode; tone: string; label: string; value: number | undefined; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} className="tile tap flex flex-col items-start gap-1 p-4 text-left transition hover:border-uplift/40">
+    <button type="button" onClick={onClick} className="tile tap flex flex-col items-start gap-1 p-4 text-left transition hover:border-ink-mute/60">
       <span className={`flex items-center gap-2 text-xs font-semibold ${tone}`}>
         {icon} {label}
       </span>

@@ -4,15 +4,17 @@ import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../ui/Avatar';
 import { SoffitGradient } from '../ui/SoffitGradient';
 
-/** Greeting and the "View my tasks" shortcut. */
+/**
+ * Greeting and the "View my tasks" shortcut, first on Home: the PHILRADS burgundy with the slow
+ * "Soffit" light moving behind it (it follows the pointer), under a burgundy scrim so the text stays AA.
+ */
 export function WelcomeBar() {
   const { profile } = useAuth();
   if (!profile) return null;
   return (
-    <section aria-labelledby="welcome-title" className="card relative isolate flex h-full flex-col gap-5 overflow-hidden">
+    <section aria-labelledby="welcome-title" className="relative isolate flex h-full flex-col gap-5 overflow-hidden rounded-2xl bg-burgundy-500 p-5 text-cloud">
       <SoffitGradient className="-z-10" />
-      {/* Scrim: keeps the greeting and labels at WCAG AA over the brightest parts of the gradient. */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-page/80" />
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-burgundy-800/45" />
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
           {/* The avatar is already in the top bar; on phones the greeting gets the room instead. */}

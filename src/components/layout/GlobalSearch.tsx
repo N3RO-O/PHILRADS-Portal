@@ -150,7 +150,7 @@ export function GlobalSearch({ value, onChange, inputRef, shortcut, className = 
   return (
     <div ref={box} className={`relative min-w-0 ${className}`}>
       <label className="flex h-11 min-w-0 items-center gap-2 rounded-xl border border-line/70 bg-surface px-4 text-muted transition-[border-color,box-shadow] duration-300 focus-within:border-uplift focus-within:shadow-[0_0_0_4px_rgba(236,149,42,0.12)]">
-        <Search className={`h-4 w-4 shrink-0 transition-transform duration-300 ${open ? 'scale-110 text-uplift' : ''}`} aria-hidden />
+        <Search className={`h-4 w-4 shrink-0 transition-transform duration-300 ${open ? 'scale-110 text-ink' : ''}`} aria-hidden />
         <span className="sr-only">Search anything</span>
         <span className="relative flex min-w-0 flex-1 items-center">
           <input
@@ -187,7 +187,7 @@ export function GlobalSearch({ value, onChange, inputRef, shortcut, className = 
         <div id={listId} role="listbox" className="popover absolute inset-x-0 top-[calc(100%+0.5rem)] z-50 !bg-surface-raised/[0.97] max-h-[min(70vh,32rem)] origin-top animate-pop-in overflow-y-auto p-2 shadow-2xl shadow-black/50">
           {!index ? (
             <p className="flex items-center gap-2 px-3 py-4 text-sm text-muted">
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-uplift/30 border-t-uplift" aria-hidden /> Looking everywhere…
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-line border-t-ink-soft" aria-hidden /> Looking everywhere…
             </p>
           ) : groups.length === 0 ? (
             <p className="px-3 py-4 text-sm text-muted">Nothing found for “{value.trim()}”. Try another word.</p>
@@ -206,14 +206,14 @@ export function GlobalSearch({ value, onChange, inputRef, shortcut, className = 
                       aria-selected={i === active}
                       onPointerEnter={() => setActive(i)}
                       onClick={() => go(h)}
-                      className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors ${i === active ? 'bg-uplift/[0.12]' : 'hover:bg-white/[0.04]'}`}
+                      className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors ${i === active ? 'bg-surface-raised' : 'hover:bg-ink/[0.04]'}`}
                     >
-                      <g.icon className={`h-4 w-4 shrink-0 ${i === active ? 'text-uplift' : 'text-muted'}`} aria-hidden />
+                      <g.icon className={`h-4 w-4 shrink-0 ${i === active ? 'text-ink' : 'text-muted'}`} aria-hidden />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm font-medium text-ink">{h.title}</span>
                         <span className="block truncate text-xs capitalize text-muted">{h.sub}</span>
                       </span>
-                      {i === active && <CornerDownLeft className="h-3.5 w-3.5 shrink-0 text-uplift" aria-hidden />}
+                      {i === active && <CornerDownLeft className="h-3.5 w-3.5 shrink-0" aria-hidden />}
                     </button>
                   );
                 })}

@@ -50,8 +50,8 @@ function useStepAction() {
 function Progress({ done, total }: { done: number; total: number }) {
   return (
     <div className="flex w-full items-center gap-3">
-      <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-white/[0.06]" role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={done} aria-label="Getting started progress">
-        <div className="h-full rounded-full bg-gradient-to-r from-uplift to-[#f5b562] transition-[width] duration-500" style={{ width: `${(done / total) * 100}%` }} />
+      <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-ink/[0.06]" role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={done} aria-label="Getting started progress">
+        <div className="h-full rounded-full bg-uplift transition-[width] duration-500" style={{ width: `${(done / total) * 100}%` }} />
       </div>
       <span className="shrink-0 text-xs font-semibold tabular-nums text-ink-soft">
         {done} of {total} done
@@ -77,7 +77,7 @@ function StepList({ onRun, nextRef, stacked }: { onRun: (s: Step) => void; nextR
             onClick={() => setShowDone((v) => !v)}
             aria-expanded={showDone}
           >
-            <span aria-hidden className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-status-in/90 text-page">
+            <span aria-hidden className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-status-in/90 text-onaccent">
               <Check className="h-4 w-4" strokeWidth={3} />
             </span>
             {doneCount} done{showDone ? ' · hide' : ' · show'}
@@ -101,10 +101,10 @@ function StepList({ onRun, nextRef, stacked }: { onRun: (s: Step) => void; nextR
           </button>
         );
         return (
-          <li key={s.id} className={`flex gap-3 rounded-xl px-2 py-2.5 ${stacked ? 'items-start' : 'items-center'} ${isNext ? 'bg-uplift/[0.07] ring-1 ring-inset ring-uplift/25' : ''}`}>
+          <li key={s.id} className={`flex gap-3 rounded-xl px-2 py-2.5 ${stacked ? 'items-start' : 'items-center'} ${isNext ? 'bg-surface-raised' : ''}`}>
             <span
               aria-hidden
-              className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-bold ${stacked && !s.done ? 'mt-0.5' : ''} ${s.done ? 'bg-status-in/90 text-page' : isNext ? 'bg-uplift text-page' : 'border border-line text-muted'}`}
+              className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-bold ${stacked && !s.done ? 'mt-0.5' : ''} ${s.done ? 'bg-status-in/90 text-onaccent' : isNext ? 'bg-uplift text-onaccent' : 'border border-line text-muted'}`}
             >
               {s.done ? <Check className="h-4 w-4" strokeWidth={3} /> : i + 1}
             </span>
@@ -113,7 +113,7 @@ function StepList({ onRun, nextRef, stacked }: { onRun: (s: Step) => void; nextR
                 {s.label}
                 {s.done && <span className="sr-only">(done)</span>}
                 {recommended && (
-                  <span className="badge border-uplift/50 text-uplift">
+                  <span className="badge border-line text-ink-soft">
                     <Sparkles className="mr-1 h-3 w-3" aria-hidden /> For you
                   </span>
                 )}
@@ -155,12 +155,12 @@ function CoachMark({ target, text, below, onDone }: { target: RefObject<HTMLElem
     <div
       role="dialog"
       aria-label="Tip"
-      className="fixed z-50 w-[280px] animate-pop-in rounded-2xl border border-uplift/50 bg-surface-raised p-4 text-sm shadow-2xl shadow-black/60"
+      className="fixed z-50 w-[280px] animate-pop-in rounded-2xl border border-line bg-surface-raised p-4 text-sm shadow-2xl shadow-black/60"
       style={below ? { top: box.bottom + 12, left } : { bottom: window.innerHeight - box.top + 12, left }}
     >
       <span
         aria-hidden
-        className={`absolute h-4 w-4 rotate-45 border-uplift/50 bg-surface-raised ${below ? '-top-2 border-l border-t' : '-bottom-2 border-b border-r'}`}
+        className={`absolute h-4 w-4 rotate-45 border-line bg-surface-raised ${below ? '-top-2 border-l border-t' : '-bottom-2 border-b border-r'}`}
         style={{ left: arrowLeft }}
       />
       <p className="text-ink">{text}</p>
@@ -183,7 +183,7 @@ export function GettingStartedCard({ onPersonalise }: { onPersonalise?: () => vo
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="icon-chip" aria-hidden>
-            {o.allDone ? <PartyPopper className="h-[1.125rem] w-[1.125rem] text-uplift" /> : <Rocket className="h-[1.125rem] w-[1.125rem] text-uplift" />}
+            {o.allDone ? <PartyPopper className="h-[1.125rem] w-[1.125rem]" /> : <Rocket className="h-[1.125rem] w-[1.125rem]" />}
           </span>
           <div>
             <h2 id="gs-title" className="card-title">
@@ -233,7 +233,7 @@ export function GettingStartedBar() {
           ref={barRef}
           type="button"
           onClick={() => setOpen(true)}
-          className="flex min-h-14 flex-1 items-center gap-3 rounded-2xl border border-uplift/40 bg-surface-raised/95 px-3 text-left shadow-2xl shadow-black/60 backdrop-blur-md"
+          className="flex min-h-14 flex-1 items-center gap-3 rounded-2xl border border-line bg-surface-raised px-3 text-left shadow-2xl shadow-black/60"
         >
           <span className="relative grid h-9 w-9 shrink-0 place-items-center rounded-full text-[0.6875rem] font-bold tabular-nums" style={{ background: `conic-gradient(#ec952a ${pct}%, rgba(255,255,255,0.08) 0)` }} aria-hidden>
             <span className="grid h-7 w-7 place-items-center rounded-full bg-surface-raised">
@@ -241,13 +241,13 @@ export function GettingStartedBar() {
             </span>
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[0.6875rem] font-semibold uppercase tracking-wider text-uplift">{o.allDone ? 'All set' : 'Next step'}</span>
+            <span className="block text-[0.6875rem] font-semibold uppercase tracking-wider text-muted">{o.allDone ? 'All set' : 'Next step'}</span>
             <span className="block truncate text-sm font-semibold text-ink">{o.allDone ? 'You’re ready to go' : o.next?.label}</span>
           </span>
           <ChevronUp className="h-5 w-5 shrink-0 text-muted" aria-hidden />
         </button>
         {o.allDone && (
-          <button type="button" className="grid h-14 w-12 place-items-center rounded-2xl border border-line bg-surface-raised/95 text-muted" onClick={o.hide} aria-label="Close Get started">
+          <button type="button" className="grid h-14 w-12 place-items-center rounded-2xl border border-line bg-surface-raised text-muted" onClick={o.hide} aria-label="Close Get started">
             <X className="h-5 w-5" aria-hidden />
           </button>
         )}

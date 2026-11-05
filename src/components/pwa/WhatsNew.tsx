@@ -1,8 +1,20 @@
-import { useEffect, useRef, type CSSProperties } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Bell,
+  BellRing,
+  CalendarCheck,
   CalendarDays,
+  Camera,
+  CircleDot,
+  Fingerprint,
+  ListChecks,
+  Moon,
+  Package,
+  Palette,
+  PenLine,
+  Search,
+  Sun,
   ChartColumn,
   ChevronRight,
   Crown,
@@ -34,6 +46,18 @@ import { useBackdropClose } from '../ui/Sheet';
 
 const ICONS: Record<string, LucideIcon> = {
   bell: Bell,
+  'bell-ring': BellRing,
+  'calendar-check': CalendarCheck,
+  camera: Camera,
+  'circle-dot': CircleDot,
+  fingerprint: Fingerprint,
+  'list-checks': ListChecks,
+  moon: Moon,
+  package: Package,
+  palette: Palette,
+  pen: PenLine,
+  search: Search,
+  sun: Sun,
   calendar: CalendarDays,
   chart: ChartColumn,
   crown: Crown,
@@ -103,19 +127,18 @@ export function WhatsNew() {
     >
       {view && (
         <div className="flex max-h-[min(44rem,calc(100dvh-2rem))] flex-col">
-          {/* Header: a soft orange glow behind the gift */}
+          
           <div className="relative shrink-0 overflow-hidden border-b border-line/70 px-6 pb-5 pt-6">
-            <div aria-hidden className="pointer-events-none absolute -right-16 -top-24 h-56 w-56 rounded-full bg-uplift/25 blur-3xl" />
             <div className="relative flex items-start gap-4">
-              <span className="icon-chip h-12 w-12 animate-pop-in rounded-xl" style={{ '--glow': 'rgba(236, 149, 42, 0.38)' } as CSSProperties}>
-                {updating ? <RefreshCw className="h-6 w-6 text-uplift" aria-hidden /> : <Gift className="h-6 w-6 text-uplift" aria-hidden />}
+              <span className="icon-chip h-12 w-12 animate-pop-in rounded-xl">
+                {updating ? <RefreshCw className="h-6 w-6" aria-hidden /> : <Gift className="h-6 w-6" aria-hidden />}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-uplift">{updating ? 'Update ready' : 'What’s new'}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">{updating ? 'Update ready' : 'What’s new'}</p>
                 <h2 id="whats-new-title" className="mt-1 text-lg font-bold leading-snug text-balance">
                   {lead ? lead.title : 'A new version of the portal'}
                 </h2>
-                {lead && <p className="mt-0.5 text-xs text-muted">{dayOf(lead.date)}
+                {lead && <p className="mt-0.5 text-xs text-muted">{lead.version && <span className="font-semibold text-ink-soft">Version {lead.version} · </span>}{dayOf(lead.date)}
                     {releases.length > 1 && ` · plus ${releases.length - 1} earlier ${releases.length === 2 ? 'update' : 'updates'}`}</p>}
               </div>
               <button type="button" className="icon-btn -mr-2 -mt-2 h-9 w-9" onClick={whatsNew.close} aria-label={updating ? 'Later' : 'Close'}>
@@ -137,7 +160,10 @@ export function WhatsNew() {
                     {ri > 0 && (
                       <h3 className="flex items-baseline justify-between gap-3 border-t border-line/60 pt-4 text-sm font-semibold text-ink">
                         {r.title}
-                        <span className="shrink-0 text-xs font-normal text-muted">{dayOf(r.date)}</span>
+                        <span className="shrink-0 text-xs font-normal text-muted">
+                          {r.version && `v${r.version} · `}
+                          {dayOf(r.date)}
+                        </span>
                       </h3>
                     )}
                     <ul className="flex flex-col gap-1">
@@ -161,7 +187,7 @@ export function WhatsNew() {
                             {go ? (
                               <button
                                 type="button"
-                                className="group flex w-full items-start gap-3 rounded-xl px-2 py-2.5 text-left transition-colors hover:bg-white/[0.04]"
+                                className="group flex w-full items-start gap-3 rounded-xl px-2 py-2.5 text-left transition-colors hover:bg-ink/[0.04]"
                                 onClick={() => {
                                   whatsNew.close();
                                   navigate(i.path!);

@@ -31,7 +31,7 @@ export function StockList({ rows, sort, onSort, onOpen, resetKey, onClearFilters
 
   if (rows.length === 0)
     return (
-      <div className="tile flex flex-col items-center gap-3 px-4 py-12 text-center">
+      <div className="flex flex-col items-center gap-3 px-4 py-12 text-center">
         <PackageSearch className="h-8 w-8 text-muted" aria-hidden />
         <p className="text-sm text-ink-soft">No stock matches these filters.</p>
         {onClearFilters && (
@@ -72,7 +72,7 @@ export function StockList({ rows, sort, onSort, onOpen, resetKey, onClearFilters
           </thead>
           <tbody className="divide-y divide-line/60">
             {visible.map((r) => (
-              <tr key={r.key} onClick={() => onOpen(r)} className="cursor-pointer transition-colors hover:bg-white/[0.03]">
+              <tr key={r.key} onClick={() => onOpen(r)} className="cursor-pointer transition-colors hover:bg-ink/[0.03]">
                 <td className="max-w-[18rem] px-3 py-2.5">
                   <p className="truncate font-semibold text-ink">{r.item.name}</p>
                   <p className="truncate text-xs text-muted">
@@ -167,7 +167,7 @@ function Th({ k, sort, onSort, children, className = '' }: { k: SortKey; sort: S
         className={`inline-flex items-center gap-1 rounded-md py-1 hover:text-ink ${active ? 'text-ink' : ''} ${className.includes('text-right') ? 'flex-row-reverse' : ''}`}
       >
         {children}
-        <Icon className={`h-3.5 w-3.5 ${active ? 'text-uplift' : 'opacity-50'}`} aria-hidden />
+        <Icon className={`h-3.5 w-3.5 ${active ? 'text-ink' : 'opacity-50'}`} aria-hidden />
       </button>
     </th>
   );

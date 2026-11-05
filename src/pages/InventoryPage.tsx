@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ChevronDown, Database, Download, ExternalLink, FileText, Loader2, RefreshCw, Search, X } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
@@ -249,7 +249,7 @@ export function InventoryPage() {
       { header: 'Region', value: (r) => r.location?.region },
       { header: 'Usable on hand', value: (r) => r.usable },
       { header: 'Unit', value: (r) => r.item.unit },
-      { header: 'Reorder level', value: (r) => r.item.reorderLevel },
+      { header: 'Low-stock level', value: (r) => r.item.reorderLevel },
       { header: 'Stock status', value: (r) => STOCK_META[r.stock].label },
       { header: 'Expired quantity', value: (r) => r.expiredQty },
       { header: 'Nearest expiry', value: (r) => r.nearestExpiry },
@@ -262,7 +262,7 @@ export function InventoryPage() {
 
   if (!canRead)
     return (
-      <p className="card text-sm text-ink-soft" role="alert" data-quiet>
+      <p className="notice text-ink-soft" role="alert" data-quiet>
         Your role doesn’t include access to inventory. Ask an administrator if you need it.
       </p>
     );
@@ -288,29 +288,30 @@ export function InventoryPage() {
         <>
           {/* Overview: stock tiles and New items filter the list below; the others open the view they count.
               Phones: 3 stock tiles per row, then activity 2 per row; tablets 3 + 4; wide screens all 7 in one row.
-              Glows use tailwind.config.js `status.*` colours. */}
+              Figures are in their status colour (tailwind.config.js `status.*`), next to the word. */}
           {overview && (
             <section aria-label="Inventory overview" className="grid grid-cols-6 gap-2 sm:grid-cols-12 lg:grid-cols-7">
               {(
                 [
-                  ['In stock', overview.in, null, 'text-status-in', 'rgba(74, 222, 128, 0.13)', statusFilter('in')],
-                  ['Expired lots', overview.expired, null, 'text-status-expired', 'rgba(251, 146, 60, 0.14)', statusFilter('expired')],
-                  ['Expiring ≤ 90 d', overview.expiring, null, 'text-status-expiring', 'rgba(196, 181, 253, 0.14)', statusFilter('expiring', '90')],
-                  ['Releases', overview.released, 'last 30 days', 'text-uplift', undefined, { go: { tab: 'log', type: 'release' } }],
-                  ['New items', overview.newItems, 'last 30 days', 'text-sky-300', 'rgba(125, 211, 252, 0.13)', statusFilter('new')],
-                  ['Awaiting approval', imsPending.length, 'releases in the IMS', 'text-status-low', 'rgba(251, 191, 36, 0.13)', canApprove ? { go: { tab: 'approvals' } } : null],
-                  ['Donations with stock left', overview.donationsLeft, 'not fully given out', 'text-pink-300', 'rgba(249, 168, 212, 0.13)', { go: { tab: 'donations' } }],
+                  ['In stock', overview.in, null, 'text-status-in', statusFilter('in')],
+                  ['Expired lots', overview.expired, null, 'text-status-expired', statusFilter('expired')],
+                  ['Expiring ≤ 90 d', overview.expiring, null, 'text-status-expiring', statusFilter('expiring', '90')],
+                  ['Releases', overview.released, 'last 30 days', 'text-ink', { go: { tab: 'log', type: 'release' } }],
+                  ['New items', overview.newItems, 'last 30 days', 'text-ink', statusFilter('new')],
+                  ['Awaiting approval', imsPending.length, 'releases in the IMS', 'text-status-low', canApprove ? { go: { tab: 'approvals' } } : null],
+                  ['Donations with stock left', overview.donationsLeft, 'not fully given out', 'text-ink', { go: { tab: 'donations' } }],
                 ] as const
-              ).map(([label, n, note, tone, glow, action], i) => {
+              ).map(([label, n, note, tone, action], i) => {
                 const Tile = action ? 'button' : 'div';
                 const pressed = action && 'pressed' in action ? action.pressed : undefined;
                 return (
                   <Tile
                     key={label}
                     {...(action && { type: 'button' as const, 'aria-pressed': pressed, onClick: () => setParam(action.go) })}
-                    style={{ '--glow': glow } as CSSProperties}
-                    className={`kpi-tile flex min-h-[4.5rem] min-w-0 flex-col items-start justify-between gap-1 rounded-2xl px-3 py-2.5 text-left lg:col-span-1 ${
-                      action ? 'tap transition hover:-translate-y-0.5 hover:border-white/[0.14] aria-pressed:border-uplift aria-pressed:bg-uplift/10' : ''
+                    className={`flex min-h-[4.5rem] min-w-0 flex-col items-start justify-between gap-1 px-3 py-2.5 text-left lg:col-span-1 ${
+                      action
+                        ? 'kpi-tile tap transition hover:border-ink-mute/60 hover:bg-surface-raised aria-pressed:border-burgundy-400 aria-pressed:bg-burgundy-500/25'
+                        : 'border-t border-line'
                     } ${i < 3 ? 'col-span-2 sm:col-span-4' : 'col-span-3'}`}
                   >
                     <span className="w-full text-[0.6875rem] font-semibold leading-tight text-ink-soft">{label}</span>
@@ -324,7 +325,7 @@ export function InventoryPage() {
             </section>
           )}
 
-          <section className="card flex flex-col gap-4 p-4 sm:p-5">
+          <section className="card flex flex-col gap-4">
             {/* Tabs and primary actions */}
             <div className="flex flex-wrap items-center justify-between gap-3">
               {/* Phones: an even grid (2 × 2 with Approvals, else one row of 3) so every tab shows without sideways scrolling. */}
@@ -333,7 +334,7 @@ export function InventoryPage() {
                 aria-label="Inventory views"
                 className={`relative grid w-full gap-1 rounded-xl bg-surface-sunken p-1 sm:flex sm:w-auto ${canApprove ? 'grid-cols-2' : 'grid-cols-3'}`}
               >
-                <SlidingPill className="rounded-lg bg-surface-raised shadow-sm shadow-black/30 ring-1 ring-inset ring-white/[0.06]" />
+                <SlidingPill className="rounded-lg bg-surface-raised shadow-sm shadow-black/30 ring-1 ring-inset ring-ink/[0.06]" />
                 {(
                   [
                     ['stock', 'Stock', 'Stock'],
@@ -377,7 +378,7 @@ export function InventoryPage() {
             {tab === 'stock' && (
               <>
                 {/* Sticky search and filters: always reachable while scrolling a long list. */}
-                <div className="sticky top-16 z-20 -mx-4 flex flex-col gap-2 border-b border-line/60 bg-surface/95 px-4 py-3 backdrop-blur-md sm:-mx-5 sm:px-5">
+                <div className="sticky top-16 z-20 flex flex-col gap-2 border-b border-line bg-page py-3">
                   <div className="flex gap-2">
                     <div className="relative min-w-0 flex-1">
                       <label htmlFor="inv-search" className="sr-only">
@@ -403,13 +404,13 @@ export function InventoryPage() {
                   </div>
                   {/* Phones: category and location side by side, sort below, all inside the card; wider screens: one row. */}
                   <div className="grid grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap [&>select]:w-full [&>select]:min-w-0 [&>select]:truncate sm:[&>select]:w-auto">
-                    <select aria-label="Category" className={`chip shrink-0 bg-transparent pr-7 ${cat ? 'border-uplift text-uplift' : ''}`} value={cat} onChange={(e) => setParam({ cat: e.target.value || null })}>
+                    <select aria-label="Category" className={`chip shrink-0 bg-transparent pr-7 ${cat ? 'border-burgundy-400 bg-burgundy-500 text-cloud' : ''}`} value={cat} onChange={(e) => setParam({ cat: e.target.value || null })}>
                       <option value="">All categories</option>
                       {categoriesOf(snapshot.items).map((c) => (
                         <option key={c}>{c}</option>
                       ))}
                     </select>
-                    <select aria-label="Location" className={`chip shrink-0 bg-transparent pr-7 ${loc ? 'border-uplift text-uplift' : ''}`} value={loc} onChange={(e) => setParam({ loc: e.target.value || null })}>
+                    <select aria-label="Location" className={`chip shrink-0 bg-transparent pr-7 ${loc ? 'border-burgundy-400 bg-burgundy-500 text-cloud' : ''}`} value={loc} onChange={(e) => setParam({ loc: e.target.value || null })}>
                       <option value="">All locations</option>
                       {snapshot.locations.map((l) => (
                         <option key={l.id} value={l.id}>
@@ -470,7 +471,7 @@ export function InventoryPage() {
               href={`${imsUrl}/inventory.php`}
               target="_blank"
               rel="noopener noreferrer"
-              className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-4 z-30 flex h-14 items-center gap-2 rounded-full bg-uplift pl-4 pr-5 text-sm font-bold text-page shadow-xl shadow-black/50 transition active:scale-95 md:hidden"
+              className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-4 z-30 flex h-14 items-center gap-2 rounded-full premium pl-4 pr-5 text-sm font-bold text-onaccent shadow-xl shadow-black/50 transition active:scale-95 md:hidden"
             >
               <ExternalLink className="h-5 w-5" aria-hidden /> Open IMS
             </a>
@@ -542,7 +543,7 @@ function ImsSourceBanner({ snapshot, imsUrl, fromCache }: { snapshot: InventoryS
         phase === 'fading' ? 'opacity-0' : ''
       } ${stale ? 'border-status-low/40 bg-status-low/10' : 'border-line/70 bg-surface'}`}
     >
-      <Database className={`h-5 w-5 shrink-0 ${stale ? 'text-status-low' : 'text-uplift'}`} aria-hidden />
+      <Database className={`h-5 w-5 shrink-0 ${stale ? 'text-status-low' : 'text-ink-soft'}`} aria-hidden />
       <p className="min-w-0 flex-1">
         {stale && <>Stock may be out of date: last updated {ago(snapshot.fetchedAt)} ({formatDateTime(snapshot.fetchedAt)}).</>}
         {offline && `${stale ? ' ' : ''}You’re offline: this is the copy saved on this device.`}
@@ -562,7 +563,7 @@ function ExportMenu({ onCsv, onPrint }: { onCsv: () => void; onPrint: () => void
   const button = useRef<HTMLButtonElement>(null);
   const close = useCallback(() => setOpen(false), []);
   useDismiss(open, wrap, close, button);
-  const item = 'tap flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-medium hover:bg-white/[0.05]';
+  const item = 'tap flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-medium hover:bg-ink/[0.05]';
   return (
     <div ref={wrap} className="relative">
       <button ref={button} type="button" className="btn-ghost px-3" aria-expanded={open} aria-haspopup="menu" onClick={() => setOpen((o) => !o)}>
@@ -577,14 +578,14 @@ function ExportMenu({ onCsv, onPrint }: { onCsv: () => void; onPrint: () => void
           className="popover fixed inset-x-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-50 animate-pop-in p-2 shadow-2xl shadow-black/60 sm:absolute sm:inset-x-auto sm:bottom-auto sm:right-0 sm:top-12 sm:z-40 sm:w-64 sm:origin-top-right"
         >
           <button role="menuitem" type="button" className={item} onClick={() => (close(), onCsv())}>
-            <Download className="h-4 w-4 text-uplift" aria-hidden />
+            <Download className="h-4 w-4" aria-hidden />
             <span>
               Excel / Sheets (.csv)
               <span className="block text-xs text-muted">The list as filtered</span>
             </span>
           </button>
           <button role="menuitem" type="button" className={item} onClick={() => (close(), onPrint())}>
-            <FileText className="h-4 w-4 text-uplift" aria-hidden />
+            <FileText className="h-4 w-4" aria-hidden />
             <span>
               PDF report
               <span className="block text-xs text-muted">Print, or choose “Save as PDF”</span>

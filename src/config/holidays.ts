@@ -80,15 +80,15 @@ export const weekdayIndex = (day: string) => (new Date(`${day}T00:00:00Z`).getUT
 
 /** Day-number colour per weekday and holiday kind (shared by both calendars). */
 export const DAY_TONE = {
-  saturday: 'text-sky-300',
-  sunday: 'text-rose',
+  saturday: 'text-muted',
+  sunday: 'text-muted',
   regular: 'text-status-out',
-  special: 'text-uplift',
+  special: 'text-status-low',
   working: 'text-ink-soft',
 } as const;
 
 export const HOLIDAY_STYLE: Record<HolidayKind, { chip: string; dot: string }> = {
   regular: { chip: 'border-status-out/40 bg-status-out/10 text-status-out', dot: 'bg-status-out' },
-  special: { chip: 'border-uplift/40 bg-uplift/10 text-uplift', dot: 'bg-uplift' },
+  special: { chip: 'border-status-low/40 bg-status-low/10 text-status-low', dot: 'bg-status-low' },
   working: { chip: 'border-dashed border-line text-ink-soft', dot: 'bg-ink-mute' },
 };

@@ -37,10 +37,10 @@ export function RecordDetails({ a, showMapLink = true, className = '' }: { a: Pr
         ))}
       </dl>
       {(a.donors || a.partner || a.contactPerson) && (
-        <div className="tile flex flex-col gap-1.5 p-3 text-sm">
+        <div className="flex flex-col gap-1.5 border-l-2 border-line pl-3 text-sm">
           {a.donors && (
             <p className="flex gap-2">
-              <HandHeart className="mt-0.5 h-4 w-4 shrink-0 text-uplift" aria-hidden />
+              <HandHeart className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
               <span>
                 <span className="text-xs text-muted">Donors: </span>
                 {a.donors}
@@ -49,7 +49,7 @@ export function RecordDetails({ a, showMapLink = true, className = '' }: { a: Pr
           )}
           {(a.partner || a.contactPerson) && (
             <p className="flex gap-2">
-              <Handshake className="mt-0.5 h-4 w-4 shrink-0 text-uplift" aria-hidden />
+              <Handshake className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
               <span>
                 <span className="text-xs text-muted">Partner: </span>
                 {[a.partner, a.contactPerson].filter(Boolean).join(' · ')}

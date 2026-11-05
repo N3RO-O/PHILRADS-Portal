@@ -69,7 +69,7 @@ export function PullToRefresh({ onRefresh, children }: { onRefresh: () => void; 
         className="pointer-events-none absolute inset-x-0 top-0 flex justify-center"
         style={{ height: pull, opacity: Math.min(1, pull / TRIGGER) }}
       >
-        <span className="mt-auto mb-2 grid h-9 w-9 place-items-center rounded-full border border-line bg-surface-raised text-uplift shadow-lg">
+        <span className="mt-auto mb-2 grid h-9 w-9 place-items-center rounded-full border border-line bg-surface-raised text-ink-soft shadow-lg">
           <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} style={refreshing ? undefined : { transform: `rotate(${pull * 4}deg)` }} aria-hidden />
         </span>
       </div>

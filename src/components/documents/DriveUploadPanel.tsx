@@ -73,7 +73,7 @@ export function DriveUploadPanel() {
         htmlFor={inputId}
         className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-line bg-surface-sunken px-4 py-8 text-center transition-colors hover:border-uplift/50 focus-within:border-uplift"
       >
-        <span className="grid h-12 w-12 place-items-center rounded-xl bg-uplift/10 text-uplift">
+        <span className="grid h-12 w-12 place-items-center rounded-xl text-ink-soft">
           <CloudUpload className="h-6 w-6" aria-hidden />
         </span>
         <span className="text-sm font-semibold text-ink">Choose files</span>
@@ -89,8 +89,8 @@ export function DriveUploadPanel() {
         </select>
       </label>
       {/* Where the files will land in Google Drive: by uploader, then category. */}
-      <p className="tile flex flex-wrap items-center gap-1 px-3 py-2.5 text-xs text-ink-soft" aria-label="Saves to Google Drive folder">
-        <FolderTree className="mr-1 h-4 w-4 shrink-0 text-uplift" aria-hidden />
+      <p className="flex flex-wrap items-center gap-1 text-xs text-ink-soft" aria-label="Saves to Google Drive folder">
+        <FolderTree className="mr-1 h-4 w-4 shrink-0" aria-hidden />
         <span className="text-muted">Saves to</span>
         {drivePath({ module: 'documentation', category }, profile?.displayName ?? 'You').map((part, i) => (
           <span key={i} className="inline-flex items-center gap-1 font-semibold text-ink">
@@ -103,7 +103,7 @@ export function DriveUploadPanel() {
         <ul className="flex flex-col gap-2" aria-label="Selected files">
           {files.map((f) => (
             <li key={f.key} className="tile flex items-center gap-3 px-3 py-2.5">
-              <FileText className="h-4 w-4 shrink-0 text-uplift" aria-hidden />
+              <FileText className="h-4 w-4 shrink-0" aria-hidden />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-ink">{f.file.name}</p>
                 <p className={`text-xs ${f.error ? 'text-rose' : 'text-muted'}`}>{f.error ?? formatBytes(f.file.size)}</p>
@@ -124,7 +124,7 @@ export function DriveUploadPanel() {
         {busy ? 'Uploading…' : `Upload${valid.length ? ` ${valid.length} file${valid.length > 1 ? 's' : ''}` : ''}`}
       </button>
       {(blockedReason || message) && (
-        <p role="status" className="rounded-xl border border-uplift/30 bg-uplift/10 px-4 py-3 text-sm text-ink">
+        <p role="status" className="rounded-xl border border-line bg-surface-sunken px-4 py-3 text-sm text-ink">
           {message ?? blockedReason}
         </p>
       )}

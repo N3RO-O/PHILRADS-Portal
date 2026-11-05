@@ -121,8 +121,7 @@ export function BreakNudge() {
     const ss = String(Math.max(0, breakLeft) % 60).padStart(2, '0');
     const over = breakLeft <= 0;
     return (
-      <div role="dialog" aria-modal="true" aria-label="Break time" className="fixed inset-0 z-[1250] flex animate-fade-in flex-col items-center justify-center gap-8 bg-page/95 px-6 text-center backdrop-blur-2xl">
-        <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/3 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-status-in/10 blur-3xl" />
+      <div role="dialog" aria-modal="true" aria-label="Break time" className="fixed inset-0 z-[1250] flex animate-fade-in flex-col items-center justify-center gap-8 bg-page px-6 text-center backdrop-blur-2xl">
         <div className="relative grid h-56 w-56 place-items-center">
           <span aria-hidden className="absolute inset-0 rounded-full bg-status-in/15 animate-[breathe_8s_ease-in-out_infinite]" />
           <span aria-hidden className="absolute inset-6 rounded-full bg-status-in/20 animate-[breathe_8s_ease-in-out_infinite_200ms]" />
@@ -146,7 +145,7 @@ export function BreakNudge() {
   if (!ask || mine === 'dnd') return null;
   const mins = Math.max(90, Math.round((Date.now() - state.current.start) / 60_000));
   return (
-    <div role="status" className="toast-in fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] left-4 right-4 z-[1150] mx-auto max-w-sm rounded-2xl border border-status-in/40 bg-surface-raised/95 p-4 shadow-2xl shadow-black/60 backdrop-blur-xl">
+    <div role="status" className="toast-in fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] left-4 right-4 z-[1150] mx-auto max-w-sm rounded-2xl border border-status-in/40 bg-surface-raised p-4 shadow-2xl shadow-black/60">
       <div className="flex items-start gap-3">
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-status-in/15 text-status-in">
           <Coffee className="h-5 w-5" aria-hidden />

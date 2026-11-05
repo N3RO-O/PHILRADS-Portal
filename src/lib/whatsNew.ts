@@ -20,6 +20,8 @@ export interface ReleaseItem {
 }
 export interface Release {
   id: string;
+  /** The portal's version number (package.json), e.g. 1.5.0. */
+  version?: string;
   date: string;
   title: string;
   items: ReleaseItem[];
@@ -39,6 +41,16 @@ const isReleaseList = (v: unknown): v is Release[] =>
   Array.isArray(v) && v.length > 0 && v.every((r) => r && typeof r.id === 'string' && typeof r.title === 'string' && Array.isArray(r.items));
 
 const SEEN_KEY = 'philrads.whatsNew.seen';
+/** Releases whose note in the bell was opened or marked read, one by one. */
+const READ_KEY = 'philrads.whatsNew.read';
+const readRead = (): string[] => {
+  try {
+    const v: unknown = JSON.parse(localStorage.getItem(READ_KEY) ?? '[]');
+    return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+};
 const readSeen = () => {
   try {
     return localStorage.getItem(SEEN_KEY);
@@ -56,10 +68,12 @@ interface State {
   incoming: Release[] | null;
   /** The last release whose notes this person saw on this device (null: never). */
   seen: string | null;
+  /** Release notes read one by one in the bell. */
+  read: string[];
   view: WhatsNewView;
 }
 
-let state: State = { updateReady: false, incoming: null, seen: readSeen(), view: null };
+let state: State = { updateReady: false, incoming: null, seen: readSeen(), read: readRead(), view: null };
 let applyUpdate: (() => void) | null = null;
 const listeners = new Set<() => void>();
 const set = (patch: Partial<State>) => {
@@ -114,6 +128,27 @@ export const whatsNew = {
       /* storage blocked: the note shows as new again next time */
     }
     set({ seen: id });
+  },
+  /**
+   * Has this release's note been read? Everything up to the last release seen counts as read; someone
+   * new to the portal starts with only the latest one unread.
+   */
+  isRead(id: string) {
+    if (state.read.includes(id)) return true;
+    const at = RELEASES.findIndex((r) => r.id === id);
+    const seenAt = state.seen ? RELEASES.findIndex((r) => r.id === state.seen) : -1;
+    return seenAt === -1 ? at > 0 : at >= seenAt;
+  },
+  /** Mark release notes read in the bell; when none is left unread, this version counts as seen. */
+  markRead(ids: string[]) {
+    const read = [...new Set([...state.read, ...ids])].filter((id) => RELEASES.some((r) => r.id === id));
+    try {
+      localStorage.setItem(READ_KEY, JSON.stringify(read));
+    } catch {
+      /* storage blocked: unread again next time */
+    }
+    set({ read });
+    if (RELEASES.every((r) => whatsNew.isRead(r.id))) whatsNew.markSeen(CURRENT.id);
   },
   /** This version is newer than the notes last seen here: show them once, after an update. */
   get updatedSinceSeen() {

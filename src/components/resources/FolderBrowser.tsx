@@ -19,14 +19,14 @@ const LIST: Record<DocView, string> = {
 
 function kindOf(f: FolderItem): { icon: LucideIcon; tone: string; label: string } {
   const m = f.mimeType;
-  if (f.folder) return { icon: Folder, tone: 'bg-status-low/10 text-status-low', label: 'Folder' };
-  if (m.startsWith('image/')) return { icon: ImageIcon, tone: 'bg-sky-300/10 text-sky-300', label: 'Photo' };
-  if (m.startsWith('video/')) return { icon: Film, tone: 'bg-violet-300/10 text-violet-300', label: 'Video' };
-  if (m === 'application/pdf') return { icon: FileText, tone: 'bg-status-out/10 text-status-out', label: 'PDF' };
-  if (m.includes('spreadsheet') || m.includes('excel')) return { icon: FileSpreadsheet, tone: 'bg-status-in/10 text-status-in', label: m.includes('google-apps') ? 'Google Sheet' : 'Excel' };
-  if (m.includes('presentation') || m.includes('powerpoint')) return { icon: Presentation, tone: 'bg-uplift/10 text-uplift', label: m.includes('google-apps') ? 'Google Slides' : 'PowerPoint' };
-  if (m.includes('document') || m.includes('word')) return { icon: FileText, tone: 'bg-sky-300/10 text-sky-300', label: m.includes('google-apps') ? 'Google Doc' : 'Word' };
-  return { icon: File, tone: 'bg-white/5 text-ink-soft', label: f.name.includes('.') ? f.name.split('.').pop()!.toUpperCase() : 'File' };
+  if (f.folder) return { icon: Folder, tone: 'text-ink-soft', label: 'Folder' };
+  if (m.startsWith('image/')) return { icon: ImageIcon, tone: 'text-ink-soft', label: 'Photo' };
+  if (m.startsWith('video/')) return { icon: Film, tone: 'text-ink-soft', label: 'Video' };
+  if (m === 'application/pdf') return { icon: FileText, tone: 'text-ink-soft', label: 'PDF' };
+  if (m.includes('spreadsheet') || m.includes('excel')) return { icon: FileSpreadsheet, tone: 'text-ink-soft', label: m.includes('google-apps') ? 'Google Sheet' : 'Excel' };
+  if (m.includes('presentation') || m.includes('powerpoint')) return { icon: Presentation, tone: 'text-ink-soft', label: m.includes('google-apps') ? 'Google Slides' : 'PowerPoint' };
+  if (m.includes('document') || m.includes('word')) return { icon: FileText, tone: 'text-ink-soft', label: m.includes('google-apps') ? 'Google Doc' : 'Word' };
+  return { icon: File, tone: 'text-ink-soft', label: f.name.includes('.') ? f.name.split('.').pop()!.toUpperCase() : 'File' };
 }
 
 function Thumb({ f, className, icon = 'h-7 w-7' }: { f: FolderItem; className: string; icon?: string }) {
@@ -45,7 +45,7 @@ function Thumb({ f, className, icon = 'h-7 w-7' }: { f: FolderItem; className: s
 
 function Tick({ on }: { on: boolean }) {
   return (
-    <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border-2 ${on ? 'border-uplift bg-uplift text-page' : 'border-ink-mute bg-black/30'}`} aria-hidden>
+    <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border-2 ${on ? 'border-burgundy-400 bg-burgundy-500 text-cloud' : 'border-ink-mute bg-black/30'}`} aria-hidden>
       {on && <Check className="h-3 w-3" strokeWidth={3} />}
     </span>
   );
@@ -128,7 +128,7 @@ export function FolderBrowser({ resource, onFallback }: { resource: Resource; on
     const on = selected.has(f.id);
     const k = kindOf(f);
     const base = 'tap group w-full text-left outline-none focus-visible:ring-2 focus-visible:ring-uplift';
-    const row = on ? 'bg-uplift/10 ring-1 ring-inset ring-uplift/60' : 'hover:bg-white/[0.05]';
+    const row = on ? 'bg-burgundy-500/25 ring-1 ring-inset ring-burgundy-400' : 'hover:bg-ink/[0.05]';
     const props = {
       type: 'button' as const,
       onClick: (e: MouseEvent) => onClick(f, e),
@@ -143,7 +143,7 @@ export function FolderBrowser({ resource, onFallback }: { resource: Resource; on
       return (
         <button {...props} className={`${base} flex flex-col gap-1.5 rounded-xl p-1`}>
           <span className="relative block w-full">
-            <Thumb f={f} icon={v === 'medium' ? 'h-7 w-7' : 'h-10 w-10'} className={`aspect-[4/3] w-full rounded-xl border ${on ? 'border-uplift ring-2 ring-uplift' : 'border-line/60'}`} />
+            <Thumb f={f} icon={v === 'medium' ? 'h-7 w-7' : 'h-10 w-10'} className={`aspect-[4/3] w-full rounded-xl border ${on ? 'border-burgundy-400 ring-2 ring-burgundy-400' : 'border-line/60'}`} />
             {!f.folder && (
               <span className={`absolute right-2 top-2 transition ${on ? '' : 'opacity-0 group-hover:opacity-100'}`}>
                 <Tick on={on} />
@@ -169,7 +169,7 @@ export function FolderBrowser({ resource, onFallback }: { resource: Resource; on
       );
     if (v === 'tiles' || v === 'content')
       return (
-        <button {...props} className={`${base} flex items-center gap-3 rounded-xl ${v === 'tiles' ? `border p-2.5 ${on ? 'border-uplift/60 bg-uplift/10' : 'border-line/60 hover:bg-white/[0.04]'}` : `px-1.5 py-2.5 ${row}`}`}>
+        <button {...props} className={`${base} flex items-center gap-3 rounded-xl ${v === 'tiles' ? `border p-2.5 ${on ? 'border-burgundy-400 bg-burgundy-500/25' : 'border-line/60 hover:bg-ink/[0.04]'}` : `px-1.5 py-2.5 ${row}`}`}>
           {tick}
           <Thumb f={f} icon="h-6 w-6" className={v === 'tiles' ? 'h-12 w-12 rounded-xl' : 'aspect-[4/3] w-24 rounded-lg'} />
           <span className="min-w-0 flex-1">
@@ -200,7 +200,7 @@ export function FolderBrowser({ resource, onFallback }: { resource: Resource; on
             <span key={p.id || i} className="flex items-center gap-0.5">
               {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-muted" aria-hidden />}
               {i < all.length - 1 ? (
-                <button type="button" className="rounded px-1 py-0.5 font-medium text-ink-soft hover:bg-white/[0.06] hover:text-ink" onClick={() => setFolderId(i === 0 ? undefined : p.id)}>
+                <button type="button" className="rounded px-1 py-0.5 font-medium text-ink-soft hover:bg-ink/[0.06] hover:text-ink" onClick={() => setFolderId(i === 0 ? undefined : p.id)}>
                   {i === 0 ? resource.title : p.name}
                 </button>
               ) : (

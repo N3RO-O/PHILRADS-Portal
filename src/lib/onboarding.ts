@@ -38,7 +38,7 @@ export interface StepDef {
 
 export const STEPS: StepDef[] = [
   { id: 'signin', label: 'Sign in to the portal', why: 'Done. Your account is ready.', action: '', to: '/' },
-  { id: 'task', label: 'Plan your first task', why: 'Type what you’ll do and press Enter. It lands in My Day.', action: 'Add a task', to: '/tasks?view=myday' },
+  { id: 'task', label: 'Plan your first task', why: 'Type what you’ll do and press Enter. It lands in Today.', action: 'Add a task', to: '/tasks?view=myday' },
   { id: 'stock', label: 'Check what’s in stock', why: 'Live from PHILRADS IMS: what’s low, expiring or waiting for approval.', action: 'Open Inventory', to: '/inventory', permission: 'inventory.read' },
   { id: 'file', label: 'Find a form or file', why: 'Forms, policies and manuals from Google Drive, in one place.', action: 'Open Resources', to: '/resources', permission: 'resources.read' },
   { id: 'map', label: 'See where we’ve worked', why: 'Projects, warehouses and the team in the field on the Live Map.', action: 'Open Live Map', to: '/live-map', permission: 'map.read' },
@@ -51,7 +51,7 @@ export const STEPS: StepDef[] = [
 ];
 
 export const FOCUS_OPTIONS: { focus: Focus; label: string; note: string; permission?: PermissionKey }[] = [
-  { focus: 'task', label: 'Plan and follow up my work', note: 'Tasks, My Day and deadlines' },
+  { focus: 'task', label: 'Plan and follow up my work', note: 'Tasks, today’s plan and deadlines' },
   { focus: 'stock', label: 'Track and approve relief stock', note: 'Inventory from PHILRADS IMS', permission: 'inventory.read' },
   { focus: 'file', label: 'Find forms and files', note: 'Resources from Google Drive', permission: 'resources.read' },
   { focus: 'map', label: 'Follow our projects and field team', note: 'The Live Map', permission: 'map.read' },

@@ -271,10 +271,10 @@ export function DocumentationPage() {
 
       {queue.length > 0 && <UploadQueuePanel items={queue} />}
 
-      <section className="card flex flex-col gap-4 p-4 sm:p-5">
+      <section className="card flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="card-title flex items-center gap-2">
-            <ImageIcon className="h-4 w-4 text-uplift" aria-hidden /> Field documentation
+            <ImageIcon className="h-4 w-4" aria-hidden /> Field documentation
             {docs && <span className="text-sm font-normal text-muted">{formatNumber(all.length)}</span>}
           </h2>
           <div className="flex flex-wrap gap-2">
@@ -402,7 +402,7 @@ export function DocumentationPage() {
       </section>
 
       {selecting && (
-        <div className="sticky bottom-4 z-30 mx-auto flex w-full max-w-xl flex-wrap items-center gap-2 rounded-2xl border border-line bg-surface-raised/95 p-3 shadow-2xl shadow-black/50 backdrop-blur-md">
+        <div className="sticky bottom-4 z-30 mx-auto flex w-full max-w-xl flex-wrap items-center gap-2 rounded-2xl border border-line bg-surface-raised p-3 shadow-2xl shadow-black/50">
           <span className="min-w-0 flex-1 text-sm font-semibold">{selected.size ? `${selected.size} selected` : wide ? 'Click files to select them (Shift-click for a range)' : 'Tap files to select them'}</span>
           <button
             type="button"
@@ -491,10 +491,10 @@ function DriveCard({ status, isAdmin, sample, onConnect }: { status: DriveStatus
   const showForm = isAdmin && (!status.connected || broken || changing);
 
   return (
-    <section className={`card flex flex-col gap-3 p-4 ${broken || !status.connected ? 'border-uplift/40' : ''}`} aria-label="Google Drive">
+    <section className={`card flex flex-col gap-3`} aria-label="Google Drive">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <p className="flex min-w-0 items-start gap-3 text-sm">
-          <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${status.connected && !broken ? 'bg-status-in/15 text-status-in' : 'bg-uplift/15 text-uplift'}`}>
+          <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${status.connected && !broken ? 'bg-status-in/15 text-status-in' : 'text-ink-soft'}`}>
             {broken ? <AlertTriangle className="h-4 w-4" aria-hidden /> : <HardDrive className="h-4 w-4" aria-hidden />}
           </span>
           <span className="min-w-0">
@@ -506,7 +506,7 @@ function DriveCard({ status, isAdmin, sample, onConnect }: { status: DriveStatus
               </>
             ) : broken ? (
               <>
-                <span className="block font-semibold text-uplift">Uploads are paused</span>
+                <span className="block font-semibold text-status-low">Uploads are paused</span>
                 <span className="block text-xs text-muted">{status.lastError}</span>
               </>
             ) : (
@@ -528,7 +528,7 @@ function DriveCard({ status, isAdmin, sample, onConnect }: { status: DriveStatus
 
       {showForm && (
         <form
-          className="flex flex-col gap-3 rounded-xl border border-line/70 bg-white/[0.02] p-3"
+          className="flex flex-col gap-3 rounded-xl border border-line/70 bg-ink/[0.02] p-3"
           onSubmit={(e) => {
             e.preventDefault();
             setBusy(true);
@@ -566,10 +566,10 @@ function UploadQueuePanel({ items }: { items: QueuedUpload[] }) {
   const active = items.filter((i) => i.status === 'uploading' || i.status === 'waiting').length;
   const finished = items.some((i) => i.status === 'done' || i.status === 'cancelled');
   return (
-    <section className="card flex flex-col gap-3 p-4" aria-label="Uploads">
+    <section className="card flex flex-col gap-3" aria-label="Uploads">
       <div className="flex items-center justify-between gap-2">
         <h2 className="flex items-center gap-2 text-sm font-semibold">
-          {active ? <Loader2 className="h-4 w-4 animate-spin text-uplift" aria-hidden /> : <CheckCircle2 className="h-4 w-4 text-status-in" aria-hidden />}
+          {active ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <CheckCircle2 className="h-4 w-4 text-status-in" aria-hidden />}
           {active ? `Uploading ${active} file${active === 1 ? '' : 's'}…` : 'Uploads finished'}
         </h2>
         {finished && (
@@ -605,7 +605,7 @@ function UploadQueuePanel({ items }: { items: QueuedUpload[] }) {
                 </button>
               )}
             </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]" role="progressbar" aria-valuenow={Math.round(i.progress * 100)} aria-valuemin={0} aria-valuemax={100} aria-label={i.meta.title}>
+            <div className="h-1.5 overflow-hidden rounded-full bg-ink/[0.06]" role="progressbar" aria-valuenow={Math.round(i.progress * 100)} aria-valuemin={0} aria-valuemax={100} aria-label={i.meta.title}>
               <div
                 className={`h-full w-full origin-left rounded-full transition-transform duration-300 ${i.status === 'failed' ? 'bg-status-out' : i.status === 'done' ? 'bg-status-in' : 'bg-uplift'}`}
                 style={{ transform: `scaleX(${Math.max(0.02, i.progress)})` }}

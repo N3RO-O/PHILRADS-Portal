@@ -223,7 +223,7 @@ export function ResourcesPage() {
 
   if (!canRead)
     return (
-      <p className="card text-sm text-ink-soft" role="alert" data-quiet>
+      <p className="notice text-ink-soft" role="alert" data-quiet>
         Your role doesn’t include access to Resources. Ask an administrator if you need it.
       </p>
     );
@@ -233,16 +233,16 @@ export function ResourcesPage() {
 
   return (
     <div className="flex flex-col gap-4 pb-24 md:pb-0">
-      <section className="card flex flex-col gap-4 p-4 sm:p-5">
+      <section className="card flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
             <h2 className="card-title flex items-center gap-2">
-              <Library className="h-4 w-4 text-uplift" aria-hidden /> Shared files and links
+              <Library className="h-4 w-4" aria-hidden /> Shared files and links
               {resourcesService.source === 'mock' && <SampleBadge />}
             </h2>
             <p className="card-note">Open or download from Google Drive with your PHILRADS account.</p>
             {!online && (
-              <p className="mt-1 text-xs font-semibold text-sky-300">You’re offline: showing the list saved on this device. Opening files and adding resources need a connection.</p>
+              <p className="mt-1 text-xs font-semibold text-ink-soft">You’re offline: showing the list saved on this device. Opening files and adding resources need a connection.</p>
             )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -262,7 +262,7 @@ export function ResourcesPage() {
 
         {/* Only the search box stays at the top while scrolling (from tablets up; phones have the top bar's
             search). The filters below scroll away with the page, so they never cover the list. */}
-        <div className="relative -mx-4 bg-surface/95 px-4 py-2 backdrop-blur-md sm:-mx-5 sm:px-5 md:sticky md:top-16 md:z-20">
+        <div className="relative bg-page py-2 md:sticky md:top-16 md:z-20">
           <label htmlFor="res-search" className="sr-only">
             Search resources
           </label>
@@ -277,7 +277,7 @@ export function ResourcesPage() {
             enterKeyHint="search"
           />
         </div>
-        <div className="-mx-4 -mt-2 flex flex-col gap-2 border-b border-line/60 px-4 pb-3 sm:-mx-5 sm:px-5">
+        <div className="-mt-2 flex flex-col gap-2 border-b border-line pb-3">
           <label htmlFor="res-cat" className="sr-only">
             Category
           </label>
@@ -308,7 +308,7 @@ export function ResourcesPage() {
               ))}
             </select>
             <div role="group" aria-label="Group by" className="relative flex gap-1 rounded-lg bg-surface-sunken p-0.5">
-              <SlidingPill className="rounded-md bg-surface-raised shadow-sm shadow-black/30 ring-1 ring-inset ring-white/[0.06]" />
+              <SlidingPill className="rounded-md bg-surface-raised shadow-sm shadow-black/30 ring-1 ring-inset ring-ink/[0.06]" />
               {(
                 [
                   ['category', 'By category', FolderOpen],
@@ -400,7 +400,7 @@ export function ResourcesPage() {
       </section>
 
       {selecting && (
-        <div className="sticky bottom-4 z-30 mx-auto flex w-full max-w-xl flex-wrap items-center gap-2 rounded-2xl border border-line bg-surface-raised/95 p-3 shadow-2xl shadow-black/50 backdrop-blur-md">
+        <div className="sticky bottom-4 z-30 mx-auto flex w-full max-w-xl flex-wrap items-center gap-2 rounded-2xl border border-line bg-surface-raised p-3 shadow-2xl shadow-black/50">
           <span className="min-w-0 flex-1 text-sm font-semibold">{selected.size ? `${selected.size} selected` : wide ? 'Click resources to select them (Shift-click for a range)' : 'Tap resources to select them'}</span>
           <button
             type="button"
@@ -419,7 +419,7 @@ export function ResourcesPage() {
         <button
           type="button"
           onClick={() => setSheet({ resource: null })}
-          className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-4 z-30 flex h-14 items-center gap-2 rounded-full bg-uplift pl-4 pr-5 text-sm font-bold text-page shadow-xl shadow-black/50 transition active:scale-95 md:hidden"
+          className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-4 z-30 flex h-14 items-center gap-2 rounded-full premium pl-4 pr-5 text-sm font-bold text-onaccent shadow-xl shadow-black/50 transition active:scale-95 md:hidden"
         >
           <Plus className="h-6 w-6" aria-hidden /> Add resource
         </button>

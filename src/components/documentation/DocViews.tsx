@@ -98,8 +98,8 @@ export function ViewMenu({ view, pane, onChange, showPanes }: { view: DocView; p
   const close = useCallback(() => setOpen(false), []);
   useDismiss(open, wrap, close, button);
   const Current = VIEWS.find((v) => v.id === view)?.icon ?? Grid2x2;
-  const item = 'flex min-h-10 w-full items-center gap-3 rounded-lg px-2.5 text-left text-sm text-ink transition-colors hover:bg-white/[0.06]';
-  const dot = (on: boolean) => <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${on ? 'bg-ink' : 'bg-transparent'}`} aria-hidden />;
+  const item = 'flex min-h-10 w-full items-center gap-3 rounded-lg px-2.5 text-left text-sm text-ink transition-colors hover:bg-ink/[0.06]';
+  const dot = (on: boolean) => <Check className={`h-4 w-4 shrink-0 ${on ? '' : 'invisible'}`} aria-hidden />;
   return (
     <div ref={wrap} className="relative">
       <button ref={button} type="button" className="btn-ghost min-h-11 px-3.5" aria-haspopup="menu" aria-expanded={open} onClick={() => {
@@ -173,7 +173,7 @@ function Thumb({ doc, thumb, className, icon = 'h-8 w-8', badges = false }: { do
 
 function Tick({ on, className = '' }: { on: boolean; className?: string }) {
   return (
-    <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border-2 ${on ? 'border-uplift bg-uplift text-page' : 'border-white/70 bg-black/40'} ${className}`} aria-hidden>
+    <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border-2 ${on ? 'border-burgundy-400 bg-burgundy-500 text-cloud' : 'border-ink/70 bg-black/40'} ${className}`} aria-hidden>
       {on && <Check className="h-3 w-3" strokeWidth={3} />}
     </span>
   );
@@ -196,7 +196,7 @@ interface ItemProps {
 /** One file. Shift-click and Ctrl-click are handled by the page (selecting several). */
 export function DocItem({ doc, thumb, view, selecting, selected, focused, onClick, onDoubleClick, compact = false }: ItemProps) {
   const base = 'tap group w-full text-left outline-none focus-visible:ring-2 focus-visible:ring-uplift';
-  const rowState = selected ? 'bg-uplift/10 ring-1 ring-inset ring-uplift/60' : focused ? 'bg-surface-raised' : 'hover:bg-white/[0.04]';
+  const rowState = selected ? 'bg-burgundy-500/25 ring-1 ring-inset ring-burgundy-400' : focused ? 'bg-surface-raised' : 'hover:bg-ink/[0.04]';
   const props = {
     type: 'button' as const,
     onClick,
@@ -209,7 +209,7 @@ export function DocItem({ doc, thumb, view, selecting, selected, focused, onClic
   const meta = `${doc.uploadedByName} · ${formatTime(doc.uploadedAt)}${doc.imsEventName ? ` · ${doc.imsEventName}` : ''}`;
 
   if (view === 'xl' || view === 'large' || view === 'medium') {
-    const ring = selected ? 'border-uplift ring-2 ring-uplift' : focused ? 'border-ink-mute ring-2 ring-ink-mute/60' : 'border-line/60';
+    const ring = selected ? 'border-burgundy-400 ring-2 ring-burgundy-400' : focused ? 'border-ink-mute ring-2 ring-ink-mute/60' : 'border-line/60';
     return (
       <button {...props} className={`${base} flex flex-col gap-1.5 rounded-xl`}>
         <span className="relative block w-full">
@@ -254,7 +254,7 @@ export function DocItem({ doc, thumb, view, selecting, selected, focused, onClic
 
   if (view === 'tiles') {
     return (
-      <button {...props} className={`${base} flex items-center gap-3 rounded-xl border p-2 ${selected ? 'border-uplift/60 bg-uplift/10' : focused ? 'border-ink-mute/60 bg-surface-raised' : 'border-line/60 hover:bg-white/[0.04]'}`}>
+      <button {...props} className={`${base} flex items-center gap-3 rounded-xl border p-2 ${selected ? 'border-burgundy-400 bg-burgundy-500/25' : focused ? 'border-ink-mute/60 bg-surface-raised' : 'border-line/60 hover:bg-ink/[0.04]'}`}>
         {selecting && <Tick on={selected} />}
         <Thumb doc={doc} thumb={thumb} icon="h-6 w-6" className="h-16 w-16 rounded-lg" />
         <span className="min-w-0 flex-1">

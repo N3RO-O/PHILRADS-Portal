@@ -141,7 +141,7 @@ export function SyncSheet({ open, onClose, records, withFunding, onSynced }: Pro
           </button>
         ) : (
           <div className="flex flex-col gap-2">
-            {!online && <p className="text-xs text-uplift">You’re offline. Syncing needs an internet connection.</p>}
+            {!online && <p className="text-xs text-status-low">You’re offline. Syncing needs an internet connection.</p>}
             <div className="flex gap-2">
               <button type="button" className="btn-ghost flex-1" onClick={close}>
                 Cancel
@@ -157,7 +157,7 @@ export function SyncSheet({ open, onClose, records, withFunding, onSynced }: Pro
     >
       {done ? (
         <div className="flex flex-col items-center gap-3 py-8 text-center" role="status">
-          <span className="icon-chip h-12 w-12" style={{ ['--glow' as string]: 'rgba(74, 222, 128, 0.2)' }}>
+          <span className="icon-chip h-12 w-12">
             <CheckCircle2 className="h-6 w-6 text-status-in" aria-hidden />
           </span>
           <p className="text-base font-semibold">Synced {periodText}</p>
@@ -177,7 +177,7 @@ export function SyncSheet({ open, onClose, records, withFunding, onSynced }: Pro
             onDragLeave={() => setDragging(false)}
             onDrop={onDrop}
             className={`flex flex-col items-center gap-2 rounded-2xl border-2 border-dashed px-4 py-6 text-center transition-colors ${
-              dragging ? 'border-uplift bg-uplift/10' : 'border-line bg-surface-sunken'
+              dragging ? 'border-ink-soft bg-surface-raised' : 'border-line bg-surface-sunken'
             }`}
           >
             {file ? (
@@ -194,7 +194,7 @@ export function SyncSheet({ open, onClose, records, withFunding, onSynced }: Pro
               </>
             ) : (
               <>
-                {reading ? <Loader2 className="h-8 w-8 animate-spin text-uplift" aria-hidden /> : <UploadCloud className="h-8 w-8 text-uplift" aria-hidden />}
+                {reading ? <Loader2 className="h-8 w-8 animate-spin" aria-hidden /> : <UploadCloud className="h-8 w-8" aria-hidden />}
                 <p className="text-sm font-semibold text-ink">{reading ? 'Reading the workbook…' : 'Drop the statistics workbook here'}</p>
                 <p className="text-xs text-muted">The Excel file with one sheet per year (e.g. “Database- Statistics-2023-2026.xlsx”).</p>
                 <button type="button" className="btn-ghost mt-1 min-h-10 px-4 text-sm" onClick={() => input.current?.click()} disabled={reading}>
@@ -229,14 +229,14 @@ export function SyncSheet({ open, onClose, records, withFunding, onSynced }: Pro
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted">Sync</p>
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="relative flex gap-1 rounded-xl bg-surface-sunken p-1" role="group" aria-label="Period">
-                    <SlidingPill className="rounded-lg bg-uplift shadow-sm shadow-black/30" />
+                    <SlidingPill className="gloss rounded-lg bg-burgundy-500 ring-1 ring-inset ring-burgundy-400" />
                     {(
                       [
                         ['month', 'This month'],
                         ['year', 'This year'],
                       ] as const
                     ).map(([k, label]) => (
-                      <button key={k} type="button" aria-pressed={kind === k} onClick={() => setKind(k)} className="rounded-lg px-3 py-1.5 text-sm font-semibold text-ink-soft relative z-10 transition-colors duration-500 hover:text-ink aria-pressed:text-page">
+                      <button key={k} type="button" aria-pressed={kind === k} onClick={() => setKind(k)} className="rounded-lg px-3 py-1.5 text-sm font-semibold text-ink-soft relative z-10 transition-colors duration-500 hover:text-ink aria-pressed:text-onaccent">
                         {label}
                       </button>
                     ))}
@@ -263,7 +263,7 @@ export function SyncSheet({ open, onClose, records, withFunding, onSynced }: Pro
               {/* Summary */}
               <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3" aria-label={`What the sync of ${periodText} would do`}>
                 <Stat label="New records" value={plan.added.length} tone="text-status-in" />
-                <Stat label="Records to update" value={plan.matched.filter((m) => m.changes.length).length} tone="text-uplift" />
+                <Stat label="Records to update" value={plan.matched.filter((m) => m.changes.length).length} tone="text-ink" />
                 <Stat label="Already up to date" value={plan.matched.filter((m) => !m.changes.length).length} />
                 <Stat label="Kept (not in file)" value={plan.notInFile.length} note="other sources" />
                 <Stat label="Not added" value={plan.undated.length + plan.duplicates.length} note="no date or repeated" />
@@ -271,14 +271,14 @@ export function SyncSheet({ open, onClose, records, withFunding, onSynced }: Pro
               </ul>
 
               {plan.added.length + plan.matched.length + plan.undated.length + plan.duplicates.length === 0 && (
-                <p className="tile px-4 py-6 text-center text-sm text-muted">The workbook has no rows for {periodText}.</p>
+                <p className="py-6 text-center text-sm text-muted">The workbook has no rows for {periodText}.</p>
               )}
 
               {plan.added.length > 0 && (
                 <Section title="New records" note="Not in the portal yet. They won’t be on the Live Map until a pin is added.">
                   {plan.added.map(({ row }) => (
                     <label key={`${row.sheet}-${row.line}`} className="flex cursor-pointer gap-3 border-t border-line/60 py-3 first:border-t-0">
-                      <input type="checkbox" className="mt-1 h-4 w-4 shrink-0 accent-[#EC952A]" checked={pickedNew.has(row)} onChange={() => toggle(pickedNew, row, setPickedNew)} />
+                      <input type="checkbox" className="mt-1 h-4 w-4 shrink-0 accent-burgundy-500" checked={pickedNew.has(row)} onChange={() => toggle(pickedNew, row, setPickedNew)} />
                       <span className="min-w-0 text-sm">
                         <span className="flex flex-wrap items-center gap-2 font-semibold text-ink">
                           <Plus className="h-3.5 w-3.5 text-status-in" aria-hidden />
@@ -296,7 +296,7 @@ export function SyncSheet({ open, onClose, records, withFunding, onSynced }: Pro
                           </span>
                         )}
                         {row.warnings.map((w) => (
-                          <span key={w} className="mt-1 block text-xs text-uplift">
+                          <span key={w} className="mt-1 block text-xs text-status-low">
                             {w}
                           </span>
                         ))}
@@ -321,15 +321,15 @@ export function SyncSheet({ open, onClose, records, withFunding, onSynced }: Pro
                             const key = `${m.record.id}:${c.field}`;
                             return (
                               <li key={key}>
-                                <label className="flex cursor-pointer items-start gap-3 rounded-lg px-2 py-1.5 hover:bg-white/[0.03]">
-                                  <input type="checkbox" className="mt-1 h-4 w-4 shrink-0 accent-[#EC952A]" checked={pickedFields.has(key)} onChange={() => toggle(pickedFields, key, setPickedFields)} />
+                                <label className="flex cursor-pointer items-start gap-3 rounded-lg px-2 py-1.5 hover:bg-ink/[0.03]">
+                                  <input type="checkbox" className="mt-1 h-4 w-4 shrink-0 accent-burgundy-500" checked={pickedFields.has(key)} onChange={() => toggle(pickedFields, key, setPickedFields)} />
                                   <span className="min-w-0 text-sm">
                                     <span className="flex flex-wrap items-center gap-2 text-xs font-semibold text-ink-soft">
                                       {FIELD_LABEL[c.field]}
                                       {c.fill ? (
                                         <span className="badge border-status-in/40 bg-status-in/10 text-status-in">Empty in portal</span>
                                       ) : (
-                                        <span className="badge border-uplift/40 bg-uplift/10 text-uplift">Differs</span>
+                                        <span className="badge border-line text-ink-soft">Differs</span>
                                       )}
                                     </span>
                                     {c.fill ? (

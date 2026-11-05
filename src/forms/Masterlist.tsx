@@ -85,7 +85,7 @@ function Row({ n, dupeOf }: { n: number; dupeOf?: number }) {
       <td style={{ ...td, textAlign: 'center' }}><Box k={r('photoNo')} /></td>
       <td style={td}><In k={r('contact')} align="center" /></td>
       <td style={{ ...td, position: 'relative' }}>
-        <SignBox k={r('sig')} hint="✎ Sign" />
+        <SignBox k={r('sig')} hint="Sign" />
       </td>
     </tr>
   );

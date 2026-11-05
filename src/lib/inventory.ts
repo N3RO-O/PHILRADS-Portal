@@ -19,7 +19,7 @@ export const daysUntil = (isoDate: string, today = todayKey()) =>
   Math.round((Date.parse(`${isoDate}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / DAY);
 
 export const stockStatus = (onHand: number, reorderLevel: number): StockStatus =>
-  onHand <= 0 ? 'out' : onHand < reorderLevel ? 'low' : 'in';
+  onHand <= 0 ? 'out' : onHand <= reorderLevel ? 'low' : 'in';
 
 export function expiryStatus(expiryDate: string | null, today = todayKey()): ExpiryStatus {
   if (!expiryDate) return 'none';

@@ -66,7 +66,7 @@ export const MODULES: ModuleConfig[] = [
     icon: Package,
     group: 'Field operations',
     summary: 'Track relief goods across warehouses and field hubs, with every receipt, release and transfer recorded.',
-    plannedScope: ['Item catalogue and stock on hand per location', 'Inventory movements with who recorded them', 'Reorder-level alerts'],
+    plannedScope: ['Item catalogue and stock on hand per location', 'Inventory movements with who recorded them', 'Low-stock warnings'],
   },
   {
     id: 'pdm',

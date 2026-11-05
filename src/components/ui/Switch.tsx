@@ -17,7 +17,7 @@ interface Props {
  * An on/off switch that moves like a real one: the knob stretches as it sets off, overshoots the
  * end and settles back. Pressing and holding stretches it too. Motion is skipped for reduced motion.
  */
-export function Switch({ checked, onChange, label, labelledBy, disabled, title, onClass = 'border-uplift bg-uplift/80', className = '' }: Props) {
+export function Switch({ checked, onChange, label, labelledBy, disabled, title, onClass = 'border-burgundy-400 bg-burgundy-500', className = '' }: Props) {
   // Only animate after the first flip, so the switch doesn't wobble when the page opens.
   const [moved, setMoved] = useState(false);
   return (

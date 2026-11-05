@@ -56,9 +56,9 @@ const FILTERS: [Filter, string][] = [
 
 const STATUS_TONE: Record<ProjectStatus, string> = {
   active: 'bg-status-in/15 text-status-in',
-  planned: 'bg-sky-400/15 text-sky-300',
+  planned: 'text-ink-soft',
   on_hold: 'bg-status-low/15 text-status-low',
-  completed: 'bg-white/[0.08] text-ink-soft',
+  completed: 'bg-ink/[0.08] text-ink-soft',
   cancelled: 'bg-status-out/15 text-status-out',
 };
 
@@ -160,10 +160,10 @@ function ProjectList({ projects, me, canCreate, canCost, onNew }: { projects: Pr
   const totalCost = costed.reduce((sum, p) => sum + (p.totalCost ?? 0), 0);
 
   return (
-    <section className="card flex flex-col gap-4 p-4 sm:p-5">
+    <section className="card flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="card-title flex items-center gap-2">
-          <FolderKanban className="h-4 w-4 text-uplift" aria-hidden /> Projects {projectsService.source === 'mock' && <SampleBadge />}
+          <FolderKanban className="h-4 w-4" aria-hidden /> Projects {projectsService.source === 'mock' && <SampleBadge />}
         </h2>
         {canCreate && (
           <button type="button" className="btn-primary min-h-11 px-4" onClick={onNew}>
@@ -187,8 +187,8 @@ function ProjectList({ projects, me, canCreate, canCost, onNew }: { projects: Pr
         <input type="search" className="field pl-10" placeholder="Search: name, type, donor, partner, place, lead…" value={search} onChange={(e) => setSearch(e.target.value)} />
       </label>
       {canCost && costed.length > 0 && (
-        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-line bg-white/[0.03] px-4 py-3 text-sm text-ink-soft">
-          <Banknote className="h-4 w-4 shrink-0 text-uplift" aria-hidden />
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-soft">
+          <Banknote className="h-4 w-4 shrink-0" aria-hidden />
           <span>Total cost of the projects shown</span>
           <strong className="text-base tabular-nums text-ink">{formatPeso(totalCost)}</strong>
           <span className="text-xs text-muted">
@@ -235,7 +235,7 @@ function ProjectCard({ project: p, today, canCost }: { project: Project; today: 
   const due = next ? dueText(next, today) : null;
   const done = p.milestones.filter((m) => m.done).length;
   return (
-    <Link to={`/projects/${p.id}`} className="tile tap flex h-full flex-col gap-3 p-4 transition hover:border-uplift/40">
+    <Link to={`/projects/${p.id}`} className="tile tap flex h-full flex-col gap-3 p-4 transition hover:border-ink-mute/60">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="line-clamp-2 font-semibold leading-snug">{p.name}</p>
@@ -248,8 +248,8 @@ function ProjectCard({ project: p, today, canCost }: { project: Project; today: 
           <span className="text-muted">{p.milestones.length ? `${done} of ${p.milestones.length} milestones` : 'Progress'}</span>
           <span className="font-semibold tabular-nums">{p.progress}%</span>
         </div>
-        <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/[0.06]" role="progressbar" aria-valuenow={p.progress} aria-valuemin={0} aria-valuemax={100} aria-label={`${p.name} progress`}>
-          <div className="h-full w-full origin-left rounded-full bg-gradient-to-r from-uplift to-status-in" style={{ transform: `scaleX(${p.progress / 100})` }} />
+        <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-ink/[0.06]" role="progressbar" aria-valuenow={p.progress} aria-valuemin={0} aria-valuemax={100} aria-label={`${p.name} progress`}>
+          <div className="h-full w-full origin-left rounded-full bg-uplift" style={{ transform: `scaleX(${p.progress / 100})` }} />
         </div>
       </div>
       {next && due && (
@@ -334,11 +334,11 @@ function ProjectDetail({ project: p, me, canManage, canCost, people, onChanged, 
 
   const done = p.milestones.filter((m) => m.done).length;
   const facts: [ReactNode, string][] = [];
-  if (canCost && p.totalCost != null) facts.push([<Banknote key="i" className="h-4 w-4 text-uplift" aria-hidden />, `Total cost: ${formatPeso(p.totalCost)}`]);
-  if (p.donor) facts.push([<Landmark key="i" className="h-4 w-4 text-uplift" aria-hidden />, `Donor: ${p.donor}`]);
-  if (p.partner) facts.push([<HandHeart key="i" className="h-4 w-4 text-uplift" aria-hidden />, `Partner: ${p.partner}`]);
-  if (p.location) facts.push([<MapPin key="i" className="h-4 w-4 text-uplift" aria-hidden />, p.location]);
-  if (dateRange(p)) facts.push([<CalendarClock key="i" className="h-4 w-4 text-uplift" aria-hidden />, dateRange(p)!]);
+  if (canCost && p.totalCost != null) facts.push([<Banknote key="i" className="h-4 w-4" aria-hidden />, `Total cost: ${formatPeso(p.totalCost)}`]);
+  if (p.donor) facts.push([<Landmark key="i" className="h-4 w-4" aria-hidden />, `Donor: ${p.donor}`]);
+  if (p.partner) facts.push([<HandHeart key="i" className="h-4 w-4" aria-hidden />, `Partner: ${p.partner}`]);
+  if (p.location) facts.push([<MapPin key="i" className="h-4 w-4" aria-hidden />, p.location]);
+  if (dateRange(p)) facts.push([<CalendarClock key="i" className="h-4 w-4" aria-hidden />, dateRange(p)!]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -346,7 +346,7 @@ function ProjectDetail({ project: p, me, canManage, canCost, people, onChanged, 
         <ArrowLeft className="h-3.5 w-3.5" aria-hidden /> All projects
       </Link>
 
-      <section className="card flex flex-col gap-4 p-4 sm:p-5">
+      <section className="card flex flex-col gap-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted">{p.programArea || 'Project'}</p>
@@ -403,8 +403,8 @@ function ProjectDetail({ project: p, me, canManage, canCost, people, onChanged, 
             <span className="text-muted">{p.milestones.length ? `${done} of ${p.milestones.length} milestones done` : 'Progress'}</span>
             <strong className="text-lg tabular-nums">{p.progress}%</strong>
           </div>
-          <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-white/[0.06]" role="progressbar" aria-valuenow={p.progress} aria-valuemin={0} aria-valuemax={100} aria-label="Progress">
-            <div className="h-full w-full origin-left rounded-full bg-gradient-to-r from-uplift to-status-in transition-transform duration-500" style={{ transform: `scaleX(${p.progress / 100})` }} />
+          <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-ink/[0.06]" role="progressbar" aria-valuenow={p.progress} aria-valuemin={0} aria-valuemax={100} aria-label="Progress">
+            <div className="h-full w-full origin-left rounded-full bg-uplift transition-transform duration-500" style={{ transform: `scaleX(${p.progress / 100})` }} />
           </div>
         </div>
         {error && (
@@ -423,7 +423,7 @@ function ProjectDetail({ project: p, me, canManage, canCost, people, onChanged, 
           <Team project={p} people={people} canManage={canManage} busy={busy} act={act} />
           <ProjectDocs project={p} docs={docs} links={links} />
           {activity.length > 0 && (
-            <section className="card flex flex-col gap-3 p-4" aria-labelledby="pd-activity">
+            <section className="card flex flex-col gap-3" aria-labelledby="pd-activity">
               <h3 id="pd-activity" className="card-title">
                 History
               </h3>
@@ -459,10 +459,10 @@ function PeopleToReach({ project: p, canManage, busy, act }: { project: Project;
   const num = (v: string) => Math.max(0, Math.round(Number(v) || 0));
   if (p.beneficiariesTarget == null && !p.beneficiariesAdditional && !canManage) return null;
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-line/70 bg-white/[0.02] p-3">
+    <div className="flex flex-col gap-3 rounded-xl border border-line/70 bg-ink/[0.02] p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="flex items-center gap-2 text-sm font-semibold">
-          <Users className="h-4 w-4 text-uplift" aria-hidden /> People to reach
+          <Users className="h-4 w-4" aria-hidden /> People to reach
         </p>
         {canManage && !editing && (
           <button type="button" className="btn-ghost min-h-9 px-3 text-xs" onClick={begin}>
@@ -500,15 +500,15 @@ function PeopleToReach({ project: p, canManage, busy, act }: { project: Project;
         </form>
       ) : (
         <div className="grid grid-cols-3 gap-2 text-center">
-          <div className="rounded-lg bg-white/[0.03] px-2 py-2">
+          <div className="rounded-lg bg-ink/[0.03] px-2 py-2">
             <p className="text-lg font-bold tabular-nums">{p.beneficiariesTarget == null ? '—' : formatNumber(p.beneficiariesTarget)}</p>
             <p className="text-[0.6875rem] text-muted">Planned</p>
           </div>
-          <div className="rounded-lg bg-white/[0.03] px-2 py-2">
+          <div className="rounded-lg bg-ink/[0.03] px-2 py-2">
             <p className="text-lg font-bold tabular-nums text-status-in">+{formatNumber(p.beneficiariesAdditional)}</p>
             <p className="text-[0.6875rem] text-muted">Additional</p>
           </div>
-          <div className="rounded-lg bg-white/[0.03] px-2 py-2">
+          <div className="rounded-lg bg-ink/[0.03] px-2 py-2">
             <p className="text-lg font-bold tabular-nums">{formatNumber(total)}</p>
             <p className="text-[0.6875rem] text-muted">In all</p>
           </div>
@@ -532,9 +532,9 @@ function Milestones({ project: p, today, canManage, onTeam, busy, act }: { proje
     });
   };
   return (
-    <section className="card flex flex-col gap-3 p-4" aria-labelledby="pd-ms">
+    <section className="card flex flex-col gap-3" aria-labelledby="pd-ms">
       <h3 id="pd-ms" className="card-title flex items-center gap-2">
-        <CheckCircle2 className="h-4 w-4 text-uplift" aria-hidden /> Milestones and reports
+        <CheckCircle2 className="h-4 w-4" aria-hidden /> Milestones and reports
       </h3>
       {list.length === 0 ? (
         <p className="text-sm text-muted">{canManage ? 'Add the steps and reporting deadlines; progress follows them.' : 'No milestones yet.'}</p>
@@ -557,14 +557,14 @@ function Milestones({ project: p, today, canManage, onTeam, busy, act }: { proje
                   {busy === m.id ? (
                     <Loader2 className="h-4 w-4 animate-spin text-muted" aria-hidden />
                   ) : (
-                    <span className={`grid h-5 w-5 place-items-center rounded-md border-2 ${m.done ? 'border-status-in bg-status-in text-page' : onTeam ? 'border-ink-mute' : 'border-line'}`}>
+                    <span className={`grid h-5 w-5 place-items-center rounded-md border-2 ${m.done ? 'border-status-in bg-status-in text-onaccent' : onTeam ? 'border-ink-mute' : 'border-line'}`}>
                       {m.done && <Check className="h-3 w-3" strokeWidth={3} aria-hidden />}
                     </span>
                   )}
                 </button>
                 <span className="min-w-0 flex-1 pt-1.5">
                   <span className={`block text-sm leading-snug ${m.done ? 'text-muted line-through' : ''}`}>
-                    {m.kind === 'report' && <span className="mr-1.5 rounded bg-sky-400/15 px-1.5 py-0.5 text-[0.625rem] font-bold uppercase tracking-wide text-sky-300 no-underline">Report</span>}
+                    {m.kind === 'report' && <span className="mr-1.5 rounded border border-line px-1.5 py-0.5 text-[0.625rem] font-bold uppercase tracking-wide text-ink-soft no-underline">Report</span>}
                     {m.title}
                   </span>
                   <span className={`block text-[0.6875rem] ${due.late ? 'font-semibold text-status-out' : due.soon ? 'text-status-low' : 'text-muted'}`}>
@@ -583,7 +583,7 @@ function Milestones({ project: p, today, canManage, onTeam, busy, act }: { proje
       )}
       {canManage && (
         <form
-          className="flex flex-col gap-2 rounded-xl border border-line/70 bg-white/[0.02] p-3"
+          className="flex flex-col gap-2 rounded-xl border border-line/70 bg-ink/[0.02] p-3"
           onSubmit={(e) => {
             e.preventDefault();
             add();
@@ -653,7 +653,7 @@ function ProjectTasks({ project: p, tasks, canManage, today, onAdded }: { projec
     }
   };
   return (
-    <section className="card flex flex-col gap-3 p-4" aria-labelledby="pd-tasks">
+    <section className="card flex flex-col gap-3" aria-labelledby="pd-tasks">
       <div className="flex items-center justify-between gap-2">
         <h3 id="pd-tasks" className="card-title">
           Tasks
@@ -670,7 +670,7 @@ function ProjectTasks({ project: p, tasks, canManage, today, onAdded }: { projec
             const late = t.dueDate && t.dueDate < today;
             return (
               <li key={t.id}>
-                <Link to={`/tasks?task=${t.id}`} className="tap flex items-center justify-between gap-3 rounded-lg px-1 py-2.5 hover:bg-white/[0.03]">
+                <Link to={`/tasks?task=${t.id}`} className="tap flex items-center justify-between gap-3 rounded-lg px-1 py-2.5 hover:bg-ink/[0.03]">
                   <span className="min-w-0">
                     <span className="block truncate text-sm">{t.title}</span>
                     <span className="block text-[0.6875rem] text-muted">{t.assigneeName ?? 'Unassigned'}</span>
@@ -718,9 +718,9 @@ function Team({ project: p, people, canManage, busy, act }: { project: Project; 
   const onTeam = new Set([p.leadId, ...p.members.map((m) => m.profileId)]);
   const members = p.members.filter((m) => m.profileId !== p.leadId);
   return (
-    <section className="card flex flex-col gap-3 p-4" aria-labelledby="pd-team">
+    <section className="card flex flex-col gap-3" aria-labelledby="pd-team">
       <h3 id="pd-team" className="card-title flex items-center gap-2">
-        <Users className="h-4 w-4 text-uplift" aria-hidden /> Team
+        <Users className="h-4 w-4" aria-hidden /> Team
       </h3>
       <ul className="flex flex-col gap-2">
         <li className="flex items-center gap-3">
@@ -779,10 +779,10 @@ function Team({ project: p, people, canManage, busy, act }: { project: Project; 
 
 function ProjectDocs({ project: p, docs, links }: { project: Project; docs: DocFile[] | null; links: Record<string, DocLinks> }) {
   return (
-    <section className="card flex flex-col gap-3 p-4" aria-labelledby="pd-docs">
+    <section className="card flex flex-col gap-3" aria-labelledby="pd-docs">
       <div className="flex items-center justify-between gap-2">
         <h3 id="pd-docs" className="card-title flex items-center gap-2">
-          <FileText className="h-4 w-4 text-uplift" aria-hidden /> Documentation
+          <FileText className="h-4 w-4" aria-hidden /> Documentation
         </h3>
         {docs && docs.length > 0 && (
           <Link to={`/documentation?project=${p.id}`} className="link">

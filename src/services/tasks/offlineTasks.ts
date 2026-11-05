@@ -5,6 +5,7 @@ import {
   type Assignee,
   type CompletionResult,
   type Kudos,
+  type WeekBonus,
   type Task,
   type TaskDraft,
   type TaskPatch,
@@ -50,6 +51,7 @@ interface Saved {
   tasks: Task[];
   awards: XpAward[];
   kudos: Kudos[];
+  weekBonuses?: WeekBonus[];
   team: TeamProgress | null;
   people: Assignee[];
   savedAt: string;
@@ -306,11 +308,11 @@ export function createOfflineTasks(inner: TasksService): OfflineTasksService {
       await ready;
       try {
         const p = await inner.progress();
-        persist({ awards: p.awards, kudos: p.kudos });
+        persist({ awards: p.awards, kudos: p.kudos, weekBonuses: p.weekBonuses });
         return p;
       } catch (e) {
         if (!isOffline(e) || !hasSaved) throw e;
-        return { awards: saved.awards, kudos: saved.kudos };
+        return { awards: saved.awards, kudos: saved.kudos, weekBonuses: saved.weekBonuses ?? [] };
       }
     },
     async team() {

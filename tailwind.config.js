@@ -5,45 +5,51 @@ export default {
     extend: {
       colors: {
         // PHILRADS brand palette (branding guide)
+        // Dominant colour (docs/design-system.md): a fill with Cloud text, never text on the dark page.
         burgundy: {
           DEFAULT: '#640606',
           50: '#fbf2f2',
           100: '#f5e1e1',
+          400: '#b3302f', // edge of a burgundy fill (selected chip, active menu item)
+          500: '#8c1414', // burgundy fill on dark surfaces: Cloud text on it is 8:1
           600: '#7a0b0b',
           700: '#640606',
           800: '#4d0404',
         },
         cloud: '#F1F1F1',
+        // Dark text on an Uplift fill: the same in both themes.
+        onaccent: '#1c1d21',
         charcoal: '#353535',
+        // Theme colours are CSS variables (src/index.css): dark by default, light with data-theme="light".
         uplift: {
-          DEFAULT: '#EC952A', // Uplifting Yellow: the highlight colour of the dark UI
-          soft: '#F3AE57',
+          DEFAULT: 'rgb(var(--uplift) / <alpha-value>)', // Accent: primary action, links, focus, your own progress. Nothing else.
+          soft: 'rgb(var(--uplift-soft) / <alpha-value>)',
           700: '#8f5410',
         },
-        // Light burgundy for data and alerts on dark surfaces (Dark Burgundy itself is too dark to read there).
-        rose: '#D97B7B',
+        // Kept as a name for older code; it is the red of status-out (late, failed, high priority).
+        rose: 'rgb(var(--status-out) / <alpha-value>)',
         // Dark interface surfaces, built on the brand's Charcoal.
-        page: '#1c1d21',
+        page: 'rgb(var(--page) / <alpha-value>)',
         surface: {
-          DEFAULT: '#26272c',
-          sunken: '#202125',
-          raised: '#303137',
+          DEFAULT: 'rgb(var(--surface) / <alpha-value>)',
+          sunken: 'rgb(var(--surface-sunken) / <alpha-value>)',
+          raised: 'rgb(var(--surface-raised) / <alpha-value>)',
         },
-        line: '#36373d',
+        line: 'rgb(var(--line) / <alpha-value>)',
         ink: {
-          DEFAULT: '#F1F1F1', // Cloud
-          soft: '#c4c6cd',
-          mute: '#9a9ca6',
+          DEFAULT: 'rgb(var(--ink) / <alpha-value>)', // Cloud on dark
+          soft: 'rgb(var(--ink-soft) / <alpha-value>)',
+          mute: 'rgb(var(--ink-mute) / <alpha-value>)',
         },
-        muted: '#9a9ca6',
-        // Inventory status colours. All meet WCAG AA (>= 5:1) as text on dark surfaces,
-        // always paired with an icon and a word so status never relies on colour alone.
+        muted: 'rgb(var(--ink-mute) / <alpha-value>)',
+        // Status colours: state only, always next to a word (docs/design-system.md). All meet WCAG AA
+        // (>= 5:1) as text on dark surfaces.
         status: {
-          in: '#4ade80', // In stock: green
-          low: '#fbbf24', // Low / reorder: amber
-          out: '#f87171', // Out of stock / critical: red
-          expiring: '#c4b5fd', // Expiring soon: purple
-          expired: '#fb923c', // Expired: dark orange
+          in: 'rgb(var(--status-in) / <alpha-value>)', // Done, in stock, connected, live: green
+          low: 'rgb(var(--status-low) / <alpha-value>)', // Needs attention soon: amber
+          out: 'rgb(var(--status-out) / <alpha-value>)', // Wrong or late: red
+          expiring: 'rgb(var(--status-low) / <alpha-value>)', // = low
+          expired: 'rgb(var(--status-out) / <alpha-value>)', // = out
         },
       },
       fontFamily: {
@@ -68,6 +74,9 @@ export default {
         'grow-y': { from: { transform: 'scaleY(0)' }, to: { transform: 'scaleY(1)' } },
         'sheet-up': { from: { transform: 'translateY(100%)' }, to: { transform: 'translateY(0)' } },
         'sheet-left': { from: { transform: 'translateX(100%)' }, to: { transform: 'translateX(0)' } },
+        // Calendar: the new month slides in from the side you went to.
+        'cal-next': { from: { opacity: '0', transform: 'translateX(24px)' }, to: { opacity: '1', transform: 'translateX(0)' } },
+        'cal-prev': { from: { opacity: '0', transform: 'translateX(-24px)' }, to: { opacity: '1', transform: 'translateX(0)' } },
         'roll-in': { from: { opacity: '0', transform: 'translateY(100%)' }, to: { opacity: '1', transform: 'translateY(0)' } },
         // Undo bar: shrinks to nothing over the undo window.
         'undo-countdown': { from: { transform: 'scaleX(1)' }, to: { transform: 'scaleX(0)' } },
@@ -76,6 +85,8 @@ export default {
         // Entrances use fill-mode "backwards": hidden during their delay, and no transform is held afterwards.
         'fade-up': 'fade-up 480ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
         'fade-in': 'fade-in 240ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
+        'cal-next': 'cal-next 320ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
+        'cal-prev': 'cal-prev 320ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
         'pop-in': 'pop-in 180ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
         'slide-in-left': 'slide-in-left 320ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
         'grow-x': 'grow-x 800ms cubic-bezier(0.22, 1, 0.36, 1) backwards',

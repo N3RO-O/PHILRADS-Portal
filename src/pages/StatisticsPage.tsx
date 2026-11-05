@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useMemo, useState } from 'react';
 import { CalendarDays, ChevronDown, FileSpreadsheet, Home, MapPin, Search, UsersRound, Wallet, X } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
 import { RecordDetails } from '../components/statistics/RecordDetails';
@@ -123,18 +123,17 @@ export function StatisticsPage() {
       </section>
 
       {/* Totals */}
-      <section className={`grid animate-fade-up grid-cols-2 gap-3 [animation-delay:60ms] ${canFunding ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`} aria-label="Totals">
+      <section className={`grid animate-fade-up grid-cols-2 gap-x-6 gap-y-5 [animation-delay:60ms] ${canFunding ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`} aria-label="Totals">
         <Kpi icon={CalendarDays} label="Activities" value={formatNumber(done.length)} note={shown.length > done.length ? `+${shown.length - done.length} scheduled` : 'completed or ongoing'} />
-        <Kpi icon={Home} label="Households served" value={formatNumber(sum(done, (a) => a.householdsServed))} note="where recorded" glow="rgba(96,165,250,.2)" />
-        <Kpi icon={UsersRound} label="People served" value={formatNumber(sum(done, (a) => a.individualsServed))} note="individuals, where recorded" glow="rgba(74,222,128,.18)" />
-        <Kpi icon={MapPin} label="Places reached" value={formatNumber(places)} note="barangays, towns and provinces" glow="rgba(224,122,122,.2)" />
+        <Kpi icon={Home} label="Households served" value={formatNumber(sum(done, (a) => a.householdsServed))} note="where recorded" />
+        <Kpi icon={UsersRound} label="People served" value={formatNumber(sum(done, (a) => a.individualsServed))} note="individuals, where recorded" />
+        <Kpi icon={MapPin} label="Places reached" value={formatNumber(places)} note="barangays, towns and provinces" />
         {canFunding && (
           <Kpi
             icon={Wallet}
             label="Funding recorded"
             value={funded.length ? `₱${compact(sum(funded, (a) => a.funding))}` : '—'}
             note={funded.length ? `for ${funded.length} of ${done.length} activities` : 'none recorded'}
-            glow="rgba(196,181,253,.2)"
             className="col-span-2 lg:col-span-1"
           />
         )}
@@ -161,7 +160,7 @@ export function StatisticsPage() {
                       </span>
                       <span className="tabular-nums text-muted">{formatNumber(list.length)}</span>
                     </span>
-                    <span className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
+                    <span className="h-2 overflow-hidden rounded-full bg-ink/[0.06]">
                       <span className="block h-full rounded-full transition-[width] duration-500" style={{ width: `${(list.length / done.length) * 100}%`, background: p.color }} />
                     </span>
                     <span className="text-xs text-muted">
@@ -173,18 +172,18 @@ export function StatisticsPage() {
             })}
           </ul>
           {sexed.length > 0 && men + women > 0 && (
-            <div className="tile flex flex-col gap-2 p-3">
+            <div className="flex flex-col gap-2">
               <p className="flex items-baseline justify-between text-xs">
                 <span className="font-semibold text-ink-soft">Men and women served</span>
                 <span className="text-muted">{formatNumber(sexed.length)} activities with a breakdown</span>
               </p>
               <span className="flex h-2.5 overflow-hidden rounded-full">
-                <span className="bg-sky-400" style={{ width: `${(men / (men + women)) * 100}%` }} />
-                <span className="bg-pink-400" style={{ width: `${(women / (men + women)) * 100}%` }} />
+                <span className="bg-ink-soft" style={{ width: `${(men / (men + women)) * 100}%` }} />
+                <span className="bg-ink-mute/60" style={{ width: `${(women / (men + women)) * 100}%` }} />
               </span>
               <p className="flex justify-between text-xs tabular-nums">
-                <span className="text-sky-300">Men {formatNumber(men)} ({Math.round((men / (men + women)) * 100)}%)</span>
-                <span className="text-pink-300">Women {formatNumber(women)} ({Math.round((women / (men + women)) * 100)}%)</span>
+                <span className="text-ink">Men {formatNumber(men)} ({Math.round((men / (men + women)) * 100)}%)</span>
+                <span className="text-ink-soft">Women {formatNumber(women)} ({Math.round((women / (men + women)) * 100)}%)</span>
               </p>
             </div>
           )}
@@ -196,8 +195,8 @@ export function StatisticsPage() {
       {canFunding && <TopDonors list={program === 'all' && !needle ? all.filter((a) => a.status !== 'scheduled') : done} />}
 
       {/* Every record */}
-      <section className="card flex animate-fade-up flex-col gap-1 p-0 [animation-delay:180ms]">
-        <div className="flex flex-wrap items-baseline justify-between gap-2 px-5 pb-2 pt-5">
+      <section className="card flex animate-fade-up flex-col gap-1 [animation-delay:180ms]">
+        <div className="flex flex-wrap items-baseline justify-between gap-2 pb-2">
           <h3 className="card-title">Records</h3>
           <p className="text-xs text-muted">
             {formatNumber(shown.length)} {shown.length === 1 ? 'record' : 'records'}
@@ -217,11 +216,11 @@ export function StatisticsPage() {
           </p>
         </div>
         {shown.length === 0 ? (
-          <p className="px-5 pb-6 text-sm text-muted">No records match. Try another word or year.</p>
+          <p className="pb-6 text-sm text-muted">No records match. Try another word or year.</p>
         ) : (
           [...new Set(shown.map((a) => a.year))].map((y) => (
             <div key={y}>
-              <h4 className="sticky top-0 z-10 border-y border-line/60 bg-surface/95 px-5 py-2 text-xs font-semibold uppercase tracking-wider text-muted backdrop-blur">
+              <h4 className="sticky top-16 z-10 border-y border-line bg-page py-2 text-xs font-semibold uppercase tracking-wider text-muted">
                 {y} <span className="font-normal normal-case tracking-normal">· {shown.filter((a) => a.year === y).length} records</span>
               </h4>
               <ul>
@@ -254,17 +253,16 @@ export function StatisticsPage() {
   );
 }
 
-function Kpi({ icon: Icon, label, value, note, glow, className = '' }: { icon: typeof Home; label: string; value: string; note: string; glow?: string; className?: string }) {
+/** A key figure: no box, just the number, what it counts and a note, under a thin rule. */
+function Kpi({ icon: Icon, label, value, note, className = '' }: { icon: typeof Home; label: string; value: string; note: string; className?: string }) {
   return (
-    <div className={`card flex flex-col gap-3 p-4 ${className}`}>
-      <span className="icon-chip" style={glow ? ({ '--glow': glow } as CSSProperties) : undefined}>
-        <Icon className="h-[1.125rem] w-[1.125rem] text-ink" aria-hidden />
-      </span>
-      <div>
-        <p className="font-display text-2xl tabular-nums tracking-wide sm:text-3xl">{/\d/.test(value) ? <RollingNumber value={value} /> : value}</p>
-        <p className="text-sm font-medium text-ink-soft">{label}</p>
-        <p className="text-xs text-muted">{note}</p>
-      </div>
+    <div className={`flex flex-col gap-1 border-t border-line pt-4 ${className}`}>
+      <p className="flex items-center gap-2 text-sm font-medium text-ink-soft">
+        <Icon className="h-4 w-4 shrink-0" aria-hidden />
+        {label}
+      </p>
+      <p className="font-display text-2xl tabular-nums tracking-wide sm:text-3xl">{/\d/.test(value) ? <RollingNumber value={value} /> : value}</p>
+      <p className="text-xs text-muted">{note}</p>
     </div>
   );
 }
@@ -293,7 +291,7 @@ function YearChart({ list, active, onPick }: { list: ProgramActivity[]; active: 
               className={`group flex h-full flex-1 flex-col items-center justify-end gap-2 rounded-xl px-1 pt-2 transition-opacity ${active !== 'all' && active !== y ? 'opacity-40 hover:opacity-80' : ''}`}
             >
               <span className="text-sm font-semibold tabular-nums">{inYear.length}</span>
-              <span className="flex w-full max-w-[4.5rem] flex-col-reverse overflow-hidden rounded-t-lg ring-1 ring-inset ring-white/5 transition-[height] duration-500" style={{ height: `${(inYear.length / max) * 100}%` }}>
+              <span className="flex w-full max-w-[4.5rem] flex-col-reverse overflow-hidden rounded-t-lg ring-1 ring-inset ring-ink/5 transition-[height] duration-500" style={{ height: `${(inYear.length / max) * 100}%` }}>
                 {PROGRAMS.map((p) => {
                   const n = inYear.filter((a) => a.program === p.key).length;
                   return n ? <span key={p.key} title={`${p.short}: ${n}`} style={{ height: `${(n / inYear.length) * 100}%`, background: p.color }} /> : null;
@@ -333,7 +331,7 @@ function Responses({ list, onSearch }: { list: ProgramActivity[]; onSearch: (s: 
           const years = [...new Set(acts.map((a) => a.year))].sort();
           return (
             <li key={name}>
-              <button type="button" className="tile flex h-full w-full flex-col gap-2 p-4 text-left transition-colors hover:bg-white/[0.06]" onClick={() => onSearch(name)}>
+              <button type="button" className="tile flex h-full w-full flex-col gap-2 p-4 text-left transition-colors hover:bg-ink/[0.06]" onClick={() => onSearch(name)}>
                 <span className="flex items-start justify-between gap-2">
                   <span className="text-sm font-semibold leading-snug">{name}</span>
                   <span className="h-2.5 w-2.5 shrink-0 translate-y-1 rounded-full" style={{ background: programMeta(mostCommon(acts)).color }} aria-hidden />
@@ -365,13 +363,13 @@ function Record({ a }: { a: ProgramActivity }) {
   const served = servedText(a);
   return (
     <li className="border-b border-line/50 last:border-b-0">
-      <button type="button" className="flex w-full items-start gap-3 px-5 py-3.5 text-left transition-colors hover:bg-white/[0.03]" onClick={() => setOpen(!open)} aria-expanded={open}>
+      <button type="button" className="flex w-full items-start gap-3 py-3.5 text-left transition-colors hover:bg-ink/[0.03]" onClick={() => setOpen(!open)} aria-expanded={open}>
         <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: p.color }} aria-hidden />
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="text-sm font-semibold leading-snug">{a.activity}</span>
-            {a.status === 'scheduled' && <span className="badge border-sky-400/40 bg-sky-400/10 text-sky-300">Scheduled</span>}
-            {a.status === 'ongoing' && <span className="badge border-uplift/40 bg-uplift/10 text-uplift">Ongoing</span>}
+            {a.status === 'scheduled' && <span className="badge border-line text-ink-soft">Scheduled</span>}
+            {a.status === 'ongoing' && <span className="badge border-line text-ink-soft">Ongoing</span>}
           </span>
           <span className="mt-0.5 block text-xs text-muted">
             {a.response && <span className="text-ink-soft">{a.response} · </span>}
@@ -382,7 +380,7 @@ function Record({ a }: { a: ProgramActivity }) {
         <ChevronDown className={`mt-1 h-4 w-4 shrink-0 text-muted transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden />
       </button>
       <div className={`expand ${open ? 'is-open' : ''}`} aria-hidden={!open}>
-        <div>{open && <RecordDetails a={a} className="px-5 pb-4 pl-[2.625rem]" />}</div>
+        <div>{open && <RecordDetails a={a} className="pb-4 pl-[1.375rem]" />}</div>
       </div>
     </li>
   );

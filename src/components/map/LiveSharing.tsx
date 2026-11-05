@@ -300,10 +300,10 @@ export function LiveShareCard() {
   if (!live.canShare) return null;
 
   return (
-    <section className={`rounded-2xl border p-4 ${on ? 'border-status-in/40 bg-status-in/[0.07]' : 'border-line/70 bg-white/[0.02]'}`} aria-labelledby="live-share-title">
+    <section className={`rounded-2xl border p-4 ${on ? 'border-status-in/40 bg-status-in/[0.07]' : 'border-line/70 bg-ink/[0.02]'}`} aria-labelledby="live-share-title">
       <div className="flex items-center gap-3">
         <span className={`icon-chip h-10 w-10 ${on ? '' : 'opacity-80'}`} aria-hidden>
-          <Radio className={`h-5 w-5 ${on ? 'text-status-in' : 'text-uplift'}`} />
+          <Radio className={`h-5 w-5 ${on ? 'text-status-in' : 'text-ink-soft'}`} />
         </span>
         <div className="min-w-0 flex-1">
           <h3 id="live-share-title" className="text-sm font-semibold">
@@ -333,7 +333,7 @@ export function LiveShareCard() {
                 role="radio"
                 aria-checked={choice === c.value}
                 onClick={() => setChoice(c.value)}
-                className={`tap min-h-11 rounded-xl border px-2 text-xs font-semibold leading-tight transition-colors ${choice === c.value ? 'border-uplift bg-uplift/10 text-ink' : 'border-line/70 text-ink-soft hover:border-ink-mute'}`}
+                className={`tap min-h-11 rounded-xl border px-2 text-xs font-semibold leading-tight transition-colors ${choice === c.value ? 'border-burgundy-400 bg-burgundy-500/25 text-ink' : 'border-line/70 text-ink-soft hover:border-ink-mute'}`}
               >
                 {c.label}
               </button>
@@ -351,7 +351,7 @@ export function LiveShareCard() {
             {live.status === 'starting' ? 'Finding you…' : 'Start sharing'}
           </button>
           <p className="flex items-start gap-2 text-xs text-muted">
-            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-uplift" aria-hidden />
+            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
             PHILRADS staff see your pin move while the portal is open on your phone. It stops by itself at the time you choose, or when you tap Stop.
           </p>
         </div>

@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useMemo, useState } from 'react';
 import { Crown, HandHeart, Lock } from 'lucide-react';
 import { formatNumber, manilaDayKey } from '../../lib/format';
 import { topDonors } from '../../lib/donors';
@@ -48,7 +48,7 @@ export function TopDonors({ list }: { list: ProgramActivity[] }) {
         </div>
         <div className="flex flex-wrap gap-2">
           <div className="relative flex gap-1 rounded-xl bg-surface-sunken p-1" role="group" aria-label="Period">
-            <SlidingPill className="rounded-lg bg-surface-raised shadow-sm shadow-black/30 ring-1 ring-inset ring-white/[0.06]" />
+            <SlidingPill className="rounded-lg bg-surface-raised shadow-sm shadow-black/30 ring-1 ring-inset ring-ink/[0.06]" />
             {(
               [
                 ['month', 'This month'],
@@ -62,7 +62,7 @@ export function TopDonors({ list }: { list: ProgramActivity[] }) {
             ))}
           </div>
           <div className="relative flex gap-1 rounded-xl bg-surface-sunken p-1" role="group" aria-label="Rank by">
-            <SlidingPill className="rounded-lg bg-surface-raised shadow-sm shadow-black/30 ring-1 ring-inset ring-white/[0.06]" />
+            <SlidingPill className="rounded-lg bg-surface-raised shadow-sm shadow-black/30 ring-1 ring-inset ring-ink/[0.06]" />
             {(
               [
                 ['funding', 'By funding'],
@@ -87,8 +87,8 @@ export function TopDonors({ list }: { list: ProgramActivity[] }) {
             const value = rank === 'funding' ? d.funding : d.activities;
             const top = i === 0;
             return (
-              <li key={d.name} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 ${top ? 'kpi-tile' : ''}`} style={top ? ({ '--glow': 'rgba(236, 149, 42, 0.18)' } as CSSProperties) : undefined}>
-                <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg text-sm font-bold tabular-nums ${top ? 'bg-uplift text-page' : 'bg-surface-raised text-ink-soft'}`}>
+              <li key={d.name} className="flex items-center gap-3 py-2.5">
+                <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg text-sm font-bold tabular-nums ${top ? 'bg-surface-raised text-ink' : 'bg-surface-raised text-ink-soft'}`}>
                   {top ? <Crown className="h-4 w-4" aria-label="Top donor" /> : i + 1}
                 </span>
                 <span className="min-w-0 flex-1">
@@ -100,8 +100,8 @@ export function TopDonors({ list }: { list: ProgramActivity[] }) {
                       {rank === 'funding' ? (d.funding ? pesoShort(d.funding) : '—') : formatNumber(d.activities)}
                     </span>
                   </span>
-                  <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-white/[0.06]" aria-hidden>
-                    <span className={`block h-full rounded-full ${top ? 'bg-uplift' : 'bg-ink-mute/70'}`} style={{ width: `${(value / max) * 100}%` }} />
+                  <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-ink/[0.06]" aria-hidden>
+                    <span className={`block h-full rounded-full ${top ? 'bg-ink-soft' : 'bg-ink-mute/70'}`} style={{ width: `${(value / max) * 100}%` }} />
                   </span>
                   <span className="mt-1 block text-xs text-muted">
                     {formatNumber(d.activities)} {d.activities === 1 ? 'activity' : 'activities'}

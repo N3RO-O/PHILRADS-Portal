@@ -7,6 +7,17 @@
     <meta name="description" content="Internal staff portal for Philippine Relief and Development Services, Inc. (PHILRADS)." />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="theme-color" content="#1c1d21" />
+    <script>
+      // Light or dark, as chosen in Profile (src/lib/theme.ts), set before the page draws.
+      try {
+        var t = localStorage.getItem('philrads.theme');
+        if (t === 'system') t = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        if (t === 'light') {
+          document.documentElement.dataset.theme = 'light';
+          document.querySelector('meta[name=theme-color]').setAttribute('content', '#e6e6ea');
+        }
+      } catch (e) {}
+    </script>
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />

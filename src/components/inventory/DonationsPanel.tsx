@@ -87,8 +87,8 @@ export function DonationsPanel({ donations, sample }: { donations: ImsDonation[]
             ['People served', formatNumber([...reached.values()].reduce((s, n) => s + n, 0)), Users],
           ] as const
         ).map(([label, value, Icon]) => (
-          <div key={label} className="tile flex items-center gap-3 px-3 py-3">
-            <Icon className="hidden h-5 w-5 shrink-0 text-uplift sm:block" aria-hidden />
+          <div key={label} className="flex items-center gap-3 py-2">
+            <Icon className="hidden h-5 w-5 shrink-0 text-ink-soft sm:block" aria-hidden />
             <div className="min-w-0">
               <p className="truncate text-[0.6875rem] font-semibold text-muted">{label}</p>
               <p className="text-lg font-bold tabular-nums">{value}</p>
@@ -171,7 +171,7 @@ export function DonationsPanel({ donations, sample }: { donations: ImsDonation[]
                 </div>
 
                 <div
-                  className="h-2 overflow-hidden rounded-full bg-white/[0.06]"
+                  className="h-2 overflow-hidden rounded-full bg-ink/[0.06]"
                   role="progressbar"
                   aria-valuemin={0}
                   aria-valuemax={100}
@@ -208,7 +208,7 @@ export function DonationsPanel({ donations, sample }: { donations: ImsDonation[]
                           <li key={g.release_id} className="text-sm">
                             <p className="flex flex-wrap items-center gap-x-1.5">
                               <span className="font-semibold">{g.release_code}</span>
-                              <ArrowRight className="h-3.5 w-3.5 text-uplift" aria-label="to" />
+                              <ArrowRight className="h-3.5 w-3.5" aria-label="to" />
                               <span>{g.recipient_org ?? 'Recipient not recorded'}</span>
                             </p>
                             <p className="text-xs text-muted">

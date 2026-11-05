@@ -378,7 +378,7 @@ export function MapCanvas({ places, sites = [], checkIns, live, selected, onSele
         <div aria-hidden className="pointer-events-none absolute inset-0 z-[500] grid place-items-center">
           <div className="relative grid place-items-center">
             <span className="absolute h-14 w-14 rounded-full border-2 border-uplift/70" />
-            <Crosshair className="h-7 w-7 text-uplift drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]" strokeWidth={2.5} />
+            <Crosshair className="h-7 w-7 drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]" strokeWidth={2.5} />
           </div>
         </div>
       )}

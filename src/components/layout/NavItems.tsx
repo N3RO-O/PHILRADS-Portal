@@ -37,11 +37,7 @@ export function NavItems({ expanded, onNavigate }: NavItemsProps) {
   return (
     <>
       {/* The active highlight, behind the links (the nav around this is relative). */}
-      <SlidingPill
-        className={`rounded-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.07)] ring-1 ring-inset ring-uplift/35 ${
-          expanded ? 'bg-gradient-to-r from-uplift/25 via-uplift/10 to-uplift/[0.03]' : 'bg-gradient-to-b from-uplift/25 to-uplift/[0.06]'
-        }`}
-      />
+      <SlidingPill className="gloss rounded-xl bg-burgundy-500 ring-1 ring-inset ring-burgundy-400" />
       {NAV_GROUPS.filter((group) => visible.some((m) => m.group === group)).map((group, gi) => (
         <div key={group} role="group" aria-label={group} className="flex flex-col gap-1">
           {gi > 0 && <hr className="mx-2 my-2 border-line/70" aria-hidden />}
@@ -64,30 +60,25 @@ export function NavItems({ expanded, onNavigate }: NavItemsProps) {
                   expanded ? 'px-3' : 'justify-center'
                 } ${
                   isActive
-                    ? // The glassy yellow highlight itself is the sliding pill above.
-                      `font-semibold ${expanded ? 'text-ink' : 'text-uplift'}`
-                    : 'font-medium text-ink-soft hover:bg-white/[0.04] hover:text-ink'
+                    ? // The burgundy highlight itself is the sliding pill above.
+                      'font-semibold text-cloud'
+                    : 'font-medium text-ink-soft hover:bg-ink/[0.04] hover:text-ink'
                 }`
               }
             >
-              {({ isActive }) => (
+              {() => (
                 <>
-                  <m.icon className={`h-[1.125rem] w-[1.125rem] shrink-0 ${isActive ? 'text-uplift' : ''}`} aria-hidden />
+                  <m.icon className="h-5 w-5 shrink-0" aria-hidden />
                   {expanded ? (
                     <>
                       <span className="truncate">{m.label}</span>
                       {m.soon && (
-                        <span className="ml-auto shrink-0 rounded-full border border-uplift/30 bg-uplift/10 px-2 py-0.5 text-[0.625rem] font-semibold uppercase tracking-wider text-uplift">
+                        <span className="ml-auto shrink-0 text-[0.6875rem] font-medium text-muted">
                           Soon
                         </span>
                       )}
                     </>
-                  ) : (
-                    <>
-                      {isActive && <span aria-hidden className="absolute -right-3 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-l bg-uplift" />}
-                      {m.soon && <span aria-hidden className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-uplift/80" />}
-                    </>
-                  )}
+                  ) : null}
                 </>
               )}
             </NavLink>

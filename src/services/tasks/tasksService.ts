@@ -4,7 +4,8 @@ import { demoProfile } from '../../data/mockDashboard';
 import { createTaskSeed, SAMPLE_PEOPLE } from '../../data/mockTaskSeed';
 import { todayKey } from '../../lib/inventory';
 import { nextOccurrence } from '../../lib/tasks';
-import { scoreCompletion, XP_RULES } from '../../lib/taskProgress';
+import { scoreCompletion, weekBonusesFrom, XP_RULES } from '../../lib/taskProgress';
+import { sampleHasPhoto } from './staffBoard';
 import type { TaskPriority, TaskStatus } from '../../types';
 import { flushPush } from '../../lib/push';
 import {
@@ -17,6 +18,7 @@ import {
   type TaskDraft,
   type TaskList,
   type TasksService,
+  type WeekBonus,
   type WorkSetting,
   type XpAward,
 } from './types';
@@ -129,6 +131,7 @@ function sampleSave(d: TaskDraft): Task {
     createdById: prev?.createdById ?? me,
     createdByName: prev?.createdByName ?? demoProfile.displayName,
     projectId: d.projectId ?? prev?.projectId ?? null,
+    requiresPhoto: d.requiresPhoto ?? prev?.requiresPhoto ?? false,
     completedAt: prev?.completedAt ?? null,
     createdAt: prev?.createdAt ?? now,
     updatedAt: now,
@@ -165,6 +168,7 @@ export const mockTasksService: TasksService = {
     const s = sampleState();
     const earner = prev.assigneeId ?? prev.createdById ?? me;
     let award: XpAward | null = null;
+    if (done && prev.status !== 'done' && prev.requiresPhoto && !sampleHasPhoto(id)) throw new TaskRuleError('This task needs a photo. Add one when you finish it.');
     const task: Task = { ...prev, status: done ? 'done' : 'todo', completedAt: done ? prev.completedAt ?? new Date().toISOString() : null, updatedAt: new Date().toISOString() };
     replace(task);
     if (done && prev.status !== 'done') {
@@ -172,7 +176,7 @@ export const mockTasksService: TasksService = {
       if (earner === me) {
         const today = todayKey();
         const selfToday = s.awards.filter((a) => a.day === today && a.selfSet).reduce((sum, a) => sum + a.points, 0);
-        award = scoreCompletion(prev, earner, selfToday, today);
+        award = scoreCompletion(prev, earner, selfToday, today, sampleHasPhoto(id));
         s.awards = [...s.awards.filter((a) => a.taskId !== id), award];
       }
     }
@@ -189,7 +193,7 @@ export const mockTasksService: TasksService = {
   async progress() {
     needOnline();
     const s = sampleState();
-    return later({ awards: s.awards, kudos: s.kudos });
+    return later({ awards: s.awards, kudos: s.kudos, weekBonuses: weekBonusesFrom(s.awards) });
   },
   async team() {
     needOnline();
@@ -240,7 +244,7 @@ export function createSupabaseTasksService(client: SupabaseClient): TasksService
     if (!navigator.onLine || /failed to fetch|networkerror|load failed|network request failed/i.test(error.message)) throw new TaskOfflineError();
     // The database's own rules explain themselves; a bare row-level security refusal doesn't.
     if (error.code === '42501') throw new TaskRuleError(/row-level security|permission denied/i.test(error.message) ? 'Your role does not allow this.' : error.message);
-    if (error.code === '22023') throw new TaskRuleError(error.message);
+    if (error.code === '22023' || /needs a photo/i.test(error.message)) throw new TaskRuleError(error.message);
     if (error.code === '23505') throw new TaskRuleError('You already thanked them today. Try again tomorrow.');
     if (error.code && error.code.startsWith('23')) throw new TaskRuleError('The server rejected this task. Check the title and details.');
     throw new Error(`Could not ${what}. Check the connection and try again.`);
@@ -248,7 +252,7 @@ export function createSupabaseTasksService(client: SupabaseClient): TasksService
   const uid = async () => (await client.auth.getSession()).data.session?.user.id ?? null;
 
   const columns =
-    'id, title, description, priority, status, list, work_setting, due_date, due_time, my_day, subtasks, recurrence, location, assignee_id, created_by, project_id, completed_at, created_at, updated_at, acceptance, declined_reason, assignee:profiles!tasks_assignee_id_fkey(display_name), creator:profiles!tasks_created_by_fkey(display_name)';
+    'id, title, description, priority, status, list, work_setting, due_date, due_time, my_day, subtasks, recurrence, location, assignee_id, created_by, project_id, requires_photo, completed_at, created_at, updated_at, acceptance, declined_reason, assignee:profiles!tasks_assignee_id_fkey(display_name), creator:profiles!tasks_created_by_fkey(display_name)';
   const name = (p: unknown) => (p as { display_name?: string } | null)?.display_name || null;
   const map = (r: Record<string, unknown>): Task => ({
     id: r.id as string,
@@ -274,6 +278,7 @@ export function createSupabaseTasksService(client: SupabaseClient): TasksService
     updatedAt: r.updated_at as string,
     acceptance: (r.acceptance as Task['acceptance']) ?? 'accepted',
     declinedReason: (r.declined_reason as string | null) ?? null,
+    requiresPhoto: Boolean(r.requires_photo),
   });
   const row = (d: TaskDraft, me: string | null) => ({
     title: d.title.trim(),
@@ -289,6 +294,7 @@ export function createSupabaseTasksService(client: SupabaseClient): TasksService
     location: d.location.trim() || null,
     assignee_id: d.assigneeId ?? me,
     ...(d.projectId !== undefined ? { project_id: d.projectId } : {}),
+    ...(d.requiresPhoto !== undefined ? { requires_photo: d.requiresPhoto } : {}),
   });
   const mapAward = (r: Record<string, unknown>): XpAward => ({
     taskId: r.task_id as string,
@@ -297,13 +303,14 @@ export function createSupabaseTasksService(client: SupabaseClient): TasksService
     base: r.base as number,
     onTime: r.on_time as number,
     subtasks: r.subtasks as number,
+    photo: (r.photo as number | null) ?? 0,
     selfSet: Boolean(r.self_set),
     capped: Boolean(r.capped),
     flag: (r.flag as 'added_done' | null) ?? null,
     day: r.day as string,
     awardedAt: r.created_at as string,
   });
-  const awardColumns = 'task_id, points, base, on_time, subtasks, self_set, capped, flag, day, created_at, task:tasks(title)';
+  const awardColumns = 'task_id, points, base, on_time, subtasks, photo, self_set, capped, flag, day, created_at, task:tasks(title)';
 
   const save = async (d: TaskDraft) => {
     validate(d);
@@ -358,13 +365,16 @@ export function createSupabaseTasksService(client: SupabaseClient): TasksService
     },
     async progress() {
       const me = await uid();
-      if (!me) return { awards: [], kudos: [] };
-      const [awards, kudos] = await Promise.all([
+      if (!me) return { awards: [], kudos: [], weekBonuses: [] };
+      const [awards, kudos, weeks] = await Promise.all([
         client.from('task_xp_events').select(awardColumns).eq('user_id', me).order('created_at', { ascending: false }).limit(5000),
         client.from('task_kudos').select('id, message, points, created_at, giver:profiles!task_kudos_from_user_fkey(display_name)').eq('to_user', me).order('created_at', { ascending: false }).limit(200),
+        client.from('task_week_bonuses').select('week_start, points').eq('user_id', me).order('week_start', { ascending: false }).limit(520),
       ]);
       if (awards.error) fail('load your progress', awards.error);
       if (kudos.error) fail('load your kudos', kudos.error);
+      if (weeks.error) fail('load your weekly bonuses', weeks.error);
+      const weekBonuses: WeekBonus[] = (weeks.data ?? []).map((r) => ({ weekStart: r.week_start as string, points: r.points as number }));
       return {
         awards: (awards.data ?? []).map((r) => mapAward(r as Record<string, unknown>)),
         kudos: (kudos.data ?? []).map((r) => ({
@@ -374,6 +384,7 @@ export function createSupabaseTasksService(client: SupabaseClient): TasksService
           points: (r.points as number) ?? XP_RULES.kudos,
           createdAt: r.created_at as string,
         })),
+        weekBonuses,
       };
     },
     async team() {

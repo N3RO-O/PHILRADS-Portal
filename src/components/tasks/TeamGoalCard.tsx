@@ -32,11 +32,11 @@ export function TeamGoalCard({ team, canManage, people, me, onSetGoal, onKudos }
   };
 
   return (
-    <section aria-labelledby={`${uid}-h`} className="card flex flex-col gap-3 p-4 sm:p-5">
+    <section aria-labelledby={`${uid}-h`} className="card flex flex-col gap-3">
       <header className="flex items-start justify-between gap-2">
         <div>
           <h2 id={`${uid}-h`} className="card-title flex items-center gap-2">
-            <Target className="h-4 w-4 text-uplift" aria-hidden /> Team goal{month && ` · ${month}`}
+            <Target className="h-4 w-4" aria-hidden /> Team goal{month && ` · ${month}`}
           </h2>
           <p className="card-note">Every task finished by anyone at PHILRADS counts.</p>
         </div>
@@ -54,7 +54,7 @@ export function TeamGoalCard({ team, canManage, people, me, onSetGoal, onKudos }
             <span className="text-sm text-muted">of {formatNumber(team.goal)} tasks</span>
           </p>
           <div className="h-2.5 overflow-hidden rounded-full bg-surface-sunken" role="progressbar" aria-label="Team goal" aria-valuemin={0} aria-valuemax={team.goal} aria-valuenow={team.done}>
-            <div className="h-full rounded-full bg-gradient-to-r from-status-in/70 to-status-in transition-[width] duration-700" style={{ width: `${Math.max(3, share * 100)}%` }} />
+            <div className="h-full rounded-full bg-status-in transition-[width] duration-700" style={{ width: `${Math.max(3, share * 100)}%` }} />
           </div>
           <p className="text-xs text-muted">{share >= 1 ? 'Goal reached this month. Well done, everyone.' : `${formatNumber(team.goal - team.done)} to go this month.`}</p>
         </>
@@ -79,7 +79,7 @@ export function TeamGoalCard({ team, canManage, people, me, onSetGoal, onKudos }
 
       {canManage && (
         <button type="button" className="btn-ghost min-h-10 px-3 text-sm" onClick={() => setKudosOpen(true)}>
-          <HandHeart className="h-4 w-4 text-uplift" aria-hidden /> Send kudos
+          <HandHeart className="h-4 w-4" aria-hidden /> Send kudos
         </button>
       )}
       <KudosDialog open={kudosOpen} people={people.filter((p) => p.id !== me)} onClose={() => setKudosOpen(false)} onSend={onKudos} />

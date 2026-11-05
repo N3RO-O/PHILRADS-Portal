@@ -1,5 +1,8 @@
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Briefcase, Camera, Check, ChevronDown, Globe2, Loader2, Lock, Phone, Pipette, Trash2, UserRound } from 'lucide-react';
+import { ChoiceSwitch } from '../components/ui/ChoiceSwitch';
+import { ThemeSwitch } from '../components/ui/ThemeSwitch';
+import { useTheme } from '../lib/theme';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../components/auth/AuthProvider';
 import { BADGE_ICON, FRAME_RING, FRAME_TEXT } from '../components/tasks/taskMeta';
@@ -112,14 +115,12 @@ function ProfileCard({
   const [openBadge, setOpenBadge] = useState<string | null>(null);
   const shown = badges.find((b) => b.badge.id === openBadge) ?? null;
   return (
-    <article className="overflow-hidden rounded-2xl border border-line/70 bg-surface shadow-[0_24px_60px_-28px_rgba(0,0,0,0.8)]" aria-label={`${p.displayName}’s profile`}>
+    <article className="overflow-hidden rounded-2xl border border-line bg-surface" aria-label={`${p.displayName}’s profile`}>
       <div
         className="relative h-28 sm:h-32"
-        style={{ background: `linear-gradient(135deg, ${color} 0%, color-mix(in srgb, ${color} 55%, #1c1d21) 100%)` }}
+        style={{ background: color }}
         aria-hidden
-      >
-        <div className="absolute inset-0 bg-[radial-gradient(120%_120%_at_100%_0%,rgba(255,255,255,0.18),transparent_55%)]" />
-      </div>
+      />
 
       <div className="relative px-4 pb-4 sm:px-5">
         <div className="flex items-end justify-between gap-3">
@@ -147,7 +148,7 @@ function ProfileCard({
                       type="button"
                       title={badge.name}
                       onClick={() => setOpenBadge(badge.id)}
-                      className="grid h-7 w-7 place-items-center rounded-lg text-uplift transition hover:bg-uplift/15"
+                      className="grid h-7 w-7 place-items-center rounded-lg text-ink-soft transition hover:bg-surface-raised hover:text-ink"
                       aria-label={`${badge.name}. Show details`}
                     >
                       <Icon className="h-[1.05rem] w-[1.05rem]" aria-hidden />
@@ -174,7 +175,7 @@ function ProfileCard({
 
         {!p.details ? (
           <div className="mt-4 flex flex-col items-center gap-2 rounded-xl border border-line/50 bg-surface-sunken px-4 py-8 text-center">
-            <span className="grid h-12 w-12 place-items-center rounded-full bg-white/[0.06] text-muted">
+            <span className="grid h-12 w-12 place-items-center rounded-full bg-ink/[0.06] text-muted">
               <Lock className="h-5 w-5" aria-hidden />
             </span>
             <p className="text-sm font-semibold text-ink">{p.displayName.split(' ')[0]} keeps their profile private</p>
@@ -211,7 +212,7 @@ function ProfileCard({
               <ul className="flex flex-wrap gap-1.5">
                 {[p.roleName, p.office].filter(Boolean).map((r, i) => (
                   <li key={r} className="inline-flex items-center gap-1.5 rounded-md border border-line/70 bg-surface px-2 py-1 text-xs font-medium text-ink-soft">
-                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: i === 0 ? color : '#9a9ca6' }} aria-hidden />
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: i === 0 ? color : 'rgb(var(--ink-mute))' }} aria-hidden />
                     {r}
                   </li>
                 ))}
@@ -245,14 +246,14 @@ function ProfileCard({
                         type="button"
                         onClick={() => setOpenBadge(badge.id)}
                         aria-label={`${badge.name}: ${got ? 'earned' : `${value} of ${badge.target}`}. Show details`}
-                        className="tap group flex w-full flex-col items-center gap-1 rounded-lg p-1 text-center hover:bg-white/[0.04]"
+                        className="tap group flex w-full flex-col items-center gap-1 rounded-lg p-1 text-center hover:bg-ink/[0.04]"
                       >
                         <span
                           className="grid h-11 w-11 place-items-center rounded-full p-[3px]"
                           style={{ background: got ? 'rgba(236,149,42,0.9)' : `conic-gradient(rgba(236,149,42,0.75) ${pct}%, rgba(255,255,255,0.08) 0)` }}
                           aria-hidden
                         >
-                          <span className={`grid h-full w-full place-items-center rounded-full ${got ? 'bg-[#3a2a14] text-uplift' : 'bg-surface-sunken text-ink-mute'}`}>
+                          <span className={`grid h-full w-full place-items-center rounded-full ${got ? 'bg-surface-raised text-uplift' : 'bg-surface-sunken text-ink-mute'}`}>
                             {got ? <Icon className="h-[1.15rem] w-[1.15rem]" /> : <Lock className="h-3.5 w-3.5" />}
                           </span>
                         </span>
@@ -289,13 +290,13 @@ function BadgeDetails({ item: { badge, value, earned }, mine, onClose }: { item:
           style={{ background: earned ? 'rgba(236,149,42,0.9)' : `conic-gradient(rgba(236,149,42,0.75) ${pct}%, rgba(255,255,255,0.08) 0)` }}
           aria-hidden
         >
-          <span className={`grid h-full w-full place-items-center rounded-full ${earned ? 'bg-[#3a2a14] text-uplift' : 'bg-surface-sunken text-ink-mute'}`}>
+          <span className={`grid h-full w-full place-items-center rounded-full ${earned ? 'bg-surface-raised text-uplift' : 'bg-surface-sunken text-ink-mute'}`}>
             {earned ? <Icon className="h-9 w-9" /> : <Lock className="h-7 w-7" />}
           </span>
         </span>
         <p className="text-sm text-ink-soft">{badge.description}</p>
         {earned ? (
-          <p className="inline-flex items-center gap-1.5 rounded-full border border-uplift/40 bg-uplift/10 px-3 py-1 text-xs font-semibold text-uplift">
+          <p className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1 text-xs font-semibold text-ink-soft">
             <Check className="h-3.5 w-3.5" aria-hidden /> Earned
           </p>
         ) : (
@@ -413,7 +414,7 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
     >
       <div className="flex min-w-0 flex-col gap-4 [container-type:inline-size]">
         {!mine && (
-          <p className="rounded-xl border border-uplift/30 bg-uplift/10 px-4 py-3 text-sm text-ink-soft">
+          <p className="rounded-xl border border-line bg-surface-sunken px-4 py-3 text-sm text-ink-soft">
             You’re editing {person.displayName}’s profile as an administrator.
           </p>
         )}
@@ -519,27 +520,25 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
               placeholder="A few words about you and your work with PHILRADS."
             />
           </Field>
-          {/* Visibility: one small switch at the end, not a card of its own. */}
-          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 border-t border-line/70 pt-4">
-            <span className="flex min-w-0 items-center gap-2 text-xs text-muted">
-              {d.isPublic ? <Globe2 className="h-3.5 w-3.5 shrink-0" aria-hidden /> : <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden />}
-              {d.isPublic ? 'Everyone sees your details.' : 'Colleagues see only your name, picture and role.'}
+          {/* Visibility: the chosen one is filled, with its icon, so it's clear which is on. */}
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-line/70 pt-4">
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold text-ink">
+                Your profile is {d.isPublic ? 'public' : 'private'}
+              </span>
+              <span className="block text-xs text-muted">{d.isPublic ? 'Everyone at PHILRADS sees your details.' : 'Colleagues see only your name, picture and role.'}</span>
             </span>
-            <span className="flex shrink-0 rounded-lg border border-line p-0.5" role="radiogroup" aria-label="Who can see your profile">
-              {([[true, 'Public'], [false, 'Private']] as const).map(([value, label]) => (
-                <button
-                  key={label}
-                  type="button"
-                  role="radio"
-                  aria-checked={d.isPublic === value}
-                  onClick={() => set('isPublic', value)}
-                  className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors ${d.isPublic === value ? 'bg-uplift/15 text-uplift' : 'text-muted hover:text-ink'}`}
-                >
-                  {label}
-                </button>
-              ))}
-            </span>
+            <ChoiceSwitch
+              label="Who can see your profile"
+              value={d.isPublic}
+              onChange={(v) => set('isPublic', v)}
+              options={[
+                { value: true, label: 'Public', icon: Globe2 },
+                { value: false, label: 'Private', icon: Lock },
+              ]}
+            />
           </div>
+          <ThemeRow />
           {message && (
             <p role={message.error ? 'alert' : 'status'} className={`rounded-xl border px-4 py-3 text-sm ${message.error ? 'border-status-out/40 bg-status-out/10' : 'border-status-in/40 bg-status-in/10'}`}>
               {message.text}
@@ -569,7 +568,7 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
 
       {/* Like Discord: a bar that appears while there are changes to save. */}
       <div
-        className={`fixed inset-x-0 bottom-4 z-40 mx-auto flex w-[calc(100%-2rem)] max-w-2xl items-center gap-3 rounded-2xl p-3 pl-4 transition duration-300 glass ${dirty ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-6 opacity-0'}`}
+        className={`fixed inset-x-0 bottom-4 z-40 mx-auto flex w-[calc(100%-2rem)] max-w-2xl items-center gap-3 rounded-2xl p-3 pl-4 transition duration-300 floating ${dirty ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-6 opacity-0'}`}
         aria-hidden={!dirty}
       >
         <p className="min-w-0 flex-1 text-sm font-medium">You have changes that aren’t saved yet.</p>
@@ -592,7 +591,7 @@ function PhotoOverlay({ busy = false, small = false }: { busy?: boolean; small?:
       <span aria-hidden className="pointer-events-none absolute inset-0 rounded-full bg-black/0 transition-colors group-hover:bg-black/35" />
       <span
         aria-hidden
-        className={`pointer-events-none absolute grid place-items-center rounded-full border-2 border-surface bg-uplift text-page shadow-lg transition-transform group-hover:scale-110 group-active:scale-95 ${small ? '-bottom-0.5 -right-0.5 h-6 w-6' : 'bottom-0 right-0 h-8 w-8'}`}
+        className={`pointer-events-none absolute grid place-items-center rounded-full border-2 border-surface bg-uplift text-onaccent shadow-lg transition-transform group-hover:scale-110 group-active:scale-95 ${small ? '-bottom-0.5 -right-0.5 h-6 w-6' : 'bottom-0 right-0 h-8 w-8'}`}
       >
         {busy ? <Loader2 className={`${small ? 'h-3 w-3' : 'h-4 w-4'} animate-spin`} /> : <Camera className={small ? 'h-3 w-3' : 'h-4 w-4'} />}
       </span>
@@ -636,7 +635,7 @@ function FramePicker({ value, onChange, progress, avatar }: { value: string | nu
         title={locked && f ? `${f.name}: ${unlockText(f)}` : f?.name ?? 'No frame'}
         onClick={() => !locked && onChange(id)}
         className={`press flex min-w-0 flex-col items-center gap-2.5 rounded-xl border px-1 pb-2 pt-3.5 transition-colors ${
-          on ? 'border-uplift bg-uplift/10' : locked ? 'cursor-not-allowed border-transparent' : 'border-transparent hover:bg-white/[0.04]'
+          on ? 'border-burgundy-400 bg-burgundy-500/25' : locked ? 'cursor-not-allowed border-transparent' : 'border-transparent hover:bg-ink/[0.04]'
         }`}
       >
         <span className={`relative ${locked ? 'opacity-40 grayscale' : ''}`}>
@@ -655,7 +654,7 @@ function FramePicker({ value, onChange, progress, avatar }: { value: string | nu
     <EditGroup title="Avatar frame" note="A ring around your picture wherever it shows: Active, tasks, your profile.">
       <button
         type="button"
-        className="press flex items-center gap-4 rounded-xl border border-line px-3 py-3 text-left transition-colors hover:bg-white/[0.04]"
+        className="press flex items-center gap-4 rounded-xl border border-line px-3 py-3 text-left transition-colors hover:bg-ink/[0.04]"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
       >
@@ -716,6 +715,20 @@ function Field({ id, label, hint, children }: { id: string; label: string; hint?
         {hint && <span className="text-xs text-muted">{hint}</span>}
       </div>
       {children}
+    </div>
+  );
+}
+
+/** Light or dark: saved on this device straight away (no Save needed). */
+function ThemeRow() {
+  const theme = useTheme();
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-line/70 pt-4">
+      <span className="min-w-0">
+        <span className="block text-sm font-semibold text-ink">Appearance</span>
+        <span className="block text-xs text-muted">{theme === 'system' ? 'Follows this device’s setting.' : `${theme === 'light' ? 'Light' : 'Dark'} on this device.`} Saved straight away.</span>
+      </span>
+      <ThemeSwitch />
     </div>
   );
 }

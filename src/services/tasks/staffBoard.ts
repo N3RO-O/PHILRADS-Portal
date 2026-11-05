@@ -168,6 +168,8 @@ const sampleTasks = (personId: string): BoardTask[] => {
 };
 const nudged = new Map<string, number>();
 const sampleOutputs = new Map<string, TaskOutput[]>();
+/** Sample mode: has a photo been sent with this task? */
+export const sampleHasPhoto = (taskId: string) => (sampleOutputs.get(taskId) ?? []).some((o) => o.photos.length > 0);
 const later = <T,>(v: T) => new Promise<T>((r) => setTimeout(() => r(v), 250));
 
 export const mockStaffBoard: StaffBoardService = {

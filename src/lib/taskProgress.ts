@@ -1,4 +1,4 @@
-import type { Kudos, Task, TaskList, XpAward } from '../services/tasks/types';
+import type { Kudos, Task, TaskList, WeekBonus, XpAward } from '../services/tasks/types';
 import { addDays, daysBetween } from './tasks';
 import { todayKey } from './inventory';
 import { manilaDayKey } from './format';
@@ -19,21 +19,26 @@ export const XP_RULES = {
   /** Most XP a day from tasks people set for themselves. */
   selfDailyCap: 60,
   kudos: 15,
+  /** A photo sent with a task that didn't need one. */
+  photo: 5,
+  /** A task finished on every working day (Monday to Friday) of a week. */
+  fullWeek: 25,
 } as const;
 
 /** Score a finished task (sample mode). `selfXpToday`: XP already earned today from self-set tasks. */
-export function scoreCompletion(task: Task, earnerId: string, selfXpToday: number, today = todayKey()): XpAward {
+export function scoreCompletion(task: Task, earnerId: string, selfXpToday: number, today = todayKey(), withPhoto = false): XpAward {
   const selfSet = task.createdById === earnerId;
   const base = selfSet ? XP_RULES.self : XP_RULES.base[task.priority];
   const onTime = !selfSet && task.dueDate && today <= task.dueDate ? XP_RULES.onTime : 0;
   const subtasks = selfSet ? 0 : Math.min(XP_RULES.maxSubtasks, XP_RULES.perSubtask * task.subtasks.filter((s) => s.done).length);
-  let points = base + onTime + subtasks;
+  const photo = withPhoto && !task.requiresPhoto ? XP_RULES.photo : 0;
+  let points = base + onTime + subtasks + photo;
   let capped = false;
   if (selfSet && points > Math.max(0, XP_RULES.selfDailyCap - selfXpToday)) {
     points = Math.max(0, XP_RULES.selfDailyCap - selfXpToday);
     capped = true;
   }
-  return { taskId: task.id, taskTitle: task.title, points, base, onTime, subtasks, selfSet, capped, flag: null, day: today, awardedAt: new Date().toISOString() };
+  return { taskId: task.id, taskTitle: task.title, points, base, onTime, subtasks, photo, selfSet, capped, flag: null, day: today, awardedAt: new Date().toISOString() };
 }
 
 /** What finishing a task is worth before any cap: shown on the task. Your own tasks are worth a flat amount. */
@@ -99,7 +104,7 @@ export interface TaskStats {
   rapidHigh: number;
   /** Given by someone else. */
   fromOthers: number;
-  /** Finished on the day they were planned in My Day. */
+  /** Finished on the day they were planned for. */
   planned: number;
   streak: number;
   bestStreak: number;
@@ -128,11 +133,40 @@ export const BADGES: Badge[] = [
   { id: 'on-time', name: 'On the dot', description: 'Finish 10 tasks on or before their due date', icon: 'clock', target: 10, value: (s) => s.onTime },
   { id: 'rapid', name: 'Rapid response', description: 'Finish 3 high-priority tasks within a day of adding them', icon: 'zap', target: 3, value: (s) => s.rapidHigh },
   { id: 'team', name: 'Team player', description: 'Finish 5 tasks someone else gave you', icon: 'users', target: 5, value: (s) => s.fromOthers },
-  { id: 'planner', name: 'Day planner', description: 'Finish 10 tasks on the day you planned them in My Day', icon: 'sun', target: 10, value: (s) => s.planned },
+  { id: 'planner', name: 'Day planner', description: 'Finish 10 tasks on the day you planned to do them', icon: 'sun', target: 10, value: (s) => s.planned },
   { id: 'steady', name: 'Seven-day streak', description: 'Finish at least one task 7 days in a row', icon: 'flame', target: 7, value: (s) => s.bestStreak },
   { id: 'thanked', name: 'Thanked', description: 'Receive kudos from a coordinator', icon: 'sparkles', target: 1, value: (s) => s.kudos },
   { id: 'hundred', name: 'Hundred strong', description: 'Finish 100 tasks', icon: 'award', target: 100, value: (s) => s.total },
 ];
+
+// ───────────────────────── The working week ─────────────────────────
+
+/** 0 = Monday … 6 = Sunday, for a YYYY-MM-DD day. */
+const weekday = (day: string) => (new Date(`${day}T00:00:00Z`).getUTCDay() + 6) % 7;
+export const mondayOf = (day: string) => addDays(day, -weekday(day));
+
+/** Weeks with a finished task on every day Monday to Friday (the database's rule, for sample mode). */
+export function weekBonusesFrom(awards: XpAward[]): WeekBonus[] {
+  const weeks = new Map<string, Set<number>>();
+  for (const a of awards) {
+    if (a.flag || weekday(a.day) > 4) continue;
+    const w = mondayOf(a.day);
+    weeks.set(w, (weeks.get(w) ?? new Set()).add(weekday(a.day)));
+  }
+  return [...weeks].filter(([, d]) => d.size === 5).map(([weekStart]) => ({ weekStart, points: XP_RULES.fullWeek }));
+}
+
+/** This week, Monday to Sunday: which days had a finished task. */
+export function weekCircles(awards: XpAward[], today: string, bonuses: WeekBonus[] = []) {
+  const monday = mondayOf(today);
+  const doneDays = new Set(awards.filter((a) => !a.flag).map((a) => a.day));
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const day = addDays(monday, i);
+    return { day, done: doneDays.has(day), today: day === today, future: day > today, weekend: i > 4 };
+  });
+  const workDone = days.filter((d) => !d.weekend && d.done).length;
+  return { monday, days, workDone, bonus: bonuses.some((b) => b.weekStart === monday) || workDone === 5 };
+}
 
 // ───────────────────────── Putting it together ─────────────────────────
 
@@ -154,7 +188,7 @@ function streaks(days: Set<string>, today: string) {
   return { current, best };
 }
 
-export function computeProgress(input: { awards: XpAward[]; kudos: Kudos[]; tasks: Task[]; userId: string | null; today?: string }) {
+export function computeProgress(input: { awards: XpAward[]; kudos: Kudos[]; weekBonuses?: WeekBonus[]; tasks: Task[]; userId: string | null; today?: string }) {
   const today = input.today ?? todayKey();
   const { kudos } = input;
   // Tasks added already finished don't count toward badges or streaks.
@@ -179,7 +213,8 @@ export function computeProgress(input: { awards: XpAward[]; kudos: Kudos[]; task
     kudos: kudos.length,
   };
 
-  const xp = awards.reduce((s, a) => s + a.points, 0) + kudos.reduce((s, k) => s + k.points, 0);
+  const weekBonuses = input.weekBonuses ?? [];
+  const xp = awards.reduce((s, a) => s + a.points, 0) + kudos.reduce((s, k) => s + k.points, 0) + weekBonuses.reduce((s, w) => s + w.points, 0);
   const todays = awards.filter((a) => a.day === today);
   return {
     xp,
@@ -188,6 +223,8 @@ export function computeProgress(input: { awards: XpAward[]; kudos: Kudos[]; task
     todayXp: todays.reduce((s, a) => s + a.points, 0),
     selfXpToday: todays.filter((a) => a.selfSet).reduce((s, a) => s + a.points, 0),
     badges: badgesFor(stats),
+    week: weekCircles(awards, today, weekBonuses),
+    fullWeeks: weekBonuses.length,
   };
 }
 

@@ -16,11 +16,11 @@ import { SuccessTick } from '../ui/SuccessTick';
 const manilaToday = () => new Date(Date.now() + 8 * 3600_000).toISOString().slice(0, 10);
 
 const STANDING = {
-  done: { label: 'Done', cls: 'border-l-status-in bg-status-in/[0.07]', chip: 'bg-status-in/15 text-status-in' },
-  in_progress: { label: 'In progress', cls: 'border-l-status-low bg-status-low/[0.07]', chip: 'bg-status-low/15 text-status-low' },
-  review: { label: 'For review', cls: 'border-l-sky-300 bg-sky-300/[0.06]', chip: 'bg-sky-300/15 text-sky-300' },
-  todo: { label: 'Not started', cls: 'border-l-ink-mute bg-white/[0.02]', chip: 'bg-white/[0.06] text-ink-soft' },
-  overdue: { label: 'Overdue', cls: 'border-l-status-out bg-status-out/[0.07]', chip: 'bg-status-out/15 text-status-out' },
+  done: { label: 'Done', cls: 'border-l-status-in', chip: 'text-status-in' },
+  in_progress: { label: 'In progress', cls: 'border-l-ink-soft', chip: 'text-ink' },
+  review: { label: 'For review', cls: 'border-l-line', chip: 'text-ink-soft' },
+  todo: { label: 'Not started', cls: 'border-l-line', chip: 'text-muted' },
+  overdue: { label: 'Overdue', cls: 'border-l-status-out', chip: 'text-status-out' },
 } as const;
 const standing = (t: BoardTask, today: string) =>
   t.status === 'done' ? 'done' : t.status === 'review' ? 'review' : t.status === 'in_progress' ? 'in_progress' : t.dueDate && t.dueDate < today ? 'overdue' : 'todo';
@@ -63,7 +63,7 @@ export function PersonTasks({ person, status, me, onClose, onChanged }: { person
         <span className="flex items-center gap-3">
           <span className="relative">
             <PersonAvatar id={person.id} name={person.name} size="lg" />
-            <StatusDot status={status} size={20} ring="#26272c" className="absolute -bottom-1 -right-1" />
+            <StatusDot status={status} size={20} ring="rgb(var(--surface))" className="absolute -bottom-1 -right-1" />
           </span>
           <span className="min-w-0">
             <span className="block truncate">{mine ? 'Your tasks' : person.name}</span>
@@ -97,7 +97,7 @@ export function PersonTasks({ person, status, me, onClose, onChanged }: { person
             ['Overdue', person.overdue, 'text-status-out'],
             ['Done 7d', person.doneWeek, 'text-status-in'],
           ].map(([k, v, c]) => (
-            <div key={k as string} className="tile px-1 py-2.5">
+            <div key={k as string} className="px-1 py-2.5">
               <p className={`font-display text-xl tabular-nums tracking-wide ${c}`}>{v as number}</p>
               <p className="text-[0.6875rem] text-muted">{k as string}</p>
             </div>
@@ -136,7 +136,7 @@ export function PersonTasks({ person, status, me, onClose, onChanged }: { person
                       <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
                         <span className={`rounded px-1.5 py-0.5 font-semibold ${s.chip}`}>{s.label}</span>
                         {t.acceptance === 'pending' && !result && (
-                          <span className="inline-flex items-center gap-1 rounded bg-sky-300/15 px-1.5 py-0.5 font-semibold text-sky-300">
+                          <span className="inline-flex items-center gap-1 rounded border border-line px-1.5 py-0.5 font-semibold text-ink-soft">
                             <Hourglass className="h-3 w-3" aria-hidden /> {mine ? 'Needs your answer' : 'Not accepted yet'}
                           </span>
                         )}
@@ -162,7 +162,7 @@ export function PersonTasks({ person, status, me, onClose, onChanged }: { person
                       ) : (
                         <button
                           type="button"
-                          className="press group/n flex shrink-0 items-center gap-1.5 rounded-full border border-uplift/40 bg-uplift/10 px-3 py-1.5 text-xs font-semibold text-uplift transition-colors hover:bg-uplift/20"
+                          className="press group/n flex shrink-0 items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:bg-surface-raised"
                           disabled={busy === t.id}
                           onClick={() => void act(t.id, 'nudged', () => staffBoardService.nudge(t.id))}
                           title={t.nudgedAt ? `Last nudged ${formatShortDate(t.nudgedAt.slice(0, 10))}` : 'Send a gentle reminder'}

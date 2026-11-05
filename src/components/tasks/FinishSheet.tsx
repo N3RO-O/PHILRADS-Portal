@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Camera, Link2, Loader2, Plus, X } from 'lucide-react';
+import { XP_RULES } from '../../lib/taskProgress';
 import type { OutputDraft } from '../../services/tasks/staffBoard';
 import type { Task } from '../../services/tasks/types';
 import { Sheet } from '../ui/Sheet';
@@ -32,7 +33,7 @@ async function shrink(file: File): Promise<string> {
 }
 
 /**
- * Finishing a task someone gave you: say what you did, if you like (a note, links, photos), and
+ * Finishing a task someone gave you (or one that needs a photo): say what you did, if you like (a note, links, photos), and
  * the person who gave it is told. Finishing without an output is fine too.
  */
 export function FinishSheet({ task, onClose, onFinish }: { task: Task | null; onClose: () => void; onFinish: (t: Task, output: OutputDraft | null) => Promise<string | null> }) {
@@ -96,7 +97,10 @@ export function FinishSheet({ task, onClose, onFinish }: { task: Task | null; on
     setTimeout(onClose, 1100);
   };
 
-  const given = task?.createdByName;
+  // Given by someone else: they're told. Your own task: nobody to tell.
+  const given = task && task.createdById && task.createdById !== task.assigneeId ? task.createdByName : null;
+  const needsPhoto = Boolean(task?.requiresPhoto);
+  const blocked = needsPhoto && photos.length === 0;
   return (
     <Sheet
       open={Boolean(task)}
@@ -105,9 +109,9 @@ export function FinishSheet({ task, onClose, onFinish }: { task: Task | null; on
       subtitle={task ? `“${task.title}”` : undefined}
       footer={
         !done && (
-          <button type="button" className="btn-primary h-12 w-full text-base" onClick={() => void finish()} disabled={Boolean(busy)}>
+          <button type="button" className="btn-primary h-12 w-full text-base" onClick={() => void finish()} disabled={Boolean(busy) || blocked}>
             {busy === 'send' && <Loader2 className="h-5 w-5 animate-spin" aria-hidden />}
-            {note.trim() || links.length || photos.length || link.trim() ? 'Finish and send' : 'Finish'}
+            {blocked ? 'Add a photo to finish' : note.trim() || links.length || photos.length || link.trim() ? (given ? 'Finish and send' : 'Finish') : 'Finish'}
           </button>
         )
       }
@@ -120,9 +124,18 @@ export function FinishSheet({ task, onClose, onFinish }: { task: Task | null; on
         </div>
       ) : (
         <div className="flex flex-col gap-5">
-          <p className="text-sm text-muted">
-            Show what you did{given ? ` for ${given}` : ''}: a note, links or photos. All optional.
-          </p>
+          {needsPhoto ? (
+            <p className="flex items-start gap-2 rounded-xl border border-uplift/40 bg-uplift/10 px-3 py-2.5 text-sm text-ink">
+              <Camera className="mt-0.5 h-4 w-4 shrink-0 text-uplift" aria-hidden />
+              <span>
+                <strong className="font-semibold">This task needs a photo.</strong> Add at least one to finish it. A note and links are optional.
+              </span>
+            </p>
+          ) : (
+            <p className="text-sm text-muted">
+              Show what you did{given ? ` for ${given}` : ''}: a note, links or photos. All optional; a photo earns <strong className="font-semibold text-uplift">+{XP_RULES.photo} XP</strong>.
+            </p>
+          )}
           {error && (
             <p role="alert" className="rounded-xl border border-status-out/40 bg-status-out/10 px-3 py-2 text-sm text-ink">
               {error}
@@ -139,7 +152,7 @@ export function FinishSheet({ task, onClose, onFinish }: { task: Task | null; on
               <ul className="flex flex-col gap-1.5">
                 {links.map((l) => (
                   <li key={l} className="flex animate-pop-in items-center gap-2 rounded-lg bg-surface-sunken px-3 py-2 text-sm">
-                    <Link2 className="h-4 w-4 shrink-0 text-uplift" aria-hidden />
+                    <Link2 className="h-4 w-4 shrink-0" aria-hidden />
                     <span className="min-w-0 flex-1 truncate text-ink-soft">{l}</span>
                     <button type="button" className="icon-btn h-7 w-7" onClick={() => setLinks((ls) => ls.filter((x) => x !== l))} aria-label={`Remove ${l}`}>
                       <X className="h-3.5 w-3.5" aria-hidden />
@@ -165,7 +178,7 @@ export function FinishSheet({ task, onClose, onFinish }: { task: Task | null; on
 
           <div className="flex flex-col gap-2">
             <span className="text-sm font-medium text-ink-soft">
-              Photos <span className="font-normal text-muted">({photos.length} of {MAX_PHOTOS})</span>
+              Photos {needsPhoto && <span className="font-semibold text-uplift">· required</span>} <span className="font-normal text-muted">({photos.length} of {MAX_PHOTOS})</span>
             </span>
             <div className="grid grid-cols-4 gap-2">
               {photos.map((p, i) => (
@@ -177,7 +190,7 @@ export function FinishSheet({ task, onClose, onFinish }: { task: Task | null; on
                 </div>
               ))}
               {photos.length < MAX_PHOTOS && (
-                <button type="button" className="press grid aspect-square place-items-center rounded-xl border-2 border-dashed border-line text-muted hover:border-uplift hover:text-uplift" onClick={() => file.current?.click()} disabled={busy === 'photo'}>
+                <button type="button" className={`press grid aspect-square place-items-center rounded-xl border-2 border-dashed text-muted hover:border-ink-mute hover:text-ink ${blocked ? 'animate-pulse border-uplift/70 text-uplift' : 'border-line'}`} onClick={() => file.current?.click()} disabled={busy === 'photo'}>
                   {busy === 'photo' ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <Camera className="h-5 w-5" aria-hidden />}
                   <span className="sr-only">Add photos</span>
                 </button>

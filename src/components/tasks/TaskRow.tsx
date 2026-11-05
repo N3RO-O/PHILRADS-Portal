@@ -1,4 +1,4 @@
-import { Building2, CloudOff, Flag, Hourglass, ListChecks, MapPin, Repeat, Sun, TriangleAlert } from 'lucide-react';
+import { Building2, Camera, CloudOff, Flag, Hourglass, ListChecks, MapPin, Repeat, Sun, TriangleAlert } from 'lucide-react';
 import { daysBetween, dueLabel, LIST_META } from '../../lib/tasks';
 import type { Task } from '../../services/tasks/types';
 import { LIST_STYLE } from './taskMeta';
@@ -54,7 +54,7 @@ export function TaskRow({ task: t, today, me, onToggle, onOpen, onMyDay, onStart
             {done ? (
               <SuccessTick className="h-[1.375rem] w-[1.375rem] text-uplift" />
             ) : (
-              <span className={`grid h-[1.375rem] w-[1.375rem] place-items-center rounded-full border-2 transition ${style.ring} group-hover:bg-white/5`} />
+              <span className={`grid h-[1.375rem] w-[1.375rem] place-items-center rounded-full border-2 transition ${style.ring} group-hover:bg-ink/5`} />
             )}
           </button>
 
@@ -62,7 +62,7 @@ export function TaskRow({ task: t, today, me, onToggle, onOpen, onMyDay, onStart
             <span className={`block text-sm font-medium leading-snug ${done ? 'text-muted line-through decoration-ink-mute/60' : 'text-ink'}`}>{t.title}</span>
             <span className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-muted">
               {sync === 'waiting' && (
-                <span className="inline-flex items-center gap-1 font-semibold text-sky-300">
+                <span className="inline-flex items-center gap-1 font-semibold text-ink-soft">
                   <CloudOff className="h-3 w-3" aria-hidden /> Waiting to sync
                 </span>
               )}
@@ -72,14 +72,14 @@ export function TaskRow({ task: t, today, me, onToggle, onOpen, onMyDay, onStart
                 </span>
               )}
               {needsMe && (
-                <span className="inline-flex items-center gap-1 rounded bg-sky-300/15 px-1.5 font-semibold text-sky-300">
+                <span className="inline-flex items-center gap-1 rounded border border-line px-1.5 font-semibold text-ink-soft">
                   <Hourglass className="h-3 w-3" aria-hidden /> Accept or decline
                 </span>
               )}
-              {pending && !needsMe && t.assigneeId !== me && <span className="rounded bg-sky-300/15 px-1.5 font-semibold text-sky-300">Waiting for {t.assigneeName ?? 'them'} to accept</span>}
+              {pending && !needsMe && t.assigneeId !== me && <span className="rounded border border-line px-1.5 font-semibold text-ink-soft">Waiting for {t.assigneeName ?? 'them'} to accept</span>}
               {t.acceptance === 'declined' && <span className="rounded bg-status-out/15 px-1.5 font-semibold text-status-out">Declined</span>}
               {t.status === 'in_progress' && <span className="rounded bg-status-low/15 px-1.5 font-semibold text-status-low">In progress</span>}
-              {due && <span className={overdue ? 'font-semibold text-rose' : t.dueDate === today && !done ? 'text-uplift' : ''}>{due}</span>}
+              {due && <span className={overdue ? 'font-semibold text-rose' : t.dueDate === today && !done ? 'font-semibold text-status-low' : ''}>{due}</span>}
               {showList && (
                 <span className={`inline-flex items-center gap-1 ${style.text}`}>
                   <style.icon className="h-3 w-3" aria-hidden /> {LIST_META[t.list].label}
@@ -92,6 +92,11 @@ export function TaskRow({ task: t, today, me, onToggle, onOpen, onMyDay, onStart
               {t.subtasks.length > 0 && (
                 <span className="inline-flex items-center gap-1 tabular-nums">
                   <ListChecks className="h-3 w-3" aria-hidden /> {subDone}/{t.subtasks.length}
+                </span>
+              )}
+              {t.requiresPhoto && !done && (
+                <span className="inline-flex items-center gap-1 rounded bg-uplift/15 px-1.5 font-semibold text-uplift">
+                  <Camera className="h-3 w-3" aria-hidden /> Photo needed
                 </span>
               )}
               {t.recurrence !== 'none' && <Repeat className="h-3 w-3" aria-label="Repeats" />}
@@ -121,10 +126,10 @@ export function TaskRow({ task: t, today, me, onToggle, onOpen, onMyDay, onStart
             {onMyDay && !done && (
               <button
                 type="button"
-                className={`icon-btn h-9 w-9 ${inMyDay ? 'text-uplift' : 'opacity-60 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100'}`}
+                className={`icon-btn h-9 w-9 ${inMyDay ? 'text-ink' : 'opacity-60 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100'}`}
                 aria-pressed={inMyDay}
-                aria-label={inMyDay ? `Remove “${t.title}” from My Day` : `Add “${t.title}” to My Day`}
-                title={inMyDay ? 'In My Day' : 'Add to My Day'}
+                aria-label={inMyDay ? `Take “${t.title}” off today’s plan` : `Plan “${t.title}” for today`}
+                title={inMyDay ? 'Planned for today' : 'Plan for today'}
                 onClick={() => onMyDay(t)}
               >
                 <Sun className={`h-4 w-4 ${inMyDay ? 'fill-uplift/30' : ''}`} aria-hidden />

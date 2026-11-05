@@ -98,23 +98,23 @@ export function WeatherBar({ weather, onClose }: { weather: MapWeather; onClose:
   const current = WEATHER_MODES.find((m) => m.key === mode)!;
   if (minimised)
     return (
-      <div className="flex items-center gap-1 rounded-full border border-line bg-surface-raised/95 py-1 pl-1 pr-1 shadow-2xl shadow-black/50 backdrop-blur-md lg:w-fit">
-        <button type="button" onClick={() => setMinimised(false)} className="flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-full px-3 text-xs font-semibold hover:bg-white/[0.06]" aria-label="Show weather controls">
-          <current.icon className="h-4 w-4 shrink-0 text-uplift" aria-hidden />
+      <div className="flex items-center gap-1 rounded-full border border-line bg-surface-raised py-1 pl-1 pr-1 shadow-2xl shadow-black/50 lg:w-fit">
+        <button type="button" onClick={() => setMinimised(false)} className="flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-full px-3 text-xs font-semibold hover:bg-ink/[0.06]" aria-label="Show weather controls">
+          <current.icon className="h-4 w-4 shrink-0" aria-hidden />
           {current.label}
           <span className="truncate font-normal text-muted">{timeText}{sub && timeText !== sub ? ` · ${sub}` : ''}</span>
           <ChevronUp className="ml-auto h-4 w-4 shrink-0 text-muted" aria-hidden />
         </button>
-        <button type="button" onClick={onClose} aria-label="Turn weather off" className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-muted hover:bg-white/[0.06] hover:text-ink">
+        <button type="button" onClick={onClose} aria-label="Turn weather off" className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-muted hover:bg-ink/[0.06] hover:text-ink">
           <X className="h-4 w-4" aria-hidden />
         </button>
       </div>
     );
 
   return (
-    <div className="flex flex-col gap-2.5 rounded-2xl border border-line bg-surface-raised/95 p-2.5 shadow-2xl shadow-black/50 backdrop-blur-md">
+    <div className="flex flex-col gap-2.5 rounded-2xl border border-line bg-surface-raised p-2.5 shadow-2xl shadow-black/50">
       <div className="flex items-center gap-2">
-        <div role="radiogroup" aria-label="Weather to show" className="grid flex-1 grid-cols-4 gap-1 rounded-xl bg-page/70 p-1">
+        <div role="radiogroup" aria-label="Weather to show" className="grid flex-1 grid-cols-4 gap-1 rounded-xl bg-page p-1">
           {WEATHER_MODES.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
@@ -122,14 +122,14 @@ export function WeatherBar({ weather, onClose }: { weather: MapWeather; onClose:
               role="radio"
               aria-checked={mode === key}
               onClick={() => setMode(key)}
-              className={`flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 rounded-lg px-1 text-[0.6875rem] font-semibold leading-none transition ${mode === key ? 'bg-uplift text-page' : 'text-ink-soft hover:bg-white/[0.06]'}`}
+              className={`flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 rounded-lg px-1 text-[0.6875rem] font-semibold leading-none transition ${mode === key ? 'gloss bg-burgundy-500 text-cloud' : 'text-ink-soft hover:bg-ink/[0.06]'}`}
             >
               <Icon className="h-4 w-4 shrink-0" aria-hidden />
               {label}
             </button>
           ))}
         </div>
-        <button type="button" onClick={() => setMinimised(true)} aria-label="Minimise (weather stays on the map)" title="Minimise" className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-muted hover:bg-white/[0.06] hover:text-ink">
+        <button type="button" onClick={() => setMinimised(true)} aria-label="Minimise (weather stays on the map)" title="Minimise" className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-muted hover:bg-ink/[0.06] hover:text-ink">
           <ChevronDown className="h-4 w-4" aria-hidden />
         </button>
       </div>
@@ -160,7 +160,7 @@ export function WeatherBar({ weather, onClose }: { weather: MapWeather; onClose:
               setPlaying(!playing);
             }}
             aria-label={playing ? 'Pause' : 'Play'}
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-uplift text-page shadow-lg transition active:scale-95"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full premium"
           >
             {playing ? <Pause className="h-4 w-4" aria-hidden /> : <Play className="ml-0.5 h-4 w-4" aria-hidden />}
           </button>
@@ -202,7 +202,7 @@ function RadarNote({ check, onRain }: { check: MapWeather['radarCheck']; onRain:
   const what = 'Radar shows rain actually falling (measured, not a forecast) over the last 2 hours.';
   return (
     <div className="flex flex-col gap-1.5 px-1 text-[0.6875rem] leading-snug">
-      {check === 'rain' && <p className="font-semibold text-sky-300">Rain on radar in this area now. Press play to see how it moved.</p>}
+      {check === 'rain' && <p className="font-semibold text-ink-soft">Rain on radar in this area now. Press play to see how it moved.</p>}
       {check === 'dry' && <p className="font-semibold text-ink-soft">No rain on radar in this area right now, so the map stays clear.</p>}
       {check === 'uncovered' && (
         <p className="flex flex-wrap items-center gap-x-2 gap-y-1 font-semibold text-ink-soft">
@@ -243,7 +243,7 @@ function Legend({ mode }: { mode: Exclude<WeatherMode, 'radar'> }) {
 const CODE_ICON = (code: number): LucideIcon =>
   code === 0 ? Sun : code <= 2 ? CloudSun : code === 3 ? Cloud : code <= 48 ? CloudFog : code <= 57 ? CloudDrizzle : code >= 95 ? CloudLightning : CloudRain;
 
-const ALERT_TONE = { red: 'border-status-out/60 bg-status-out/10', orange: 'border-uplift/60 bg-uplift/10', yellow: 'border-status-low/50 bg-status-low/10' } as const;
+const ALERT_TONE = { red: 'border-status-out/60 bg-status-out/10', orange: 'border-burgundy-400 bg-burgundy-500/25', yellow: 'border-status-low/50 bg-status-low/10' } as const;
 
 /** Forecast for one spot: now, warnings, the next 24 hours; with `days`, the week ahead too. */
 export function SpotForecastView({ lat, lng, days = false }: { lat: number; lng: number; days?: boolean }) {
@@ -276,7 +276,7 @@ export function SpotForecastView({ lat, lng, days = false }: { lat: number; lng:
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-3">
-        <NowIcon className="h-10 w-10 shrink-0 text-uplift" aria-hidden />
+        <NowIcon className="h-10 w-10 shrink-0 text-ink-soft" aria-hidden />
         <div className="min-w-0 flex-1">
           <p className="flex items-baseline gap-2">
             <strong className="text-2xl font-bold tabular-nums">{Math.round(f.current.temp)}°</strong>
@@ -288,15 +288,15 @@ export function SpotForecastView({ lat, lng, days = false }: { lat: number; lng:
         </div>
       </div>
       <div className="grid grid-cols-2 gap-2 text-xs">
-        <p className="flex items-center gap-2 rounded-xl bg-white/[0.03] px-3 py-2">
-          <Wind className="h-4 w-4 shrink-0 text-sky-300" aria-hidden />
+        <p className="flex items-center gap-2 rounded-xl bg-ink/[0.03] px-3 py-2">
+          <Wind className="h-4 w-4 shrink-0 text-ink-soft" aria-hidden />
           <span>
             <strong className="tabular-nums">{Math.round(f.current.wind)} km/h</strong> from {compass(f.current.windFrom)}
             <span className="block text-muted">gusts {Math.round(f.current.gusts)} km/h</span>
           </span>
         </p>
-        <p className="flex items-center gap-2 rounded-xl bg-white/[0.03] px-3 py-2">
-          <Umbrella className="h-4 w-4 shrink-0 text-sky-300" aria-hidden />
+        <p className="flex items-center gap-2 rounded-xl bg-ink/[0.03] px-3 py-2">
+          <Umbrella className="h-4 w-4 shrink-0 text-ink-soft" aria-hidden />
           <span>
             <strong className="tabular-nums">{f.hourly[0]?.rainChance ?? 0}%</strong> chance of rain
             <span className="block text-muted">{f.current.rain > 0 ? `${f.current.rain.toFixed(1)} mm now` : 'none right now'}</span>
@@ -317,11 +317,11 @@ export function SpotForecastView({ lat, lng, days = false }: { lat: number; lng:
           {every3.map((h) => {
             const Icon = CODE_ICON(h.code);
             return (
-              <li key={h.time} className="flex flex-col items-center gap-0.5 rounded-xl bg-white/[0.03] px-1 py-2 text-center">
+              <li key={h.time} className="flex flex-col items-center gap-0.5 rounded-xl bg-ink/[0.03] px-1 py-2 text-center">
                 <span className="text-[0.6875rem] text-muted">{hourLabel(h.time)}</span>
                 <Icon className="h-4 w-4 text-ink-soft" aria-label={weatherLabel(h.code)} />
                 <span className="text-sm font-bold tabular-nums">{Math.round(h.temp)}°</span>
-                <span className="text-[0.6875rem] tabular-nums text-sky-300">{h.rainChance}%</span>
+                <span className="text-[0.6875rem] tabular-nums text-ink-soft">{h.rainChance}%</span>
                 <span className="text-[0.6875rem] tabular-nums text-muted">{Math.round(h.wind)} km/h</span>
               </li>
             );
@@ -340,7 +340,7 @@ export function SpotForecastView({ lat, lng, days = false }: { lat: number; lng:
                   <span className="w-[5.5rem] shrink-0 text-xs text-ink-soft">{weekday(d.time)}</span>
                   <Icon className="h-4 w-4 shrink-0 text-ink-soft" aria-label={weatherLabel(d.code)} />
                   <span className="min-w-0 flex-1 text-xs text-muted">
-                    <span className="text-sky-300">{d.rainChance}%</span> · {d.rain.toFixed(d.rain < 10 ? 1 : 0)} mm<span className="hidden sm:inline"> · gusts {Math.round(d.gusts)} km/h</span>
+                    <span className="text-ink-soft">{d.rainChance}%</span> · {d.rain.toFixed(d.rain < 10 ? 1 : 0)} mm<span className="hidden sm:inline"> · gusts {Math.round(d.gusts)} km/h</span>
                   </span>
                   <span className="shrink-0 tabular-nums">
                     <strong>{Math.round(d.max)}°</strong> <span className="text-muted">{Math.round(d.min)}°</span>

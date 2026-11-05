@@ -28,7 +28,7 @@ export function RewardsSheet({ tab, progress, kudos, onTab, onClose, onPrintCert
       subtitle={`Level ${progress.level.level} · ${progress.level.title} · ${formatNumber(progress.xp)} XP. Only you and administrators see this.`}
     >
       <div role="tablist" aria-label="Rewards" className="relative mb-5 grid grid-cols-3 gap-1 rounded-2xl bg-surface-sunken p-1">
-        <SlidingPill className="rounded-xl bg-surface-raised shadow-sm shadow-black/30 ring-1 ring-inset ring-white/[0.06]" />
+        <SlidingPill className="rounded-xl bg-surface-raised shadow-sm shadow-black/30 ring-1 ring-inset ring-ink/[0.06]" />
         {(
           [
             ['badges', `Badges ${earned}/${progress.badges.length}`],
@@ -55,7 +55,7 @@ export function RewardsSheet({ tab, progress, kudos, onTab, onClose, onPrintCert
             const Icon = BADGE_ICON[badge.icon];
             return (
               <li key={badge.id} className={`tile flex items-start gap-3 p-3 ${got ? '' : 'opacity-75'}`}>
-                <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-full border ${got ? 'border-uplift/50 bg-uplift/15 text-uplift' : 'border-line text-muted'}`}>
+                <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-full border ${got ? 'border-line text-ink-soft' : 'border-line text-muted'}`}>
                   {got ? <Icon className="h-5 w-5" aria-hidden /> : <Lock className="h-4 w-4" aria-hidden />}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -88,13 +88,13 @@ export function RewardsSheet({ tab, progress, kudos, onTab, onClose, onPrintCert
               return (
                 <li key={l.level} className={`tile flex items-center gap-3 px-3 py-2.5 ${current ? 'ring-1 ring-uplift/60' : ''}`}>
                   <span
-                    className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-bold ${reached ? 'bg-uplift/15 text-uplift' : 'bg-surface text-muted'}`}
+                    className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-bold ${reached ? 'text-ink-soft' : 'bg-surface text-muted'}`}
                   >
                     {l.level}
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold leading-tight">
-                      {l.title} {current && <span className="ml-1 text-xs font-medium text-uplift">You are here</span>}
+                      {l.title} {current && <span className="ml-1 text-xs font-medium text-ink-soft">You are here</span>}
                     </p>
                     <p className="text-xs text-muted">
                       {formatNumber(l.xp)} XP{l.frame ? ` · ${FRAME_LABEL[l.frame]}` : ''}
@@ -114,9 +114,9 @@ export function RewardsSheet({ tab, progress, kudos, onTab, onClose, onPrintCert
               );
             })}
           </ol>
-          <div className="rounded-xl border border-uplift/25 bg-uplift/[0.06] px-4 py-3 text-xs text-ink-soft">
+          <div className="rounded-xl border border-line bg-surface-sunken px-4 py-3 text-xs text-ink-soft">
             <p className="mb-1 flex items-center gap-1.5 font-semibold text-ink">
-              <Sparkles className="h-4 w-4 text-uplift" aria-hidden /> How XP works
+              <Sparkles className="h-4 w-4" aria-hidden /> How XP works
             </p>
             <ul className="list-disc space-y-0.5 pl-5">
               <li>
@@ -130,6 +130,8 @@ export function RewardsSheet({ tab, progress, kudos, onTab, onClose, onPrintCert
                 Tasks you set for yourself: {XP_RULES.self} XP each, up to {XP_RULES.selfDailyCap} XP a day. Tasks someone gave you have no limit, and they can send one
                 back if it isn’t really done (the XP goes with it).
               </li>
+              <li>+{XP_RULES.photo} XP for a photo sent with a task that didn’t need one.</li>
+              <li>+{XP_RULES.fullWeek} XP for finishing at least one task every working day, Monday to Friday.</li>
               <li>Kudos from a coordinator: +{XP_RULES.kudos} XP.</li>
               <li>Re-opening a finished task takes its XP back.</li>
             </ul>
@@ -139,11 +141,11 @@ export function RewardsSheet({ tab, progress, kudos, onTab, onClose, onPrintCert
 
       {tab === 'kudos' &&
         (kudos.length === 0 ? (
-          <p className="tile px-4 py-10 text-center text-sm text-muted">No kudos yet. Coordinators can thank people for work well done; it shows here.</p>
+          <p className="py-10 text-center text-sm text-muted">No kudos yet. Coordinators can thank people for work well done; it shows here.</p>
         ) : (
           <ul className="flex flex-col gap-2">
             {kudos.map((k) => (
-              <li key={k.id} className="tile flex flex-col gap-1 p-4">
+              <li key={k.id} className="flex flex-col gap-1 border-t border-line py-3 first:border-t-0">
                 <p className="text-sm leading-relaxed">“{k.message}”</p>
                 <p className="text-xs text-muted">
                   {k.fromName} · {formatShortInstant(k.createdAt)} · <span className="font-semibold text-uplift">+{k.points} XP</span>

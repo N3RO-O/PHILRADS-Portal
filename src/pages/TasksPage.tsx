@@ -19,19 +19,19 @@ import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { formatLongDate, formatNumber, manilaDayKey } from '../lib/format';
 import { todayKey } from '../lib/inventory';
 import { BUCKET_LABEL, BUCKETS, bucketOf, compareTasks, daysBetween, LIST_META, type Bucket } from '../lib/tasks';
-import { computeProgress, LEVELS, type Level } from '../lib/taskProgress';
+import { computeProgress, LEVELS, XP_RULES, type Level } from '../lib/taskProgress';
 import { useLeaving } from '../components/ui/LeavingRow';
 import { tasksService, staffBoardService } from '../services';
 import { FinishSheet } from '../components/tasks/FinishSheet';
 import type { OutputDraft } from '../services/tasks/staffBoard';
-import { TASK_LISTS, TaskRuleError, type Assignee, type Kudos, type Task, type TaskDraft, type TaskList, type TeamProgress, type XpAward } from '../services/tasks/types';
+import { TASK_LISTS, TaskRuleError, type Assignee, type Kudos, type Task, type TaskDraft, type TaskList, type TeamProgress, type WeekBonus, type XpAward } from '../services/tasks/types';
 
 type View = 'myday' | 'upcoming' | 'calendar' | 'assigned' | 'delegated' | 'team' | 'done' | 'list';
 type Where = 'all' | 'field' | 'office';
 const VIEWS: View[] = ['myday', 'upcoming', 'calendar', 'assigned', 'delegated', 'team', 'done', 'list'];
 
 const VIEW_META: Record<Exclude<View, 'list'>, { label: string; icon: typeof Sun; note: string }> = {
-  myday: { label: 'My Day', icon: Sun, note: 'What you’ve planned for today.' },
+  myday: { label: 'Today', icon: Sun, note: 'What you plan to do today.' },
   upcoming: { label: 'Upcoming', icon: CalendarClock, note: 'All your open tasks, soonest first.' },
   calendar: { label: 'Calendar', icon: CalendarDays, note: 'Your tasks on their due dates. Tap a day to see them.' },
   assigned: { label: 'Assigned to me', icon: UserRoundCheck, note: 'Tasks a coordinator gave you.' },
@@ -98,6 +98,7 @@ export function TasksPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [awards, setAwards] = useState<XpAward[]>([]);
   const [kudos, setKudos] = useState<Kudos[]>([]);
+  const [weekBonuses, setWeekBonuses] = useState<WeekBonus[]>([]);
   const [team, setTeam] = useState<TeamProgress | null>(null);
   const [people, setPeople] = useState<Assignee[]>([]);
 
@@ -114,6 +115,7 @@ export function TasksPage() {
       setTasks(list);
       setAwards(progress.awards);
       setKudos(progress.kudos);
+      setWeekBonuses(progress.weekBonuses);
       setSavedAt(tasksService.savedAt());
       setPending(tasksService.pending());
     } catch (e) {
@@ -192,7 +194,7 @@ export function TasksPage() {
     .sort(compareTasks);
 
   const awardOf = useMemo(() => new Map(awards.map((a) => [a.taskId, a])), [awards]);
-  const progress = useMemo(() => computeProgress({ awards, kudos, tasks: all, userId: me, today }), [awards, kudos, all, me, today]);
+  const progress = useMemo(() => computeProgress({ awards, kudos, weekBonuses, tasks: all, userId: me, today }), [awards, kudos, weekBonuses, all, me, today]);
 
   // ── Actions ──
   const [toast, setToast] = useState<{ text: ReactNode; tone: 'ok' | 'warn'; undo?: () => void } | null>(null);
@@ -223,6 +225,8 @@ export function TasksPage() {
         return upsert(r.next ? upsert(base, r.next) : base, r.task);
       });
       setAwards((prev) => [...prev.filter((a) => a.taskId !== t.id), ...(r.award ? [r.award] : [])]);
+      // The week bonus is decided by the database: read it back.
+      tasksService.progress().then((p) => setWeekBonuses(p.weekBonuses), () => undefined);
       const queued = tasksService.pending().has(t.id);
       if (!done) {
         setToast({ text: queued ? `Re-opened “${t.title}”. It will sync when you’re back online.` : `Re-opened “${t.title}”. Its XP was taken back.`, tone: 'ok' });
@@ -241,13 +245,15 @@ export function TasksPage() {
           1800,
         ),
       );
-      const after = computeProgress({ awards: nextAwards, kudos, tasks: nextTasks, userId: me, today });
+      const after = computeProgress({ awards: nextAwards, kudos, weekBonuses, tasks: nextTasks, userId: me, today });
+      const fullWeek = after.week.workDone === 5 && before.week.workDone < 5;
       if (after.level.level > before.level.level) setLevelUp(LEVELS.find((l) => l.level === after.level.level) ?? null);
       const newBadges = after.badges.filter((b) => b.earned && !before.badges.find((x) => x.badge.id === b.badge.id)?.earned);
       const parts: string[] = [];
       if (r.award) {
         if (r.award.onTime) parts.push(`on time +${r.award.onTime}`);
         if (r.award.subtasks) parts.push(`subtasks +${r.award.subtasks}`);
+        if (r.award.photo) parts.push(`photo +${r.award.photo}`);
       }
       setToast({
         tone: 'ok',
@@ -265,6 +271,9 @@ export function TasksPage() {
               </>
             ) : (
               <>Done: “{t.title}”.</>
+            )}
+            {fullWeek && (
+              <span className="block text-xs font-semibold text-uplift">Full working week! +{XP_RULES.fullWeek} XP</span>
             )}
             {newBadges.map((b) => (
               <span key={b.badge.id} className="block text-xs font-semibold text-uplift">
@@ -417,9 +426,9 @@ export function TasksPage() {
   } as const;
   const go = (v: View, l?: TaskList) => setParam({ view: v === 'myday' ? null : v, list: v === 'list' ? (l ?? listKey) : null, day: null });
   const syncOf = (t: Task) => (pending.has(t.id) ? (pending.get(t.id)!.error ? ('failed' as const) : ('waiting' as const)) : null);
-  // Finishing a task someone gave you opens Finish (with an optional output); your own tick off at once.
+  // Finishing a task someone gave you, or one that needs a photo, opens Finish; your own tick off at once.
   const [finishing, setFinishing] = useState<Task | null>(null);
-  const tick = (t: Task) => (t.status !== 'done' && t.createdById && t.createdById !== me && t.assigneeId === me ? setFinishing(t) : void toggle(t));
+  const tick = (t: Task) => (t.status !== 'done' && (t.requiresPhoto || (t.createdById && t.createdById !== me && t.assigneeId === me)) ? setFinishing(t) : void toggle(t));
   const finish = async (t: Task, output: OutputDraft | null) => {
     try {
       if (output) await staffBoardService.submitOutput(t.id, output);
@@ -447,7 +456,7 @@ export function TasksPage() {
       className={`grid gap-4 pb-6 ${cols === 3 ? 'grid-cols-[13.5rem_minmax(0,1fr)_20rem] items-start' : cols === 2 ? 'grid-cols-[13.5rem_minmax(0,1fr)]' : 'grid-cols-1'}`}
     >
       {/* Views and lists: a side menu when there's room. */}
-      <nav aria-label="Task views" className={`card sticky top-20 flex-col gap-4 p-3 ${cols >= 2 ? 'flex' : 'hidden'}`}>
+      <nav aria-label="Task views" className={`panel sticky top-20 flex-col gap-4 p-3 ${cols >= 2 ? 'flex' : 'hidden'}`}>
         <ul className="flex flex-col gap-0.5">
           {(Object.keys(VIEW_META) as Exclude<View, 'list'>[])
             .filter((v) => (v !== 'delegated' || canManage || counts.delegated > 0) && (v !== 'team' || canManage))
@@ -476,7 +485,7 @@ export function TasksPage() {
           <ProgressPanel initials={profile?.initials ?? '?'} progress={progress} onOpen={(tab) => setParam({ rewards: tab })} />
         </div>
 
-        <section className="card flex flex-col gap-4 p-4 sm:p-5">
+        <section className="card flex flex-col gap-4">
           <div className={`flex flex-col gap-3 ${cols >= 2 ? 'hidden' : ''}`}>
             <div className="flex flex-wrap gap-2" role="group" aria-label="Task views">
               {(Object.keys(VIEW_META) as Exclude<View, 'list'>[])
@@ -512,7 +521,7 @@ export function TasksPage() {
           <header className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h2 className="flex flex-wrap items-center gap-2 text-xl font-bold leading-tight">
-                {view === 'myday' && <SunMedium className="h-6 w-6 text-uplift" aria-hidden />}
+                {view === 'myday' && <SunMedium className="h-6 w-6" aria-hidden />}
                 {view === 'list' && (() => {
                   const s = LIST_STYLE[listKey];
                   return <s.icon className={`h-5 w-5 ${s.text}`} aria-hidden />;
@@ -533,8 +542,8 @@ export function TasksPage() {
           </header>
 
           {(!online || savedAt || waiting > 0 || failed.length > 0) && (
-            <div role="status" className={`flex flex-wrap items-start gap-x-3 gap-y-2 rounded-2xl border px-4 py-3 text-sm ${failed.length ? 'border-rose/40 bg-rose/10' : 'border-sky-300/30 bg-sky-300/[0.07]'}`}>
-              <CloudOff className={`mt-0.5 h-4 w-4 shrink-0 ${failed.length ? 'text-rose' : 'text-sky-300'}`} aria-hidden />
+            <div role="status" className={`flex flex-wrap items-start gap-x-3 gap-y-2 rounded-2xl border px-4 py-3 text-sm ${failed.length ? 'border-status-out/40 bg-surface-sunken' : 'border-line bg-surface-sunken'}`}>
+              <CloudOff className={`mt-0.5 h-4 w-4 shrink-0 ${failed.length ? 'text-status-out' : 'text-ink-soft'}`} aria-hidden />
               <div className="min-w-0 flex-1">
                 <p>
                   {!online ? (
@@ -568,13 +577,13 @@ export function TasksPage() {
           {view !== 'done' && view !== 'delegated' && <QuickAdd today={today} defaults={defaults} onAdd={add} onMore={(d) => setSheet({ task: null, initial: d })} disabled={!tasks} />}
 
           {suggestions.length > 0 && (
-            <div className="rounded-2xl border border-uplift/30 bg-uplift/[0.06] p-3 sm:p-4">
+            <div className="rounded-2xl border border-line bg-surface-sunken p-3 sm:p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="flex items-center gap-2 text-sm font-semibold">
-                  <Sun className="h-4 w-4 text-uplift" aria-hidden /> Plan your day
+                  <Sun className="h-4 w-4" aria-hidden /> Plan your day
                 </p>
                 <button type="button" className="link text-sm" onClick={() => suggestions.forEach((t) => void toggleMyDay(t))}>
-                  Add all to My Day
+                  Plan all for today
                 </button>
               </div>
               <p className="mt-0.5 text-xs text-muted">Overdue, due today, or urgent soon. Choose what you’ll do today.</p>
@@ -629,7 +638,7 @@ export function TasksPage() {
             ) : view === 'myday' ? (
               <>
                 {shown.length === 0 ? (
-                  <Empty icon={<Sun className="h-8 w-8 text-uplift" aria-hidden />}>
+                  <Empty icon={<Sun className="h-8 w-8" aria-hidden />}>
                     {myDayDone.length > 0 ? 'Everything you planned for today is done. Well done.' : 'Nothing planned yet. Add a task above, or tap the sun on any task to plan it for today.'}
                   </Empty>
                 ) : (
@@ -823,7 +832,7 @@ function CompletedList({ tasks, awardOf, rowProps }: { tasks: Task[]; awardOf: M
         icon={<CheckCheck className="h-8 w-8 text-muted" aria-hidden />}
         action={
           <Link to="/tasks?view=myday" className="btn-primary min-h-10 px-4 text-sm">
-            <Sun className="h-4 w-4" aria-hidden /> Open My Day
+            <Sun className="h-4 w-4" aria-hidden /> Open today’s tasks
           </Link>
         }
       >
@@ -879,7 +888,7 @@ function Collapsible({ label, tasks, rowProps }: { label: string; tasks: Task[];
 /** An empty view always offers the next step: by default, typing a task into Quick add. */
 function Empty({ icon, children, action }: { icon: ReactNode; children: ReactNode; action?: ReactNode }) {
   return (
-    <div className="tile flex flex-col items-center gap-3 px-4 py-10 text-center text-sm text-muted">
+    <div className="flex flex-col items-center gap-3 px-4 py-10 text-center text-sm text-muted">
       {icon}
       <p className="max-w-sm">{children}</p>
       {action === undefined ? <AddTaskButton /> : action}

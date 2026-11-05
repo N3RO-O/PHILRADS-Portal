@@ -1,12 +1,14 @@
 import { useCallback, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, Download, Fingerprint, Gift, LogOut, Rocket, SquareCheckBig, UserRound, UsersRound, Volume2 } from 'lucide-react';
+import { BellRing, ChevronDown, Download, Fingerprint, Gift, LogOut, Rocket, SquareCheckBig, UserRound, UsersRound, Volume2 } from 'lucide-react';
 import { QuickUnlockSheet, useQuickUnlock } from '../auth/QuickUnlock';
 import { CHOICES, STATUS_META, usePresence, type Choice } from '../../lib/presence';
 import { StatusDot } from '../ui/StatusDot';
 import { whatsNew } from '../../lib/whatsNew';
 import { errorSound, useErrorSound } from '../../lib/errorSound';
+import { notificationSound, useNotificationSound } from '../../lib/notificationSound';
 import { Switch } from '../ui/Switch';
+import { ThemeSwitch } from '../ui/ThemeSwitch';
 import { useOnboarding } from '../onboarding/OnboardingProvider';
 import { useDismiss } from '../../hooks/useDismiss';
 import { DEMO_ROLES } from '../../config/permissions';
@@ -15,7 +17,7 @@ import { InstallDialog, useInstallAvailability } from '../pwa/InstallDialog';
 import { promptInstall } from '../../lib/installPrompt';
 import { Avatar } from '../ui/Avatar';
 
-const itemClass = 'flex min-h-10 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-medium text-ink transition-colors hover:bg-white/[0.05]';
+const itemClass = 'flex min-h-10 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-medium text-ink transition-colors hover:bg-ink/[0.05]';
 
 export function ProfileMenu() {
   const { profile, state, signOut, setDemoRole, can } = useAuth();
@@ -30,6 +32,7 @@ export function ProfileMenu() {
   useDismiss(open, wrap, close, button);
   const install = useInstallAvailability();
   const soundOn = useErrorSound();
+  const tingOn = useNotificationSound();
   const [unlockOpen, setUnlockOpen] = useState(false);
   const quick = useQuickUnlock();
   const presence = usePresence();
@@ -56,7 +59,7 @@ export function ProfileMenu() {
       >
         <span className="relative">
           <Avatar initials={profile.initials} src={profile.avatar} color={profile.avatarColor} size="sm" />
-          <StatusDot status={presence.mine} size={13} ring="#1c1d21" className="absolute -bottom-0.5 -right-0.5" />
+          <StatusDot status={presence.mine} size={13} ring="rgb(var(--page))" className="absolute -bottom-0.5 -right-0.5" />
         </span>
         <span className="hidden max-w-[9rem] truncate text-sm font-medium text-ink sm:block">{profile.displayName}</span>
         <ChevronDown className="h-4 w-4 text-muted" aria-hidden />
@@ -66,7 +69,7 @@ export function ProfileMenu() {
           <div className="flex items-center gap-3 border-b border-line px-2 pb-3">
             <span className="relative">
               <Avatar initials={profile.initials} src={profile.avatar} color={profile.avatarColor} />
-              <StatusDot status={presence.mine} size={16} ring="#303137" className="absolute -bottom-1 -right-1" />
+              <StatusDot status={presence.mine} size={16} ring="rgb(var(--surface-raised))" className="absolute -bottom-1 -right-1" />
             </span>
             <div className="min-w-0">
               <p className="truncate font-semibold">{profile.displayName}</p>
@@ -75,12 +78,12 @@ export function ProfileMenu() {
           </div>
           <div className="flex flex-col gap-0.5 py-2">
             <button type="button" className={itemClass} onClick={() => setPicking((p) => !p)} aria-expanded={picking}>
-              <StatusDot status={presence.choice === 'invisible' ? 'offline' : presence.choice} size={16} ring="#303137" />
+              <StatusDot status={presence.choice === 'invisible' ? 'offline' : presence.choice} size={16} ring="rgb(var(--surface-raised))" />
               <span className="flex-1">{presence.choice === 'invisible' ? 'Invisible' : STATUS_META[presence.choice].label}</span>
               <span className="text-xs text-muted">{picking ? 'Close' : 'Change'}</span>
             </button>
             {picking && (
-              <div className="mb-1 flex animate-pop-in flex-col rounded-xl bg-white/[0.03] p-1" role="radiogroup" aria-label="Your status">
+              <div className="mb-1 flex animate-pop-in flex-col rounded-xl bg-ink/[0.03] p-1" role="radiogroup" aria-label="Your status">
                 {CHOICES.map((c) => (
                   <button
                     key={c.value}
@@ -88,9 +91,9 @@ export function ProfileMenu() {
                     role="radio"
                     aria-checked={presence.choice === c.value}
                     onClick={() => (presence.setChoice(c.value as Choice), setPicking(false))}
-                    className={`flex w-full items-start gap-3 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-white/[0.06] ${presence.choice === c.value ? 'bg-white/[0.05]' : ''}`}
+                    className={`flex w-full items-start gap-3 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-ink/[0.06] ${presence.choice === c.value ? 'bg-ink/[0.05]' : ''}`}
                   >
-                    <StatusDot status={c.value === 'invisible' ? 'offline' : c.value} size={16} ring="#2a2b30" className="mt-0.5" />
+                    <StatusDot status={c.value === 'invisible' ? 'offline' : c.value} size={16} ring="rgb(var(--surface-raised))" className="mt-0.5" />
                     <span className="min-w-0">
                       <span className="block text-sm font-semibold text-ink">{c.label}</span>
                       <span className="block text-xs leading-snug text-muted">{c.note}</span>
@@ -100,10 +103,10 @@ export function ProfileMenu() {
               </div>
             )}
             <Link to="/profile" className={itemClass} onClick={() => setOpen(false)}>
-              <UserRound className="h-4 w-4 text-uplift" aria-hidden /> Your profile
+              <UserRound className="h-4 w-4" aria-hidden /> Your profile
             </Link>
             <Link to="/tasks" className={itemClass} onClick={() => setOpen(false)}>
-              <SquareCheckBig className="h-4 w-4 text-uplift" aria-hidden /> My tasks
+              <SquareCheckBig className="h-4 w-4" aria-hidden /> My tasks
             </Link>
             {/* After "Skip for now": bring the Get started list back, progress intact. */}
             {onboarding.ready && onboarding.state.hidden && !onboarding.allDone && (
@@ -115,7 +118,7 @@ export function ProfileMenu() {
                   setOpen(false);
                 }}
               >
-                <Rocket className="h-4 w-4 text-uplift" aria-hidden /> Getting started
+                <Rocket className="h-4 w-4" aria-hidden /> Getting started
                 <span className="ml-auto text-xs tabular-nums text-muted">
                   {onboarding.doneCount} of {onboarding.steps.length}
                 </span>
@@ -123,7 +126,7 @@ export function ProfileMenu() {
             )}
             {can('staff.manage') && (
               <Link to="/staff" className={itemClass} onClick={() => setOpen(false)}>
-                <UsersRound className="h-4 w-4 text-uplift" aria-hidden /> Manage staff
+                <UsersRound className="h-4 w-4" aria-hidden /> Manage staff
               </Link>
             )}
             <button
@@ -134,28 +137,38 @@ export function ProfileMenu() {
                 whatsNew.showNotes();
               }}
             >
-              <Gift className="h-4 w-4 text-uplift" aria-hidden /> What’s new
+              <Gift className="h-4 w-4" aria-hidden /> What’s new
             </button>
+            <div className="px-3 py-1.5">
+              <ThemeSwitch size="sm" className="w-full" />
+            </div>
             <div className={itemClass}>
-              <Volume2 className="h-4 w-4 text-uplift" aria-hidden />
+              <Volume2 className="h-4 w-4" aria-hidden />
               <span id={`${panelId}-sound`} className="flex-1">
                 Sound on errors
               </span>
               <Switch checked={soundOn} labelledBy={`${panelId}-sound`} onChange={(next) => errorSound.set(next)} />
             </div>
+            <div className={itemClass}>
+              <BellRing className="h-4 w-4" aria-hidden />
+              <span id={`${panelId}-ting`} className="flex-1">
+                Sound on notifications
+              </span>
+              <Switch checked={tingOn} labelledBy={`${panelId}-ting`} onChange={(next) => notificationSound.set(next)} />
+            </div>
             <button type="button" className={itemClass} onClick={() => (setOpen(false), setUnlockOpen(true))}>
-              <Fingerprint className="h-4 w-4 text-uplift" aria-hidden />
+              <Fingerprint className="h-4 w-4" aria-hidden />
               <span className="flex-1">Quick unlock</span>
-              <span className={`rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold ${quick.enabled ? 'bg-status-in/15 text-status-in' : 'bg-white/[0.06] text-muted'}`}>{quick.enabled ? 'On' : 'Off'}</span>
+              <span className={`rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold ${quick.enabled ? 'bg-status-in/15 text-status-in' : 'bg-ink/[0.06] text-muted'}`}>{quick.enabled ? 'On' : 'Off'}</span>
             </button>
             {install !== 'installed' && (
               <button type="button" className={itemClass} onClick={() => void onInstall()}>
-                <Download className="h-4 w-4 text-uplift" aria-hidden /> Install app
+                <Download className="h-4 w-4" aria-hidden /> Install app
               </button>
             )}
             {state.status === 'signed-in' && (
               <button type="button" className={itemClass} onClick={() => void signOut()}>
-                <LogOut className="h-4 w-4 text-uplift" aria-hidden /> Sign out
+                <LogOut className="h-4 w-4" aria-hidden /> Sign out
               </button>
             )}
           </div>

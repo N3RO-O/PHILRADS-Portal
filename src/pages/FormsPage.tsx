@@ -50,7 +50,7 @@ function FormList() {
               <span className="mt-0.5 block text-xs text-ink-soft">{f.summary}</span>
               <span className="mt-1.5 flex flex-wrap items-center gap-2 text-[0.6875rem] text-muted">
                 {f.paper}
-                {drafts.has(f.id) && <span className="rounded-full border border-uplift/40 bg-uplift/10 px-2 py-px font-semibold text-uplift">Draft</span>}
+                {drafts.has(f.id) && <span className="rounded-full border border-line px-2 py-px font-semibold text-ink-soft">Draft</span>}
               </span>
             </span>
             <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted transition group-hover:translate-x-0.5" aria-hidden />
@@ -130,7 +130,7 @@ function FormEditor({ form }: { form: FormDef }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="card sticky top-16 z-20 flex flex-wrap items-center gap-2 p-3">
+      <div className="floating sticky top-16 z-20 rounded-2xl flex flex-wrap items-center gap-2 p-3">
         <button type="button" className="icon-btn" onClick={() => navigate('/forms')} aria-label="All forms">
           <ArrowLeft className="h-5 w-5" aria-hidden />
         </button>

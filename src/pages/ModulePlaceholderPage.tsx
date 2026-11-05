@@ -22,13 +22,13 @@ export function ModulePlaceholderPage({ moduleId }: { moduleId: ModuleId }) {
   return (
     <div className="grid grid-cols-1 gap-5 xl:grid-cols-12 xl:items-start">
       <section className="card flex animate-fade-up flex-col gap-4 sm:flex-row sm:items-center xl:col-span-12">
-        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-uplift/10 text-uplift">
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl text-ink-soft">
           <m.icon className="h-6 w-6" aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-base font-semibold leading-tight">About this module</h2>
-            <span className="badge gap-1 border-uplift/40 bg-uplift/10 text-uplift">
+            <span className="badge gap-1 border-line text-ink-soft">
               <Construction className="h-3 w-3" aria-hidden /> Planned
             </span>
           </div>
@@ -41,7 +41,7 @@ export function ModulePlaceholderPage({ moduleId }: { moduleId: ModuleId }) {
 
       {action && !(showUpload && actionKey === 'upload') && (
         <p role="status" className="flex animate-fade-up gap-2 rounded-2xl border border-dashed border-line px-4 py-3 text-sm text-ink-soft xl:col-span-12">
-          <Info className="mt-0.5 h-4 w-4 shrink-0 text-uplift" aria-hidden />
+          <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <span>
             “{action}” will open here once the {m.label} module is built. Nothing has been created or saved.
           </span>
@@ -56,7 +56,7 @@ export function ModulePlaceholderPage({ moduleId }: { moduleId: ModuleId }) {
         <ul className="flex flex-col">
           {m.plannedScope.map((s) => (
             <li key={s} className="flex items-start gap-3 border-t border-line/70 py-3 text-sm text-ink-soft first:border-t-0 first:pt-0">
-              <CircleCheck className="mt-0.5 h-4 w-4 shrink-0 text-uplift" aria-hidden />
+              <CircleCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
               {s}
             </li>
           ))}

@@ -84,19 +84,19 @@ export function SignInPage() {
   return (
     <main className="relative isolate grid min-h-dvh place-items-center overflow-hidden p-4">
       <SignInBackground />
-      <div ref={card} className="card w-full max-w-sm animate-fade-up gap-0 p-0 shadow-2xl shadow-black/40">
-        <div className="flex flex-col items-center gap-3 rounded-t-2xl border-b border-line/70 px-6 py-8 text-center">
+      <div ref={card} className="floating w-full max-w-sm animate-fade-up overflow-hidden rounded-2xl">
+        <div className="flex flex-col items-center gap-3 rounded-t-2xl bg-burgundy-500 px-6 py-8 text-center text-cloud">
           <Emblem className="h-16 w-16" />
           <div>
             <p className="font-display text-2xl tracking-wide">PHILRADS</p>
-            <p className="text-xs uppercase tracking-[0.18em] text-muted">Staff Portal</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-cloud/80">Staff Portal</p>
           </div>
         </div>
         {mode === 'sign-in' ? (
           <form onSubmit={submit} noValidate className="flex flex-col gap-4 p-6">
             <h1 className="text-lg font-bold">Sign in</h1>
             {idleOut && !error && (
-              <p role="status" className="rounded-xl border border-uplift/30 bg-uplift/10 px-4 py-3 text-sm text-ink-soft">
+              <p role="status" className="rounded-xl border border-line bg-surface-sunken px-4 py-3 text-sm text-ink-soft">
                 You were signed out after 10 minutes without activity. Sign in again to continue.
               </p>
             )}

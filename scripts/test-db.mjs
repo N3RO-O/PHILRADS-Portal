@@ -378,7 +378,7 @@ await check('a bio is at most 500 characters', () => as(B, `update public.profil
 // Badges on profiles: colleagues see the counts behind them, worked out from the XP the database awarded
 await check('a colleague sees someone’s badge counts and XP', async () => {
   const s = (await as(A, `select public.profile_task_stats('${B}') s`)).rows[0].s;
-  const xp = (await db.query(`select coalesce(sum(points), 0)::int + (select coalesce(sum(points), 0)::int from public.task_kudos where to_user = '${B}') xp from public.task_xp_events where user_id = '${B}' and flag is null`)).rows[0].xp;
+  const xp = (await db.query(`select coalesce(sum(points), 0)::int + (select coalesce(sum(points), 0)::int from public.task_kudos where to_user = '${B}') + (select coalesce(sum(points), 0)::int from public.task_week_bonuses where user_id = '${B}') xp from public.task_xp_events where user_id = '${B}' and flag is null`)).rows[0].xp;
   const total = (await db.query(`select count(*)::int n from public.task_xp_events where user_id = '${B}' and flag is null`)).rows[0].n;
   if (s.xp !== xp || s.total !== total || s.total < 1 || typeof s.by_list.office !== 'number' || s.best_streak < 1) throw new Error(JSON.stringify({ s, xp, total }));
   return { xp: s.xp, total: s.total, streak: s.streak };
@@ -873,6 +873,54 @@ await check('links must be web links', () => as(B, `insert into public.task_outp
 await check('an empty output is refused', () => as(B, `insert into public.task_outputs (task_id) values (${TASK('Photos of the distribution')})`), true);
 await check('outputs cannot be edited', () => as(B, `update public.task_outputs set note = 'changed'`), true);
 
+// Needs a photo, the photo bonus, and the working-week bonus (20261113000000)
+const photoXp = async (title) => (await db.query(`select points, photo from public.task_xp_events where task_id = ${TASK(title)}`)).rows[0];
+await check('a task that needs a photo cannot be finished without one', async () => {
+  await as(A, `insert into public.tasks (title, priority, assignee_id, created_by, requires_photo) values ('Photo needed', 'low', '${B}', '${A}', true)`);
+  return as(B, `update public.tasks set status = 'done' where id = ${TASK('Photo needed')}`);
+}, true);
+await check('only the giver switches "needs a photo"', () => as(B, `update public.tasks set requires_photo = false where id = ${TASK('Photo needed')}`), true);
+await check('with a photo sent it finishes, with no extra for the photo', async () => {
+  await as(B, `insert into public.task_outputs (task_id, photos) values (${TASK('Photo needed')}, array['data:image/jpeg;base64,AAAA'])`);
+  await as(B, `update public.tasks set status = 'done' where id = ${TASK('Photo needed')}`);
+  const x = await photoXp('Photo needed');
+  if (x?.points !== 10 || x.photo !== 0) throw new Error(JSON.stringify(x));
+  return x;
+});
+await check('a photo nobody asked for adds 5 XP', async () => {
+  await as(A, `insert into public.tasks (title, priority, assignee_id, created_by) values ('Photo extra', 'low', '${B}', '${A}')`);
+  await as(B, `insert into public.task_outputs (task_id, photos) values (${TASK('Photo extra')}, array['data:image/jpeg;base64,AAAA'])`);
+  await as(B, `update public.tasks set status = 'done' where id = ${TASK('Photo extra')}`);
+  const x = await photoXp('Photo extra');
+  if (x?.points !== 15 || x.photo !== 5) throw new Error(JSON.stringify(x));
+  return x;
+});
+const manilaDow = Number((await db.query(`select extract(isodow from (now() at time zone 'Asia/Manila'))::int d`)).rows[0].d);
+if (manilaDow <= 5) {
+  // The other working days of this week, set up directly: a finished task on each.
+  const WEEK = `date_trunc('week', (now() at time zone 'Asia/Manila'))::date`;
+  const others = [1, 2, 3, 4, 5].filter((d) => d !== manilaDow);
+  await db.exec(others.map((d) => `insert into public.tasks (title, status, assignee_id, created_by) values ('Week day ${d}', 'done', '${B}', '${A}');
+    update public.task_xp_events set day = ${WEEK} + ${d - 1}, flag = null, points = 10 where task_id = ${TASK(`Week day ${d}`)};`).join('\n'));
+  await check('a task on every working day earns the week bonus once, with a bell note', async () => {
+    await as(A, `insert into public.tasks (title, assignee_id, created_by) values ('Week today', '${B}', '${A}')`);
+    await as(B, `update public.tasks set status = 'done' where id = ${TASK('Week today')}`);
+    const b = (await as(B, `select points from public.task_week_bonuses`)).rows;
+    const n = (await db.query(`select count(*)::int n from public.notifications where recipient_id = '${B}' and title like 'A full working week%'`)).rows[0].n;
+    if (b.length !== 1 || b[0].points !== 25 || n !== 1) throw new Error(JSON.stringify({ b, n }));
+    return b[0].points;
+  });
+  await check('staff cannot write a week bonus themselves', () => as(B, `insert into public.task_week_bonuses (user_id, week_start, points) values ('${B}', date_trunc('week', now())::date - 7, 25)`), true);
+  await check('re-opening a task that leaves a day empty takes the week bonus back', async () => {
+    await db.exec(`update public.tasks set status = 'todo' where id = ${TASK(`Week day ${others[0]}`)}`);
+    const n = (await db.query(`select count(*)::int n from public.task_week_bonuses where user_id = '${B}'`)).rows[0].n;
+    if (n !== 0) throw new Error(`${n} bonus rows`);
+    return n;
+  });
+} else {
+  results.push('ok   (skipped) week bonus checks: today is a weekend in Manila');
+}
+
 // Only the owner edits a profile
 await check('an administrator cannot edit someone else’s profile', () => as(A, `update public.profiles set bio = 'edited by admin' where id = '${B}'`), true);
 await check('staff choose their own avatar frame', () => as(B, `update public.profiles set avatar_frame = 'aurora' where id = '${B}' returning avatar_frame`).then(expectRows(1)));
@@ -902,6 +950,32 @@ await check('staff share their status', () => as(B, `insert into public.staff_pr
 await check('colleagues see who is on', () => as(A, `select status from public.staff_presence where profile_id = '${B}'`).then(expectRows(1)));
 await check('nobody sets someone else’s status', () => as(A, `insert into public.staff_presence (profile_id, status) values ('${B}', 'dnd')`), true);
 
+// Verse of the Day reflections (20261114000000)
+const TODAY_MNL = `(now() at time zone 'Asia/Manila')::date`;
+await check('staff share a reflection on today’s verse', () => as(B, `insert into public.verse_reflections (verse_day, verse_ref, body) values (${TODAY_MNL}, 'Psalm 23:1–3 (NLT)', '  Rest is part of the journey.  ') returning body`).then((r) => {
+  if (r.rows[0]?.body !== 'Rest is part of the journey.') throw new Error(JSON.stringify(r.rows));
+  return r.rows[0].body;
+}));
+await check('one reflection a person a day', () => as(B, `insert into public.verse_reflections (verse_day, verse_ref, body) values (${TODAY_MNL}, 'Psalm 23:1–3 (NLT)', 'A second one')`), true);
+await check('a reflection is at most 280 characters', () => as(A, `insert into public.verse_reflections (verse_day, verse_ref, body) values (${TODAY_MNL}, 'Psalm 23:1–3 (NLT)', repeat('x', 281))`), true);
+await check('only today’s verse can be written about', () => as(A, `insert into public.verse_reflections (verse_day, verse_ref, body) values (${TODAY_MNL} - 1, 'Psalm 23:1–3 (NLT)', 'Backdated')`), true);
+await check('nobody writes in someone else’s name', () => as(A, `insert into public.verse_reflections (verse_day, verse_ref, author_id, body) values (${TODAY_MNL}, 'Psalm 23:1–3 (NLT)', '${B}', 'Not mine')`), true);
+await check('colleagues read the reflections', () => as(A, `select body from public.verse_reflections`).then(expectRows(1)));
+await check('nobody edits someone else’s reflection', async () => {
+  await as(A, `update public.verse_reflections set body = 'changed by admin'`);
+  const r = (await db.query(`select body from public.verse_reflections`)).rows[0];
+  if (r.body === 'changed by admin') throw new Error('changed');
+  return 'unchanged';
+});
+await check('the author edits only the words', async () => {
+  await as(B, `update public.verse_reflections set body = 'Rest is a gift.', verse_day = '2020-01-01' where author_id = '${B}'`);
+  const r = (await db.query(`select body, verse_day = ${TODAY_MNL} as today from public.verse_reflections`)).rows[0];
+  if (r.body !== 'Rest is a gift.' || !r.today) throw new Error(JSON.stringify(r));
+  return r.body;
+});
+await check('an account not yet switched on reads none', () => as(C, `select id from public.verse_reflections`).then(expectRows(0)));
+await check('an administrator can remove an unkind one', () => as(A, `delete from public.verse_reflections where author_id = '${B}' returning id`).then(expectRows(1)));
+
 // Inactive account and signed-out visitors
 await check('inactive account sees no tasks', () => as(C, `select id from public.tasks`).then(expectRows(0)));
 await check('inactive account still sees its own profile', () => as(C, `select id from public.profiles`).then(expectRows(1)));
@@ -914,6 +988,7 @@ await check('role names are final (no placeholder or TBC)', async () => {
 
 await db.exec(`set role anon`);
 await check('signed-out visitors cannot read tasks', () => db.query(`select * from public.tasks`), true);
+await check('signed-out visitors cannot read verse reflections', () => db.query(`select * from public.verse_reflections`), true);
 await check('signed-out visitors cannot call the dashboard summary', () => db.query(`select * from public.get_dashboard_summary()`), true);
 await check('signed-out visitors cannot read the IMS snapshot', () => db.query(`select * from public.ims_inventory_snapshot`), true);
 await check('signed-out visitors cannot read resources', () => db.query(`select * from public.resources`), true);

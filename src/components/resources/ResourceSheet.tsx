@@ -189,7 +189,7 @@ export function ResourceSheet({ open, resource, existing, onClose, onSave, onRem
     >
       {!resource && (
         <div role="tablist" aria-label="How to add" className="relative mb-5 grid grid-cols-2 gap-1 rounded-2xl bg-surface-sunken p-1">
-          <SlidingPill className="rounded-xl bg-surface-raised shadow-sm shadow-black/30 ring-1 ring-inset ring-white/[0.06]" />
+          <SlidingPill className="rounded-xl bg-surface-raised shadow-sm shadow-black/30 ring-1 ring-inset ring-ink/[0.06]" />
           {(
             [
               ['link', 'Paste a link', Link2],
@@ -211,7 +211,7 @@ export function ResourceSheet({ open, resource, existing, onClose, onSave, onRem
       )}
 
       {mode === 'upload' ? (
-        <div className="tile flex flex-col gap-3 px-4 py-5 text-sm text-ink-soft">
+        <div className="flex flex-col gap-3 py-3 text-sm text-ink-soft">
           <p>
             <strong className="font-semibold text-ink">Uploading straight to Google Drive isn’t connected yet.</strong>{' '}
             {driveUploadService.configured
@@ -227,7 +227,7 @@ export function ResourceSheet({ open, resource, existing, onClose, onSave, onRem
           {restored && dirty && (
             <p className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-xl border border-line/70 bg-surface-sunken px-4 py-2.5 text-sm text-ink-soft">
               <span className="flex items-center gap-2">
-                <History className="h-4 w-4 shrink-0 text-uplift" aria-hidden /> Kept what you typed before.
+                <History className="h-4 w-4 shrink-0" aria-hidden /> Kept what you typed before.
               </span>
               <button type="button" className="link text-sm" onClick={startOver}>
                 Start over

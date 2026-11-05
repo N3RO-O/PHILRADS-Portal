@@ -277,7 +277,7 @@ export function LiveMapPage() {
 
   if (!can('map.read'))
     return (
-      <p className="card text-sm text-ink-soft" role="alert" data-quiet>
+      <p className="notice text-ink-soft" role="alert" data-quiet>
         Your role doesn’t include the Live Map. Ask an administrator if you need it.
       </p>
     );
@@ -311,7 +311,7 @@ export function LiveMapPage() {
       {/* "isolate": the map's own layers stay under the top bar's menus. */}
       {/* Not isolated while the map fills the window, so it can sit above the sidebar and top bar. */}
       <section
-        className={`card relative overflow-hidden p-0 lg:grid lg:grid-cols-[var(--panel-shown)_minmax(0,1fr)] ${panel_.dragging ? 'select-none' : 'lg:transition-[grid-template-columns] lg:duration-300'} ${full === 'window' ? '' : 'isolate'}`}
+        className={`panel relative overflow-hidden p-0 lg:grid lg:grid-cols-[var(--panel-shown)_minmax(0,1fr)] ${panel_.dragging ? 'select-none' : 'lg:transition-[grid-template-columns] lg:duration-300'} ${full === 'window' ? '' : 'isolate'}`}
         style={
           {
             '--panel': panel_.collapsed ? '0px' : `${panel_.width}px`,
@@ -331,7 +331,7 @@ export function LiveMapPage() {
         >
           <div className="flex items-center justify-between gap-2 border-b border-line/70 px-4 py-3">
             <h2 className="card-title flex items-center gap-2 whitespace-nowrap">
-              <MapPin className="h-4 w-4 text-uplift" aria-hidden /> Places and team
+              <MapPin className="h-4 w-4" aria-hidden /> Places and team
               {mapService.source === 'mock' && <SampleBadge />}
             </h2>
             {canManage && (
@@ -374,14 +374,14 @@ export function LiveMapPage() {
               }}
               className={`group pointer-events-auto absolute inset-y-0 -left-1.5 flex w-3 cursor-col-resize items-center justify-center focus:outline-none`}
             >
-              <span className={`h-full w-0.5 transition-colors ${panel_.dragging ? 'bg-uplift' : 'bg-transparent group-hover:bg-uplift/60 group-focus-visible:bg-uplift'}`} />
-              <span className="absolute h-10 w-1.5 rounded-full bg-line transition-colors group-hover:bg-uplift" />
+              <span className={`h-full w-0.5 transition-colors ${panel_.dragging ? 'bg-ink-mute' : 'bg-transparent group-hover:bg-ink-mute/60'}`} />
+              <span className="absolute h-10 w-1.5 rounded-full bg-line transition-colors group-hover:bg-ink-mute" />
             </div>
           )}
           <button
             type="button"
             onClick={panel_.toggle}
-            className="press pointer-events-auto absolute left-0 top-1/2 grid h-14 w-6 -translate-y-1/2 place-items-center rounded-r-xl border border-l-0 border-line bg-surface-raised/95 text-ink-soft shadow-xl backdrop-blur-md hover:text-uplift"
+            className="press pointer-events-auto absolute left-0 top-1/2 grid h-14 w-6 -translate-y-1/2 place-items-center rounded-r-xl border border-l-0 border-line bg-surface-raised text-ink-soft shadow-xl hover:text-ink"
             aria-label={panel_.collapsed ? 'Show the places panel' : 'Hide the places panel'}
             title={panel_.collapsed ? 'Show places and team' : 'Hide the panel'}
           >
@@ -441,15 +441,15 @@ export function LiveMapPage() {
           )}
 
           {!online && !picking && (
-            <p className="absolute left-3 right-16 top-3 z-[600] flex items-start gap-2 rounded-xl border border-line bg-surface-raised/95 px-3 py-2 text-xs text-ink-soft shadow-xl backdrop-blur-md lg:right-auto lg:max-w-sm">
-              <CloudOff className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-300" aria-hidden />
+            <p className="absolute left-3 right-16 top-3 z-[600] flex items-start gap-2 rounded-xl border border-line bg-surface-raised px-3 py-2 text-xs text-ink-soft shadow-xl lg:right-auto lg:max-w-sm">
+              <CloudOff className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-soft" aria-hidden />
               You’re offline: places from your last visit, and map areas you’ve viewed before.
             </p>
           )}
 
           {placesQ.status === 'success' && places.length === 0 && !picking && (
-            <div className="absolute inset-x-3 top-16 z-[600] mx-auto flex max-w-sm flex-col items-center gap-3 rounded-2xl border border-line bg-surface-raised/95 p-5 text-center shadow-2xl backdrop-blur-md">
-              <MapPin className="h-7 w-7 text-uplift" aria-hidden />
+            <div className="absolute inset-x-3 top-16 z-[600] mx-auto flex max-w-sm flex-col items-center gap-3 rounded-2xl border border-line bg-surface-raised p-5 text-center shadow-2xl">
+              <MapPin className="h-7 w-7" aria-hidden />
               <p className="text-sm font-semibold">No places pinned yet</p>
               <p className="text-xs text-muted">Pin warehouses, hubs and response sites so everyone can find them and see their stock.</p>
               {canManage && (
@@ -462,7 +462,7 @@ export function LiveMapPage() {
 
           {/* Picking a spot: crosshair in the middle, actions at the bottom (thumb reach) */}
           {picking && (
-            <div className="absolute inset-x-3 bottom-3 z-[600] mx-auto flex max-w-md flex-col gap-3 rounded-2xl border border-uplift/40 bg-surface-raised/95 p-4 shadow-2xl backdrop-blur-md">
+            <div className="absolute inset-x-3 bottom-3 z-[600] mx-auto flex max-w-md flex-col gap-3 rounded-2xl border border-line bg-surface-raised p-4 shadow-2xl">
               <p className="text-sm">
                 <strong className="font-semibold">Move the map</strong> until the crosshair sits on {picking.name.trim() ? `“${picking.name.trim()}”` : 'the place'}.
               </p>
@@ -495,7 +495,7 @@ export function LiveMapPage() {
 
           {/* Following someone sharing live: the map keeps them in the middle */}
           {following && !picking && (
-            <div className="absolute left-1/2 top-3 z-[600] flex -translate-x-1/2 items-center gap-2 rounded-full border border-status-in/50 bg-surface-raised/95 py-1.5 pl-3 pr-1.5 text-xs shadow-xl backdrop-blur-md">
+            <div className="absolute left-1/2 top-3 z-[600] flex -translate-x-1/2 items-center gap-2 rounded-full border border-status-in/50 bg-surface-raised py-1.5 pl-3 pr-1.5 text-xs shadow-xl">
               <span className="h-2 w-2 animate-pulse rounded-full bg-status-in" aria-hidden />
               <span className="max-w-[10rem] truncate font-semibold">Following {live.find((p) => p.profileId === following)?.name.split(' ')[0] ?? ''}</span>
               <button type="button" className="rounded-full border border-line px-2.5 py-1 font-semibold hover:bg-surface" onClick={() => setFollowing(null)}>
@@ -514,8 +514,8 @@ export function LiveMapPage() {
           {/* Phones: list and sharing at the bottom, within thumb reach */}
           {!picking && (
             <div className="absolute inset-x-3 bottom-6 z-[600] flex items-center justify-between gap-2 lg:hidden">
-              <button type="button" className="flex min-h-12 items-center gap-2 rounded-full border border-line bg-surface-raised/95 px-4 text-sm font-semibold shadow-xl backdrop-blur-md" onClick={() => setPanel({ type: 'list' })}>
-                <List className="h-4 w-4 text-uplift" aria-hidden /> List
+              <button type="button" className="flex min-h-12 items-center gap-2 rounded-full border border-line bg-surface-raised px-4 text-sm font-semibold shadow-xl" onClick={() => setPanel({ type: 'list' })}>
+                <List className="h-4 w-4" aria-hidden /> List
                 <span className="text-xs font-normal text-muted">{formatNumber(shownPlaces.length + shownCheckIns.length + shownLive.length + shownSites.length)}</span>
               </button>
               {canCheckIn && <ShareButton live={sharing.status !== 'off'} onClick={() => setPanel({ type: 'share' })} disabled={!online} />}
@@ -639,13 +639,13 @@ export function LiveMapPage() {
             <div className="flex items-center gap-3 text-xs text-muted" aria-hidden>
               <span className="h-px flex-1 bg-line" /> or <span className="h-px flex-1 bg-line" />
             </div>
-            <section className="flex flex-col gap-3 rounded-2xl border border-line/70 bg-white/[0.02] p-4">
+            <section className="flex flex-col gap-3 rounded-2xl border border-line/70 bg-ink/[0.02] p-4">
               <div>
                 <h3 className="text-sm font-semibold">Check in once</h3>
                 <p className="text-xs text-muted">One pin where you are now, with a note. Shown for 24 hours.</p>
               </div>
               <button type="button" className="btn-ghost min-h-11" onClick={() => setPanel({ type: 'checkin' })}>
-                <MapPin className="h-4 w-4 text-uplift" aria-hidden /> Check in here
+                <MapPin className="h-4 w-4" aria-hidden /> Check in here
               </button>
             </section>
           </div>
@@ -727,7 +727,7 @@ function ShareButton({ live, onClick, disabled }: { live: boolean; onClick: () =
       onClick={onClick}
       disabled={disabled}
       className={`flex min-h-12 items-center gap-2 rounded-full px-5 text-sm font-bold shadow-xl shadow-black/50 transition active:scale-95 disabled:opacity-60 ${
-        live ? 'border border-status-in/60 bg-surface-raised/95 text-status-in backdrop-blur-md' : 'bg-uplift text-page'
+        live ? 'border border-status-in/60 bg-surface-raised text-status-in' : 'premium'
       }`}
     >
       {live ? (
@@ -755,7 +755,7 @@ function MapButton({ label, onClick, active = false, children }: { label: string
       aria-label={label}
       aria-pressed={active || undefined}
       title={label}
-      className={`grid h-11 w-11 place-items-center rounded-xl border bg-surface-raised/95 shadow-xl shadow-black/50 backdrop-blur-md transition hover:bg-surface-raised ${active ? 'border-uplift/70 text-uplift' : 'border-line text-ink'}`}
+      className={`grid h-11 w-11 place-items-center rounded-xl border bg-surface-raised shadow-xl shadow-black/50 transition hover:bg-surface-raised ${active ? 'border-burgundy-400 bg-burgundy-500 text-cloud' : 'border-line text-ink'}`}
     >
       {children}
     </button>
@@ -806,7 +806,7 @@ function PlacesPanel({ search, setSearch, layers, toggleLayer, places, shownPlac
         <legend className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Show on the map</legend>
         <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-1">
           {[...PLACE_KINDS.map((k) => ({ key: k.key as Layer, label: k.plural, color: k.color })), { key: 'team' as Layer, label: 'Team: live and check-ins', color: '#7a1f1f' }, { key: 'activities' as Layer, label: 'Past activities (Statistics)', color: programMeta('emergency').color }].map((l) => (
-            <label key={l.key} className="tap flex min-h-10 cursor-pointer items-center gap-3 rounded-xl px-2 text-sm hover:bg-white/[0.04]">
+            <label key={l.key} className="tap flex min-h-10 cursor-pointer items-center gap-3 rounded-xl px-2 text-sm hover:bg-ink/[0.04]">
               <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: l.color }} aria-hidden />
               <span className="min-w-0 flex-1 truncate">{l.label}</span>
               <span className="text-xs tabular-nums text-muted">{counts(l.key)}</span>
@@ -842,8 +842,8 @@ function PlacesPanel({ search, setSearch, layers, toggleLayer, places, shownPlac
               .sort((a, b) => (b.activities[0].startDate ?? `${b.activities[0].year}`).localeCompare(a.activities[0].startDate ?? `${a.activities[0].year}`))
               .map((s) => (
                 <li key={s.key}>
-                  <button type="button" className="tap flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-white/[0.04]" onClick={() => onSelect({ type: 'site', id: s.key })}>
-                    <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-[0.625rem] font-bold text-page" style={{ background: programMeta(s.program).color }} aria-hidden>
+                  <button type="button" className="tap flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-ink/[0.04]" onClick={() => onSelect({ type: 'site', id: s.key })}>
+                    <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-[0.625rem] font-bold text-onaccent" style={{ background: programMeta(s.program).color }} aria-hidden>
                       {s.activities.length}
                     </span>
                     <span className="min-w-0 flex-1">
@@ -870,9 +870,9 @@ function PlacesPanel({ search, setSearch, layers, toggleLayer, places, shownPlac
               const fresh = isFresh(p);
               return (
                 <li key={p.profileId}>
-                  <button type="button" className="tap flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-white/[0.04]" onClick={() => onSelect({ type: 'live', id: p.profileId })}>
+                  <button type="button" className="tap flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-ink/[0.04]" onClick={() => onSelect({ type: 'live', id: p.profileId })}>
                     <span
-                      className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 text-[0.6875rem] font-bold ${fresh ? 'border-status-in' : 'border-muted'} ${p.mine ? 'bg-uplift text-page' : 'bg-surface-raised text-ink'}`}
+                      className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 text-[0.6875rem] font-bold ${fresh ? 'border-status-in' : 'border-muted'} ${p.mine ? 'bg-burgundy-500 text-cloud' : 'bg-surface-raised text-ink'}`}
                       aria-hidden
                     >
                       {initialsOf(p.name)}
@@ -897,13 +897,13 @@ function PlacesPanel({ search, setSearch, layers, toggleLayer, places, shownPlac
             Team today <span className="font-normal normal-case tracking-normal">{shownCheckIns.length}</span>
           </h3>
           {shownCheckIns.length === 0 ? (
-            <p className="rounded-xl bg-white/[0.02] px-3 py-3 text-xs text-muted">Nobody has checked in in the last 24 hours. In the field, tap “Check in here” so coordinators can see you.</p>
+            <p className="rounded-xl bg-ink/[0.02] px-3 py-3 text-xs text-muted">Nobody has checked in in the last 24 hours. In the field, tap “Check in here” so coordinators can see you.</p>
           ) : (
             <ul className="flex flex-col">
               {shownCheckIns.map((c) => (
                 <li key={c.id}>
-                  <button type="button" className="tap flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-white/[0.04]" onClick={() => onSelect({ type: 'checkin', id: c.id })}>
-                    <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-[0.6875rem] font-bold ${c.mine ? 'bg-uplift text-page' : 'bg-burgundy-600 text-white'}`} aria-hidden>
+                  <button type="button" className="tap flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-ink/[0.04]" onClick={() => onSelect({ type: 'checkin', id: c.id })}>
+                    <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-[0.6875rem] font-bold ${c.mine ? 'bg-burgundy-500 text-cloud' : 'bg-surface-raised text-ink'}`} aria-hidden>
                       {initialsOf(c.name)}
                     </span>
                     <span className="min-w-0 flex-1">
@@ -936,7 +936,7 @@ function PlacesPanel({ search, setSearch, layers, toggleLayer, places, shownPlac
             ))}
           </div>
         ) : sorted.length === 0 ? (
-          <div className="flex flex-col items-start gap-2 rounded-xl bg-white/[0.02] px-3 py-3 text-xs text-muted">
+          <div className="flex flex-col items-start gap-2 rounded-xl bg-ink/[0.02] px-3 py-3 text-xs text-muted">
             {places.length === 0 ? 'No places pinned yet.' : 'No places match. Try another word, or turn more layers on.'}
             {places.length === 0 && canManage && (
               <button type="button" className="btn-primary min-h-9 px-3 text-xs" onClick={onAdd}>
@@ -957,8 +957,8 @@ function PlacesPanel({ search, setSearch, layers, toggleLayer, places, shownPlac
                   : (p.address ?? meta.label);
               return (
                 <li key={p.id}>
-                  <button type="button" className="tap flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-white/[0.04]" onClick={() => onSelect({ type: 'place', id: p.id })}>
-                    <span className="h-3 w-3 shrink-0 rounded-full ring-4 ring-white/[0.04]" style={{ background: meta.color }} aria-hidden />
+                  <button type="button" className="tap flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-ink/[0.04]" onClick={() => onSelect({ type: 'place', id: p.id })}>
+                    <span className="h-3 w-3 shrink-0 rounded-full ring-4 ring-ink/[0.04]" style={{ background: meta.color }} aria-hidden />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium">{p.name}</span>
                       <span className={`block truncate text-xs ${stock?.low ? 'text-status-low' : 'text-muted'}`}>{detail}</span>

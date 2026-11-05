@@ -54,10 +54,10 @@ export function PlaceDetails({ place, snapshot, checkIns, canManage, onClose, on
     >
       <div className="flex flex-col gap-4">
         {place.imsLocation && (
-          <section className="tile flex flex-col gap-3 p-4" aria-labelledby="pd-stock">
+          <section className="flex flex-col gap-3 border-t border-line pt-4" aria-labelledby="pd-stock">
             <div className="flex items-center justify-between gap-2">
               <h3 id="pd-stock" className="flex items-center gap-2 text-sm font-semibold">
-                <Package className="h-4 w-4 text-uplift" aria-hidden /> Stock here
+                <Package className="h-4 w-4" aria-hidden /> Stock here
               </h3>
               <span className="text-[0.6875rem] text-muted">Live from PHILRADS IMS</span>
             </div>
@@ -94,7 +94,7 @@ export function PlaceDetails({ place, snapshot, checkIns, canManage, onClose, on
         )}
 
         {event && (
-          <section className="tile flex flex-col gap-3 p-4" aria-labelledby="pd-event">
+          <section className="flex flex-col gap-3 border-t border-line pt-4" aria-labelledby="pd-event">
             <h3 id="pd-event" className="flex items-center gap-2 text-sm font-semibold">
               <Users className="h-4 w-4 text-rose" aria-hidden /> {event.name}
             </h3>
@@ -105,8 +105,8 @@ export function PlaceDetails({ place, snapshot, checkIns, canManage, onClose, on
                 </span>
                 <span className="text-xs font-semibold tabular-nums text-ink-soft">{pct}%</span>
               </div>
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/[0.06]" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="People served">
-                <div className="h-full rounded-full bg-gradient-to-r from-rose to-uplift" style={{ width: `${pct}%` }} />
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-ink/[0.06]" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="People served">
+                <div className="h-full rounded-full bg-uplift" style={{ width: `${pct}%` }} />
               </div>
             </div>
             {event.areas.length > 0 && (
@@ -125,9 +125,9 @@ export function PlaceDetails({ place, snapshot, checkIns, canManage, onClose, on
           </section>
         )}
 
-        <section className="tile flex flex-col gap-3 p-4" aria-labelledby="pd-weather">
+        <section className="flex flex-col gap-3 border-t border-line pt-4" aria-labelledby="pd-weather">
           <h3 id="pd-weather" className="flex items-center gap-2 text-sm font-semibold">
-            <CloudSun className="h-4 w-4 text-uplift" aria-hidden /> Weather here
+            <CloudSun className="h-4 w-4" aria-hidden /> Weather here
           </h3>
           <SpotForecastView lat={place.lat} lng={place.lng} />
         </section>
@@ -142,7 +142,7 @@ export function PlaceDetails({ place, snapshot, checkIns, canManage, onClose, on
             <ul className="flex flex-col gap-1">
               {nearby.map(({ c, d }) => (
                 <li key={c.id}>
-                  <button type="button" className="tap flex w-full items-center justify-between gap-3 rounded-xl px-2 py-2 text-left text-sm hover:bg-white/[0.04]" onClick={() => onSelectCheckIn(c)}>
+                  <button type="button" className="tap flex w-full items-center justify-between gap-3 rounded-xl px-2 py-2 text-left text-sm hover:bg-ink/[0.04]" onClick={() => onSelectCheckIn(c)}>
                     <span className="min-w-0 truncate font-medium">{c.name}</span>
                     <span className="shrink-0 text-xs text-muted">
                       {formatDistance(d)} · {timeAgo(c.createdAt)}
@@ -171,7 +171,7 @@ export function PlaceDetails({ place, snapshot, checkIns, canManage, onClose, on
 
 function Stat({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
-    <div className="rounded-xl bg-white/[0.03] px-2 py-2">
+    <div className="rounded-xl bg-ink/[0.03] px-2 py-2">
       <p className={`text-lg font-bold tabular-nums ${tone ?? 'text-ink'}`}>{value}</p>
       <p className="text-[0.6875rem] text-muted">{label}</p>
     </div>

@@ -7,15 +7,15 @@ import { PersonAvatar } from '../ui/PersonAvatar';
 import { SlidingPill } from '../ui/SlidingPill';
 import { LIST_STYLE } from './taskMeta';
 
-/** Where a task given to someone stands, by colour. */
+/** Where a task given to someone stands: a word, coloured only for done (green) and overdue (red). */
 type Standing = 'done' | 'in_progress' | 'review' | 'not_started' | 'overdue';
 
-const STANDING: Record<Standing, { label: string; row: string; chip: string; dot: string }> = {
-  done: { label: 'Done', row: 'border-l-status-in bg-status-in/[0.08]', chip: 'border-status-in/40 bg-status-in/15 text-status-in', dot: 'bg-status-in' },
-  in_progress: { label: 'In progress', row: 'border-l-status-low bg-status-low/[0.08]', chip: 'border-status-low/40 bg-status-low/15 text-status-low', dot: 'bg-status-low' },
-  review: { label: 'For review', row: 'border-l-sky-300 bg-sky-300/[0.07]', chip: 'border-sky-300/40 bg-sky-300/15 text-sky-300', dot: 'bg-sky-300' },
-  not_started: { label: 'Not started', row: 'border-l-ink-mute bg-white/[0.02]', chip: 'border-line bg-white/[0.04] text-ink-soft', dot: 'bg-ink-mute' },
-  overdue: { label: 'Overdue', row: 'border-l-status-out bg-status-out/[0.08]', chip: 'border-status-out/40 bg-status-out/15 text-status-out', dot: 'bg-status-out' },
+const STANDING: Record<Standing, { label: string; row: string; chip: string }> = {
+  done: { label: 'Done', row: 'border-l-status-in', chip: 'border-status-in/40 text-status-in' },
+  in_progress: { label: 'In progress', row: 'border-l-ink-soft', chip: 'border-line text-ink' },
+  review: { label: 'For review', row: 'border-l-line', chip: 'border-line text-ink-soft' },
+  not_started: { label: 'Not started', row: 'border-l-line', chip: 'border-line text-muted' },
+  overdue: { label: 'Overdue', row: 'border-l-status-out', chip: 'border-status-out/40 text-status-out' },
 };
 const ORDER: Standing[] = ['overdue', 'not_started', 'in_progress', 'review', 'done'];
 
@@ -67,7 +67,7 @@ export function TeamTasks({ tasks, me, today, canSeeAll, onOpen }: { tasks: Task
       <div className="flex flex-wrap items-center gap-2">
         {canSeeAll && (
           <div role="group" aria-label="Whose tasks" className="relative flex gap-1 rounded-lg bg-surface-sunken p-0.5">
-            <SlidingPill className="rounded-md bg-surface-raised shadow-sm shadow-black/30 ring-1 ring-inset ring-white/[0.06]" />
+            <SlidingPill className="rounded-md bg-surface-raised shadow-sm shadow-black/30 ring-1 ring-inset ring-ink/[0.06]" />
             {(
               [
                 ['mine', 'Given by me'],
@@ -95,7 +95,7 @@ export function TeamTasks({ tasks, me, today, canSeeAll, onOpen }: { tasks: Task
             onClick={() => setOnly(only === s ? null : s)}
             className={`tap inline-flex min-h-8 items-center gap-1.5 rounded-full border px-2.5 text-xs font-semibold transition ${STANDING[s].chip} ${only && only !== s ? 'opacity-40' : ''}`}
           >
-            <span className={`h-2 w-2 rounded-full ${STANDING[s].dot}`} aria-hidden /> {STANDING[s].label} <span className="tabular-nums">{counts[s]}</span>
+            {STANDING[s].label} <span className="tabular-nums">{counts[s]}</span>
           </button>
         ))}
       </div>

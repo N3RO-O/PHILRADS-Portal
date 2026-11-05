@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { useAuth } from '../components/auth/AuthProvider';
 import { Emblem } from '../components/ui/Emblem';
 import { PasswordField } from '../components/ui/PasswordField';
-import { SoffitGradient } from '../components/ui/SoffitGradient';
+import { SignInBackground } from '../components/auth/SignInBackground';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { errorSound } from '../lib/errorSound';
 import { shake } from '../lib/motion';
@@ -55,13 +55,13 @@ export function SetPasswordPage() {
 
   return (
     <main className="relative isolate grid min-h-dvh place-items-center overflow-hidden p-4">
-      <SoffitGradient className="-z-10" />
-      <div ref={card} className="card w-full max-w-sm animate-fade-up gap-0 p-0 shadow-2xl shadow-black/40">
-        <div className="flex flex-col items-center gap-3 rounded-t-2xl border-b border-line/70 px-6 py-8 text-center">
+      <SignInBackground />
+      <div ref={card} className="floating w-full max-w-sm animate-fade-up overflow-hidden rounded-2xl">
+        <div className="flex flex-col items-center gap-3 rounded-t-2xl bg-burgundy-500 px-6 py-8 text-center text-cloud">
           <Emblem className="h-16 w-16" />
           <div>
             <p className="font-display text-2xl tracking-wide">PHILRADS</p>
-            <p className="text-xs uppercase tracking-[0.18em] text-muted">Staff Portal</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-cloud/80">Staff Portal</p>
           </div>
         </div>
         <form onSubmit={submit} noValidate className="flex flex-col gap-4 p-6">

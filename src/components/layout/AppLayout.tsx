@@ -108,7 +108,7 @@ export function AppLayout() {
     <QuickUnlockProvider>
     <LiveSharingProvider>
     <div className="min-h-dvh">
-      <a href="#main" className="sr-only z-50 rounded-xl bg-uplift px-4 py-2 font-semibold text-page focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
+      <a href="#main" className="sr-only z-50 rounded-xl bg-uplift px-4 py-2 font-semibold text-onaccent focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
         Skip to main content
       </a>
       <Sidebar expanded={expanded} onToggle={toggleSidebar} />
@@ -128,7 +128,7 @@ export function AppLayout() {
             <div className="min-w-0">
               {current && (
                 <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-muted">
-                  PHILRADS <span aria-hidden className="mx-1 text-ink-mute/50">/</span> <span className="text-uplift">{current.group}</span>
+                  PHILRADS <span aria-hidden className="mx-1 text-ink-mute/50">/</span> <span className="text-ink-soft">{current.group}</span>
                 </p>
               )}
               <h1 className="mt-1 text-2xl font-bold leading-tight tracking-tight text-ink sm:text-[1.75rem]">{title}</h1>
@@ -136,7 +136,7 @@ export function AppLayout() {
             <div className="flex flex-wrap items-center gap-2">
               <OnlinePill className="sm:hidden" />
               <span className="pill border border-line/70 bg-surface text-ink-soft">
-                <CalendarDays className="h-3.5 w-3.5 text-uplift" aria-hidden />
+                <CalendarDays className="h-3.5 w-3.5" aria-hidden />
                 <time dateTime={new Date().toISOString().slice(0, 10)}>{formatLongDate()}</time>
               </span>
             </div>
@@ -170,7 +170,7 @@ export function AppLayout() {
       )}
       {!wide && activeDrawer && (
         <div className="fixed inset-0 z-[60] flex justify-end">
-          <button type="button" className="absolute inset-0 animate-fade-in bg-black/50 backdrop-blur-[2px]" aria-label="Close the Active list" onClick={() => setActiveDrawer(false)} />
+          <button type="button" className="absolute inset-0 animate-fade-in bg-black/50" aria-label="Close the Active list" onClick={() => setActiveDrawer(false)} />
           <div className="relative h-full animate-sheet-left">
             <ActivePanel variant="drawer" onClose={() => setActiveDrawer(false)} />
           </div>

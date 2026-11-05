@@ -22,6 +22,7 @@ import type { StaffService } from './staff/types';
 import { createSupabaseStaffBoard, mockStaffBoard, type StaffBoardService } from './tasks/staffBoard';
 import { createOfflineTasks, type OfflineTasksService } from './tasks/offlineTasks';
 import { createSupabaseTasksService, mockTasksService } from './tasks/tasksService';
+import { createSupabaseReflections, mockReflections, type ReflectionsService } from './verse/reflectionsService';
 
 export type { DashboardService } from './dashboard/types';
 export { driveUploadService, DriveNotConfiguredError } from './googleDrive';
@@ -73,3 +74,6 @@ export const activitiesService: ActivitiesService = withDeviceCopy(live ? create
 
 /** Staff Tasks: who is carrying what, accepting tasks and nudges. */
 export const staffBoardService: StaffBoardService = live ? createSupabaseStaffBoard(live) : mockStaffBoard;
+
+/** Verse of the Day: short reflections staff share on today's verse. */
+export const reflectionsService: ReflectionsService = live ? createSupabaseReflections(live) : mockReflections;

@@ -73,7 +73,7 @@ export function PinBoxes({ value, state = 'idle' }: { value: string; state?: 'id
           <span
             key={i}
             className={`grid h-14 w-11 place-items-center rounded-2xl border-2 transition-all duration-200 sm:h-16 sm:w-12 ${
-              state === 'ok' ? 'border-status-in bg-status-in/15' : state === 'wrong' ? 'border-rose bg-rose/10' : filled ? 'border-uplift bg-uplift/10' : current ? 'border-uplift/70' : 'border-line bg-white/[0.03]'
+              state === 'ok' ? 'border-status-in bg-status-in/15' : state === 'wrong' ? 'border-rose bg-rose/10' : filled ? 'border-uplift bg-uplift/10' : current ? 'border-uplift/70' : 'border-line bg-ink/[0.03]'
             }`}
             style={state === 'ok' ? { transitionDelay: `${i * 40}ms` } : undefined}
           >
@@ -91,15 +91,15 @@ function Keypad({ onDigit, onBack, extra }: { onDigit: (d: string) => void; onBa
   return (
     <div className="mx-auto grid w-full max-w-[17rem] grid-cols-3 gap-3">
       {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((d) => (
-        <button key={d} type="button" onClick={() => onDigit(d)} className="press grid h-16 place-items-center rounded-full bg-white/[0.06] font-display text-2xl tracking-wide text-ink hover:bg-white/[0.1]">
+        <button key={d} type="button" onClick={() => onDigit(d)} className="press grid h-16 place-items-center rounded-full bg-ink/[0.06] font-display text-2xl tracking-wide text-ink hover:bg-ink/[0.1]">
           {d}
         </button>
       ))}
       <span className="grid place-items-center">{extra}</span>
-      <button type="button" onClick={() => onDigit('0')} className="press grid h-16 place-items-center rounded-full bg-white/[0.06] font-display text-2xl tracking-wide text-ink hover:bg-white/[0.1]">
+      <button type="button" onClick={() => onDigit('0')} className="press grid h-16 place-items-center rounded-full bg-ink/[0.06] font-display text-2xl tracking-wide text-ink hover:bg-ink/[0.1]">
         0
       </button>
-      <button type="button" onClick={onBack} className="press grid h-16 place-items-center rounded-full text-ink-soft hover:bg-white/[0.06]" aria-label="Delete">
+      <button type="button" onClick={onBack} className="press grid h-16 place-items-center rounded-full text-ink-soft hover:bg-ink/[0.06]" aria-label="Delete">
         <Delete className="h-6 w-6" aria-hidden />
       </button>
     </div>
@@ -178,12 +178,11 @@ function LockScreen({ uid, onUnlock }: { uid: string; onUnlock: () => void }) {
   useDigits(true, onDigit, onBack);
 
   return (
-    <div role="dialog" aria-modal="true" aria-label="Portal locked" className="fixed inset-0 z-[1300] flex animate-fade-in flex-col items-center justify-center overflow-y-auto bg-page/95 px-6 py-10 backdrop-blur-2xl">
-      <div aria-hidden className="pointer-events-none absolute -top-40 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-uplift/15 blur-3xl" />
+    <div role="dialog" aria-modal="true" aria-label="Portal locked" className="fixed inset-0 z-[1300] flex animate-fade-in flex-col items-center justify-center overflow-y-auto bg-page px-6 py-10 backdrop-blur-2xl">
       <div className="relative flex w-full max-w-sm flex-col items-center gap-6 text-center">
         <span className="relative">
-          <Avatar initials={profile?.initials ?? '?'} src={profile?.avatar} color={profile?.avatarColor} size="xl" ring="ring-4 ring-uplift/30" />
-          <span className={`absolute -bottom-1 -right-1 grid h-10 w-10 place-items-center rounded-full border-4 border-page ${state === 'ok' ? 'bg-status-in text-page' : 'bg-uplift text-page'}`}>
+          <Avatar initials={profile?.initials ?? '?'} src={profile?.avatar} color={profile?.avatarColor} size="xl" ring="ring-4 ring-line" />
+          <span className={`absolute -bottom-1 -right-1 grid h-10 w-10 place-items-center rounded-full border-4 border-page ${state === 'ok' ? 'bg-status-in text-onaccent' : 'bg-surface-raised text-ink'}`}>
             {state === 'ok' ? <SuccessTick className="h-6 w-6" /> : <ShieldCheck className="h-5 w-5" aria-hidden />}
           </span>
         </span>
@@ -201,15 +200,14 @@ function LockScreen({ uid, onUnlock }: { uid: string; onUnlock: () => void }) {
             onBack={onBack}
             extra={
               hasBio ? (
-                <button type="button" onClick={() => void bio()} className="press grid h-16 w-16 place-items-center rounded-full text-uplift hover:bg-uplift/10" aria-label="Use fingerprint or face">
+                <button type="button" onClick={() => void bio()} className="press grid h-16 w-16 place-items-center rounded-full text-ink hover:bg-surface-raised" aria-label="Use fingerprint or face">
                   <Fingerprint className="h-8 w-8" aria-hidden />
                 </button>
               ) : null
             }
           />
         ) : (
-          <button type="button" onClick={() => void bio()} className="press relative grid h-24 w-24 place-items-center rounded-full border-2 border-uplift/60 bg-uplift/10 text-uplift" aria-label="Use fingerprint or face">
-            <span className="absolute inset-0 animate-ping rounded-full border-2 border-uplift/30" aria-hidden />
+          <button type="button" onClick={() => void bio()} className="press relative grid h-24 w-24 place-items-center rounded-full border-2 border-line text-ink-soft" aria-label="Use fingerprint or face">
             <Fingerprint className="h-12 w-12" aria-hidden />
           </button>
         )}
@@ -308,8 +306,8 @@ export function QuickUnlockSheet({ open, onClose }: { open: boolean; onClose: ()
               <SuccessTick className="h-6 w-6 text-status-in" /> PIN saved on this device.
             </p>
           )}
-          <section className="tile flex items-center gap-3 p-4">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-uplift/15 font-display text-sm text-uplift">123</span>
+          <section className="flex items-center gap-3 border-t border-line pt-4">
+            <span className="grid h-10 w-10 place-items-center rounded-xl font-display text-sm text-ink-soft">123</span>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold">6-digit PIN</p>
               <p className="text-xs text-muted">{hasPin ? 'Set on this device.' : 'Not set.'}</p>
@@ -318,8 +316,8 @@ export function QuickUnlockSheet({ open, onClose }: { open: boolean; onClose: ()
               {hasPin ? 'Change' : 'Set PIN'}
             </button>
           </section>
-          <section className="tile flex items-center gap-3 p-4">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-uplift/15 text-uplift">
+          <section className="flex items-center gap-3 border-t border-line pt-4">
+            <span className="grid h-10 w-10 place-items-center rounded-xl text-ink-soft">
               <Fingerprint className="h-5 w-5" aria-hidden />
             </span>
             <div className="min-w-0 flex-1">

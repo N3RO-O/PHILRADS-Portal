@@ -7,10 +7,10 @@ export type Status = 'online' | 'idle' | 'dnd' | 'offline';
 export type Choice = 'online' | 'idle' | 'dnd' | 'invisible';
 
 export const STATUS_META: Record<Status, { label: string; color: string }> = {
-  online: { label: 'Online', color: '#23a55a' },
-  idle: { label: 'Idle', color: '#f0b232' },
-  dnd: { label: 'Do Not Disturb', color: '#f23f43' },
-  offline: { label: 'Offline', color: '#80848e' },
+  online: { label: 'Online', color: '#4ade80' },
+  idle: { label: 'Idle', color: '#fbbf24' },
+  dnd: { label: 'Do Not Disturb', color: '#f87171' },
+  offline: { label: 'Offline', color: 'rgb(var(--ink-mute))' },
 };
 export const CHOICES: { value: Choice; label: string; note: string }[] = [
   { value: 'online', label: 'Online', note: 'Shown as available.' },
