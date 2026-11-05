@@ -8,7 +8,7 @@ import { useAuth } from '../components/auth/AuthProvider';
 import { BADGE_ICON, FRAME_RING, FRAME_TEXT } from '../components/tasks/taskMeta';
 import { Avatar } from '../components/ui/Avatar';
 import { AvatarFrame } from '../components/ui/AvatarFrame';
-import { AVATAR_FRAMES, frameUnlocked, type AvatarFrameInfo } from '../lib/avatarFrames';
+import { AVATAR_FRAMES, frameUnlocked, hasAllFrames, type AvatarFrameInfo } from '../lib/avatarFrames';
 import { EmptyState, LoadError, Skeleton } from '../components/ui/Card';
 import { SampleBadge } from '../components/ui/SampleBadge';
 import { Dialog } from '../components/ui/Dialog';
@@ -608,24 +608,26 @@ const unlockText = (f: AvatarFrameInfo) =>
  */
 function FramePicker({ value, onChange, progress, avatar }: { value: string | null; onChange: (f: string | null) => void; progress: ProfileProgress | null; avatar: ReactNode }) {
   const [open, setOpen] = useState(false);
-  const role = useAuth().profile?.roleKey;
+  const auth = useAuth();
+  const role = auth.profile?.roleKey;
+  const all = hasAllFrames(auth.state.status === 'signed-in' ? auth.state.session.user.email : null);
   const level = progress ? levelFor(progress.xp).level : 1;
   const badges = useMemo(() => new Set(progress ? badgesFor(progress.stats).filter((b) => b.earned).map((b) => b.badge.id) : []), [progress]);
   const current = AVATAR_FRAMES.find((f) => f.id === value) ?? null;
   const exclusive = (f: AvatarFrameInfo) => Boolean(f.unlock && 'role' in f.unlock);
   const groups: [string, AvatarFrameInfo[]][] = [
-    ['Exclusive', AVATAR_FRAMES.filter((f) => exclusive(f) && frameUnlocked(f, level, badges, role))],
+    ['Exclusive', AVATAR_FRAMES.filter((f) => exclusive(f) && frameUnlocked(f, level, badges, role, all))],
     ['Still', AVATAR_FRAMES.filter((f) => !exclusive(f) && !f.animated)],
     ['Moving', AVATAR_FRAMES.filter((f) => !exclusive(f) && f.animated)],
   ];
   // Frames for other roles aren't shown or counted.
-  const offered = AVATAR_FRAMES.filter((f) => !exclusive(f) || frameUnlocked(f, level, badges, role));
-  const unlockedCount = offered.filter((f) => frameUnlocked(f, level, badges, role)).length;
+  const offered = AVATAR_FRAMES.filter((f) => !exclusive(f) || frameUnlocked(f, level, badges, role, all));
+  const unlockedCount = offered.filter((f) => frameUnlocked(f, level, badges, role, all)).length;
 
   const Option = ({ f }: { f: AvatarFrameInfo | null }) => {
     const id = f?.id ?? null;
     const on = value === id;
-    const locked = Boolean(f && !frameUnlocked(f, level, badges, role));
+    const locked = Boolean(f && !frameUnlocked(f, level, badges, role, all));
     return (
       <button
         type="button"

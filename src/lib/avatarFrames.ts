@@ -49,5 +49,25 @@ const IDS = new Set<string>(AVATAR_FRAMES.map((f) => f.id));
 export const isAvatarFrame = (id: string | null | undefined): id is AvatarFrameId => Boolean(id && IDS.has(id));
 
 /** Whether someone with this role, at this level, with these badges, may wear the frame. */
-export const frameUnlocked = (f: AvatarFrameInfo, level: number, badges: ReadonlySet<string>, role: string | null | undefined) =>
-  !f.unlock || ('role' in f.unlock ? role === f.unlock.role : 'level' in f.unlock ? level >= f.unlock.level : badges.has(f.unlock.badge));
+export const frameUnlocked = (f: AvatarFrameInfo, level: number, badges: ReadonlySet<string>, role: string | null | undefined, all = false) =>
+  !f.unlock || ('role' in f.unlock ? role === f.unlock.role : all || ('level' in f.unlock ? level >= f.unlock.level : badges.has(f.unlock.badge)));
+
+// One account has every level and badge frame open from the start (the role frame still needs the
+// role: the database checks that one). Kept as a hash so the address isn't in the public bundle.
+const ALL_FRAMES = new Set([3971360200525167]);
+function cyrb53(s: string) {
+  let h1 = 0xdeadbeef;
+  let h2 = 0x41c6ce57;
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i);
+    h1 = Math.imul(h1 ^ c, 2654435761);
+    h2 = Math.imul(h2 ^ c, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+  h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+  h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return 4294967296 * (2097151 & h2) + (h1 >>> 0);
+}
+/** Whether this signed-in address has every earned frame open. */
+export const hasAllFrames = (email: string | null | undefined) => Boolean(email && ALL_FRAMES.has(cyrb53(email.trim().toLowerCase())));
