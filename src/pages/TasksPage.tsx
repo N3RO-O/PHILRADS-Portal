@@ -50,12 +50,15 @@ export function TasksPage() {
   // A callback ref: the layout may appear after a loading state.
   const [layoutEl, layoutRef] = useState<HTMLDivElement | null>(null);
   const [cols, setCols] = useState<1 | 2 | 3>(1);
+  // Three columns (menu, tasks, progress) also fit beside an open sidebar on a laptop: slimmer side columns until there's room.
+  const [roomy, setRoomy] = useState(false);
   useEffect(() => {
     const el = layoutEl;
     if (!el) return;
     const fit = () => {
       const w = el.getBoundingClientRect().width;
-      setCols(w >= 1080 ? 3 : w >= 760 ? 2 : 1);
+      setCols(w >= 940 ? 3 : w >= 760 ? 2 : 1);
+      setRoomy(w >= 1180);
     };
     fit();
     const ro = new ResizeObserver(fit);
@@ -453,7 +456,7 @@ export function TasksPage() {
   return (
     <div
       ref={layoutRef}
-      className={`grid gap-4 pb-6 ${cols === 3 ? 'grid-cols-[13.5rem_minmax(0,1fr)_20rem] items-start' : cols === 2 ? 'grid-cols-[13.5rem_minmax(0,1fr)]' : 'grid-cols-1'}`}
+      className={`grid gap-4 pb-6 ${cols === 3 ? `${roomy ? 'grid-cols-[13.5rem_minmax(0,1fr)_20rem]' : 'grid-cols-[12.5rem_minmax(0,1fr)_18rem]'} items-start` : cols === 2 ? 'grid-cols-[13.5rem_minmax(0,1fr)]' : 'grid-cols-1'}`}
     >
       {/* Views and lists: a side menu when there's room. */}
       <nav aria-label="Task views" className={`panel sticky top-20 flex-col gap-4 p-3 ${cols >= 2 ? 'flex' : 'hidden'}`}>

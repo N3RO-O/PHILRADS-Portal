@@ -1,6 +1,5 @@
-import { ChevronsLeft, ChevronsRight, LogOut } from 'lucide-react';
+import { ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../auth/AuthProvider';
 import { Emblem } from '../ui/Emblem';
 import { NavItems } from './NavItems';
 
@@ -13,7 +12,6 @@ const footerButton = 'flex h-10 w-full items-center gap-3 rounded-xl text-sm fon
 
 /** Desktop navigation: full-height sidebar that collapses to an icon rail. */
 export function Sidebar({ expanded, onToggle }: SidebarProps) {
-  const { state, signOut } = useAuth();
   return (
     <aside
       aria-label="Main navigation"
@@ -35,18 +33,6 @@ export function Sidebar({ expanded, onToggle }: SidebarProps) {
         <NavItems expanded={expanded} />
       </nav>
       <div className="flex shrink-0 flex-col gap-1 border-t border-line/70 px-3 py-3">
-        {state.status === 'signed-in' && (
-          <button
-            type="button"
-            onClick={() => void signOut()}
-            className={`${footerButton} ${expanded ? 'px-3' : 'justify-center'}`}
-            aria-label={expanded ? undefined : 'Sign out'}
-            title={expanded ? undefined : 'Sign out'}
-          >
-            <LogOut className="h-[1.125rem] w-[1.125rem]" aria-hidden />
-            {expanded && 'Sign out'}
-          </button>
-        )}
         <button
           type="button"
           onClick={onToggle}

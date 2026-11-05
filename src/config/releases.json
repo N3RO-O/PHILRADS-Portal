@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-11-05.1",
+    "version": "1.5.1",
+    "date": "2026-11-05",
+    "title": "Staff Tasks fits beside the menu",
+    "items": [
+      {
+        "icon": "list-checks",
+        "title": "Your progress stays on the right",
+        "body": "On a laptop with the menu open, Staff Tasks now keeps its lists on the left, your tasks in the middle and your level, week and team goal on the right, instead of pushing them above and below.",
+        "path": "/tasks"
+      },
+      {
+        "icon": "fingerprint",
+        "title": "Sign out from your profile",
+        "body": "Sign out has moved off the side menu. Open your picture at the top right and choose Sign out."
+      }
+    ]
+  },
+  {
     "id": "2026-11-05",
     "version": "1.5.0",
     "date": "2026-11-05",
