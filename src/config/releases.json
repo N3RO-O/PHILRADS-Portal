@@ -1,5 +1,30 @@
 [
   {
+    "id": "2026-11-05.3",
+    "version": "1.6.1",
+    "date": "2026-11-05",
+    "title": "Tidier resources and a smoother map",
+    "items": [
+      {
+        "icon": "folder",
+        "title": "Cleaner resource cards",
+        "body": "Each card now shows the title in full width with one Preview button. Open in Google, Download and Copy link are under the ⋯ button next to the pencil.",
+        "path": "/resources"
+      },
+      {
+        "icon": "map",
+        "title": "Show all places",
+        "body": "The fit button on the Live Map now frames just the places on the map, instead of zooming far out for a far-away check-in or site.",
+        "path": "/live-map"
+      },
+      {
+        "icon": "map",
+        "title": "A smoother side panel",
+        "body": "Folding the Live Map panel away or back is smooth now: the map stays still as the panel slides, and the button no longer jumps when you press it."
+      }
+    ]
+  },
+  {
     "id": "2026-11-05.2",
     "version": "1.6.0",
     "date": "2026-11-05",

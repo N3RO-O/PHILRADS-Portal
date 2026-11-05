@@ -210,21 +210,32 @@ function Controller({ focus, fit, picking, onCenter, onBackground, onView }: Pic
   }, [focus, map]);
   useEffect(() => {
     if (!fit || fit.points.length === 0) return;
-    if (fit.points.length === 1) map.flyTo([fit.points[0].lat, fit.points[0].lng], 12, { duration: 0.8 });
     // Room around the edges for the zoom buttons (top-left), map buttons (top-right) and the
     // List / Check in buttons (bottom), so no pin ends up hidden under one.
-    else
-      map.flyToBounds(L.latLngBounds(fit.points.map((p) => [p.lat, p.lng] as [number, number])), {
-        paddingTopLeft: [72, 72],
-        paddingBottomRight: [72, 104],
-        maxZoom: 13,
-        duration: 0.8,
-      });
+    const room = { paddingTopLeft: [72, 72] as L.PointTuple, paddingBottomRight: [72, 104] as L.PointTuple, maxZoom: 13 };
+    const bounds = L.latLngBounds(fit.points.map((p) => [p.lat, p.lng] as [number, number]));
+    const target = { center: bounds.getCenter(), zoom: fit.points.length === 1 ? 12 : Math.min(13, map.getBoundsZoom(bounds, false, L.point(144, 176))) };
+    // Already looking at the area: a short, direct glide. Far away: fly there (out a little, then in).
+    const near = map.getBounds().pad(0.5).contains(bounds) || bounds.contains(map.getBounds());
+    if (near && Math.abs(target.zoom - map.getZoom()) <= 4) {
+      if (fit.points.length === 1) map.setView(target.center, target.zoom, { animate: true });
+      else map.fitBounds(bounds, { ...room, animate: true });
+    } else if (fit.points.length === 1) map.flyTo(target.center, target.zoom, { duration: 0.7 });
+    else map.flyToBounds(bounds, { ...room, duration: 0.7 });
   }, [fit, map]);
   // The map's size changes with the sidebar and on rotation; keep the tiles filling it.
   useEffect(() => {
     const el = map.getContainer();
-    const ro = new ResizeObserver(() => map.invalidateSize());
+    // When the places panel slides open or shut, the map's left edge moves: keep what is on the map
+    // standing still on screen (no re-centring every frame), so the panel glides over it smoothly.
+    let left = el.getBoundingClientRect().left;
+    const ro = new ResizeObserver(() => {
+      const now = el.getBoundingClientRect().left;
+      map.invalidateSize({ pan: false });
+      const dx = Math.round(now - left);
+      left = now;
+      if (dx) map.panBy([dx, 0], { animate: false });
+    });
     ro.observe(el);
     return () => ro.disconnect();
   }, [map]);

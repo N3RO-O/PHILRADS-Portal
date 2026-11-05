@@ -217,14 +217,21 @@ export function LiveMapPage() {
     [sites, layers, needle],
   );
 
-  // First load: fit everything in view.
+  // "Show all places": just the places on the map, so one far-away check-in or activity site doesn't
+  // zoom the map right out. Only when no place is shown does it fall back to the rest.
+  const placePoints = () => (shownPlaces.length ? shownPlaces : [...shownCheckIns, ...shownSites, ...shownLive]);
+  const showAll = () => {
+    const pts = placePoints();
+    if (pts.length) setFit({ points: pts, key: Date.now() });
+  };
+  // First load: the places in view.
   const [fitted, setFitted] = useState(false);
   useEffect(() => {
     if (fitted || placesQ.status !== 'success') return;
     setFitted(true);
-    const pts = [...shownPlaces, ...shownCheckIns];
-    if (pts.length) setFit({ points: pts, key: Date.now() });
-  }, [fitted, placesQ.status, shownPlaces, shownCheckIns]);
+    showAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fitted, placesQ.status]);
 
   const toggleLayer = (l: Layer) =>
     setLayers((prev) => {
@@ -311,7 +318,7 @@ export function LiveMapPage() {
       {/* "isolate": the map's own layers stay under the top bar's menus. */}
       {/* Not isolated while the map fills the window, so it can sit above the sidebar and top bar. */}
       <section
-        className={`panel relative overflow-hidden p-0 lg:grid lg:grid-cols-[var(--panel-shown)_minmax(0,1fr)] ${panel_.dragging ? 'select-none' : 'lg:transition-[grid-template-columns] lg:duration-300'} ${full === 'window' ? '' : 'isolate'}`}
+        className={`panel relative overflow-hidden p-0 lg:grid lg:grid-cols-[var(--panel-shown)_minmax(0,1fr)] ${panel_.dragging ? 'select-none' : 'lg:transition-[grid-template-columns] lg:duration-300 lg:ease-[cubic-bezier(0.32,0.72,0,1)]'} ${full === 'window' ? '' : 'isolate'}`}
         style={
           {
             '--panel': panel_.collapsed ? '0px' : `${panel_.width}px`,
@@ -326,7 +333,9 @@ export function LiveMapPage() {
         <aside
           ref={asideRef}
           className={`hidden h-[calc(100dvh-13rem)] min-h-[34rem] min-w-0 flex-col overflow-hidden lg:flex ${
-            panel_.collapsed ? 'invisible opacity-0' : `border-r border-line/70 opacity-100 ${panel_.dragging ? '' : 'transition-opacity delay-200 duration-200'}`
+            panel_.collapsed
+              ? 'invisible opacity-0 transition-[opacity,visibility] duration-150'
+              : `visible border-r border-line/70 opacity-100 ${panel_.dragging ? '' : 'transition-[opacity,visibility] delay-150 duration-200'}`
           }`}
         >
           <div className="flex items-center justify-between gap-2 border-b border-line/70 px-4 py-3">
@@ -354,7 +363,7 @@ export function LiveMapPage() {
 
         {/* The panel's edge: drag to resize, double-click to reset, or fold the panel away. */}
         <div
-          className={`pointer-events-none absolute inset-y-0 z-[650] hidden lg:block ${panel_.dragging ? '' : 'transition-[left] duration-300'}`}
+          className={`pointer-events-none absolute inset-y-0 z-[650] hidden lg:block ${panel_.dragging ? '' : 'transition-[left] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]'}`}
           style={{ left: 'var(--panel-shown)' }}
         >
           {!panel_.collapsed && (
@@ -381,7 +390,7 @@ export function LiveMapPage() {
           <button
             type="button"
             onClick={panel_.toggle}
-            className="press pointer-events-auto absolute left-0 top-1/2 grid h-14 w-6 -translate-y-1/2 place-items-center rounded-r-xl border border-l-0 border-line bg-surface-raised text-ink-soft shadow-xl hover:text-ink"
+            className="press pointer-events-auto absolute left-0 top-[calc(50%-1.75rem)] grid h-14 w-6 place-items-center rounded-r-xl border border-l-0 border-line bg-surface-raised text-ink-soft shadow-xl hover:text-ink"
             aria-label={panel_.collapsed ? 'Show the places panel' : 'Hide the places panel'}
             title={panel_.collapsed ? 'Show places and team' : 'Hide the panel'}
           >
@@ -428,7 +437,7 @@ export function LiveMapPage() {
               <MapButton label={full === 'off' ? 'Full screen' : 'Exit full screen'} active={full !== 'off'} onClick={() => void toggleFull()}>
                 {full === 'off' ? <Fullscreen className="h-[1.125rem] w-[1.125rem]" aria-hidden /> : <Minimize2 className="h-[1.125rem] w-[1.125rem]" aria-hidden />}
               </MapButton>
-              <MapButton label="Show everything" onClick={() => setFit({ points: [...shownPlaces, ...shownCheckIns, ...shownLive, ...shownSites], key: Date.now() })}>
+              <MapButton label="Show all places" onClick={showAll}>
                 <Maximize2 className="h-[1.125rem] w-[1.125rem]" aria-hidden />
               </MapButton>
               <MapButton label="Show my location" onClick={() => void locateMe()}>
