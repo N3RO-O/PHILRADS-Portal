@@ -1,5 +1,28 @@
 [
   {
+    "id": "2026-11-05.2",
+    "version": "1.6.0",
+    "date": "2026-11-05",
+    "title": "The portal is now PRISM",
+    "items": [
+      {
+        "icon": "sparkles",
+        "title": "A new name: PRISM",
+        "body": "PRISM stands for Response, Inventory and Staff Management. It is the same system, with the same sign-in and everything you have already done."
+      },
+      {
+        "icon": "palette",
+        "title": "A new logo",
+        "body": "One beam of light goes into a prism and comes out as three colours: one system, three jobs made clear. You will see it in the menu, on the sign-in page and on the browser tab."
+      },
+      {
+        "icon": "smartphone",
+        "title": "Installed on your phone?",
+        "body": "The home-screen icon and name change to PRISM after this update. On some phones they only change once you remove the app and add it to the home screen again."
+      }
+    ]
+  },
+  {
     "id": "2026-11-05.1",
     "version": "1.5.1",
     "date": "2026-11-05",

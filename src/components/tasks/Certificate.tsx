@@ -16,7 +16,7 @@ export function Certificate({ name, level, tasksDone }: { name: string; level: L
         <p className="lead">This is presented to</p>
         <p className="name">{name}</p>
         <p className="body">
-          for reaching <strong>Level {level.level} · {level.title}</strong> in the PHILRADS Staff Portal, having faithfully completed{' '}
+          for reaching <strong>Level {level.level} · {level.title}</strong> in PRISM, the PHILRADS staff system, having faithfully completed{' '}
           {formatNumber(tasksDone)} tasks in service of families and communities in need.
         </p>
         <p className="date">Given on {formatLongDate()}</p>

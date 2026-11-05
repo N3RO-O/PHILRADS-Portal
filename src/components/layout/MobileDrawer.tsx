@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
-import { Emblem } from '../ui/Emblem';
+import { PrismLogo } from '../ui/PrismMark';
 import { NavItems } from './NavItems';
 
 interface MobileDrawerProps {
@@ -29,13 +29,7 @@ export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
     >
       <div className="flex h-full flex-col overflow-y-auto">
         <div className="flex h-16 shrink-0 items-center justify-between gap-3 px-5">
-          <span className="flex items-center gap-3">
-            <Emblem className="h-9 w-9" decorative />
-            <span className="flex flex-col leading-tight">
-              <span className="font-display text-base tracking-wide">PHILRADS</span>
-              <span className="text-[0.625rem] uppercase tracking-[0.18em] text-muted">Staff Portal</span>
-            </span>
-          </span>
+          <PrismLogo />
           <button type="button" onClick={onClose} aria-label="Close navigation" className="icon-btn">
             <X className="h-5 w-5" aria-hidden />
           </button>

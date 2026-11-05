@@ -1,7 +1,7 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { z } from 'zod';
 import { useAuth } from '../components/auth/AuthProvider';
-import { Emblem } from '../components/ui/Emblem';
+import { PrismMark } from '../components/ui/PrismMark';
 import { PasswordField } from '../components/ui/PasswordField';
 import { SignInBackground } from '../components/auth/SignInBackground';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
@@ -86,10 +86,10 @@ export function SignInPage() {
       <SignInBackground />
       <div ref={card} className="floating w-full max-w-sm animate-fade-up overflow-hidden rounded-2xl">
         <div className="flex flex-col items-center gap-3 rounded-t-2xl bg-burgundy-500 px-6 py-8 text-center text-cloud">
-          <Emblem className="h-16 w-16" />
+          <PrismMark className="h-16 w-16" tone="brand" />
           <div>
-            <p className="font-display text-2xl tracking-wide">PHILRADS</p>
-            <p className="text-xs uppercase tracking-[0.18em] text-cloud/80">Staff Portal</p>
+            <p className="font-display text-3xl tracking-[0.08em]">PRISM</p>
+            <p className="mt-1 text-[0.6875rem] font-semibold uppercase tracking-[0.22em] text-cloud/80">by PHILRADS</p>
           </div>
         </div>
         {mode === 'sign-in' ? (

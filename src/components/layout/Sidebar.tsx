@@ -1,6 +1,6 @@
 import { ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Emblem } from '../ui/Emblem';
+import { PrismMark } from '../ui/PrismMark';
 import { NavItems } from './NavItems';
 
 interface SidebarProps {
@@ -19,12 +19,12 @@ export function Sidebar({ expanded, onToggle }: SidebarProps) {
         expanded ? 'w-64' : 'w-[4.5rem]'
       }`}
     >
-      <Link to="/" className={`flex h-16 shrink-0 items-center gap-3 ${expanded ? 'px-5' : 'justify-center'}`} aria-label="PHILRADS Staff Portal home">
-        <Emblem className="h-9 w-9" decorative />
+      <Link to="/" className={`flex h-16 shrink-0 items-center gap-3 ${expanded ? 'px-5' : 'justify-center'}`} aria-label="PRISM home">
+        <PrismMark className="h-9 w-9 text-ink" />
         {expanded && (
           <span className="flex min-w-0 animate-fade-in flex-col leading-tight">
-            <span className="font-display text-base tracking-wide text-ink">PHILRADS</span>
-            <span className="text-[0.625rem] uppercase tracking-[0.18em] text-muted">Staff Portal</span>
+            <span className="font-display text-base tracking-[0.06em] text-ink">PRISM</span>
+            <span className="text-[0.5625rem] font-semibold uppercase tracking-[0.2em] text-muted">by PHILRADS</span>
           </span>
         )}
       </Link>

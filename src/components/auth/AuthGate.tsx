@@ -3,13 +3,13 @@ import { RefreshCw } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import { SetPasswordPage } from '../../pages/SetPasswordPage';
 import { SignInPage } from '../../pages/SignInPage';
-import { Emblem } from '../ui/Emblem';
+import { PrismMark } from '../ui/PrismMark';
 
 function CenteredMessage({ title, children }: { title: string; children?: ReactNode }) {
   return (
     <main className="grid min-h-dvh place-items-center p-6">
       <div className="panel flex max-w-md flex-col items-center gap-4 text-center">
-        <Emblem className="h-14 w-14" />
+        <PrismMark className="h-14 w-14 text-ink" />
         <h1 className="text-xl font-bold">{title}</h1>
         {children}
       </div>
@@ -23,7 +23,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
   if (state.status === 'loading') {
     return (
-      <CenteredMessage title="PHILRADS Staff Portal">
+      <CenteredMessage title="PRISM">
         <p className="text-sm text-muted" role="status">
           Checking your sign-in…
         </p>

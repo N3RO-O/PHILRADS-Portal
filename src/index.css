@@ -15,6 +15,10 @@
     --ink-mute: 154 156 166;
     --uplift: 236 149 42;
     --uplift-soft: 243 174 87;
+    /* PRISM mark: the three rays (src/components/ui/PrismMark.tsx). */
+    --prism-1: 224 82 74;
+    --prism-2: 236 149 42;
+    --prism-3: 246 207 126;
     --status-in: 74 222 128;
     --status-low: 251 191 36;
     --status-out: 248 113 113;
@@ -37,6 +41,9 @@
     --ink-mute: 94 96 106;
     --uplift: 158 79 4;
     --uplift-soft: 176 92 10;
+    --prism-1: 140 20 20;
+    --prism-2: 217 122 12;
+    --prism-3: 229 169 46;
     --status-in: 18 108 50;
     --status-low: 152 70 6;
     --status-out: 184 30 30;

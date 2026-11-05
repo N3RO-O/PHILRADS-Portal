@@ -1,12 +1,12 @@
-/* Phone notifications for the PHILRADS Staff Portal (loaded into the service worker). */
+/* Phone notifications for PRISM, the PHILRADS staff system (loaded into the service worker). */
 self.addEventListener('push', (event) => {
   let data = {};
   try {
     data = event.data ? event.data.json() : {};
   } catch {
-    data = { title: event.data ? event.data.text() : 'PHILRADS Staff Portal' };
+    data = { title: event.data ? event.data.text() : 'PRISM' };
   }
-  const title = data.title || 'PHILRADS Staff Portal';
+  const title = data.title || 'PRISM';
   event.waitUntil(
     self.registration.showNotification(title, {
       body: data.body || '',

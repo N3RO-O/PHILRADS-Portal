@@ -57,7 +57,7 @@ export function AppLayout() {
   const title = current?.label ?? 'Page not found';
 
   useEffect(() => {
-    document.title = `${title} · PHILRADS Staff Portal`;
+    document.title = `${title} · PRISM`;
   }, [title]);
 
   useEffect(() => {
@@ -151,7 +151,7 @@ export function AppLayout() {
         </main>
         <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-line/50 px-4 py-4 text-xs text-muted sm:px-6">
           <span>
-            Philippine Relief and Development Services, Inc. · Staff Portal v{__APP_VERSION__}{' '}
+            Philippine Relief and Development Services, Inc. · PRISM v{__APP_VERSION__}{' '}
             <span className="text-muted/70">({__APP_BUILD__})</span>
           </span>
           <a href="https://philrads.org/" target="_blank" rel="noopener noreferrer" className="font-semibold text-uplift hover:underline">

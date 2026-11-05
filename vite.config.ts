@@ -43,13 +43,13 @@ export default defineConfig({
       // so a new service worker only takes over when staff choose to reload.
       registerType: 'prompt',
       injectRegister: false,
-      includeAssets: ['favicon.ico', 'favicon-32x32.png', 'apple-touch-icon.png', 'brand/philrads-emblem.png'],
+      includeAssets: ['favicon.ico', 'favicon-32x32.png', 'apple-touch-icon.png', 'brand/prism-favicon.svg', 'brand/prism-icon.svg'],
       manifest: {
         id: '/',
-        name: 'PHILRADS Staff Portal',
-        short_name: 'PHILRADS',
+        name: 'PRISM by PHILRADS',
+        short_name: 'PRISM',
         description:
-          'Internal staff portal for Philippine Relief and Development Services, Inc. Serving People in Jesus’ Name.',
+          'PRISM: Response, Inventory and Staff Management for Philippine Relief and Development Services, Inc. Serving People in Jesus’ Name.',
         lang: 'en',
         start_url: '/',
         scope: '/',

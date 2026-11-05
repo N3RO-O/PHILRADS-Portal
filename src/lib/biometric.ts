@@ -33,7 +33,7 @@ export async function setUpBiometric(who: string, name: string): Promise<string 
     const cred = (await navigator.credentials.create({
       publicKey: {
         challenge: random(32),
-        rp: { name: 'PHILRADS Staff Portal', id: location.hostname },
+        rp: { name: 'PRISM by PHILRADS', id: location.hostname },
         user: { id: new TextEncoder().encode(who).slice(0, 64), name, displayName: name },
         pubKeyCredParams: [
           { type: 'public-key', alg: -7 },
