@@ -33,8 +33,8 @@ const request = (id: string) => {
   timer ??= setTimeout(() => void flush(), 0);
 };
 
-/** Someone's profile picture (or initials in their colour). Your own follows your profile straight away. */
-export function PersonAvatar({ id, name, size, ring, frame = true }: { id: string | null | undefined; name: string; size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'hero'; ring?: string; frame?: boolean }) {
+/** Someone's picture, colour and frame (fetched with everyone else's on the page). Yours follows your profile. */
+export function usePicture(id: string | null | undefined): ProfilePicture | undefined {
   const { profile } = useAuth();
   const [, rerender] = useReducer((n: number) => n + 1, 0);
   const own = Boolean(profile && id === profile.id);
@@ -44,7 +44,12 @@ export function PersonAvatar({ id, name, size, ring, frame = true }: { id: strin
     request(id);
     return () => void listeners.delete(rerender);
   }, [id, own]);
-  const pic = own ? { avatar: profile!.avatar ?? null, color: profile!.avatarColor ?? null, frame: profile!.avatarFrame ?? null } : id ? cache.get(id) : undefined;
+  return own ? { avatar: profile!.avatar ?? null, color: profile!.avatarColor ?? null, frame: profile!.avatarFrame ?? null } : id ? cache.get(id) : undefined;
+}
+
+/** Someone's profile picture (or initials in their colour). Your own follows your profile straight away. */
+export function PersonAvatar({ id, name, size, ring, frame = true }: { id: string | null | undefined; name: string; size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'hero'; ring?: string; frame?: boolean }) {
+  const pic = usePicture(id);
   const avatar = <Avatar initials={initialsOf(name || '?')} src={pic?.avatar} color={pic?.color} size={size} ring={ring} />;
   // Big pictures get the full frame, moving; small ones in lists a clean ring that moves on hover.
   const big = size === 'lg' || size === 'xl' || size === 'hero';

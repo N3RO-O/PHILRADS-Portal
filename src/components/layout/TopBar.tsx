@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react';
-import { Menu, Users } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useOnboarding } from '../onboarding/OnboardingProvider';
 import { PrismMark } from '../ui/PrismMark';
+import { ActiveFaces } from './ActiveFaces';
 import { GlobalSearch } from './GlobalSearch';
 import { NotificationsMenu } from './NotificationsMenu';
 import { OnlinePill } from './OnlineStatus';
@@ -66,18 +67,7 @@ export function TopBar({ search, onSearch, menuOpen, onOpenMenu, hideMobileSearc
         <GlobalSearch value={search} onChange={onSearch} inputRef={desktopInput} shortcut={SHORTCUT_LABEL} className="hidden w-full max-w-md md:block" />
         <div className="ml-auto flex items-center gap-1 sm:gap-2">
           <OnlinePill className="hidden sm:inline-flex" />
-          {onToggleActive && (
-            <button
-              type="button"
-              className={`icon-btn ${activeShown ? 'bg-surface-raised text-ink' : ''}`}
-              onClick={onToggleActive}
-              aria-pressed={activeShown}
-              aria-label={activeShown ? 'Hide the Active list' : 'Show who’s active'}
-              title={activeShown ? 'Hide the Active list' : 'Show who’s active'}
-            >
-              <Users className="h-[1.125rem] w-[1.125rem]" aria-hidden />
-            </button>
-          )}
+          {onToggleActive && <ActiveFaces shown={activeShown} onToggle={onToggleActive} />}
           <NotificationsMenu />
           <ProfileMenu />
         </div>

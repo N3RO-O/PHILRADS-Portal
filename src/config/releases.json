@@ -1,5 +1,29 @@
 [
   {
+    "id": "2026-11-06.1",
+    "version": "1.8.0",
+    "date": "2026-11-06",
+    "title": "See who’s on, and tasks for the whole team",
+    "items": [
+      {
+        "icon": "users",
+        "title": "Who’s active, at a glance",
+        "body": "The top bar now shows the faces of who’s on right now, updating as people come and go. Tap them to open the Active list."
+      },
+      {
+        "icon": "user",
+        "title": "See someone’s picture",
+        "body": "Tap a person’s picture in their task list or on their profile to see it big, in their frame, with a quick way to their profile."
+      },
+      {
+        "icon": "list-checks",
+        "title": "One task, many people",
+        "body": "On a project, choose several people (or the whole team) for a new task. Each person gets their own copy, so you don’t have to add it again for everyone.",
+        "path": "/projects"
+      }
+    ]
+  },
+  {
     "id": "2026-11-05.4",
     "version": "1.7.0",
     "date": "2026-11-05",

@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../components/auth/AuthProvider';
+import { AssigneePicker } from '../components/projects/AssigneePicker';
 import { ProjectSheet } from '../components/projects/ProjectSheet';
 import { EmptyState, LoadError, Skeleton } from '../components/ui/Card';
 import { SampleBadge } from '../components/ui/SampleBadge';
@@ -612,8 +613,9 @@ function Milestones({ project: p, today, canManage, onTeam, busy, act }: { proje
 
 function ProjectTasks({ project: p, tasks, canManage, today, onAdded }: { project: Project; tasks: Task[] | null; canManage: boolean; today: string; onAdded: () => void }) {
   const [title, setTitle] = useState('');
-  const [assignee, setAssignee] = useState('');
+  const [assignees, setAssignees] = useState<string[]>([]);
   const [due, setDue] = useState('');
+  const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const team = useMemo(() => {
@@ -627,29 +629,40 @@ function ProjectTasks({ project: p, tasks, canManage, today, onAdded }: { projec
     if (!title.trim()) return;
     setBusy(true);
     setError(null);
+    setNote(null);
+    // One copy each, so everyone has their own progress (nobody picked: a task for you).
+    const people: (string | null)[] = assignees.length ? assignees : [null];
+    let made = 0;
     try {
-      await tasksService.save({
-        title: title.trim(),
-        notes: '',
-        list: 'coordination',
-        setting: 'field',
-        priority: 'medium',
-        dueDate: due || null,
-        dueTime: null,
-        myDay: null,
-        subtasks: [],
-        recurrence: 'none',
-        location: p.location ?? '',
-        assigneeId: assignee || null,
-        projectId: p.id,
-      });
+      for (const assigneeId of people) {
+        await tasksService.save({
+          title: title.trim(),
+          notes: '',
+          list: 'coordination',
+          setting: 'field',
+          priority: 'medium',
+          dueDate: due || null,
+          dueTime: null,
+          myDay: null,
+          subtasks: [],
+          recurrence: 'none',
+          location: p.location ?? '',
+          assigneeId,
+          projectId: p.id,
+        });
+        made++;
+      }
       setTitle('');
       setDue('');
-      onAdded();
+      if (made > 1) setNote(`Added for ${made} people.`);
     } catch (e) {
-      setError(errorText(e));
+      const left = people.length - made;
+      // Trying again then adds it only for the people still missing it.
+      if (made && assignees.length) setAssignees(assignees.slice(made));
+      setError(made ? `Added for ${made}, but not for the other ${left}: ${errorText(e)} Try again for the rest.` : errorText(e));
     } finally {
       setBusy(false);
+      if (made) onAdded();
     }
   };
   return (
@@ -691,16 +704,7 @@ function ProjectTasks({ project: p, tasks, canManage, today, onAdded }: { projec
       >
         <input className="field" maxLength={200} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Add a task for this project" aria-label="New task" />
         <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 sm:flex">
-          {canManage && (
-            <select className="field min-w-0 sm:w-40" value={assignee} onChange={(e) => setAssignee(e.target.value)} aria-label="Assign to">
-              <option value="">Me</option>
-              {team.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
-          )}
+          {canManage && <AssigneePicker team={team} value={assignees} onChange={setAssignees} className="min-w-0 sm:w-44" />}
           <input type="date" className={`field sm:w-40 ${canManage ? 'col-span-2 sm:col-span-1' : ''}`} value={due} onChange={(e) => setDue(e.target.value)} aria-label="Due date" />
           <button type="submit" className="btn-primary min-h-11 px-4" disabled={!title.trim() || busy}>
             {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Plus className="h-4 w-4" aria-hidden />}
@@ -709,6 +713,7 @@ function ProjectTasks({ project: p, tasks, canManage, today, onAdded }: { projec
         </div>
       </form>
       {error && <p className="text-xs text-status-out">{error}</p>}
+      {note && !error && <p className="text-xs text-status-in" role="status">{note}</p>}
     </section>
   );
 }

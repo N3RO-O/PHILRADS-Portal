@@ -8,6 +8,7 @@ import { useAuth } from '../components/auth/AuthProvider';
 import { BADGE_ICON, FRAME_RING, FRAME_TEXT } from '../components/tasks/taskMeta';
 import { Avatar } from '../components/ui/Avatar';
 import { AvatarFrame } from '../components/ui/AvatarFrame';
+import { ViewPhoto } from '../components/ui/PhotoViewer';
 import { AVATAR_FRAMES, frameUnlocked, hasAllFrames, type AvatarFrameInfo } from '../lib/avatarFrames';
 import { EmptyState, LoadError, Skeleton } from '../components/ui/Card';
 import { SampleBadge } from '../components/ui/SampleBadge';
@@ -132,11 +133,11 @@ function ProfileCard({
               <PhotoOverlay />
             </button>
           ) : (
-            <div className="-mt-14 rounded-full bg-surface p-1.5">
+            <ViewPhoto id={p.id} name={p.displayName} subtitle={p.jobTitle || undefined} profileLink={false} className="-mt-14 bg-surface p-1.5">
               <AvatarFrame frame={p.avatarFrame}>
                 <Avatar initials={p.initials} src={p.avatar} color={p.avatarColor} size="xl" ring={`ring-4 ${FRAME_RING[level?.frame ?? 'none']}`} />
               </AvatarFrame>
-            </div>
+            </ViewPhoto>
           )}
           {earned.length > 0 && (
             <ul className="mb-1 flex max-w-[60%] flex-wrap justify-end gap-1 rounded-xl border border-line/70 bg-surface-sunken p-1.5" aria-label="Badges">

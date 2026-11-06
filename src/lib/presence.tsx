@@ -30,6 +30,8 @@ interface PresenceValue {
   mine: Status;
   /** When someone last had the portal open (null if never seen). */
   lastSeen: (id: string) => string | null;
+  /** Everyone online, idle or busy right now (you included when you're shown). */
+  activeIds: string[];
 }
 
 const PresenceContext = createContext<PresenceValue>({
@@ -39,6 +41,7 @@ const PresenceContext = createContext<PresenceValue>({
   setChoice: () => undefined,
   mine: 'online',
   lastSeen: () => null,
+  activeIds: [],
 });
 
 const CHOICE_KEY = 'philrads.status';
@@ -188,7 +191,9 @@ export function PresenceProvider({ children }: { children: ReactNode }) {
       return live ? (others[id] ?? fresh(id) ?? 'offline') : (SAMPLE[id] ?? 'offline');
     };
     const lastSeen = (id: string) => beats[id]?.seenAt ?? null;
-    return { statusOf, activeCount: (ids) => ids.filter((id) => statusOf(id) !== 'offline').length, choice, setChoice, mine, lastSeen };
+    const seen = live ? [...Object.keys(others), ...Object.keys(beats)] : Object.keys(SAMPLE);
+    const activeIds = [...new Set([...(me ? [me] : []), ...seen])].filter((id) => statusOf(id) !== 'offline');
+    return { statusOf, activeCount: (ids) => ids.filter((id) => statusOf(id) !== 'offline').length, choice, setChoice, mine, lastSeen, activeIds };
   }, [state.status, me, mine, others, beats, choice, setChoice]);
 
   return <PresenceContext.Provider value={value}>{children}</PresenceContext.Provider>;
