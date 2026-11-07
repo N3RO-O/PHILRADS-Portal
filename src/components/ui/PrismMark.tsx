@@ -29,13 +29,22 @@ export function PrismMark({ className = 'h-9 w-9', tone = 'theme', title }: { cl
   );
 }
 
+/** "PRISM" with its P in PHILRADS red (PHILRADS, 7 Nov 2026). Styles: .prism-p in index.css. */
+export function PrismWord({ className = '' }: { className?: string }) {
+  return (
+    <span className={className}>
+      <span className="prism-p">P</span>RISM
+    </span>
+  );
+}
+
 /** The mark with the PRISM wordmark and "by PHILRADS" (side menu, phone menu). */
 export function PrismLogo({ compact = false, className = '' }: { compact?: boolean; className?: string }) {
   return (
     <span className={`flex items-center gap-3 ${className}`}>
       <PrismMark className={compact ? 'h-8 w-8' : 'h-9 w-9'} />
       <span className="flex min-w-0 flex-col leading-tight">
-        <span className="font-display text-base tracking-[0.06em] text-ink">PRISM</span>
+        <PrismWord className="font-display text-base tracking-[0.06em] text-ink" />
         {!compact && <span className="text-[0.5625rem] font-semibold uppercase tracking-[0.2em] text-muted">by PHILRADS</span>}
       </span>
     </span>

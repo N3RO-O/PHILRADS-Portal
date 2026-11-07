@@ -28,7 +28,17 @@ export function PrismHero({ className = '', children }: { className?: string; ch
         <PrismMark className="relative h-16 w-16" tone="brand" />
       </span>
       <div className="animate-fade-up [animation-delay:120ms]">
-        <p className="pg-word font-display text-3xl tracking-[0.08em]">PRISM</p>
+        <p className="font-display text-3xl tracking-[0.08em]">
+          <span className="sr-only">PRISM</span>
+          <span aria-hidden className="pg-word">
+            <span className="pg-p">P</span>
+            {['R', 'I', 'S', 'M'].map((c, i) => (
+              <span key={c} className="pg-letter" style={{ animationDelay: `${0.75 + i * 0.08}s` }}>
+                {c}
+              </span>
+            ))}
+          </span>
+        </p>
         <p className="mt-1 text-[0.6875rem] font-semibold uppercase tracking-[0.22em] text-cloud/80">by PHILRADS</p>
       </div>
       {children}

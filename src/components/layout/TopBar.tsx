@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Menu } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useOnboarding } from '../onboarding/OnboardingProvider';
-import { PrismMark } from '../ui/PrismMark';
+import { PrismMark, PrismWord } from '../ui/PrismMark';
 import { ActiveFaces } from './ActiveFaces';
 import { GlobalSearch } from './GlobalSearch';
 import { NotificationsMenu } from './NotificationsMenu';
@@ -62,7 +62,7 @@ export function TopBar({ search, onSearch, menuOpen, onOpenMenu, hideMobileSearc
         </button>
         <Link to="/" className="flex items-center gap-2 lg:hidden" aria-label="PRISM home">
           <PrismMark className="h-8 w-8 text-ink" />
-          <span className="hidden font-display text-sm tracking-[0.06em] min-[380px]:inline">PRISM</span>
+          <PrismWord className="hidden font-display text-sm tracking-[0.06em] min-[380px]:inline" />
         </Link>
         <GlobalSearch value={search} onChange={onSearch} inputRef={desktopInput} shortcut={SHORTCUT_LABEL} className="hidden w-full max-w-md md:block" />
         <div className="ml-auto flex items-center gap-1 sm:gap-2">

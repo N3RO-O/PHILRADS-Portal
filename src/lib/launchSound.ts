@@ -1,6 +1,6 @@
 /**
- * The PRISM launch theme (public/sounds/prism-launch.mp3, about a minute) on the sign-in screen:
- * fades in softly when the screen opens, fades out when the person signs in or leaves. Plays once
+ * The PRISM launch theme (public/sounds/prism-launch.mp3, about a minute, looping) on the sign-in
+ * screen: fades in softly when the screen opens, fades out when the person signs in or leaves. Plays once
  * per visit (browser tab), never for data saving, and the speaker button turns it off on this
  * device. Browsers only allow sound after a tap or key press, so when it can't start straight away
  * it starts on the first one. Volume goes through Web Audio, because phones (iPhone) ignore
@@ -44,6 +44,8 @@ function setup() {
   if (audio) return;
   audio = new Audio(SRC);
   audio.preload = 'auto';
+  // Loops for as long as the sign-in screen stays open.
+  audio.loop = true;
   const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
   if (AC) {
     ctx = new AC();

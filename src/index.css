@@ -1527,15 +1527,29 @@
   animation: pg-halo 4.8s ease-in-out infinite;
 }
 .pg-word {
+  display: inline-flex;
   color: #fbf2f2;
-  background: linear-gradient(100deg, #fbf2f2 0%, #fbf2f2 40%, #ffd79a 48%, #fff8ee 52%, #fbf2f2 60%, #fbf2f2 100%);
-  background-size: 260% 100%;
-  background-position: 100% 0;
+  text-shadow: 0 2px 18px rgba(60, 0, 0, 0.35);
+}
+/* The P: PHILRADS red, lit from within. It lights up first, then glows slowly. */
+.pg-p {
+  display: inline-block;
+  background: linear-gradient(170deg, #ff8a7a 0%, #ff4b40 38%, #e0202a 70%, #b3121c 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 2px 18px rgba(60, 0, 0, 0.35);
-  animation: pg-shimmer 7.5s cubic-bezier(0.45, 0, 0.2, 1) 1.5s infinite;
+  -webkit-text-stroke: 1px rgba(255, 228, 220, 0.55);
+  text-shadow: none;
+  filter: drop-shadow(0 0 6px rgba(255, 70, 60, 0.55)) drop-shadow(0 2px 10px rgba(40, 0, 0, 0.5));
+  transform-origin: 50% 60%;
+  animation:
+    pg-p-ignite 900ms cubic-bezier(0.22, 1, 0.36, 1) 250ms backwards,
+    pg-p-glow 4.8s ease-in-out 1.4s infinite;
+}
+/* R, I, S, M fan out from behind the P, like light leaving the prism. */
+.pg-letter {
+  display: inline-block;
+  animation: pg-letter-in 620ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 @keyframes pg-drift-a {
   from { transform: translate3d(0, 0, 0) scale(1); }
@@ -1549,10 +1563,20 @@
   0% { transform: translateX(-70%); }
   45%, 100% { transform: translateX(70%); }
 }
-@keyframes pg-shimmer {
-  0% { background-position: 100% 0; }
-  45%, 100% { background-position: 0% 0; }
+@keyframes pg-p-ignite {
+  0% { opacity: 0; transform: scale(0.55) rotate(-8deg); filter: drop-shadow(0 0 0 rgba(255, 70, 60, 0)) brightness(2.2); }
+  55% { opacity: 1; transform: scale(1.12) rotate(2deg); filter: drop-shadow(0 0 18px rgba(255, 90, 70, 0.95)) brightness(1.5); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 6px rgba(255, 70, 60, 0.55)) drop-shadow(0 2px 10px rgba(40, 0, 0, 0.5)); }
 }
+@keyframes pg-p-glow {
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(255, 70, 60, 0.5)) drop-shadow(0 2px 10px rgba(40, 0, 0, 0.5)); }
+  50% { filter: drop-shadow(0 0 14px rgba(255, 96, 72, 0.85)) drop-shadow(0 2px 10px rgba(40, 0, 0, 0.5)); }
+}
+@keyframes pg-letter-in {
+  from { opacity: 0; transform: translateX(-0.6em) skewX(-12deg); filter: blur(4px); }
+  to { opacity: 1; transform: translateX(0) skewX(0deg); filter: blur(0); }
+}
+
 @keyframes pg-float {
   0%, 100% { transform: translateY(0) rotate(0deg); }
   50% { transform: translateY(-4px) rotate(-1.5deg); }
@@ -1562,6 +1586,14 @@
   50% { opacity: 1; transform: scale(1.06); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .pg-orb, .pg-sheen, .pg-mark > svg, .pg-halo, .pg-word { animation: none !important; }
+  .pg-orb, .pg-sheen, .pg-mark > svg, .pg-halo, .pg-p, .pg-letter { animation: none !important; }
   .pg-sheen { display: none; }
+}
+
+/* "PRISM" in the menu and top bar: the P in PHILRADS red (a brighter red on dark surfaces). */
+.prism-p {
+  color: #ef4a3f;
+}
+[data-theme='light'] .prism-p {
+  color: #a3191a;
 }

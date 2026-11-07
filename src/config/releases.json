@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-11-07.6",
+    "version": "1.9.5",
+    "date": "2026-11-07",
+    "title": "The P lights up",
+    "items": [
+      {
+        "icon": "sparkles",
+        "title": "A red P in PRISM",
+        "body": "The P in PRISM is now PHILRADS red. On the sign-in screen it lights up first, then R, I, S and M fan out after it like light leaving the prism, and the P keeps a slow glow."
+      },
+      {
+        "icon": "volume",
+        "title": "The theme keeps playing",
+        "body": "The PRISM theme on the sign-in screen now loops for as long as the screen is open. The speaker button still turns it off."
+      }
+    ]
+  },
+  {
     "id": "2026-11-07.5",
     "version": "1.9.4",
     "date": "2026-11-07",
