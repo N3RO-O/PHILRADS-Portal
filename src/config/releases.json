@@ -15,6 +15,22 @@
         "icon": "gift",
         "title": "Badges by program",
         "body": "The list badges now follow the programs too: First responder, Eyes on the ground, Rebuilder, Change maker and Mentor."
+      },
+      {
+        "icon": "calendar-check",
+        "title": "My tasks on Home",
+        "body": "A new box on Home shows tasks waiting for your answer, what's on today, and what's coming up. Tap one to open it.",
+        "path": "/"
+      },
+      {
+        "icon": "bell-ring",
+        "title": "Task requests are easier to find",
+        "body": "Tapping a notification now opens the task. Tasks someone asks you to take on wait at the top of Today until you accept or decline."
+      },
+      {
+        "icon": "toggle-right",
+        "title": "A tidier menu",
+        "body": "Staff Tasks sits under the Live Map, Response under Inventory, and Statistics at the end after Resources."
       }
     ]
   },
