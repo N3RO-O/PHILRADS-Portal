@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import './lib/installPrompt';
 import { envProblems } from './config/env';
 import App from './App';
+import { startAppUpdate } from './lib/appUpdate';
 import { startErrorSound } from './lib/errorSound';
 import { startNotificationSound } from './lib/notificationSound';
 import { installPressRipple } from './lib/ripple';
@@ -15,6 +16,8 @@ startErrorSound();
 startNotificationSound();
 installPressRipple();
 startTheme();
+// Updates: checked from the first screen on, and installed on their own when nothing can be lost.
+startAppUpdate();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-11-07.7",
+    "version": "1.9.6",
+    "date": "2026-11-07",
+    "title": "Updates install themselves",
+    "items": [
+      {
+        "icon": "sparkles",
+        "title": "Always the latest PRISM",
+        "body": "PRISM now checks for a new version from the sign-in screen on, every 15 minutes and whenever you come back to it, and installs it on its own when nothing can be lost: before you sign in, right after opening, or when you return after a while. In the middle of your work it still asks first."
+      }
+    ]
+  },
+  {
     "id": "2026-11-07.6",
     "version": "1.9.5",
     "date": "2026-11-07",
