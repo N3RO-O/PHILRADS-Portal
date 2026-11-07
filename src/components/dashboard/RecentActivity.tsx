@@ -83,7 +83,7 @@ export function RecentActivity({ search }: { search: string }) {
       </h2>
       {/* Opens and closes smoothly: the row grows from nothing to its natural height. */}
       <div id={bodyId} className={`grid transition-[grid-template-rows] duration-300 motion-reduce:transition-none ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`} ref={body}>
-        <div className="min-h-0 overflow-hidden">
+        <div className="relative min-h-0 overflow-hidden">
           <div className="flex flex-col gap-4 border-t border-line px-4 pb-4 pt-4 sm:px-5">
       <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter activity by type">
         {FILTERS.map((f) => (
@@ -124,7 +124,7 @@ export function RecentActivity({ search }: { search: string }) {
             </EmptyState>
           )
         ) : (
-          <ol className="-mr-2 flex max-h-[25rem] flex-col overflow-y-auto pr-2">
+          <ol className="relative -mr-2 flex max-h-[25rem] flex-col overflow-y-auto pr-2">
             {items.map((a, i) => {
               const k = KIND[a.kind];
               const day = manilaDayKey(a.occurredAt);
