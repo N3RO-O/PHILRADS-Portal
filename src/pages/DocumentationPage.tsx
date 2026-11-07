@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
+import { Fab } from '../components/ui/Fab';
+import { ViewSwitch } from '../components/ui/ViewSwitch';
 import { AlertTriangle, CheckCircle2, CheckSquare, CloudUpload, HardDrive, Image as ImageIcon, Link2, Loader2, RotateCw, Search, Trash2, Upload, X } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../components/auth/AuthProvider';
@@ -285,14 +287,39 @@ export function DocumentationPage() {
               </button>
             )}
             {canUpload && !selecting && (
-              <button type="button" className="btn-primary min-h-11 px-4" onClick={() => setUploadOpen(true)} disabled={!ready || !online} title={!ready ? 'Google Drive isn’t connected yet' : undefined}>
+              <button type="button" className="btn-primary hidden min-h-11 px-4 md:inline-flex" onClick={() => setUploadOpen(true)} disabled={!ready || !online} title={!ready ? 'Google Drive isn’t connected yet' : undefined}>
                 <Upload className="h-4 w-4" aria-hidden /> Upload
               </button>
+            )}
+            {canUpload && !selecting && (
+              <Fab onClick={() => setUploadOpen(true)} disabled={!ready || !online} title={!ready ? 'Google Drive isn’t connected yet' : undefined} icon={<Upload className="h-6 w-6" aria-hidden />}>
+                Upload
+              </Fab>
             )}
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Show">
+        <div className="md:hidden">
+          {(() => {
+            const n = (c: DocumentCategory) => all.filter((d) => d.category === c).length;
+            const opts = (cs: readonly DocumentCategory[]) => cs.filter((c) => n(c) > 0).map((c) => ({ key: c as DocumentCategory | 'all', label: c, count: n(c) }));
+            const media = opts(['Photos', 'Videos']);
+            const records = opts(DOCUMENT_CATEGORIES.filter((c) => c !== 'Photos' && c !== 'Videos'));
+            return (
+              <ViewSwitch
+                label="Show"
+                value={category}
+                onChange={setCategory}
+                groups={[
+                  { key: 'all', label: 'All', count: all.length, options: [{ key: 'all', label: 'All' }] },
+                  { key: 'media', label: 'Media', count: media.reduce((t, o) => t + o.count, 0), options: media },
+                  { key: 'records', label: 'Records', count: records.reduce((t, o) => t + o.count, 0), options: records },
+                ]}
+              />
+            );
+          })()}
+        </div>
+        <div className="hidden flex-wrap gap-2 md:flex" role="radiogroup" aria-label="Show">
           {(['all', ...DOCUMENT_CATEGORIES] as const).map((c) => {
             const n = c === 'all' ? all.length : all.filter((d) => d.category === c).length;
             if (c !== 'all' && n === 0) return null;

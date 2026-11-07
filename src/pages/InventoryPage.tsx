@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fab } from '../components/ui/Fab';
 import { useSearchParams } from 'react-router-dom';
 import { ChevronDown, Database, Download, ExternalLink, FileText, Loader2, RefreshCw, Search, X } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
@@ -467,14 +468,9 @@ export function InventoryPage() {
 
           {/* Thumb-reach primary action on phones (not on Approvals, where each card has its own button) */}
           {imsUrl && tab !== 'approvals' && (
-            <a
-              href={`${imsUrl}/inventory.php`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-4 z-30 flex h-14 items-center gap-2 rounded-full premium pl-4 pr-5 text-sm font-bold text-onaccent shadow-xl shadow-black/50 transition active:scale-95 md:hidden"
-            >
-              <ExternalLink className="h-5 w-5" aria-hidden /> Open IMS
-            </a>
+            <Fab href={`${imsUrl}/inventory.php`} icon={<ExternalLink className="h-5 w-5" aria-hidden />}>
+              Open IMS
+            </Fab>
           )}
 
           <StockDetailSheet

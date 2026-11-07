@@ -217,9 +217,8 @@ export function LiveMapPage() {
     [sites, layers, needle],
   );
 
-  // "Show all places": just the places on the map, so one far-away check-in or activity site doesn't
-  // zoom the map right out. Only when no place is shown does it fall back to the rest.
-  const placePoints = () => (shownPlaces.length ? shownPlaces : [...shownCheckIns, ...shownSites, ...shownLive]);
+  // "Show all places": everything that's on the map right now (the layers that are toggled on).
+  const placePoints = () => [...shownPlaces, ...shownCheckIns, ...shownSites, ...shownLive];
   const showAll = () => {
     const pts = placePoints();
     if (pts.length) setFit({ points: pts, key: Date.now() });

@@ -1,4 +1,5 @@
-import { Building2, Camera, CloudOff, Flag, Hourglass, ListChecks, MapPin, Repeat, Sun, TriangleAlert } from 'lucide-react';
+import { useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from 'react';
+import { Building2, Camera, Check, CloudOff, Flag, Hourglass, ListChecks, MapPin, Repeat, RotateCcw, Sun, TriangleAlert } from 'lucide-react';
 import { daysBetween, dueLabel, LIST_META } from '../../lib/tasks';
 import type { Task } from '../../services/tasks/types';
 import { LIST_STYLE } from './taskMeta';
@@ -23,6 +24,68 @@ interface Props {
   syncOf?: (t: Task) => 'waiting' | 'failed' | null;
 }
 
+const SWIPE = 84; // how far to drag before letting go does it
+
+/**
+ * Swipe a row sideways with a finger: right to finish (or undo), left to plan it for today (or take
+ * it off). The row follows the finger over a coloured strip that says what letting go will do;
+ * short of the mark it springs back. Mouse and pen don't swipe (they have the buttons).
+ */
+function useSwipe(right: (() => void) | null, left: (() => void) | null) {
+  const [dx, setDx] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const start = useRef<{ x: number; y: number; id: number; axis: 'x' | 'y' | null } | null>(null);
+  const moved = useRef(false);
+  const clamp = (v: number) => Math.max(left ? -SWIPE * 1.6 : 0, Math.min(right ? SWIPE * 1.6 : 0, v));
+  const end = () => {
+    const s = start.current;
+    start.current = null;
+    setDragging(false);
+    if (s?.axis === 'x') {
+      if (dx >= SWIPE) right?.();
+      else if (dx <= -SWIPE) left?.();
+    }
+    setDx(0);
+  };
+  const handlers = {
+    onPointerDown: (e: ReactPointerEvent) => {
+      if (e.pointerType !== 'touch' || (!right && !left)) return;
+      start.current = { x: e.clientX, y: e.clientY, id: e.pointerId, axis: null };
+      moved.current = false;
+    },
+    onPointerMove: (e: ReactPointerEvent) => {
+      const s = start.current;
+      if (!s || s.id !== e.pointerId) return;
+      const x = e.clientX - s.x;
+      const y = e.clientY - s.y;
+      if (!s.axis) {
+        if (Math.abs(x) < 10 && Math.abs(y) < 10) return;
+        s.axis = Math.abs(x) > Math.abs(y) * 1.2 ? 'x' : 'y';
+        if (s.axis === 'y') return;
+        try {
+          (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+        } catch {
+          /* already released: follow it without capture */
+        }
+        setDragging(true);
+        moved.current = true;
+      }
+      if (s.axis === 'x') setDx(clamp(x));
+    },
+    onPointerUp: end,
+    onPointerCancel: end,
+    // A swipe isn't a tap: don't open the task or tick it as the finger lifts.
+    onClickCapture: (e: ReactMouseEvent) => {
+      if (moved.current) {
+        e.stopPropagation();
+        e.preventDefault();
+        moved.current = false;
+      }
+    },
+  };
+  return { dx, dragging, handlers };
+}
+
 /** One task, Any.do style: a round checkbox in the list's colour, the title, and one line of details. */
 export function TaskRow({ task: t, today, me, onToggle, onOpen, onMyDay, onStart, flash, showList = true, syncOf, leavingIds }: Props) {
   const leaving = leavingIds?.has(t.id) ?? false;
@@ -38,11 +101,38 @@ export function TaskRow({ task: t, today, me, onToggle, onOpen, onMyDay, onStart
   // Waiting to be accepted: the person it's for answers first (the checkbox opens the task instead).
   const pending = t.acceptance === 'pending';
   const needsMe = pending && t.assigneeId === me && t.createdById !== me;
+  const swipe = useSwipe(needsMe || pending ? null : () => onToggle(t), onMyDay && !done ? () => onMyDay(t) : null);
+  const past = Math.abs(swipe.dx) >= SWIPE;
 
   return (
     <li className={`leave-row ${leaving ? 'is-leaving' : ''}`} aria-hidden={leaving || undefined}>
-      <div className="leave-row-inner">
-        <div className="group relative flex items-start gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-surface-raised/50">
+      <div className="leave-row-inner relative">
+        {/* What letting go will do, under the row while it's dragged. */}
+        {swipe.dx !== 0 && (
+          <div
+            aria-hidden
+            className={`absolute inset-0 flex items-center rounded-xl px-4 text-xs font-bold text-white transition-colors ${
+              swipe.dx > 0 ? `justify-start ${past ? 'bg-status-in' : 'bg-status-in/45'}` : `justify-end ${past ? 'bg-uplift' : 'bg-uplift/45'}`
+            }`}
+          >
+            {swipe.dx > 0 ? (
+              <span className="flex items-center gap-1.5">
+                {done ? <RotateCcw className="h-4 w-4" /> : <Check className="h-4 w-4" strokeWidth={3} />}
+                {done ? 'Not done' : 'Done'}
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5">
+                <Sun className="h-4 w-4" />
+                {inMyDay ? 'Off today' : 'Today'}
+              </span>
+            )}
+          </div>
+        )}
+        <div
+          {...swipe.handlers}
+          style={{ transform: swipe.dx ? `translateX(${swipe.dx}px)` : undefined, transition: swipe.dragging ? 'none' : 'transform 220ms cubic-bezier(0.32, 0.72, 0, 1)', touchAction: 'pan-y' }}
+          className={`group relative flex items-start gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-surface-raised/50 ${swipe.dx ? "bg-page" : ""}`}
+        >
           <button
             type="button"
             role="checkbox"

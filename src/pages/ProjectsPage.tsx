@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Fab } from '../components/ui/Fab';
 import {
   ArrowLeft,
   Banknote,
@@ -167,11 +168,16 @@ function ProjectList({ projects, me, canCreate, canCost, onNew }: { projects: Pr
           <FolderKanban className="h-4 w-4" aria-hidden /> Projects {projectsService.source === 'mock' && <SampleBadge />}
         </h2>
         {canCreate && (
-          <button type="button" className="btn-primary min-h-11 px-4" onClick={onNew}>
+          <button type="button" className="btn-primary hidden min-h-11 px-4 md:inline-flex" onClick={onNew}>
             <Plus className="h-4 w-4" aria-hidden /> New project
           </button>
         )}
       </div>
+      {canCreate && (
+        <Fab onClick={onNew} icon={<Plus className="h-6 w-6" aria-hidden />}>
+          New project
+        </Fab>
+      )}
       <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Show">
         {FILTERS.map(([f, label]) => (
           <button key={f} type="button" role="radio" aria-checked={filter === f} aria-pressed={filter === f} className="chip" onClick={() => setFilter(f)}>

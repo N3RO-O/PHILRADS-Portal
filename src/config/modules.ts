@@ -7,7 +7,6 @@ import {
   Library,
   LifeBuoy,
   Map,
-  MessagesSquare,
   Package,
   Printer,
   ScrollText,
@@ -76,6 +75,7 @@ export const MODULES: ModuleConfig[] = [
     group: 'Field operations',
     summary: 'The PDM workspace. Its scope and full name will be set once PHILRADS confirms the module definition.',
     plannedScope: ['Scope to be confirmed by PHILRADS'],
+    soon: true,
   },
   {
     id: 'documentation',
@@ -125,16 +125,6 @@ export const MODULES: ModuleConfig[] = [
     group: 'Work',
     summary: 'Create, assign and track tasks across teams and modules.',
     plannedScope: ['Create and assign tasks', 'Priorities, due dates and status', 'Your tasks and your team’s tasks'],
-  },
-  {
-    id: 'chat',
-    label: 'Chat',
-    path: '/chat',
-    icon: MessagesSquare,
-    group: 'Work',
-    summary: 'Messages between staff and teams, right inside the portal.',
-    plannedScope: [],
-    soon: true,
   },
   {
     id: 'print-docs',

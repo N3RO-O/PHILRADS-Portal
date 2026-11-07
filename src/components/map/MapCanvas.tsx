@@ -7,6 +7,7 @@ import 'leaflet/dist/leaflet.css';
 import { Building2, Crosshair, HandHeart, House, LifeBuoy, Truck, Warehouse, type LucideIcon } from 'lucide-react';
 import { PH_CENTER, PH_ZOOM, type LatLng } from '../../lib/geo';
 import { initialsOf } from '../../lib/format';
+import { profileService } from '../../services';
 import { kindMeta, type CheckIn, type LivePosition, type MapPlace, type PlaceKind } from '../../services/map/types';
 import { timeAgo } from '../../lib/geo';
 import type { GridArea } from '../../services/weather/weather';
@@ -41,23 +42,31 @@ const GLYPHS = Object.fromEntries(
 ) as Record<PlaceKind, { small: string; big: string }>;
 
 const iconCache = new Map<string, L.DivIcon>();
-/** Teardrop pin in the kind's colour with its icon; bigger with a ring when selected. */
-function placeIcon(kind: PlaceKind, selected: boolean): L.DivIcon {
-  const key = `${kind}:${selected}`;
+const cached = (key: string, make: () => L.DivIcon) => {
   const hit = iconCache.get(key);
   if (hit) return hit;
-  const color = kindMeta(kind).color;
-  const size = selected ? 42 : 34;
-  const glyph = selected ? GLYPHS[kind].big : GLYPHS[kind].small;
-  const icon = L.divIcon({
-    className: 'map-pin',
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size],
-    tooltipAnchor: [0, -size],
-    html: `<span style="display:grid;place-items:center;width:${size}px;height:${size}px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${color};border:2px solid ${selected ? '#fff' : 'rgba(28,29,33,.9)'};box-shadow:0 6px 16px -4px rgba(0,0,0,.7)${selected ? `,0 0 0 6px ${color}55` : ''}"><span style="transform:rotate(45deg);display:grid">${glyph}</span></span>`,
-  });
+  const icon = make();
+  if (iconCache.size > 600) iconCache.clear();
   iconCache.set(key, icon);
   return icon;
+};
+const esc = (t: string) => t.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+
+/**
+ * A place: a round badge in the kind's colour with its icon, on a short white tail, and its name
+ * beside it once you're close enough to read it (.map-near, set from the zoom) or it's selected.
+ * Look: ".mp-*" in src/index.css.
+ */
+function placeIcon(kind: PlaceKind, selected: boolean, name: string): L.DivIcon {
+  return cached(`place:${kind}:${selected}:${name}`, () =>
+    L.divIcon({
+      className: 'map-pin',
+      iconSize: [32, 42],
+      iconAnchor: [16, 41],
+      tooltipAnchor: [0, -42],
+      html: `<span class="mp-place${selected ? ' mp-on' : ''}" style="--c:${kindMeta(kind).color}"><span class="mp-badge">${selected ? GLYPHS[kind].big : GLYPHS[kind].small}</span><span class="mp-tail"></span><span class="mp-label">${esc(name)}</span></span>`,
+    }),
+  );
 }
 
 /**
@@ -78,42 +87,45 @@ function siteIcon(s: ActivitySite, selected: boolean): L.DivIcon {
   });
 }
 
-/** A team member's check-in: their initials; a pulse while it's under an hour old. */
-function personIcon(c: CheckIn, selected: boolean): L.DivIcon {
+/** A face for a person pin: their picture, or their initials. */
+const face = (name: string, pic: string | null | undefined) =>
+  pic ? `<img src="${pic}" alt="" draggable="false">` : `<span class="mp-initials">${esc(initialsOf(name))}</span>`;
+const firstName = (name: string) => esc(name.trim().split(/\s+/)[0] || name);
+
+/**
+ * A team member's check-in: their picture in a ring on a tail, their first name beside it, and a
+ * pulse while the check-in is under an hour old. Yours is amber; older ones go quiet (grey ring).
+ */
+function personIcon(c: CheckIn, selected: boolean, pic: string | null | undefined): L.DivIcon {
   const fresh = Date.now() - Date.parse(c.createdAt) < 3600_000;
-  const size = selected ? 38 : 32;
-  return L.divIcon({
-    className: 'map-pin',
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-    tooltipAnchor: [0, -size / 2],
-    html: `<span style="position:relative;display:grid;place-items:center;width:${size}px;height:${size}px">${
-      fresh ? `<span style="position:absolute;inset:0;border-radius:9999px;background:#ec952a;animation:map-pulse 2s ease-out infinite"></span>` : ''
-    }<span style="position:relative;display:grid;place-items:center;width:${size}px;height:${size}px;border-radius:9999px;background:${c.mine ? '#ec952a' : '#7a1f1f'};color:${c.mine ? '#1c1d21' : '#fff'};font:700 ${
-      selected ? 13 : 11
-    }px/1 Montserrat,system-ui,sans-serif;border:2px solid ${selected ? '#fff' : '#1c1d21'};box-shadow:0 6px 16px -4px rgba(0,0,0,.7)">${initialsOf(c.name)}</span></span>`,
-  });
+  const ring = c.mine ? '#ec952a' : fresh ? '#f6cf7e' : '#9a9ca6';
+  return cached(`person:${c.id}:${selected}:${fresh}:${pic ? pic.length : 0}`, () =>
+    L.divIcon({
+      className: 'map-pin',
+      iconSize: [40, 44],
+      iconAnchor: [20, 43],
+      tooltipAnchor: [0, -44],
+      html: `<span class="mp-person${selected ? ' mp-on' : ''}" style="--ring:${ring}">${fresh ? '<span class="mp-pulse"></span>' : ''}<span class="mp-face">${face(c.name, pic)}</span><span class="mp-tail"></span><span class="mp-tag">${c.mine ? 'You' : firstName(c.name)}</span></span>`,
+    }),
+  );
 }
 
 /** Under 2 minutes since the last position: live. Older: the phone stopped sending (portal closed or no signal). */
 export const isFresh = (p: LivePosition, now = Date.now()) => now - Date.parse(p.updatedAt) < 120_000;
 
-/** Someone sharing live: initials in a green ring with a "LIVE" tag; grey once the position goes stale. */
-function liveIcon(p: LivePosition, selected: boolean): L.DivIcon {
+/** Someone sharing live: their picture in a green ring with a pulse and a "LIVE" tag; grey once it goes stale. */
+function liveIcon(p: LivePosition, selected: boolean, pic: string | null | undefined): L.DivIcon {
   const fresh = isFresh(p);
-  const size = selected ? 40 : 34;
   const ring = fresh ? '#4ade80' : '#9a9ca6';
-  return L.divIcon({
-    className: 'map-pin live-pin',
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-    tooltipAnchor: [0, -size / 2],
-    html: `<span style="position:relative;display:grid;place-items:center;width:${size}px;height:${size}px">${
-      fresh ? `<span style="position:absolute;inset:0;border-radius:9999px;background:${ring};animation:map-pulse 1.6s ease-out infinite"></span>` : ''
-    }<span style="position:relative;display:grid;place-items:center;width:${size}px;height:${size}px;border-radius:9999px;background:${p.mine ? '#ec952a' : '#1c1d21'};color:${p.mine ? '#1c1d21' : '#fff'};font:700 ${
-      selected ? 13 : 11
-    }px/1 Montserrat,system-ui,sans-serif;border:3px solid ${ring};box-shadow:0 6px 16px -4px rgba(0,0,0,.7)">${initialsOf(p.name)}</span><span style="position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);padding:1px 4px;border-radius:4px;background:${ring};color:#1c1d21;font:800 8px/1.2 Montserrat,system-ui,sans-serif;letter-spacing:.06em">${fresh ? 'LIVE' : 'PAUSED'}</span></span>`,
-  });
+  return cached(`live:${p.profileId}:${selected}:${fresh}:${pic ? pic.length : 0}`, () =>
+    L.divIcon({
+      className: 'map-pin live-pin',
+      iconSize: [40, 44],
+      iconAnchor: [20, 43],
+      tooltipAnchor: [0, -44],
+      html: `<span class="mp-person${selected ? ' mp-on' : ''}" style="--ring:${ring}">${fresh ? '<span class="mp-pulse"></span>' : ''}<span class="mp-face">${face(p.name, pic)}</span><span class="mp-tail"></span><span class="mp-tag"><i class="mp-dot"></i>${p.mine ? 'You' : firstName(p.name)}<b>${fresh ? 'LIVE' : 'PAUSED'}</b></span></span>`,
+    }),
+  );
 }
 
 /** Where the forecast was asked for (weather on, tapped the map). */
@@ -242,12 +254,38 @@ function Controller({ focus, fit, picking, onCenter, onBackground, onView }: Pic
   useEffect(() => {
     if (picking) onCenter?.(map.getCenter());
   }, [picking, map, onCenter]);
+  // Close enough to read names: place labels show (".map-near" in src/index.css).
+  useEffect(() => {
+    const near = () => map.getContainer().classList.toggle('map-near', map.getZoom() >= 13);
+    near();
+    map.on('zoomend', near);
+    return () => void map.off('zoomend', near);
+  }, [map]);
   useMapEvents({
     move: () => picking && onCenter?.(map.getCenter()),
     click: (e) => !picking && onBackground(e.latlng),
     moveend: reportView,
   });
   return null;
+}
+
+/** Pictures (data URLs) by person, for the given people; null where someone has none. */
+function useProfilePictures(ids: string[]) {
+  const [pics, setPics] = useState<Record<string, string | null>>({});
+  const want = [...new Set(ids)].sort().join(',');
+  useEffect(() => {
+    const missing = want ? want.split(',').filter((id) => !(id in pics)) : [];
+    if (!missing.length) return;
+    let on = true;
+    const settle = (found: Record<string, { avatar: string | null }>) =>
+      on && setPics((prev) => ({ ...prev, ...Object.fromEntries(missing.map((id) => [id, found[id]?.avatar ?? null])) }));
+    profileService.pictures(missing).then(settle, () => settle({}));
+    return () => {
+      on = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [want]);
+  return pics;
 }
 
 export function MapCanvas({ places, sites = [], checkIns, live, selected, onSelect, focus, fit, me, picking, onCenter, weather, onView, onMapClick, spot }: Props) {
@@ -264,6 +302,8 @@ export function MapCanvas({ places, sites = [], checkIns, live, selected, onSele
     return () => clearTimeout(t);
   }, []);
   const tileEvents = useMemo(() => ({ load: () => setTilesReady(true) }), []);
+  // People's pictures for their pins (fetched once per person; initials until then, or without one).
+  const pics = useProfilePictures(useMemo(() => [...checkIns.map((c) => c.profileId), ...live.map((p) => p.profileId)], [checkIns, live]));
   const handlers = useMemo(
     () => ({
       place: (id: string) => ({ click: () => onSelectRef.current({ type: 'place', id }), keypress: (e: L.LeafletKeyboardEvent) => e.originalEvent.key === 'Enter' && onSelectRef.current({ type: 'place', id }) }),
@@ -332,21 +372,21 @@ export function MapCanvas({ places, sites = [], checkIns, live, selected, onSele
             <Marker
               key={p.id}
               position={[p.lat, p.lng]}
-              icon={placeIcon(p.kind, selected?.type === 'place' && selected.id === p.id)}
+              icon={placeIcon(p.kind, selected?.type === 'place' && selected.id === p.id, p.name)}
               alt={p.name}
               keyboard
               riseOnHover
               zIndexOffset={selected?.id === p.id ? 1000 : 0}
               eventHandlers={handlers.place(p.id)}
             >
-              <Tooltip direction="auto" opacity={1} className="!rounded-lg !border-line !bg-surface-raised !px-2 !py-1 !text-xs !font-semibold !text-ink !shadow-xl">
+              <Tooltip direction="auto" opacity={1} className="place-tip !rounded-lg !border-line !bg-surface-raised !px-2 !py-1 !text-xs !font-semibold !text-ink !shadow-xl">
                 {p.name}
               </Tooltip>
             </Marker>
           ))}
         {!picking &&
           checkIns.map((c) => (
-            <Marker key={c.id} position={[c.lat, c.lng]} icon={personIcon(c, selected?.id === c.id)} alt={c.name} zIndexOffset={2000} eventHandlers={handlers.person(c.id)}>
+            <Marker key={c.id} position={[c.lat, c.lng]} icon={personIcon(c, selected?.id === c.id, pics[c.profileId])} alt={c.name} zIndexOffset={2000} eventHandlers={handlers.person(c.id)}>
               <Tooltip direction="auto" opacity={1} className="!rounded-lg !border-line !bg-surface-raised !px-2 !py-1 !text-xs !font-semibold !text-ink !shadow-xl">
                 {c.name}
               </Tooltip>
@@ -358,7 +398,7 @@ export function MapCanvas({ places, sites = [], checkIns, live, selected, onSele
               key={`live-${p.profileId}`}
               lat={p.lat}
               lng={p.lng}
-              icon={liveIcon(p, selected?.type === 'live' && selected.id === p.profileId)}
+              icon={liveIcon(p, selected?.type === 'live' && selected.id === p.profileId, pics[p.profileId])}
               alt={`${p.name}, live`}
               zIndexOffset={3000}
               eventHandlers={handlers.live(p.profileId)}

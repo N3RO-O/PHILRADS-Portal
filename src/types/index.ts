@@ -9,7 +9,6 @@ export type ModuleId =
   | 'response'
   | 'projects'
   | 'tasks'
-  | 'chat'
   | 'statistics'
   | 'print-docs'
   | 'resources'

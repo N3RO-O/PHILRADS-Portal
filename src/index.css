@@ -442,6 +442,154 @@
   outline: 2px solid #ec952a;
   outline-offset: 3px;
 }
+/* Map pins (src/components/map/MapCanvas.tsx). Places: a round badge on a white tail, the name
+   beside it when zoomed in (.map-near) or selected. People: their picture in a ring on a tail. */
+.mp-place,
+.mp-person {
+  position: relative;
+  display: block;
+  transition: transform 160ms cubic-bezier(0.32, 0.72, 0, 1);
+  transform-origin: 50% 100%;
+}
+.mp-place {
+  width: 32px;
+  height: 42px;
+}
+.mp-on {
+  transform: scale(1.18);
+}
+.mp-badge {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  background: var(--c);
+  border: 2.5px solid #fff;
+  box-shadow: 0 6px 14px -4px rgba(0, 0, 0, 0.6);
+}
+.mp-on .mp-badge {
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--c) 35%, transparent), 0 6px 14px -4px rgba(0, 0, 0, 0.6);
+}
+.mp-tail {
+  position: absolute;
+  left: 50%;
+  top: 29px;
+  width: 0;
+  height: 0;
+  transform: translateX(-50%);
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 10px solid #fff;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
+}
+.mp-label,
+.mp-tag {
+  position: absolute;
+  white-space: nowrap;
+  border-radius: 6px;
+  background: rgba(20, 21, 24, 0.88);
+  color: #fff;
+  font: 600 11px/1.45 Montserrat, system-ui, sans-serif;
+  padding: 1px 7px;
+  box-shadow: 0 4px 10px -4px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+.mp-label {
+  left: 38px;
+  top: 7px;
+  max-width: 11rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+/* Zoomed in, the name is already beside the pin. */
+.map-near .place-tip {
+  display: none;
+}
+.map-near .mp-label,
+.mp-on .mp-label {
+  opacity: 1;
+  transform: none;
+}
+.mp-person {
+  width: 40px;
+  height: 44px;
+}
+.mp-face {
+  position: absolute;
+  left: 2px;
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  overflow: hidden;
+  border-radius: 9999px;
+  border: 3px solid var(--ring);
+  background: #1c1d21;
+  box-shadow: 0 6px 14px -4px rgba(0, 0, 0, 0.65);
+}
+.mp-on .mp-face {
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--ring) 35%, transparent), 0 6px 14px -4px rgba(0, 0, 0, 0.65);
+}
+.mp-face img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.mp-initials {
+  color: #fff;
+  font: 700 12px/1 Montserrat, system-ui, sans-serif;
+}
+.mp-person .mp-tail {
+  top: 33px;
+  border-top-color: var(--ring);
+}
+.mp-pulse {
+  position: absolute;
+  left: 2px;
+  top: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  background: var(--ring);
+  animation: map-pulse 2s ease-out infinite;
+}
+.mp-tag {
+  left: 42px;
+  top: 9px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.mp-tag b {
+  margin-left: 2px;
+  border-radius: 3px;
+  background: var(--ring);
+  color: #1c1d21;
+  padding: 0 3px;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+.mp-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--ring);
+}
+@media (prefers-reduced-motion: reduce) {
+  .mp-pulse {
+    animation: none;
+    opacity: 0;
+  }
+}
 @keyframes map-pulse {
   from {
     transform: scale(1);

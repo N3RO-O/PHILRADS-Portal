@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fab } from '../components/ui/Fab';
 import { Archive, ArchiveRestore, Loader2, MailPlus, RotateCw, Search, UsersRound, X } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../components/auth/AuthProvider';
@@ -336,14 +337,9 @@ export function StaffPage() {
         )}
       </section>
 
-      <button
-        type="button"
-        onClick={() => setInviteOpen(true)}
-        disabled={!online}
-        className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-4 z-30 flex h-14 items-center gap-2 rounded-full premium pl-4 pr-5 text-sm font-bold text-onaccent shadow-xl shadow-black/50 transition active:scale-95 disabled:opacity-60 md:hidden"
-      >
-        <MailPlus className="h-6 w-6" aria-hidden /> Invite
-      </button>
+      <Fab onClick={() => setInviteOpen(true)} disabled={!online} icon={<MailPlus className="h-6 w-6" aria-hidden />}>
+        Invite
+      </Fab>
 
       <InviteSheet
         open={inviteOpen}

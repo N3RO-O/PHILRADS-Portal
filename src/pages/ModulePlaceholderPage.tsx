@@ -29,7 +29,7 @@ export function ModulePlaceholderPage({ moduleId }: { moduleId: ModuleId }) {
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-base font-semibold leading-tight">About this module</h2>
             <span className="badge gap-1 border-line text-ink-soft">
-              <Construction className="h-3 w-3" aria-hidden /> Planned
+              <Construction className="h-3 w-3" aria-hidden /> {m.soon ? 'Coming soon' : 'Planned'}
             </span>
           </div>
           <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted">{m.summary}</p>

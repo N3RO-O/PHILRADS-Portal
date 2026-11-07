@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
+import { Fab } from '../components/ui/Fab';
+import { ViewSwitch } from '../components/ui/ViewSwitch';
 import { useSearchParams } from 'react-router-dom';
 import { CheckSquare, FolderOpen, Library, Loader2, Plus, Search, Trash2, User, X } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
@@ -278,15 +280,14 @@ export function ResourcesPage() {
           />
         </div>
         <div className="-mt-2 flex flex-col gap-2 border-b border-line pb-3">
-          <label htmlFor="res-cat" className="sr-only">
-            Category
-          </label>
-          <select id="res-cat" className={`chip w-full bg-transparent pr-7 md:hidden ${cat ? 'border-uplift text-uplift' : ''}`} value={cat} onChange={(e) => setParam({ cat: e.target.value || null })}>
-            <option value="">All categories</option>
-            {RESOURCE_CATEGORIES.map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
+          <div id="res-cat" className="md:hidden">
+            <ViewSwitch
+              label="Category"
+              value={cat || 'all'}
+              onChange={(c) => setParam({ cat: c === 'all' ? null : c })}
+              groups={[{ key: 'cat', label: 'Category', options: [{ key: 'all', label: 'All' }, ...RESOURCE_CATEGORIES.map((c) => ({ key: c as string, label: c }))] }]}
+            />
+          </div>
           <div className="hidden flex-wrap items-center gap-2 md:flex" role="group" aria-label="Category">
             <button type="button" className="chip" aria-pressed={!cat} onClick={() => setParam({ cat: null })}>
               All
@@ -416,13 +417,9 @@ export function ResourcesPage() {
       )}
 
       {canManage && (
-        <button
-          type="button"
-          onClick={() => setSheet({ resource: null })}
-          className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-4 z-30 flex h-14 items-center gap-2 rounded-full premium pl-4 pr-5 text-sm font-bold text-onaccent shadow-xl shadow-black/50 transition active:scale-95 md:hidden"
-        >
-          <Plus className="h-6 w-6" aria-hidden /> Add resource
-        </button>
+        <Fab onClick={() => setSheet({ resource: null })} icon={<Plus className="h-6 w-6" aria-hidden />}>
+          Add resource
+        </Fab>
       )}
 
       <ResourcePreview

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Fab } from '../components/ui/Fab';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Building2, CalendarClock, CalendarDays, CheckCheck, ChevronDown, CloudOff, Inbox, Layers, Loader2, MapPin, Plus, RefreshCw, Send, Sun, SunMedium, UserRoundCheck, UsersRound, X } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
@@ -14,6 +15,7 @@ import { TaskSheet } from '../components/tasks/TaskSheet';
 import { TeamTasks } from '../components/tasks/TeamTasks';
 import { TeamGoalCard } from '../components/tasks/TeamGoalCard';
 import { LoadError, Skeleton } from '../components/ui/Card';
+import { ViewSwitch } from '../components/ui/ViewSwitch';
 import { SampleBadge } from '../components/ui/SampleBadge';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { formatLongDate, formatNumber, manilaDayKey } from '../lib/format';
@@ -39,6 +41,17 @@ const VIEW_META: Record<Exclude<View, 'list'>, { label: string; icon: typeof Sun
   team: { label: 'Team tasks', icon: UsersRound, note: 'Tasks given out, by person.' },
   done: { label: 'Completed', icon: CheckCheck, note: 'What you’ve finished, with the XP each earned.' },
 };
+
+/**
+ * On narrower screens the views come in three tabs (yours, the ones you gave, the team's) with one
+ * short row of pills under the first, instead of seven chips wrapping onto several rows.
+ */
+const VIEW_GROUPS: { key: 'mine' | 'given' | 'team'; label: string; views: Exclude<View, 'list'>[] }[] = [
+  { key: 'mine', label: 'Mine', views: ['myday', 'upcoming', 'calendar', 'assigned', 'done'] },
+  { key: 'given', label: 'Given', views: ['delegated'] },
+  { key: 'team', label: 'Team', views: ['team'] },
+];
+const SHORT: Partial<Record<Exclude<View, 'list'>, string>> = { assigned: 'Assigned', done: 'Done' };
 
 const errorText = (e: unknown) => (e instanceof TaskRuleError ? e.message : !navigator.onLine ? 'You’re offline. Connect and try again.' : e instanceof Error ? e.message : 'Something went wrong. Try again.');
 
@@ -490,16 +503,20 @@ export function TasksPage() {
 
         <section className="card flex flex-col gap-4">
           <div className={`flex flex-col gap-3 ${cols >= 2 ? 'hidden' : ''}`}>
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Task views">
-              {(Object.keys(VIEW_META) as Exclude<View, 'list'>[])
-                .filter((v) => (v !== 'delegated' || canManage || counts.delegated > 0) && (v !== 'team' || canManage))
-                .map((v) => (
-                  <button key={v} type="button" className="chip gap-1.5" aria-pressed={view === v} onClick={() => go(v)}>
-                    {VIEW_META[v].label}
-                    {v !== 'done' && (counts[v] ?? 0) > 0 && <span className="font-normal opacity-80">{counts[v]}</span>}
-                  </button>
-                ))}
-            </div>
+            <ViewSwitch
+              label="Whose tasks"
+              value={view === 'list' ? null : view}
+              onChange={(v) => go(v)}
+              groups={VIEW_GROUPS.map((g) => {
+                const views = g.views.filter((v) => (v !== 'delegated' || canManage || counts.delegated > 0) && (v !== 'team' || canManage));
+                return {
+                  key: g.key,
+                  label: g.label,
+                  count: g.key === 'mine' ? 0 : views.reduce((n, v) => n + (counts[v] ?? 0), 0),
+                  options: views.map((v) => ({ key: v, label: SHORT[v] ?? VIEW_META[v].label, icon: VIEW_META[v].icon, count: v === 'done' ? 0 : counts[v] ?? 0 })),
+                };
+              })}
+            />
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
               <label className="sr-only" htmlFor="task-list-select">
                 List
@@ -682,6 +699,9 @@ export function TasksPage() {
         <TeamGoalCard team={team} canManage={canManage} people={people} me={me} onSetGoal={setGoal} onKudos={sendKudos} />
       </aside>
 
+      <Fab onClick={() => setSheet({ task: null, initial: null })} icon={<Plus className="h-6 w-6" aria-hidden />}>
+        New task
+      </Fab>
       <TaskSheet
         open={Boolean(sheet)}
         task={sheet?.task ?? null}

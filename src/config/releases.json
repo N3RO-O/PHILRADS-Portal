@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026-11-07.1",
+    "version": "1.9.0",
+    "date": "2026-11-07",
+    "title": "Clearer phones, a friendlier map",
+    "items": [
+      {
+        "icon": "map",
+        "title": "New map pins",
+        "body": "Team members show with their picture in a ring and their first name; places are round badges with their name beside them once you zoom in. Show all places now frames everything you have switched on.",
+        "path": "/live-map"
+      },
+      {
+        "icon": "list-checks",
+        "title": "Tasks on your phone",
+        "body": "Your views are now three tabs (Mine, Given, Team) with one short row underneath. Swipe a task right to finish it, or left to plan it for today.",
+        "path": "/tasks"
+      },
+      {
+        "icon": "smartphone",
+        "title": "Buttons in thumb reach",
+        "body": "On phones, each page’s main button (New task, Upload, New project, Add resource, Invite) floats at the bottom right and steps aside while you scroll down."
+      },
+      {
+        "icon": "folder",
+        "title": "Tidier filters",
+        "body": "Documentation sorts into All, Media and Records on phones, and Resources categories are a single row you can slide."
+      },
+      {
+        "icon": "messages",
+        "title": "Chat is gone, PDM is coming",
+        "body": "The Chat placeholder has been removed. PDM is marked Coming soon."
+      }
+    ]
+  },
+  {
     "id": "2026-11-06.1",
     "version": "1.8.0",
     "date": "2026-11-06",
