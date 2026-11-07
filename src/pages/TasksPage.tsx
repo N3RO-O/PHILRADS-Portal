@@ -453,7 +453,15 @@ export function TasksPage() {
   const syncOf = (t: Task) => (pending.has(t.id) ? (pending.get(t.id)!.error ? ('failed' as const) : ('waiting' as const)) : null);
   // Finishing a task someone gave you, or one that needs a photo, opens Finish; your own tick off at once.
   const [finishing, setFinishing] = useState<Task | null>(null);
-  const tick = (t: Task) => (t.status !== 'done' && (t.requiresPhoto || (t.createdById && t.createdById !== me && t.assigneeId === me)) ? setFinishing(t) : void toggle(t));
+  // A task belongs to whoever gave it; besides them only the person it's for can tick it. A coordinator
+  // steps in only when the giver's account is no longer active (the database enforces this too).
+  const giverGone = (t: Task) => !t.createdById || (people.length > 0 && !people.some((p) => p.id === t.createdById));
+  const mayTouch = (t: Task) => t.assigneeId === me || t.createdById === me || (canManage && giverGone(t));
+  const tick = (t: Task) => {
+    if (!mayTouch(t)) return setToast({ text: `Only ${t.createdByName ?? 'the person who gave it'} can change “${t.title}”.`, tone: 'warn' });
+    if (t.status !== 'done' && (t.requiresPhoto || (t.createdById && t.createdById !== me && t.assigneeId === me))) setFinishing(t);
+    else void toggle(t);
+  };
   const finish = async (t: Task, output: OutputDraft | null) => {
     try {
       if (output) await staffBoardService.submitOutput(t.id, output);

@@ -93,8 +93,11 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, canGive =
   const done = task?.status === 'done';
   const forSelf = (d.assigneeId ?? me) === me && (!task || task.createdById === me);
   const worth = forSelf ? XP_RULES.self : XP_RULES.base[d.priority];
-  // Given to me by someone else: what the task is stays theirs to change (the database enforces this too).
-  const given = Boolean(task && task.createdById !== me && !canAssign);
+  // A task belongs to whoever gave it: only they change what it is (the database enforces this too).
+  // A coordinator steps in only when the giver's account is no longer active.
+  const giverGone = Boolean(task && (!task.createdById || (people.length > 0 && !people.some((p) => p.id === task.createdById))));
+  const isGiver = !task || task.createdById === me || (canAssign && giverGone);
+  const given = !isGiver;
   // Finished: locked until re-opened (it can still be planned for today).
   const locked = done;
   const fixed = locked || given;
@@ -113,7 +116,7 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, canGive =
     if (err) setError(err);
     else onClose();
   };
-  const canSendBack = Boolean(done && task && task.assigneeId && task.assigneeId !== me && (task.createdById === me || canAssign) && onSendBack);
+  const canSendBack = Boolean(done && task && task.assigneeId && task.assigneeId !== me && isGiver && onSendBack);
   const sendBack = async () => {
     if (!task || !onSendBack || busy) return;
     if (reason.trim().length < 3) {
@@ -269,7 +272,9 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, canGive =
             <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted" aria-hidden />
             {locked
               ? 'Finished, so it’s locked. Re-open it to make changes (its XP is taken back until it’s done again).'
-              : `Set by ${task?.createdByName ?? 'a coordinator'}. You can tick off its steps, add notes and plan it for today; ask them to change the title, due date or priority.`}
+              : task?.assigneeId === me
+                ? `Set by ${task?.createdByName ?? 'a coordinator'}. You can tick off its steps, add notes and plan it for today; ask them to change the title, due date or priority.`
+                : `Given by ${task?.createdByName ?? 'another coordinator'}, so only they can change, reassign or remove it.`}
           </p>
         )}
         {canSendBack && (
@@ -345,7 +350,7 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, canGive =
             </select>
           </Field>
           <Field id={`${uid}-assignee`} label="Assigned to">
-            {canGive && (!task || task.createdById === me || canAssign) ? (
+            {canGive && isGiver ? (
               <select id={`${uid}-assignee`} className="field" disabled={locked} value={d.assigneeId ?? me ?? ''} onChange={(e) => set('assigneeId', e.target.value === me ? null : e.target.value)}>
                 {people.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -363,8 +368,8 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, canGive =
 
         <PhotoToggle
           on={Boolean(d.requiresPhoto)}
-          // Only the person giving the task (or a coordinator) decides; the database checks this too.
-          disabled={locked || Boolean(task && task.createdById !== me && !canAssign)}
+          // Only the person giving the task decides; the database checks this too.
+          disabled={locked || given}
           forSelf={forSelf}
           onChange={(on) => set('requiresPhoto', on)}
         />
