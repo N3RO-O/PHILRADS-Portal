@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-11-07.5",
+    "version": "1.9.4",
+    "date": "2026-11-07",
+    "title": "The PRISM theme",
+    "items": [
+      {
+        "icon": "volume",
+        "title": "Music on the sign-in screen",
+        "body": "The PRISM theme plays softly when the sign-in screen opens and fades out when you sign in. The speaker button in the corner turns it off on your device."
+      },
+      {
+        "icon": "sparkles",
+        "title": "Tidier volunteer and guest buttons",
+        "body": "“Volunteer” and “Guest” are now two even tiles under the sign-in form, each saying what it does."
+      }
+    ]
+  },
+  {
     "id": "2026-11-07.4",
     "version": "1.9.3",
     "date": "2026-11-07",

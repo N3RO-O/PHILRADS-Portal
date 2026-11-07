@@ -1,6 +1,7 @@
-import { useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { HandHeart, Eye } from 'lucide-react';
+import { Eye, HandHeart, Volume2, VolumeX, type LucideIcon } from 'lucide-react';
+import { launchSound, useLaunchSoundMuted } from '../lib/launchSound';
 import { z } from 'zod';
 import { useAuth } from '../components/auth/AuthProvider';
 import { PrismHero } from '../components/auth/PrismHero';
@@ -132,11 +133,28 @@ export function SignInPage() {
     else setError(null);
   };
 
+  // The PRISM theme, softly, while this screen is open.
+  useEffect(() => {
+    launchSound.start();
+    return () => launchSound.stop();
+  }, []);
+  const soundOff = useLaunchSoundMuted();
+
   return (
     <main className="relative isolate grid min-h-dvh place-items-center overflow-hidden p-4">
       <SignInBackground />
-      <div ref={card} className="floating w-full max-w-sm animate-fade-up overflow-hidden rounded-2xl bg-transparent">
+      <div ref={card} className="floating relative w-full max-w-sm animate-fade-up overflow-hidden rounded-2xl bg-transparent">
         <PrismHero className="rounded-t-2xl" />
+        <button
+          type="button"
+          className="tap absolute right-2 top-2 z-10 grid h-11 w-11 place-items-center rounded-full text-cloud/75 transition-colors hover:bg-white/10 hover:text-cloud"
+          onClick={() => launchSound.setMuted(!soundOff)}
+          aria-pressed={!soundOff}
+          aria-label={soundOff ? 'Play the PRISM theme' : 'Turn off the PRISM theme'}
+          title={soundOff ? 'Music off' : 'Music on'}
+        >
+          {soundOff ? <VolumeX className="h-[1.125rem] w-[1.125rem]" aria-hidden /> : <Volume2 className="h-[1.125rem] w-[1.125rem]" aria-hidden />}
+        </button>
         <div className="bg-surface-raised">
         {mode === 'sign-in' ? (
           <form onSubmit={submit} noValidate className="flex flex-col gap-4 p-6">
@@ -179,12 +197,8 @@ export function SignInPage() {
               <span className="h-px flex-1 bg-line" /> or <span className="h-px flex-1 bg-line" />
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <button type="button" className="btn-ghost min-h-11 px-3 text-sm" onClick={() => switchMode('volunteer')}>
-                <HandHeart className="h-4 w-4" aria-hidden /> I’m a volunteer
-              </button>
-              <Link to="/guest" className="btn-ghost min-h-11 px-3 text-sm">
-                <Eye className="h-4 w-4" aria-hidden /> Continue as guest
-              </Link>
+              <DoorTile as="button" icon={HandHeart} title="Volunteer" note="Email code" onClick={() => switchMode('volunteer')} />
+              <DoorTile as="link" icon={Eye} title="Guest" note="Look around" to="/guest" />
             </div>
             <p className="text-center text-xs text-muted">Staff and volunteer accounts are created by the PHILRADS administrator.</p>
           </form>
@@ -265,5 +279,34 @@ export function SignInPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+/** The volunteer and guest doors under the staff form: two even tiles, a title and what it does. */
+function DoorTile(
+  props: { icon: LucideIcon; title: string; note: string } & ({ as: 'button'; onClick: () => void } | { as: 'link'; to: string }),
+) {
+  const { icon: Icon, title, note } = props;
+  const className =
+    'tap flex min-h-14 items-center gap-2 rounded-xl border border-line/80 bg-surface-sunken/60 px-2.5 py-2.5 text-left transition-colors hover:border-ink-mute hover:bg-surface-sunken';
+  const body = (
+    <>
+      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-burgundy-500/20 text-ink-soft">
+        <Icon className="h-4 w-4" aria-hidden />
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col leading-tight">
+        <span className="text-sm font-semibold text-ink">{title}</span>
+        <span className="text-[0.6875rem] text-muted">{note}</span>
+      </span>
+    </>
+  );
+  return props.as === 'link' ? (
+    <Link to={props.to} className={className}>
+      {body}
+    </Link>
+  ) : (
+    <button type="button" className={className} onClick={props.onClick}>
+      {body}
+    </button>
   );
 }
