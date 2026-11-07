@@ -644,7 +644,7 @@ function ProjectTasks({ project: p, tasks, canManage, today, onAdded }: { projec
         await tasksService.save({
           title: title.trim(),
           notes: '',
-          list: 'coordination',
+          list: 'special',
           setting: 'field',
           priority: 'medium',
           dueDate: due || null,

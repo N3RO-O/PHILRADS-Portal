@@ -1,14 +1,16 @@
 import {
   Award,
-  Briefcase,
+  ClipboardCheck,
+  Hammer,
+  Siren,
+  Sprout,
+  Star,
   Building2,
-  ClipboardList,
   Clock,
   FileText,
   Flame,
   Footprints,
   GraduationCap,
-  Handshake,
   HeartHandshake,
   MapPin,
   Search,
@@ -28,14 +30,12 @@ import type { TaskList } from '../../services/tasks/types';
  */
 const N = { text: 'text-ink-soft', ring: 'border-ink-mute', soft: 'bg-surface-raised' } as const;
 export const LIST_STYLE: Record<TaskList, { icon: LucideIcon; text: string; ring: string; soft: string }> = {
-  relief: { icon: HeartHandshake, text: N.text, ring: N.ring, soft: N.soft },
-  assessment: { icon: ClipboardList, text: N.text, ring: N.ring, soft: N.soft },
-  logistics: { icon: Truck, text: N.text, ring: N.ring, soft: N.soft },
-  beneficiaries: { icon: Users, text: N.text, ring: N.ring, soft: N.soft },
-  reports: { icon: FileText, text: N.text, ring: N.ring, soft: N.soft },
-  volunteers: { icon: GraduationCap, text: N.text, ring: N.ring, soft: N.soft },
-  coordination: { icon: Handshake, text: N.text, ring: N.ring, soft: N.soft },
-  office: { icon: Briefcase, text: N.text, ring: N.ring, soft: N.soft },
+  emergency: { icon: Siren, text: N.text, ring: N.ring, soft: N.soft },
+  rehabilitation: { icon: Hammer, text: N.text, ring: N.ring, soft: N.soft },
+  livelihood: { icon: Sprout, text: N.text, ring: N.ring, soft: N.soft },
+  training: { icon: GraduationCap, text: N.text, ring: N.ring, soft: N.soft },
+  special: { icon: Star, text: N.text, ring: N.ring, soft: N.soft },
+  monitoring: { icon: ClipboardCheck, text: N.text, ring: N.ring, soft: N.soft },
 };
 
 export const BADGE_ICON: Record<Badge['icon'], LucideIcon> = {

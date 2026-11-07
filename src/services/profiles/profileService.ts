@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { toTaskList } from '../tasks/types';
 import { demoProfile } from '../../data/mockDashboard';
 import { initialsOf } from '../../lib/format';
 import { computeProgress, type TaskStats } from '../../lib/taskProgress';
@@ -148,14 +149,17 @@ export function createSupabaseProfileService(client: SupabaseClient): ProfileSer
       if (error) throw new Error('Badges could not be loaded.');
       // Someone else's private profile: no badges to show.
       if (data === null) return null;
-      const r = (data ?? {}) as Record<string, number> & { by_list?: TaskStats['byList'] };
+      const r = (data ?? {}) as Record<string, number> & { by_list?: Record<string, number> };
       return {
         xp: r.xp ?? 0,
         stats: {
           total: r.total ?? 0,
           field: r.field ?? 0,
           office: r.office ?? 0,
-          byList: { relief: 0, assessment: 0, logistics: 0, beneficiaries: 0, reports: 0, volunteers: 0, coordination: 0, office: 0, ...r.by_list },
+          byList: Object.entries(r.by_list ?? {}).reduce(
+            (acc, [k, n]) => ((acc[toTaskList(k)] += Number(n) || 0), acc),
+            { emergency: 0, rehabilitation: 0, livelihood: 0, training: 0, special: 0, monitoring: 0 } as TaskStats['byList'],
+          ),
           onTime: r.on_time ?? 0,
           rapidHigh: r.rapid_high ?? 0,
           fromOthers: r.from_others ?? 0,
@@ -220,7 +224,7 @@ const sampleStats = (n: number): ProfileProgress => ({
     total: n,
     field: Math.round(n * 0.6),
     office: Math.round(n * 0.4),
-    byList: { relief: Math.round(n * 0.35), assessment: Math.round(n * 0.15), logistics: Math.round(n * 0.2), beneficiaries: 4, reports: 6, volunteers: 2, coordination: 3, office: 5 },
+    byList: { emergency: Math.round(n * 0.55), rehabilitation: Math.round(n * 0.1), livelihood: 3, training: 4, special: 2, monitoring: Math.round(n * 0.2) },
     onTime: Math.round(n * 0.5),
     rapidHigh: n > 20 ? 4 : 1,
     fromOthers: Math.round(n * 0.7),

@@ -125,11 +125,11 @@ export const BADGES: Badge[] = [
   { id: 'first-step', name: 'First step', description: 'Finish your first task', icon: 'footprints', target: 1, value: (s) => s.total },
   { id: 'boots', name: 'Boots on the ground', description: 'Finish 10 field tasks', icon: 'mapPin', target: 10, value: (s) => s.field },
   { id: 'backbone', name: 'Backbone of the office', description: 'Finish 10 office tasks', icon: 'building', target: 10, value: (s) => s.office },
-  { id: 'relief', name: 'Relief runner', description: 'Finish 10 relief distribution tasks', icon: 'heartHandshake', target: 10, value: (s) => s.byList.relief },
-  { id: 'assessor', name: 'Eyes on the ground', description: 'Finish 5 needs assessment tasks', icon: 'search', target: 5, value: (s) => s.byList.assessment },
-  { id: 'supply', name: 'Supply line', description: 'Finish 10 warehouse and logistics tasks', icon: 'truck', target: 10, value: (s) => s.byList.logistics },
-  { id: 'records', name: 'Record keeper', description: 'Finish 10 report or beneficiary record tasks', icon: 'fileText', target: 10, value: (s) => s.byList.reports + s.byList.beneficiaries },
-  { id: 'mentor', name: 'Mentor', description: 'Finish 5 volunteer and training tasks', icon: 'graduationCap', target: 5, value: (s) => s.byList.volunteers },
+  { id: 'relief', name: 'First responder', description: 'Finish 10 emergency response tasks', icon: 'heartHandshake', target: 10, value: (s) => s.byList.emergency },
+  { id: 'assessor', name: 'Eyes on the ground', description: 'Finish 5 monitoring and coordination tasks', icon: 'search', target: 5, value: (s) => s.byList.monitoring },
+  { id: 'supply', name: 'Rebuilder', description: 'Finish 5 rehabilitation and recovery tasks', icon: 'building', target: 5, value: (s) => s.byList.rehabilitation },
+  { id: 'records', name: 'Change maker', description: 'Finish 5 sustainable livelihood or special project tasks', icon: 'sparkles', target: 5, value: (s) => s.byList.livelihood + s.byList.special },
+  { id: 'mentor', name: 'Mentor', description: 'Finish 5 training and capacity building tasks', icon: 'graduationCap', target: 5, value: (s) => s.byList.training },
   { id: 'on-time', name: 'On the dot', description: 'Finish 10 tasks on or before their due date', icon: 'clock', target: 10, value: (s) => s.onTime },
   { id: 'rapid', name: 'Rapid response', description: 'Finish 3 high-priority tasks within a day of adding them', icon: 'zap', target: 3, value: (s) => s.rapidHigh },
   { id: 'team', name: 'Team player', description: 'Finish 5 tasks someone else gave you', icon: 'users', target: 5, value: (s) => s.fromOthers },
@@ -196,7 +196,7 @@ export function computeProgress(input: { awards: XpAward[]; kudos: Kudos[]; week
   const byTask = new Map(input.tasks.map((t) => [t.id, t]));
   const done = awards.map((a) => byTask.get(a.taskId)).filter((t): t is Task => Boolean(t));
 
-  const byList = { relief: 0, assessment: 0, logistics: 0, beneficiaries: 0, reports: 0, volunteers: 0, coordination: 0, office: 0 } as Record<TaskList, number>;
+  const byList = { emergency: 0, rehabilitation: 0, livelihood: 0, training: 0, special: 0, monitoring: 0 } as Record<TaskList, number>;
   for (const t of done) byList[t.list]++;
   const { current, best } = streaks(new Set(awards.map((a) => a.day)), today);
   const stats: TaskStats = {

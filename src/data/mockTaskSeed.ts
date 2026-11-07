@@ -28,49 +28,49 @@ type Open = [
 ];
 
 const OPEN: Open[] = [
-  ['Morning devotion and team briefing', 'coordination', 'office', 'low', 0, '08:00', { myDay: true, repeat: 'daily' }],
-  ['Pack 200 hygiene kits for Guinobatan', 'relief', 'field', 'high', 0, null, {
+  ['Morning devotion and team briefing', 'monitoring', 'office', 'low', 0, '08:00', { myDay: true, repeat: 'daily' }],
+  ['Pack 200 hygiene kits for Guinobatan', 'emergency', 'field', 'high', 0, null, {
     myDay: true, by: 'demo-maria', location: 'Main Manila Warehouse',
     subtasks: [['Count soap, toothbrush and sanitary pads', true], ['Seal and label boxes by barangay', false], ['Load onto the 10:30 truck', false]],
   }],
-  ['Arrange truck for relief goods to Daraga', 'logistics', 'field', 'high', 0, '14:00', { location: 'Daraga, Albay' }],
-  ['Reconcile beneficiary master list with the DSWD list', 'beneficiaries', 'office', 'medium', -1, null, { notes: 'Flag households listed twice and those missing a contact number.' }],
-  ['Submit situation report: Typhoon response, day 5', 'reports', 'office', 'high', 1, '17:00', { by: 'demo-maria' }],
-  ['Collect signed acknowledgement forms from Brgy. 62', 'reports', 'field', 'low', 1, null, { location: 'Brgy. 62 Sagkahan, Tacloban' }],
-  ['Rapid needs assessment in Brgy. Bagong Silangan', 'assessment', 'field', 'medium', 2, '09:00', {
+  ['Arrange truck for relief goods to Daraga', 'emergency', 'field', 'high', 0, '14:00', { location: 'Daraga, Albay' }],
+  ['Reconcile beneficiary master list with the DSWD list', 'monitoring', 'office', 'medium', -1, null, { notes: 'Flag households listed twice and those missing a contact number.' }],
+  ['Submit situation report: Typhoon response, day 5', 'monitoring', 'office', 'high', 1, '17:00', { by: 'demo-maria' }],
+  ['Collect signed acknowledgement forms from Brgy. 62', 'monitoring', 'field', 'low', 1, null, { location: 'Brgy. 62 Sagkahan, Tacloban' }],
+  ['Rapid needs assessment in Brgy. Bagong Silangan', 'emergency', 'field', 'medium', 2, '09:00', {
     location: 'Brgy. Bagong Silangan, Quezon City',
     subtasks: [['Print 40 assessment forms', false], ['Brief the 3 enumerators', false]],
   }],
-  ['Coordination meeting with the MDRRMO', 'coordination', 'field', 'medium', 3, '10:00', { location: 'Municipal Hall, Guinobatan' }],
-  ['Orientation for new volunteers', 'volunteers', 'office', 'medium', 5, '13:30', { repeat: 'weekly' }],
-  ['Prepare liquidation report for the September distribution', 'office', 'office', 'medium', 9, null],
-  ['Update bin cards at the Cebu Hub', 'logistics', 'office', 'low', null, null],
-  ['Plan first-aid refresher for field teams', 'volunteers', 'office', 'low', null, null],
+  ['Coordination meeting with the MDRRMO', 'monitoring', 'field', 'medium', 3, '10:00', { location: 'Municipal Hall, Guinobatan' }],
+  ['Orientation for new volunteers', 'training', 'office', 'medium', 5, '13:30', { repeat: 'weekly' }],
+  ['Prepare liquidation report for the September distribution', 'monitoring', 'office', 'medium', 9, null],
+  ['Update bin cards at the Cebu Hub', 'emergency', 'office', 'low', null, null],
+  ['Plan first-aid refresher for field teams', 'training', 'office', 'low', null, null],
   // Only coordinators and admins see these (someone else's work).
-  ['Verify family food packs delivered to Legazpi', 'relief', 'field', 'high', 1, null, { by: 'demo-maria', to: 'demo-jun', location: 'Legazpi Field Drop-off Point' }],
-  ['Photograph distribution for the donor report', 'reports', 'field', 'medium', 2, null, { by: 'demo-maria', to: 'demo-ana' }],
+  ['Verify family food packs delivered to Legazpi', 'emergency', 'field', 'high', 1, null, { by: 'demo-maria', to: 'demo-jun', location: 'Legazpi Field Drop-off Point' }],
+  ['Photograph distribution for the donor report', 'monitoring', 'field', 'medium', 2, null, { by: 'demo-maria', to: 'demo-ana' }],
 ];
 
 type Done = [title: string, list: TaskList, setting: WorkSetting, priority: TaskPriority, daysAgo: number, late?: boolean, by?: string];
 
 /** Finished by the demo user over the last two weeks (a 5-day streak up to today). */
 const DONE: Done[] = [
-  ['Encode 60 household profiles from Brgy. Bagong Silangan', 'beneficiaries', 'office', 'medium', 13],
-  ['Weekly stock count, Main Manila Warehouse', 'logistics', 'field', 'medium', 12, false, 'demo-maria'],
-  ['Debrief volunteers after the Tacloban distribution', 'volunteers', 'field', 'low', 11],
-  ['Draft donor update for Samaritan partners', 'reports', 'office', 'medium', 9, true],
-  ['Distribute food packs at Daraga Central School', 'relief', 'field', 'high', 8, false, 'demo-maria'],
-  ['Rapid assessment: evacuation centre, Guinobatan', 'assessment', 'field', 'high', 7, false, 'demo-maria'],
-  ['Book venue for volunteer training', 'office', 'office', 'low', 6],
-  ['Relief distribution: Municipal Hall, Guinobatan', 'relief', 'field', 'high', 4, false, 'demo-maria'],
-  ['File acknowledgement forms in the Drive folder', 'reports', 'office', 'low', 4],
-  ['Transfer tarpaulins to the Legazpi drop-off point', 'logistics', 'field', 'medium', 3],
-  ['Call barangay captains to confirm beneficiary counts', 'coordination', 'office', 'medium', 3],
-  ['Repack rice into 5 kg family packs', 'relief', 'field', 'medium', 2, false, 'demo-maria'],
-  ['Reply to DSWD data request', 'office', 'office', 'medium', 2, true],
-  ['Assessment summary for Brgy. 62', 'assessment', 'office', 'medium', 1],
-  ['Train new volunteers on the acknowledgement form', 'volunteers', 'field', 'medium', 1],
-  ['Check expiry dates on medicines at the Cebu Hub', 'logistics', 'field', 'high', 0, false, 'demo-maria'],
+  ['Encode 60 household profiles from Brgy. Bagong Silangan', 'monitoring', 'office', 'medium', 13],
+  ['Weekly stock count, Main Manila Warehouse', 'emergency', 'field', 'medium', 12, false, 'demo-maria'],
+  ['Debrief volunteers after the Tacloban distribution', 'training', 'field', 'low', 11],
+  ['Draft donor update for Samaritan partners', 'monitoring', 'office', 'medium', 9, true],
+  ['Distribute food packs at Daraga Central School', 'emergency', 'field', 'high', 8, false, 'demo-maria'],
+  ['Rapid assessment: evacuation centre, Guinobatan', 'emergency', 'field', 'high', 7, false, 'demo-maria'],
+  ['Book venue for volunteer training', 'monitoring', 'office', 'low', 6],
+  ['Relief distribution: Municipal Hall, Guinobatan', 'emergency', 'field', 'high', 4, false, 'demo-maria'],
+  ['File acknowledgement forms in the Drive folder', 'monitoring', 'office', 'low', 4],
+  ['Transfer tarpaulins to the Legazpi drop-off point', 'emergency', 'field', 'medium', 3],
+  ['Call barangay captains to confirm beneficiary counts', 'monitoring', 'office', 'medium', 3],
+  ['Repack rice into 5 kg family packs', 'emergency', 'field', 'medium', 2, false, 'demo-maria'],
+  ['Reply to DSWD data request', 'monitoring', 'office', 'medium', 2, true],
+  ['Assessment summary for Brgy. 62', 'emergency', 'office', 'medium', 1],
+  ['Train new volunteers on the acknowledgement form', 'training', 'field', 'medium', 1],
+  ['Check expiry dates on medicines at the Cebu Hub', 'emergency', 'field', 'high', 0, false, 'demo-maria'],
 ];
 
 export function createTaskSeed(today: string, userId = 'demo-user'): { tasks: Task[]; awards: XpAward[]; kudos: Kudos[] } {

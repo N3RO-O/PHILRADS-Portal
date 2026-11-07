@@ -12,6 +12,7 @@ import {
   type TasksService,
   type TeamProgress,
   type XpAward,
+  toTaskList,
 } from './types';
 
 /**
@@ -90,10 +91,10 @@ export function createOfflineTasks(inner: TasksService): OfflineTasksService {
       idbGetAll<PendingChange>('outbox').catch(() => [] as PendingChange[]),
     ]);
     if (cache) {
-      saved = cache;
+      saved = { ...cache, tasks: cache.tasks.map((t) => ({ ...t, list: toTaskList(t.list) })) };
       hasSaved = true;
     }
-    for (const e of entries) if (e.kind === 'task') queue.set(e.taskId, e);
+    for (const e of entries) if (e.kind === 'task') queue.set(e.taskId, e.create ? { ...e, create: { ...e.create, list: toTaskList(e.create.list) } } : e);
   })();
 
   const persist = (patch: Partial<Saved>) => {

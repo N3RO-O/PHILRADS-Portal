@@ -34,7 +34,7 @@ interface Props {
 const EMPTY: TaskDraft = {
   title: '',
   notes: '',
-  list: 'office',
+  list: 'monitoring',
   setting: 'office',
   priority: 'medium',
   dueDate: null,

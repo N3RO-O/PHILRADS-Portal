@@ -16,8 +16,8 @@ import {
   type Subtask,
   type Task,
   type TaskDraft,
-  type TaskList,
   type TasksService,
+  toTaskList,
   type WeekBonus,
   type WorkSetting,
   type XpAward,
@@ -65,7 +65,11 @@ const sampleState = (): SampleState => {
   if (sample) return sample;
   try {
     const raw = localStorage.getItem(STORE_KEY);
-    if (raw) return (sample = JSON.parse(raw) as SampleState);
+    if (raw) {
+      const st = JSON.parse(raw) as SampleState;
+      st.tasks = st.tasks.map((t) => ({ ...t, list: toTaskList(t.list) }));
+      return (sample = st);
+    }
   } catch {
     /* fall back to the seed */
   }
@@ -258,7 +262,7 @@ export function createSupabaseTasksService(client: SupabaseClient): TasksService
     id: r.id as string,
     title: r.title as string,
     notes: (r.description as string | null) ?? null,
-    list: r.list as TaskList,
+    list: toTaskList(r.list),
     setting: r.work_setting as WorkSetting,
     priority: r.priority as TaskPriority,
     status: r.status as TaskStatus,

@@ -4,14 +4,12 @@ import { todayKey } from './inventory';
 
 /** Task list names, where that work usually happens, and the words quick add understands (#relief, #warehouse…). */
 export const LIST_META: Record<TaskList, { label: string; setting: WorkSetting; words: string[] }> = {
-  relief: { label: 'Relief distribution', setting: 'field', words: ['relief', 'distribution', 'distro'] },
-  assessment: { label: 'Needs assessment', setting: 'field', words: ['assessment', 'assess', 'rna', 'survey'] },
-  logistics: { label: 'Warehouse and logistics', setting: 'field', words: ['logistics', 'warehouse', 'stock', 'transport'] },
-  beneficiaries: { label: 'Beneficiary records', setting: 'office', words: ['beneficiaries', 'beneficiary', 'records', 'masterlist'] },
-  reports: { label: 'Reports and documentation', setting: 'office', words: ['reports', 'report', 'docs', 'documentation'] },
-  volunteers: { label: 'Volunteers and training', setting: 'office', words: ['volunteers', 'volunteer', 'training'] },
-  coordination: { label: 'Coordination and meetings', setting: 'office', words: ['coordination', 'meeting', 'meetings', 'lgu'] },
-  office: { label: 'Office and admin', setting: 'office', words: ['office', 'admin', 'finance'] },
+  emergency: { label: 'Emergency response', setting: 'field', words: ['emergency', 'relief', 'distribution', 'distro', 'assessment', 'rna', 'logistics', 'warehouse'] },
+  rehabilitation: { label: 'Rehabilitation and recovery', setting: 'field', words: ['rehabilitation', 'rehab', 'recovery', 'shelter', 'rebuild'] },
+  livelihood: { label: 'Sustainable livelihood', setting: 'field', words: ['livelihood', 'income', 'farming'] },
+  training: { label: 'Training and capacity building', setting: 'office', words: ['training', 'capacity', 'seminar', 'volunteers', 'volunteer'] },
+  special: { label: 'Special projects', setting: 'field', words: ['special', 'project'] },
+  monitoring: { label: 'Monitoring and coordination', setting: 'office', words: ['monitoring', 'coordination', 'meeting', 'meetings', 'lgu', 'report', 'reports', 'records', 'admin'] },
 };
 
 export const SETTING_LABEL: Record<WorkSetting, string> = { field: 'Field', office: 'Office' };

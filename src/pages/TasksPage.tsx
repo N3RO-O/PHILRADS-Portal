@@ -87,7 +87,7 @@ export function TasksPage() {
   const rawView = params.get('view') as View | null;
   const view: View = rawView && VIEWS.includes(rawView) ? rawView : 'myday';
   const rawList = params.get('list') as TaskList | null;
-  const listKey: TaskList = rawList && TASK_LISTS.includes(rawList) ? rawList : 'relief';
+  const listKey: TaskList = rawList && TASK_LISTS.includes(rawList) ? rawList : 'emergency';
   const where = (['field', 'office'].includes(params.get('where') ?? '') ? params.get('where') : 'all') as Where;
   const rawDay = params.get('day');
   const rewardsTab = (['badges', 'levels', 'kudos'].includes(params.get('rewards') ?? '') ? params.get('rewards') : null) as RewardsTab | null;
@@ -435,7 +435,7 @@ export function TasksPage() {
   const title = view === 'list' ? LIST_META[listKey].label : VIEW_META[view].label;
   const note = view === 'list' ? `${listCount(listKey)} open` : view === 'myday' ? formatLongDate() : VIEW_META[view].note;
   const defaults = {
-    list: view === 'list' ? listKey : where === 'field' ? ('relief' as TaskList) : ('office' as TaskList),
+    list: view === 'list' ? listKey : where === 'field' ? ('emergency' as TaskList) : ('monitoring' as TaskList),
     setting: where !== 'all' ? where : view === 'list' ? LIST_META[listKey].setting : 'office',
     myDay: view === 'myday',
     dueDate: view === 'calendar' ? calDay : null,

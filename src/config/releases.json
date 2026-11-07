@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-11-07.2",
+    "version": "1.9.1",
+    "date": "2026-11-07",
+    "title": "Task lists follow our programs",
+    "items": [
+      {
+        "icon": "list-checks",
+        "title": "Lists named like Statistics",
+        "body": "Task lists are now the six PHILRADS programs: Emergency response, Rehabilitation and recovery, Sustainable livelihood, Training and capacity building, Special projects, and Monitoring and coordination. Your existing tasks moved to the matching program.",
+        "path": "/tasks"
+      },
+      {
+        "icon": "gift",
+        "title": "Badges by program",
+        "body": "The list badges now follow the programs too: First responder, Eyes on the ground, Rebuilder, Change maker and Mentor."
+      }
+    ]
+  },
+  {
     "id": "2026-11-07.1",
     "version": "1.9.0",
     "date": "2026-11-07",

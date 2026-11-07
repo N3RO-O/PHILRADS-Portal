@@ -1,8 +1,24 @@
 import type { DataSource, TaskPriority, TaskStatus } from '../../types';
 
 /** Humanitarian task lists (supabase/migrations/20261027000000_tasks_module.sql). */
-export const TASK_LISTS = ['relief', 'assessment', 'logistics', 'beneficiaries', 'reports', 'volunteers', 'coordination', 'office'] as const;
+/** Task lists: the PHILRADS program areas, as Statistics names them (src/services/activities/types.ts). */
+export const TASK_LISTS = ['emergency', 'rehabilitation', 'livelihood', 'training', 'special', 'monitoring'] as const;
 export type TaskList = (typeof TASK_LISTS)[number];
+
+/** The eight lists before 1.9.1, and the program each one became (migration 20261115000000). */
+const LEGACY_LISTS: Record<string, TaskList> = {
+  relief: 'emergency',
+  assessment: 'emergency',
+  logistics: 'emergency',
+  volunteers: 'training',
+  coordination: 'monitoring',
+  reports: 'monitoring',
+  beneficiaries: 'monitoring',
+  office: 'monitoring',
+};
+/** A list as saved (old names from before the change, cached offline or not migrated yet, read as their program). */
+export const toTaskList = (raw: unknown): TaskList =>
+  (TASK_LISTS as readonly string[]).includes(raw as string) ? (raw as TaskList) : (LEGACY_LISTS[raw as string] ?? 'monitoring');
 
 /** Where the work happens: out in the field or at the office. */
 export type WorkSetting = 'field' | 'office';
