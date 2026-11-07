@@ -3,8 +3,13 @@
     "id": "2026-11-07.7",
     "version": "1.9.6",
     "date": "2026-11-07",
-    "title": "Updates install themselves",
+    "title": "A new PRISM logo, and updates that install themselves",
     "items": [
+      {
+        "icon": "sparkles",
+        "title": "A new PRISM logo",
+        "body": "The triangle is the prism: white light goes in and comes out as a spectrum of red, amber and gold, with the P of PRISM in PHILRADS maroon inside. You'll see it in the menu, on the sign-in screen and as the app icon (on some phones the home-screen icon changes after you remove the app and add it again)."
+      },
       {
         "icon": "sparkles",
         "title": "Always the latest PRISM",

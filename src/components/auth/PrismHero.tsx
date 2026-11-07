@@ -25,7 +25,7 @@ export function PrismHero({ className = '', children }: { className?: string; ch
       <span className="pg-fx pg-sheen" aria-hidden />
       <span className="pg-mark animate-fade-up">
         <span className="pg-halo" aria-hidden />
-        <PrismMark className="relative h-16 w-16" tone="brand" />
+        <PrismMark className="relative h-20 w-20" tone="brand" />
       </span>
       <div className="animate-fade-up [animation-delay:120ms]">
         <p className="font-display text-3xl tracking-[0.08em]">
