@@ -1,7 +1,7 @@
 import { openedFromPasswordLink } from './supabase';
 
 /** Signed-in sessions end after this long without anyone using the portal (in any of its tabs). */
-export const IDLE_LIMIT_MS = 10 * 60_000;
+export const IDLE_LIMIT_MS = 5 * 60_000;
 /** A warning with "Stay signed in" shows for the last minute. */
 export const IDLE_WARN_MS = 60_000;
 

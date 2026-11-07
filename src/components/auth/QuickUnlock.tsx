@@ -333,7 +333,7 @@ export function QuickUnlockSheet({ open, onClose }: { open: boolean; onClose: ()
             </button>
           )}
           <p className="text-xs text-muted">
-            With quick unlock on, the portal locks after 10 idle minutes and when you reopen it, instead of signing you out. Five wrong PINs sign you out completely. Your PIN and fingerprint never leave this device.
+            With quick unlock on, the portal locks after 5 idle minutes and when you reopen it, instead of signing you out. Five wrong PINs sign you out completely. Your PIN and fingerprint never leave this device.
           </p>
         </div>
       ) : (

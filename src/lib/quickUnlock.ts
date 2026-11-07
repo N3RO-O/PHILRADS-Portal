@@ -2,7 +2,7 @@ import { biometricSetUp, forgetBiometric } from './biometric';
 
 /**
  * Quick unlock: after signing in once, a person can set a 6-digit PIN (and fingerprint or face) on
- * this device. The portal then locks, instead of signing out, after 10 idle minutes and whenever
+ * this device. The portal then locks, instead of signing out, after 5 idle minutes and whenever
  * it's reopened, and unlocks with them. Five wrong PINs sign out completely.
  * Only a salted PBKDF2 hash of the PIN is kept, on this device.
  */

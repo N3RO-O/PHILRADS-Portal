@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-11-07.4",
+    "version": "1.9.3",
+    "date": "2026-11-07",
+    "title": "Signed out after 5 quiet minutes",
+    "items": [
+      {
+        "icon": "lock",
+        "title": "Automatic sign-out is back",
+        "body": "Administrators, coordinators and staff are signed out after 5 minutes without activity, with a one-minute “Still there?” warning first. With a PIN or fingerprint set up, the portal locks instead. Sharing your live location keeps you signed in."
+      }
+    ]
+  },
+  {
     "id": "2026-11-07.3",
     "version": "1.9.2",
     "date": "2026-11-07",

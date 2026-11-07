@@ -148,7 +148,7 @@ export function SignInPage() {
             <h1 className="text-lg font-bold">Sign in</h1>
             {idleOut && !error && (
               <p role="status" className="rounded-xl border border-line bg-surface-sunken px-4 py-3 text-sm text-ink-soft">
-                You were signed out after 10 minutes without activity. Sign in again to continue.
+                You were signed out after 5 minutes without activity. Sign in again to continue.
               </p>
             )}
             <label className="flex flex-col gap-1.5 text-sm font-medium text-ink-soft">

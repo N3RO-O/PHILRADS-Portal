@@ -186,7 +186,7 @@ export function AppLayout() {
       <Welcomer />
       {/* New bell notes pop in as they arrive. */}
       <NotificationToasts />
-      {/* Signed-in staff: signed out after 10 minutes without activity. */}
+      {/* Signed-in staff: signed out after 5 minutes without activity. */}
       <IdleSignOut />
     </div>
     </LiveSharingProvider>

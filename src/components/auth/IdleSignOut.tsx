@@ -8,8 +8,9 @@ import { IDLE_LIMIT_MS, IDLE_WARN_MS, lastActive, markActive, noteIdleSignOut } 
 const ACTIVITY = ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart', 'scroll'] as const;
 
 /**
- * Signs an administrator, coordinator or staff account out after 10 minutes without activity
- * (volunteers and viewers aren't timed out), warning for the last minute.
+ * Signs an administrator, coordinator or staff account out after 5 minutes without activity
+ * (volunteers and viewers aren't timed out: their codes come by email), warning for the last minute.
+ * With quick unlock (PIN or fingerprint) set up, the portal locks instead, for every role.
  * Activity in any tab counts (the time is kept in localStorage), and so does sharing a live
  * location, which runs hands-free. Coming back to a portal left open (or reopening the app)
  * after the limit signs out straight away. Sample-data mode has nothing to protect and skips it.
@@ -17,13 +18,12 @@ const ACTIVITY = ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart'
 export function IdleSignOut() {
   const { state, signOut, profile } = useAuth();
   const live = useLiveSharing();
-  // Nobody is signed out for being idle any more. People who turned on quick unlock (PIN or
-  // fingerprint) still have the portal lock after 10 idle minutes, as they chose.
-  void profile;
+  // Roles that handle sensitive work are signed out after 5 idle minutes (PHILRADS, 7 Nov 2026).
+  const timedOut = ['admin', 'coordinator', 'staff'].includes(profile?.roleKey ?? '');
   const sharing = live.status === 'live' || live.status === 'starting';
   // With quick unlock set up, idle locks the portal (PIN or fingerprint) instead of signing out.
   const quick = useQuickUnlock();
-  const signedIn = state.status === 'signed-in' && quick.enabled;
+  const signedIn = state.status === 'signed-in' && (timedOut || quick.enabled);
   const [left, setLeft] = useState<number | null>(null);
   // This tab's own clock, for when storage is unavailable.
   const local = useRef(Date.now());
@@ -108,7 +108,7 @@ export function IdleSignOut() {
             Still there?
           </h2>
           <p id="idle-desc" className="mt-1 text-sm text-muted">
-            For your account’s safety, the portal {quick.enabled ? 'locks' : 'signs out'} after 10 minutes without activity.
+            For your account’s safety, the portal {quick.enabled ? 'locks' : 'signs out'} after 5 minutes without activity.
           </p>
         </div>
         <p className="font-display text-4xl tabular-nums tracking-wide" aria-live="polite">
