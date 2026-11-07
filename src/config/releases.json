@@ -1,5 +1,28 @@
 [
   {
+    "id": "2026-11-07.3",
+    "version": "1.9.2",
+    "date": "2026-11-07",
+    "title": "Volunteers sign in with a code",
+    "items": [
+      {
+        "icon": "key-round",
+        "title": "Volunteer sign-in",
+        "body": "Volunteers tap “I’m a volunteer” and sign in with a 6-digit code sent to their email. No password to remember. They see the Live Map, Tasks, Forms, PDM and Documentation."
+      },
+      {
+        "icon": "lock",
+        "title": "Your task, your call",
+        "body": "Only the person who gave a task can change, reassign, send back or remove it. Other coordinators can step in only if that person’s account is no longer active."
+      },
+      {
+        "icon": "sparkles",
+        "title": "A peek for guests",
+        "body": "“Continue as guest” shows what’s coming for visitors: the Live Map, Disaster News, PHILReads, Donation Drives, Merch and Feedback."
+      }
+    ]
+  },
+  {
     "id": "2026-11-07.2",
     "version": "1.9.1",
     "date": "2026-11-07",
