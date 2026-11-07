@@ -1,9 +1,13 @@
 /**
  * The PRISM launch theme (public/sounds/prism-launch.mp3, about a minute, looping) on the sign-in
- * screen: fades in softly when the screen opens, fades out when the person signs in or leaves. Plays once
- * per visit (browser tab), never for data saving, and the speaker button turns it off on this
- * device. Browsers only allow sound after a tap or key press, so when it can't start straight away
- * it starts on the first one. Volume goes through Web Audio, because phones (iPhone) ignore
+ * screen: fades in softly whenever the screen opens and fades out when the person signs in or
+ * leaves. Never for data saving; the speaker button turns it off on this device.
+ *
+ * Browsers don't let any page play sound before the person has tapped or pressed a key. So it tries
+ * straight away (installed apps and sites people use often may be allowed), and otherwise starts on
+ * the first tap, with the speaker button saying "Tap for music" meanwhile. Phones only count the end
+ * of a tap (pointerup, touchend, click) as permission, not its start, and iPhones want play() called
+ * inside that tap, so both happen there. Volume goes through Web Audio, because iPhones ignore
  * <audio>.volume.
  */
 import { useSyncExternalStore } from 'react';
@@ -12,31 +16,44 @@ const SRC = '/sounds/prism-launch.mp3';
 /** Quiet: background music under the sign-in form. */
 const VOLUME = 0.2;
 const MUTE_KEY = 'philrads.sound.launch';
-const PLAYED_KEY = 'philrads.sound.launch-played';
+/** The events that give a page permission to play sound. */
+const GESTURES = ['pointerup', 'touchend', 'click', 'keydown'] as const;
+
+export type LaunchState = 'off' | 'waiting' | 'playing';
 
 let audio: HTMLAudioElement | null = null;
 let ctx: AudioContext | null = null;
 let gain: GainNode | null = null;
-let waiting: (() => void) | null = null;
+let listening = false;
 let fadeTimer = 0;
+let state: LaunchState = 'off';
 const listeners = new Set<() => void>();
 
-const read = (store: Storage | undefined, key: string) => {
+const read = (key: string) => {
   try {
-    return store?.getItem(key) ?? null;
+    return window.localStorage.getItem(key);
   } catch {
     return null;
   }
 };
-const write = (store: Storage | undefined, key: string, value: string) => {
+const write = (key: string, value: string) => {
   try {
-    store?.setItem(key, value);
+    window.localStorage.setItem(key, value);
   } catch {
     /* storage blocked */
   }
 };
 
-let muted = typeof window !== 'undefined' && read(window.localStorage, MUTE_KEY) === '0';
+let muted = typeof window !== 'undefined' && read(MUTE_KEY) === '0';
+
+const notify = () => {
+  for (const l of listeners) l();
+};
+const setState = (next: LaunchState) => {
+  if (state === next) return;
+  state = next;
+  notify();
+};
 
 const saveData = () => Boolean((navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData);
 
@@ -53,7 +70,7 @@ function setup() {
     gain.gain.value = 0;
     ctx.createMediaElementSource(audio).connect(gain).connect(ctx.destination);
   } else {
-    audio.volume = VOLUME;
+    audio.volume = 0;
   }
 }
 
@@ -69,82 +86,114 @@ function fade(to: number, seconds: number) {
   }
 }
 
-const stopWaiting = () => {
-  if (!waiting) return;
-  window.removeEventListener('pointerdown', waiting, true);
-  window.removeEventListener('keydown', waiting, true);
-  waiting = null;
-};
+/**
+ * Starts it. resume() and play() are called right here, synchronously, so that inside a tap they
+ * count as part of it. Resolves true once it's audibly playing.
+ */
+function attempt(): Promise<boolean> {
+  if (!audio) return Promise.resolve(false);
+  const a = audio;
+  const resumed = ctx && ctx.state !== 'running' ? ctx.resume() : Promise.resolve();
+  const played = a.play();
+  const settled = Promise.all([resumed, played]).then(
+    () => true,
+    () => false,
+  );
+  // resume() stays pending until the browser allows sound: don't wait on it for long.
+  const timeout = new Promise<boolean>((r) => setTimeout(() => r(false), 400));
+  return Promise.race([settled, timeout]).then((ok) => {
+    const audible = ok && !a.paused && (!ctx || ctx.state === 'running');
+    if (!audible) {
+      a.pause();
+      return false;
+    }
+    if (muted || state === 'off') {
+      // Switched off, or the screen closed, while it was starting.
+      a.pause();
+      return false;
+    }
+    window.clearTimeout(fadeTimer);
+    fade(VOLUME, 2.5);
+    setState('playing');
+    stopListening();
+    return true;
+  });
+}
 
-/** Tries to start now; true once it's actually playing aloud. */
-async function attempt(): Promise<boolean> {
-  if (!audio) return false;
-  if (ctx && ctx.state !== 'running') {
-    // resume() stays pending until the browser allows sound: don't wait on it.
-    await Promise.race([ctx.resume().catch(() => undefined), new Promise((r) => setTimeout(r, 250))]);
-    if ((ctx.state as AudioContextState) !== 'running') return false;
-  }
-  try {
-    await audio.play();
-  } catch {
-    return false;
-  }
-  write(window.sessionStorage, PLAYED_KEY, '1');
-  fade(VOLUME, 2.5);
-  return true;
+const onGesture = (e: Event) => {
+  // The speaker button handles its own tap.
+  if (e.target instanceof Element && e.target.closest('[data-launch-toggle]')) return;
+  if (!muted && state === 'waiting') void attempt();
+};
+function listen() {
+  if (listening) return;
+  listening = true;
+  for (const type of GESTURES) window.addEventListener(type, onGesture, true);
+}
+function stopListening() {
+  if (!listening) return;
+  listening = false;
+  for (const type of GESTURES) window.removeEventListener(type, onGesture, true);
 }
 
 export const launchSound = {
   /** The sign-in screen opened. */
   start() {
-    if (typeof window === 'undefined' || muted || saveData() || read(window.sessionStorage, PLAYED_KEY) === '1') return;
+    if (typeof window === 'undefined' || muted || saveData()) return;
     setup();
     window.clearTimeout(fadeTimer);
-    void attempt().then((ok) => {
-      if (ok || waiting) return;
-      waiting = () => {
-        stopWaiting();
-        if (!muted) void attempt();
-      };
-      window.addEventListener('pointerdown', waiting, true);
-      window.addEventListener('keydown', waiting, true);
-    });
+    if (state === 'playing') return;
+    setState('waiting');
+    listen();
+    void attempt();
   },
   /** Signed in, or left the screen: fade out. */
   stop() {
-    stopWaiting();
-    if (!audio || audio.paused) return;
+    stopListening();
+    const wasPlaying = state === 'playing';
+    setState('off');
+    if (!audio || !wasPlaying) return;
     fade(0, 0.9);
     window.clearTimeout(fadeTimer);
-    fadeTimer = window.setTimeout(() => audio?.pause(), 1000);
+    fadeTimer = window.setTimeout(() => {
+      audio?.pause();
+      if (audio) audio.currentTime = 0;
+    }, 1000);
+  },
+  /** The speaker button: start it if it's waiting for a tap, otherwise switch it off or on. */
+  toggle() {
+    if (!muted && state === 'waiting') {
+      void attempt();
+      return;
+    }
+    launchSound.setMuted(!muted);
   },
   get muted() {
     return muted;
   },
   setMuted(next: boolean) {
     muted = next;
-    write(window.localStorage, MUTE_KEY, next ? '0' : '1');
-    for (const l of listeners) l();
+    write(MUTE_KEY, next ? '0' : '1');
+    notify();
     if (next) launchSound.stop();
     else {
-      // Turned back on by a tap: play from where it was (or the start).
-      try {
-        window.sessionStorage.removeItem(PLAYED_KEY);
-      } catch {
-        /* storage blocked */
-      }
+      // Switched on by a tap on the button: that tap counts, so start() plays now.
       launchSound.start();
     }
   },
 };
 
-export function useLaunchSoundMuted() {
-  return useSyncExternalStore(
+const snapshot = () => (muted ? 'off' : state);
+
+/** 'off' (switched off or not on this screen), 'waiting' (needs a tap) or 'playing'. */
+export function useLaunchSound(): { muted: boolean; state: LaunchState } {
+  const s = useSyncExternalStore(
     (l) => {
       listeners.add(l);
       return () => void listeners.delete(l);
     },
-    () => muted,
-    () => false,
+    () => `${muted ? 1 : 0}${snapshot()}`,
+    () => '0off',
   );
+  return { muted: s[0] === '1', state: s.slice(1) as LaunchState };
 }

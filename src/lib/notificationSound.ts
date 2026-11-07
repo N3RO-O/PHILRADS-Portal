@@ -5,6 +5,9 @@
  */
 import { useSyncExternalStore } from 'react';
 
+/** The events that give a page permission to play sound. */
+const UNLOCK_EVENTS = ['pointerup', 'touchend', 'click', 'keydown'] as const;
+
 const KEY = 'philrads.sound.notifications';
 const GAP_MS = 1500;
 const SRC = '/sounds/notification.mp3';
@@ -70,6 +73,7 @@ export function useNotificationSound() {
 export function startNotificationSound() {
   if (typeof window === 'undefined') return;
   // Phones only let a page play sound it was allowed to play during a tap: unlock it on the first one.
+  // The end of a tap counts as permission on phones, not its start (pointerdown).
   const unlock = () => {
     const a = sound();
     if (a) {
@@ -83,9 +87,7 @@ export function startNotificationSound() {
         .catch(() => undefined)
         .finally(() => (a.muted = false));
     }
-    window.removeEventListener('pointerdown', unlock, true);
-    window.removeEventListener('keydown', unlock, true);
+    for (const type of UNLOCK_EVENTS) window.removeEventListener(type, unlock, true);
   };
-  window.addEventListener('pointerdown', unlock, true);
-  window.addEventListener('keydown', unlock, true);
+  for (const type of UNLOCK_EVENTS) window.addEventListener(type, unlock, true);
 }

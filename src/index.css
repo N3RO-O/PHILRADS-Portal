@@ -1616,3 +1616,15 @@
 .prism-p {
   color: var(--prism-p);
 }
+
+/* Sign-in: the speaker button asks for a tap while the browser holds the music back. */
+.launch-hint {
+  animation: launch-hint 2.4s ease-in-out infinite;
+}
+@keyframes launch-hint {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 236, 214, 0.35); }
+  50% { box-shadow: 0 0 0 6px rgba(255, 236, 214, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .launch-hint { animation: none; }
+}

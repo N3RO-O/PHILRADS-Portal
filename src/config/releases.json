@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-11-07.8",
+    "version": "1.9.7",
+    "date": "2026-11-07",
+    "title": "The music starts on your first tap",
+    "items": [
+      {
+        "icon": "volume",
+        "title": "Sign-in music that starts",
+        "body": "Phones and browsers hold sound back until you tap. The PRISM theme now starts on your first tap anywhere on the sign-in screen (the speaker button says “Tap for music” until then), and it plays each time the screen opens."
+      },
+      {
+        "icon": "bell-ring",
+        "title": "Sounds on phones",
+        "body": "Notification and error sounds now get the phone's permission on your first tap, so they play reliably."
+      }
+    ]
+  },
+  {
     "id": "2026-11-07.7",
     "version": "1.9.6",
     "date": "2026-11-07",

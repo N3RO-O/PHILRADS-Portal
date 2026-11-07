@@ -7,6 +7,9 @@
  */
 import { useSyncExternalStore } from 'react';
 
+/** The events that give a page permission to play sound. */
+const UNLOCK_EVENTS = ['pointerup', 'touchend', 'click', 'keydown'] as const;
+
 const KEY = 'philrads.sound.errors';
 /** Only alerts that follow something the person did, within this long. */
 const AFTER_ACTION_MS = 4000;
@@ -77,6 +80,7 @@ export function startErrorSound() {
     lastAction = Date.now();
   };
   // Phones only let a page play sound it was allowed to play during a tap: unlock it on the first one.
+  // The end of a tap counts as permission on phones, not its start (pointerdown).
   const unlock = () => {
     if (!audio) return;
     audio.muted = true;
@@ -88,12 +92,10 @@ export function startErrorSound() {
       })
       .catch(() => undefined)
       .finally(() => (audio!.muted = false));
-    window.removeEventListener('pointerdown', unlock, true);
-    window.removeEventListener('keydown', unlock, true);
+    for (const type of UNLOCK_EVENTS) window.removeEventListener(type, unlock, true);
   };
   // A tap, or the first key for someone signing in with the keyboard alone.
-  window.addEventListener('pointerdown', unlock, true);
-  window.addEventListener('keydown', unlock, true);
+  for (const type of UNLOCK_EVENTS) window.addEventListener(type, unlock, true);
   for (const type of ['pointerdown', 'keydown', 'submit']) window.addEventListener(type, acted, true);
 
   new MutationObserver((mutations) => {

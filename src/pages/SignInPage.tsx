@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { Eye, HandHeart, Volume2, VolumeX, type LucideIcon } from 'lucide-react';
-import { launchSound, useLaunchSoundMuted } from '../lib/launchSound';
+import { launchSound, useLaunchSound } from '../lib/launchSound';
 import { z } from 'zod';
 import { useAuth } from '../components/auth/AuthProvider';
 import { PrismHero } from '../components/auth/PrismHero';
@@ -138,7 +138,8 @@ export function SignInPage() {
     launchSound.start();
     return () => launchSound.stop();
   }, []);
-  const soundOff = useLaunchSoundMuted();
+  const music = useLaunchSound();
+  const soundOff = music.muted;
 
   return (
     <main className="relative isolate grid min-h-dvh place-items-center overflow-hidden p-4">
@@ -147,12 +148,16 @@ export function SignInPage() {
         <PrismHero className="rounded-t-2xl" />
         <button
           type="button"
-          className="tap absolute right-2 top-2 z-10 grid h-11 w-11 place-items-center rounded-full text-cloud/75 transition-colors hover:bg-white/10 hover:text-cloud"
-          onClick={() => launchSound.setMuted(!soundOff)}
-          aria-pressed={!soundOff}
-          aria-label={soundOff ? 'Play the PRISM theme' : 'Turn off the PRISM theme'}
+          data-launch-toggle
+          className={`tap absolute right-2 top-2 z-10 flex h-11 items-center gap-1.5 rounded-full text-cloud/75 transition-colors hover:bg-white/10 hover:text-cloud ${
+            music.state === 'waiting' ? 'launch-hint bg-white/10 pl-3 pr-2.5 text-cloud' : 'w-11 justify-center'
+          }`}
+          onClick={() => launchSound.toggle()}
+          aria-pressed={music.state === 'playing'}
+          aria-label={music.state === 'waiting' ? 'Play the PRISM theme' : soundOff ? 'Play the PRISM theme' : 'Turn off the PRISM theme'}
           title={soundOff ? 'Music off' : 'Music on'}
         >
+          {music.state === 'waiting' && <span className="text-[0.6875rem] font-semibold">Tap for music</span>}
           {soundOff ? <VolumeX className="h-[1.125rem] w-[1.125rem]" aria-hidden /> : <Volume2 className="h-[1.125rem] w-[1.125rem]" aria-hidden />}
         </button>
         <div className="bg-surface-raised">
