@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { HandHeart, Eye } from 'lucide-react';
 import { z } from 'zod';
 import { useAuth } from '../components/auth/AuthProvider';
-import { PrismMark } from '../components/ui/PrismMark';
+import { PrismHero } from '../components/auth/PrismHero';
 import { PasswordField } from '../components/ui/PasswordField';
 import { SignInBackground } from '../components/auth/SignInBackground';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
@@ -135,14 +135,9 @@ export function SignInPage() {
   return (
     <main className="relative isolate grid min-h-dvh place-items-center overflow-hidden p-4">
       <SignInBackground />
-      <div ref={card} className="floating w-full max-w-sm animate-fade-up overflow-hidden rounded-2xl">
-        <div className="flex flex-col items-center gap-3 rounded-t-2xl bg-burgundy-500 px-6 py-8 text-center text-cloud">
-          <PrismMark className="h-16 w-16" tone="brand" />
-          <div>
-            <p className="font-display text-3xl tracking-[0.08em]">PRISM</p>
-            <p className="mt-1 text-[0.6875rem] font-semibold uppercase tracking-[0.22em] text-cloud/80">by PHILRADS</p>
-          </div>
-        </div>
+      <div ref={card} className="floating w-full max-w-sm animate-fade-up overflow-hidden rounded-2xl bg-transparent">
+        <PrismHero className="rounded-t-2xl" />
+        <div className="bg-surface-raised">
         {mode === 'sign-in' ? (
           <form onSubmit={submit} noValidate className="flex flex-col gap-4 p-6">
             <h1 className="text-lg font-bold">Sign in</h1>
@@ -267,6 +262,7 @@ export function SignInPage() {
             </button>
           </form>
         )}
+        </div>
       </div>
     </main>
   );

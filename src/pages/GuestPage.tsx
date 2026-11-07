@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowLeft, HandCoins, Map, MessageSquareHeart, Newspaper, ScrollText, Shirt, type LucideIcon } from 'lucide-react';
 import { SignInBackground } from '../components/auth/SignInBackground';
-import { PrismMark } from '../components/ui/PrismMark';
+import { PrismHero } from '../components/auth/PrismHero';
 
 interface Feature {
   icon: LucideIcon;
@@ -28,16 +28,13 @@ export function GuestPage() {
     <main className="relative isolate min-h-dvh overflow-hidden px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-[calc(2rem+env(safe-area-inset-top))]">
       <SignInBackground />
       <div className="mx-auto flex w-full max-w-3xl animate-fade-up flex-col gap-6">
-        <header className="floating flex flex-col items-center gap-3 rounded-2xl bg-burgundy-500 px-6 py-8 text-center text-cloud">
-          <PrismMark className="h-14 w-14" tone="brand" />
-          <div>
-            <p className="font-display text-3xl tracking-[0.08em]">PRISM</p>
-            <p className="mt-1 text-[0.6875rem] font-semibold uppercase tracking-[0.22em] text-cloud/80">by PHILRADS</p>
-          </div>
-          <h1 className="mt-2 text-xl font-bold">Welcome, guest</h1>
-          <p className="max-w-md text-sm text-cloud/85">
-            See how Philippine Relief and Development Services responds, and how you can help. The guest pages below are coming soon.
-          </p>
+        <header className="floating overflow-hidden rounded-2xl bg-transparent">
+          <PrismHero>
+            <h1 className="mt-2 text-xl font-bold">Welcome, guest</h1>
+            <p className="max-w-md text-sm text-cloud/85">
+              See how Philippine Relief and Development Services responds, and how you can help. The guest pages below are coming soon.
+            </p>
+          </PrismHero>
         </header>
 
         <ul className="grid gap-3 sm:grid-cols-2">

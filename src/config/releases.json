@@ -3,12 +3,22 @@
     "id": "2026-11-07.4",
     "version": "1.9.3",
     "date": "2026-11-07",
-    "title": "Signed out after 5 quiet minutes",
+    "title": "Glass, a new chime and a safer timeout",
     "items": [
       {
         "icon": "lock",
         "title": "Automatic sign-out is back",
         "body": "Administrators, coordinators and staff are signed out after 5 minutes without activity, with a one-minute “Still there?” warning first. With a PIN or fingerprint set up, the portal locks instead. Sharing your live location keeps you signed in."
+      },
+      {
+        "icon": "sparkles",
+        "title": "A glassier PRISM",
+        "body": "The PRISM header on the sign-in and guest pages is now frosted maroon glass, with slow drifting light, a sheen that sweeps across and a glow that follows your finger."
+      },
+      {
+        "icon": "bell-ring",
+        "title": "A new notification sound",
+        "body": "New notes in the bell now play a fresh chime. You can still switch it off in your account menu."
       }
     ]
   },
