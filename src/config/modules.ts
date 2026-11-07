@@ -182,3 +182,10 @@ export const moduleById = (id: ModuleId) => MODULES.find((m) => m.id === id)!;
 
 export const moduleForPath = (pathname: string): ModuleConfig | undefined =>
   pathname === '/' ? moduleById('home') : MODULES.find((m) => m.path !== '/' && pathname.startsWith(m.path));
+
+/** What volunteers see (PHILRADS, 7 Nov 2026): the Live Map, Tasks, Forms, PDM and Documentation, plus Home and Profile. */
+export const VOLUNTEER_MODULES: readonly ModuleId[] = ['home', 'live-map', 'tasks', 'print-docs', 'pdm', 'documentation', 'profile'];
+
+/** Whether a module is in this person's navigation (and reachable at all). */
+export const moduleOpenTo = (m: ModuleConfig, roleKey: string | undefined, can: (p: PermissionKey) => boolean) =>
+  (!m.permission || can(m.permission)) && (roleKey !== 'volunteer' || VOLUNTEER_MODULES.includes(m.id));

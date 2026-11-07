@@ -1,6 +1,6 @@
 import { useEffect, useState, type FocusEvent, type PointerEvent } from 'react';
 import { NavLink } from 'react-router-dom';
-import { MODULES, NAV_GROUPS } from '../../config/modules';
+import { MODULES, NAV_GROUPS, moduleOpenTo } from '../../config/modules';
 import { useAuth } from '../auth/AuthProvider';
 import { SlidingPill } from '../ui/SlidingPill';
 
@@ -18,8 +18,8 @@ interface NavItemsProps {
  * yet carry a "Soon" tag.
  */
 export function NavItems({ expanded, onNavigate }: NavItemsProps) {
-  const { can } = useAuth();
-  const visible = MODULES.filter((m) => !m.hidden && (!m.permission || can(m.permission)));
+  const { can, profile } = useAuth();
+  const visible = MODULES.filter((m) => !m.hidden && moduleOpenTo(m, profile?.roleKey, can));
   const [tip, setTip] = useState<{ label: string; top: number; left: number } | null>(null);
   const showTip = (label: string) => (e: PointerEvent<HTMLElement> | FocusEvent<HTMLElement>) => {
     if (expanded) return;

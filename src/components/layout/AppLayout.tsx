@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Outlet, useLocation, useOutletContext } from 'react-router-dom';
+import { Navigate, Outlet, useLocation, useOutletContext } from 'react-router-dom';
 import { CalendarDays } from 'lucide-react';
-import { moduleForPath } from '../../config/modules';
+import { moduleForPath, moduleOpenTo } from '../../config/modules';
+import { useAuth } from '../auth/AuthProvider';
 import { formatLongDate } from '../../lib/format';
 import { LiveSharingProvider } from '../map/LiveSharing';
 import { PresenceProvider } from '../../lib/presence';
@@ -55,6 +56,9 @@ export function AppLayout() {
   const [search, setSearch] = useState('');
   const location = useLocation();
   const current = moduleForPath(location.pathname);
+  const { can, profile } = useAuth();
+  // A page this person's role doesn't include (a volunteer opening /inventory from an old link): go to Tasks.
+  const closed = Boolean(current && profile && !moduleOpenTo(current, profile.roleKey, can));
   const title = current?.label ?? 'Page not found';
 
   useEffect(() => {
@@ -146,7 +150,7 @@ export function AppLayout() {
           {/* Keyed by page so each page change fades in smoothly. */}
           <PullToRefresh onRefresh={refreshPage}>
             <div key={`${location.pathname}#${refreshKey}`} className="animate-fade-in">
-              <Outlet context={{ search } satisfies LayoutContext} />
+              {closed ? <Navigate to="/tasks" replace /> : <Outlet context={{ search } satisfies LayoutContext} />}
             </div>
           </PullToRefresh>
         </main>

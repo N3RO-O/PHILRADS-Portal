@@ -47,6 +47,10 @@ interface AuthContextValue {
   /** Signed in from an invite or password-reset email and no password chosen yet. */
   needsPassword: boolean;
   signIn(email: string, password: string): Promise<string | null>;
+  /** Volunteers: emails a 6-digit sign-in code (invited accounts only). Returns an error message, or null. */
+  sendCode(email: string): Promise<string | null>;
+  /** Volunteers: signs in with the emailed code. Returns an error message, or null. */
+  verifyCode(email: string, code: string): Promise<string | null>;
   /** Saves a new password for the signed-in account. Returns an error message, or null. */
   setPassword(password: string): Promise<string | null>;
   /** Emails a password-reset link. Returns an error message, or null. */
@@ -224,6 +228,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return error.message === 'Invalid login credentials' ? 'That email and password do not match.' : 'Sign-in failed. Please try again.';
   }, []);
 
+  const sendCode = useCallback(async (email: string) => {
+    if (!supabase) return 'Sign-in is not configured.';
+    // Invited accounts only: an unknown email doesn't create one.
+    const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+    if (!error) return null;
+    console.error('[auth] send code', error);
+    if (/signups? not allowed|not found|user/i.test(error.message)) return 'No account uses this email yet. Ask your coordinator to invite you.';
+    if (error.status === 429 || /rate|seconds/i.test(error.message)) return 'A code was sent a moment ago. Wait a minute, then try again.';
+    return 'The code could not be sent. Please try again in a few minutes.';
+  }, []);
+
+  const verifyCode = useCallback(async (email: string, code: string) => {
+    if (!supabase) return 'Sign-in is not configured.';
+    markActive();
+    const { error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' });
+    if (!error) {
+      markUnlocked();
+      welcome.queue();
+      return null;
+    }
+    console.error('[auth] verify code', error);
+    return /expired|invalid/i.test(error.message) ? 'That code is wrong or has expired. Check the latest email, or send a new code.' : 'Sign-in failed. Please try again.';
+  }, []);
+
   const setPassword = useCallback(async (password: string) => {
     if (!supabase) return 'Sign-in is not configured.';
     const { error } = await supabase.auth.updateUser({ password });
@@ -289,14 +317,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile: state.status === 'demo' || state.status === 'signed-in' ? state.profile : null,
       can: (permission) => granted.has(permission),
       setDemoRole: state.status === 'demo' ? setDemoRole : undefined,
-      needsPassword: state.status === 'signed-in' && needsPassword,
+      // Volunteers sign in with an emailed code, so an invite doesn't ask them for a password.
+      needsPassword: state.status === 'signed-in' && needsPassword && state.profile?.roleKey !== 'volunteer',
       signIn,
+      sendCode,
+      verifyCode,
       setPassword,
       requestPasswordReset,
       signOut,
       updateProfile,
     };
-  }, [state, needsPassword, signIn, setPassword, requestPasswordReset, signOut, setDemoRole, updateProfile]);
+  }, [state, needsPassword, signIn, sendCode, verifyCode, setPassword, requestPasswordReset, signOut, setDemoRole, updateProfile]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

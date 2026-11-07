@@ -7,6 +7,7 @@ import { MODULES } from './config/modules';
 import { HomePage } from './pages/HomePage';
 import { ModulePlaceholderPage } from './pages/ModulePlaceholderPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { GuestPage } from './pages/GuestPage';
 import { Skeleton } from './components/ui/Card';
 
 // Loaded on demand so Home stays light; the service worker precaches it for offline use.
@@ -28,6 +29,8 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          {/* No account needed: what guests can see (the parts open as they're built). */}
+          <Route path="guest" element={<GuestPage />} />
           <Route
             element={
               <AuthGate>

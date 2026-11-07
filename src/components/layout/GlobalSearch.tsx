@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type RefObject } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChartColumn, CornerDownLeft, FolderKanban, Library, LayoutGrid, Search, SquareCheckBig, UserRound, type LucideIcon } from 'lucide-react';
-import { MODULES } from '../../config/modules';
+import { MODULES, moduleOpenTo } from '../../config/modules';
 import { useAuth } from '../auth/AuthProvider';
 import { activitiesService, projectsService, resourcesService, tasksService } from '../../services';
 import { siteKey } from '../../services/activities/types';
@@ -35,12 +35,12 @@ const HINTS = ['tasks', 'people', 'projects', 'places', 'donors', 'resources'];
  * read with the viewer's own permissions; one that fails (offline, no access) is just left out.
  */
 function useSearchIndex(enabled: boolean) {
-  const { can } = useAuth();
+  const { can, profile } = useAuth();
   const [hits, setHits] = useState<Hit[] | null>(null);
   useEffect(() => {
     if (!enabled || hits) return;
     let live = true;
-    const pages: Hit[] = MODULES.filter((m) => !m.hidden && (!m.permission || can(m.permission))).map((m) => ({
+    const pages: Hit[] = MODULES.filter((m) => !m.hidden && moduleOpenTo(m, profile?.roleKey, can)).map((m) => ({
       kind: 'page',
       id: m.id,
       title: m.label,

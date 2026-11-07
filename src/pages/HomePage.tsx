@@ -4,6 +4,7 @@ import { useOnboarding } from '../components/onboarding/OnboardingProvider';
 import { WelcomeQuestion } from '../components/onboarding/WelcomeQuestion';
 import { useLocation } from 'react-router-dom';
 import { useLayoutContext } from '../components/layout/AppLayout';
+import { useAuth } from '../components/auth/AuthProvider';
 import { DeadlineCalendar } from '../components/dashboard/DeadlineCalendar';
 import { OverviewKpis } from '../components/dashboard/OverviewKpis';
 import { ProjectsTable } from '../components/dashboard/ProjectsTable';
@@ -36,6 +37,8 @@ function Cell({ className, step, children }: { className: string; step: number; 
 export function HomePage() {
   const { search } = useLayoutContext();
   const query = search.trim().toLowerCase();
+  // Volunteers see their own work: tasks and the calendar, not stock, projects or the activity feed.
+  const staffView = useAuth().profile?.roleKey !== 'volunteer';
   const tasks = useAsyncData(() => dashboardService.getMyTasks());
   const stock = useAsyncData(() => dashboardService.getStockLevels());
   const { hash } = useLocation();
@@ -74,18 +77,22 @@ export function HomePage() {
       <Cell className="order-2 md:col-span-2 xl:col-span-12" step={1}>
         <DeadlineCalendar tasks={tasks} />
       </Cell>
-      <Cell className="order-4 md:col-span-2 xl:col-span-12" step={2}>
-        <RecentActivity search={query} />
-      </Cell>
-      <Cell className="order-3 md:col-span-2 xl:col-span-8" step={3}>
-        <OverviewKpis />
-      </Cell>
-      <Cell className="order-8 md:col-span-2 xl:col-span-4" step={4}>
-        <StockLevelsChart stock={stock} />
-      </Cell>
-      <Cell className="order-6 md:col-span-2 xl:col-span-12" step={5}>
-        <ProjectsTable />
-      </Cell>
+      {staffView && (
+        <>
+          <Cell className="order-4 md:col-span-2 xl:col-span-12" step={2}>
+            <RecentActivity search={query} />
+          </Cell>
+          <Cell className="order-3 md:col-span-2 xl:col-span-8" step={3}>
+            <OverviewKpis />
+          </Cell>
+          <Cell className="order-8 md:col-span-2 xl:col-span-4" step={4}>
+            <StockLevelsChart stock={stock} />
+          </Cell>
+          <Cell className="order-6 md:col-span-2 xl:col-span-12" step={5}>
+            <ProjectsTable />
+          </Cell>
+        </>
+      )}
     </div>
     <GettingStartedBar />
     </>
