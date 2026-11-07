@@ -59,6 +59,23 @@ export function NotificationToasts() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [me, state.status]);
 
+  // A phone or desktop notification was tapped while PRISM was open: the service worker brings
+  // this window forward and asks it to go to the note's page (public/push-sw.js).
+  const navRef = useRef(navigate);
+  navRef.current = navigate;
+  useEffect(() => {
+    const sw = 'serviceWorker' in navigator ? navigator.serviceWorker : null;
+    if (!sw) return;
+    const on = (e: MessageEvent) => {
+      const d = e.data as { type?: string; url?: string } | null;
+      if (d?.type !== 'prism:open' || typeof d.url !== 'string') return;
+      const u = new URL(d.url, location.origin);
+      if (u.origin === location.origin) navRef.current(u.pathname + u.search + u.hash);
+    };
+    sw.addEventListener('message', on);
+    return () => sw.removeEventListener('message', on);
+  }, []);
+
   const dismiss = (id: string) => setToasts((ts) => ts.filter((t) => t.id !== id));
   useEffect(() => {
     if (!toasts.length) return;

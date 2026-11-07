@@ -171,11 +171,13 @@ export function TasksPage() {
   const isMine = useCallback((t: Task) => (t.assigneeId ?? t.createdById) === me, [me]);
   const whereOk = (t: Task) => where === 'all' || t.setting === where;
   const showOpen = (t: Task) => t.status !== 'done' || t.id in linger;
+  /** Someone asks you to take this on: it waits at the top of Today until you answer. */
+  const isOffer = (t: Task) => t.assigneeId === me && t.createdById !== me && t.acceptance === 'pending' && t.status !== 'done';
   const doneToday = (t: Task) => t.status === 'done' && !(t.id in linger) && t.completedAt !== null && manilaDayKey(t.completedAt) === today;
 
   const openMine = all.filter((t) => isMine(t) && whereOk(t) && t.status !== 'done');
   const counts = {
-    myday: openMine.filter((t) => t.myDay === today).length,
+    myday: all.filter((t) => isMine(t) && t.status !== 'done' && ((whereOk(t) && t.myDay === today) || isOffer(t))).length,
     upcoming: openMine.length,
     calendar: undefined,
     assigned: openMine.filter((t) => t.createdById !== me).length,
@@ -187,10 +189,10 @@ export function TasksPage() {
 
   const shown = all
     .filter((t) => {
-      if (!whereOk(t)) return false;
+      if (!whereOk(t) && !isOffer(t)) return false;
       switch (view) {
         case 'myday':
-          return isMine(t) && showOpen(t) && t.myDay === today;
+          return isMine(t) && showOpen(t) && (t.myDay === today || isOffer(t));
         case 'upcoming':
           return isMine(t) && showOpen(t);
         case 'calendar':
@@ -207,7 +209,7 @@ export function TasksPage() {
           return whereOk(t);
       }
     })
-    .sort(compareTasks);
+    .sort((a, b) => Number(isOffer(b)) - Number(isOffer(a)) || compareTasks(a, b));
 
   const awardOf = useMemo(() => new Map(awards.map((a) => [a.taskId, a])), [awards]);
   const progress = useMemo(() => computeProgress({ awards, kudos, weekBonuses, tasks: all, userId: me, today }), [awards, kudos, weekBonuses, all, me, today]);
@@ -400,14 +402,21 @@ export function TasksPage() {
   };
 
   // A bell note links to one task (?task=…): open it once the tasks are loaded.
+  // The list may be older than the note (a task given while this page was open): fetch it again once.
   const linkedTask = params.get('task');
+  const refetchedFor = useRef<string | null>(null);
   useEffect(() => {
     if (!linkedTask || !tasks) return;
     const t = tasks.find((x) => x.id === linkedTask);
+    if (!t && refetchedFor.current !== linkedTask) {
+      refetchedFor.current = linkedTask;
+      void load();
+      return;
+    }
     if (t) setSheet({ task: t, initial: null });
     else setToast({ text: 'That task isn’t in your lists any more.', tone: 'warn' });
     setParam({ task: null });
-  }, [linkedTask, tasks, setParam]);
+  }, [linkedTask, tasks, setParam, load]);
 
   // Home's "Create task" quick action.
   const quickAction = params.get('action');

@@ -9,6 +9,7 @@ import { OverviewKpis } from '../components/dashboard/OverviewKpis';
 import { ProjectsTable } from '../components/dashboard/ProjectsTable';
 import { RecentActivity } from '../components/dashboard/RecentActivity';
 import { StockLevelsChart } from '../components/dashboard/StockLevelsChart';
+import { TaskBox } from '../components/dashboard/TaskBox';
 import { VerseOfTheDay } from '../components/dashboard/VerseOfTheDay';
 import { WelcomeBar } from '../components/dashboard/WelcomeBar';
 import { useAsyncData } from '../hooks/useAsyncData';
@@ -19,7 +20,7 @@ import { dashboardService } from '../services';
  *  - phones: one column, ordered by what staff need first (`order-*`)
  *  - md–lg: two columns; wide cards span both
  *  - xl: 12 columns in aligned rows, in DOM order:
- *      welcome (12) | verse (12) | calendar (12) | recent activity, folded (12) | overview (8) + stock levels (4) | projects (12)
+ *      welcome (12) | verse (12) | my tasks (12) | calendar (12) | recent activity, folded (12) | overview (8) + stock levels (4) | projects (12)
  * The calendar has the whole row, so its agenda stays beside it; recent activity opens when clicked.
  * The calendar leads, right after the welcome, at every width.
  * The verse always comes first, at every width (one a day, changing at midnight).
@@ -67,6 +68,9 @@ export function HomePage() {
           <GettingStartedCard onPersonalise={onboarding.state.question === 'skipped' ? () => setAskAgain(true) : undefined} />
         </Cell>
       )}
+      <Cell className="order-2 md:col-span-2 xl:col-span-12" step={1}>
+        <TaskBox search={query} />
+      </Cell>
       <Cell className="order-2 md:col-span-2 xl:col-span-12" step={1}>
         <DeadlineCalendar tasks={tasks} />
       </Cell>
