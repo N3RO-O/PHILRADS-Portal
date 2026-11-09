@@ -1,9 +1,10 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
-import { Loader2, MailPlus } from 'lucide-react';
+import { MailPlus } from 'lucide-react';
 import { z } from 'zod';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { STAFF_ROLES, StaffRuleError, type StaffInvite, type StaffMember, type StaffRoleKey } from '../../services/staff/types';
 import { Sheet } from '../ui/Sheet';
+import { BusyLabel } from '../ui/BusyLabel';
 
 const emailSchema = z.string().trim().email();
 
@@ -77,9 +78,11 @@ export function InviteSheet({ open, existing, onClose, onInvite, onDone }: Props
       title="Invite someone"
       subtitle="They get an email with a link to choose their password. Their account is ready as soon as they do."
       footer={
-        <button type="submit" form={`${uid}-form`} className="btn-primary h-12 w-full text-base" disabled={busy || !online}>
-          {busy ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <MailPlus className="h-5 w-5" aria-hidden />}
-          {!online ? 'Connect to invite' : busy ? 'Sending…' : 'Send invitation'}
+        <button type="submit" form={`${uid}-form`} className="btn-primary h-12 w-full text-base" disabled={busy || !online} aria-busy={busy || undefined}>
+          <BusyLabel busy={busy} busyText="Sending the invitation…">
+            <MailPlus className="h-5 w-5" aria-hidden />
+            {!online ? 'Connect to invite' : 'Send invitation'}
+          </BusyLabel>
         </button>
       }
     >

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Camera, Link2, Loader2, Plus, X } from 'lucide-react';
+import { BusyLabel } from '../ui/BusyLabel';
 import { XP_RULES } from '../../lib/taskProgress';
 import type { OutputDraft } from '../../services/tasks/staffBoard';
 import type { Task } from '../../services/tasks/types';
@@ -109,9 +110,10 @@ export function FinishSheet({ task, onClose, onFinish }: { task: Task | null; on
       subtitle={task ? `“${task.title}”` : undefined}
       footer={
         !done && (
-          <button type="button" className="btn-primary h-12 w-full text-base" onClick={() => void finish()} disabled={Boolean(busy) || blocked}>
-            {busy === 'send' && <Loader2 className="h-5 w-5 animate-spin" aria-hidden />}
-            {blocked ? 'Add a photo to finish' : note.trim() || links.length || photos.length || link.trim() ? (given ? 'Finish and send' : 'Finish') : 'Finish'}
+          <button type="button" className="btn-primary h-12 w-full text-base" onClick={() => void finish()} disabled={Boolean(busy) || blocked} aria-busy={busy === 'send' || undefined}>
+            <BusyLabel busy={busy === 'send'} busyText="Finishing…">
+              {blocked ? 'Add a photo to finish' : note.trim() || links.length || photos.length || link.trim() ? (given ? 'Finish and send' : 'Finish the task') : 'Finish the task'}
+            </BusyLabel>
           </button>
         )
       }
@@ -190,7 +192,7 @@ export function FinishSheet({ task, onClose, onFinish }: { task: Task | null; on
                 </div>
               ))}
               {photos.length < MAX_PHOTOS && (
-                <button type="button" className={`press grid aspect-square place-items-center rounded-xl border-2 border-dashed text-muted hover:border-ink-mute hover:text-ink ${blocked ? 'animate-pulse border-uplift/70 text-uplift' : 'border-line'}`} onClick={() => file.current?.click()} disabled={busy === 'photo'}>
+                <button type="button" className={`press grid aspect-square place-items-center rounded-xl border-2 border-dashed text-muted hover:border-ink-mute hover:text-ink ${blocked ? 'animate-pulse border-uplift/70 text-uplift' : 'border-line'}`} onClick={() => file.current?.click()} disabled={busy === 'photo'} aria-busy={busy === 'photo' || undefined}>
                   {busy === 'photo' ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <Camera className="h-5 w-5" aria-hidden />}
                   <span className="sr-only">Add photos</span>
                 </button>

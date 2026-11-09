@@ -364,7 +364,7 @@ export function InventoryPage() {
                 <span className={`whitespace-nowrap text-xs ${isStale(snapshot) ? 'text-status-low' : 'text-muted'}`} title={`IMS data from ${formatDateTime(snapshot.fetchedAt)}`}>
                   Updated {ago(snapshot.fetchedAt)}
                 </span>
-                <button type="button" className="icon-btn" onClick={() => void inventoryStore.refresh()} disabled={!online || state.loading} aria-label="Refresh inventory" title="Refresh">
+                <button type="button" className="icon-btn" onClick={() => void inventoryStore.refresh()} disabled={!online || state.loading} aria-busy={state.loading || undefined} aria-label="Refresh inventory" title="Refresh">
                   {state.loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <RefreshCw className="h-4 w-4" aria-hidden />}
                 </button>
                 {tab === 'stock' && <ExportMenu onCsv={exportStockCsv} onPrint={() => setPrinting(true)} />}

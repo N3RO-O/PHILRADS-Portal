@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { CloudUpload, History, Link2, Loader2, Trash2 } from 'lucide-react';
+import { BusyLabel } from '../ui/BusyLabel';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { LINK_KIND_LABEL, parseResourceLink, type LinkKind } from '../../lib/resourceLinks';
 import { validateResource, type ResourceErrors } from '../../lib/resources';
@@ -174,14 +175,13 @@ export function ResourceSheet({ open, resource, existing, onClose, onSave, onRem
         mode === 'link' && (
           <div className="flex gap-2">
             {resource && (
-              <button type="button" className="btn-ghost px-4 text-status-out" onClick={() => void remove()} disabled={Boolean(busy) || !online}>
+              <button type="button" className="btn-ghost px-4 text-status-out" onClick={() => void remove()} disabled={Boolean(busy) || !online} aria-busy={busy === 'remove' || undefined}>
                 {busy === 'remove' ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Trash2 className="h-4 w-4" aria-hidden />}
-                <span className="sr-only sm:not-sr-only">Remove</span>
+                <span className="sr-only sm:not-sr-only">Remove resource</span>
               </button>
             )}
-            <button type="submit" form={`${uid}-form`} className="btn-primary h-12 flex-1 text-base" disabled={Boolean(busy) || !online}>
-              {busy === 'save' && <Loader2 className="h-5 w-5 animate-spin" aria-hidden />}
-              {!online ? 'Connect to save' : busy === 'save' ? 'Saving…' : resource ? 'Save changes' : 'Add resource'}
+            <button type="submit" form={`${uid}-form`} className="btn-primary h-12 flex-1 text-base" disabled={Boolean(busy) || !online} aria-busy={busy === 'save' || undefined}>
+              <BusyLabel busy={busy === 'save'} busyText="Saving…">{!online ? 'Connect to save' : resource ? 'Save changes' : 'Add resource'}</BusyLabel>
             </button>
           </div>
         )

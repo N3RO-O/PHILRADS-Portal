@@ -57,7 +57,7 @@ export function TaskBox({ search }: { search: string }) {
       action={
         <div className="flex shrink-0 items-center gap-3">
           <Link to="/tasks?action=create-task" className="link hidden sm:inline-flex">
-            <Plus className="h-3.5 w-3.5" aria-hidden /> Add
+            <Plus className="h-3.5 w-3.5" aria-hidden /> Add task
           </Link>
           <Link to="/tasks" className="link">
             Open Tasks <ArrowRight className="h-3.5 w-3.5" aria-hidden />

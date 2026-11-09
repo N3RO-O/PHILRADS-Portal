@@ -95,7 +95,7 @@ export function PhotoCropper({ image, onCancel, onApply }: Props) {
           <button type="button" className="btn-ghost min-h-11 flex-1" onClick={onCancel}>
             Cancel
           </button>
-          <button type="button" className="btn-primary min-h-11 flex-1" onClick={apply} disabled={busy}>
+          <button type="button" className="btn-primary min-h-11 flex-1" onClick={apply} disabled={busy} aria-busy={busy || undefined}>
             {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Check className="h-4 w-4" aria-hidden />} Use this photo
           </button>
         </div>

@@ -137,7 +137,7 @@ export function SyncSheet({ open, onClose, records, withFunding, onSynced }: Pro
       footer={
         done ? (
           <button type="button" className="btn-primary w-full" onClick={close}>
-            Done
+            Close the sync
           </button>
         ) : (
           <div className="flex flex-col gap-2">
@@ -146,7 +146,7 @@ export function SyncSheet({ open, onClose, records, withFunding, onSynced }: Pro
               <button type="button" className="btn-ghost flex-1" onClick={close}>
                 Cancel
               </button>
-              <button type="button" className="btn-primary flex-[2]" disabled={!plan || total === 0 || applying || !online} onClick={() => void apply()}>
+              <button type="button" className="btn-primary flex-[2]" disabled={!plan || total === 0 || applying || !online} aria-busy={applying || undefined} onClick={() => void apply()}>
                 {applying ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <RefreshCw className="h-4 w-4" aria-hidden />}
                 {total ? `Apply ${formatNumber(total)} ${total === 1 ? 'change' : 'changes'}` : 'Nothing selected'}
               </button>

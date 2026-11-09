@@ -46,6 +46,7 @@ import {
 } from '../services/projects/projectsService';
 import type { Task } from '../services/tasks/types';
 import { PersonAvatar } from '../components/ui/PersonAvatar';
+import { BusyLabel } from '../components/ui/BusyLabel';
 
 type Filter = ProjectStatus | 'all';
 const FILTERS: [Filter, string][] = [
@@ -216,7 +217,7 @@ function ProjectList({ projects, me, canCreate, canCost, onNew }: { projects: Pr
           title={all.length ? 'No projects here' : 'No projects yet'}
           action={
             !all.length && canCreate ? (
-              <button type="button" className="btn-primary min-h-10 px-4 text-sm" onClick={onNew}>
+              <button type="button" className="btn-ghost min-h-10 px-4 text-sm" onClick={onNew}>
                 <Plus className="h-4 w-4" aria-hidden /> Start the first project
               </button>
             ) : undefined
@@ -500,8 +501,8 @@ function PeopleToReach({ project: p, canManage, busy, act }: { project: Project;
             <button type="button" className="btn-ghost min-h-11 px-3" onClick={() => setEditing(false)}>
               Cancel
             </button>
-            <button type="submit" className="btn-primary min-h-11 px-4" disabled={busy === 'people'}>
-              {busy === 'people' && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />} Save
+            <button type="submit" className="btn-primary min-h-11 px-4" disabled={busy === 'people'} aria-busy={busy === 'people' || undefined}>
+              <BusyLabel busy={busy === 'people'} busyText="Saving…">Save the team</BusyLabel>
             </button>
           </div>
         </form>
@@ -543,6 +544,11 @@ function Milestones({ project: p, today, canManage, onTeam, busy, act }: { proje
       <h3 id="pd-ms" className="card-title flex items-center gap-2">
         <CheckCircle2 className="h-4 w-4" aria-hidden /> Milestones and reports
       </h3>
+      {!onTeam && list.length > 0 && (
+        <p id="pd-ms-why" className="-mt-1 text-xs text-muted">
+          Only the project’s team can tick these off.
+        </p>
+      )}
       {list.length === 0 ? (
         <p className="text-sm text-muted">{canManage ? 'Add the steps and reporting deadlines; progress follows them.' : 'No milestones yet.'}</p>
       ) : (
@@ -557,7 +563,9 @@ function Milestones({ project: p, today, canManage, onTeam, busy, act }: { proje
                   aria-checked={m.done}
                   aria-label={m.title}
                   disabled={!onTeam || busy === m.id}
+                  aria-busy={busy === m.id || undefined}
                   title={onTeam ? undefined : 'Only the project’s team can tick this off'}
+                  aria-describedby={onTeam ? undefined : 'pd-ms-why'}
                   onClick={() => void act(m.id, () => projectsService.setMilestoneDone(m.id, !m.done))}
                   className="grid h-9 w-9 shrink-0 place-items-center disabled:cursor-not-allowed"
                 >
@@ -607,8 +615,8 @@ function Milestones({ project: p, today, canManage, onTeam, busy, act }: { proje
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_10rem_auto]">
             <input className="field" maxLength={200} value={title} onChange={(e) => setTitle(e.target.value)} placeholder={kind === 'report' ? 'e.g. Quarterly report to the donor' : 'e.g. First distribution done'} aria-label="Title" />
             <input type="date" className="field" value={due} onChange={(e) => setDue(e.target.value)} aria-label="Due date" />
-            <button type="submit" className="btn-primary min-h-11 px-4" disabled={!title.trim() || busy === 'add-ms'}>
-              {busy === 'add-ms' ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Plus className="h-4 w-4" aria-hidden />} Add
+            <button type="submit" className="btn-ghost min-h-11 px-4" disabled={!title.trim() || busy === 'add-ms'} aria-busy={busy === 'add-ms' || undefined}>
+              {busy === 'add-ms' ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Plus className="h-4 w-4" aria-hidden />} Add milestone
             </button>
           </div>
         </form>
@@ -712,9 +720,9 @@ function ProjectTasks({ project: p, tasks, canManage, today, onAdded }: { projec
         <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 sm:flex">
           {canManage && <AssigneePicker team={team} value={assignees} onChange={setAssignees} className="min-w-0 sm:w-44" />}
           <input type="date" className={`field sm:w-40 ${canManage ? 'col-span-2 sm:col-span-1' : ''}`} value={due} onChange={(e) => setDue(e.target.value)} aria-label="Due date" />
-          <button type="submit" className="btn-primary min-h-11 px-4" disabled={!title.trim() || busy}>
+          <button type="submit" className="btn-ghost min-h-11 px-4" disabled={!title.trim() || busy} aria-busy={busy || undefined}>
             {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Plus className="h-4 w-4" aria-hidden />}
-            <span className="sr-only sm:not-sr-only">Add</span>
+            <span className="sr-only sm:not-sr-only">Add task</span>
           </button>
         </div>
       </form>
@@ -777,6 +785,7 @@ function Team({ project: p, people, canManage, busy, act }: { project: Project; 
             type="button"
             className="btn-ghost min-h-11 shrink-0 px-3"
             disabled={!adding || busy === 'add-member'}
+            aria-busy={busy === 'add-member' || undefined}
             onClick={() => void act('add-member', async () => (await projectsService.addMember(p.id, adding), setAdding('')))}
             aria-label="Add to the team"
           >

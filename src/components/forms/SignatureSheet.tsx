@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import SignaturePad from 'signature_pad';
 import { Eraser, Fingerprint, Loader2, PenLine, Undo2, X } from 'lucide-react';
 import { biometricAvailable, biometricSetUp, setUpBiometric, verifyBiometric } from '../../lib/biometric';
@@ -12,6 +12,7 @@ import { SuccessTick } from '../ui/SuccessTick';
  * result is a picture placed on the signature line, printed with the form.
  */
 export function SignatureSheet({ open, onClose, onSign }: { open: boolean; onClose: () => void; onSign: (dataUrl: string) => void }) {
+  const hintId = useId();
   const { profile } = useAuth();
   const [tab, setTab] = useState<'draw' | 'finger'>('draw');
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -109,7 +110,7 @@ export function SignatureSheet({ open, onClose, onSign }: { open: boolean; onClo
             <div className="relative overflow-hidden rounded-2xl border-2 border-dashed border-ink-mute bg-white">
               <canvas ref={canvas} className="block h-56 w-full touch-none" aria-label="Signature pad: draw with your finger or a stylus" />
               <span className="pointer-events-none absolute inset-x-8 bottom-12 border-b border-slate-400" aria-hidden />
-              <span className="pointer-events-none absolute bottom-4 left-8 flex items-center gap-1 text-xs text-slate-500" aria-hidden>
+              <span id={hintId} className="pointer-events-none absolute bottom-4 left-8 flex items-center gap-1 text-xs text-slate-500" aria-hidden>
                 <X className="h-3.5 w-3.5" /> Sign above the line
               </span>
             </div>
@@ -118,9 +119,9 @@ export function SignatureSheet({ open, onClose, onSign }: { open: boolean; onClo
                 <Undo2 className="h-4 w-4" aria-hidden />
               </button>
               <button type="button" className="btn-ghost min-h-11 px-3" onClick={() => (pad.current?.clear(), setEmpty(true))} disabled={empty}>
-                <Eraser className="h-4 w-4" aria-hidden /> Clear
+                <Eraser className="h-4 w-4" aria-hidden /> Clear signature
               </button>
-              <button type="button" className="btn-primary min-h-11 flex-1" onClick={useDrawing} disabled={empty}>
+              <button type="button" className="btn-primary min-h-11 flex-1" onClick={useDrawing} disabled={empty} aria-describedby={empty ? hintId : undefined}>
                 Use this signature
               </button>
             </div>
@@ -131,6 +132,8 @@ export function SignatureSheet({ open, onClose, onSign }: { open: boolean; onClo
               type="button"
               onClick={() => void signWithFinger()}
               disabled={state === 'busy' || bio === false}
+              aria-describedby={`${hintId}-bio`}
+              aria-busy={state === 'busy' || undefined}
               className={`press relative grid h-28 w-28 place-items-center rounded-full border-2 transition-colors ${state === 'ok' ? 'border-status-in bg-status-in/10 text-status-in' : state === 'failed' ? 'border-rose bg-rose/10 text-rose' : 'border-line text-ink-soft'}`}
               aria-label="Sign with fingerprint or face"
             >
@@ -138,7 +141,7 @@ export function SignatureSheet({ open, onClose, onSign }: { open: boolean; onClo
             </button>
             <div>
               <p className="font-semibold text-ink">{state === 'ok' ? 'Verified' : `Sign as ${name}`}</p>
-              <p className="mx-auto mt-1 max-w-xs text-sm text-muted">
+              <p id={`${hintId}-bio`} className="mx-auto mt-1 max-w-xs text-sm text-muted">
                 {bio === false
                   ? 'This device has no fingerprint or face unlock. Draw your signature instead.'
                   : 'Touch the fingerprint sensor (or use face unlock). Your name is stamped as a verified e-signature with the date and time.'}

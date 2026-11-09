@@ -244,7 +244,7 @@ export function StaffPage() {
                   Show everyone
                 </button>
               ) : (
-                <button type="button" className="btn-primary min-h-10 px-4 text-sm" onClick={() => setInviteOpen(true)} disabled={!online}>
+                <button type="button" className="btn-ghost min-h-10 px-4 text-sm" onClick={() => setInviteOpen(true)} disabled={!online}>
                   <MailPlus className="h-4 w-4" aria-hidden /> Invite someone
                 </button>
               )
@@ -281,7 +281,7 @@ export function StaffPage() {
                         </div>
                       </div>
                       {m.archivedAt ? (
-                        <button type="button" className="btn-ghost sm:shrink-0" onClick={() => restore(m)} disabled={busy || !online}>
+                        <button type="button" className="btn-ghost sm:shrink-0" onClick={() => restore(m)} disabled={busy || !online} aria-busy={busy || undefined}>
                           {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <ArchiveRestore className="h-4 w-4" aria-hidden />} Restore
                         </button>
                       ) : (
@@ -318,9 +318,15 @@ export function StaffPage() {
                           />
                           <button
                             type="button"
-                            className="icon-btn"
-                            onClick={() => archive(m)}
-                            disabled={!swipeable || busy}
+                            className="icon-btn aria-disabled:opacity-40"
+                            onClick={() =>
+                              swipeable
+                                ? archive(m)
+                                : setToast({ text: !canArchive(m) ? (m.roleKey === 'admin' ? 'Administrators can’t be archived.' : 'You can’t archive your own account.') : 'You’re offline. Connect to archive.', error: true })
+                            }
+                            disabled={busy}
+                            aria-disabled={!swipeable || undefined}
+                            aria-busy={busy || undefined}
                             title={canArchive(m) ? 'Archive' : m.roleKey === 'admin' ? 'Administrators can’t be archived' : 'You can’t archive your own account'}
                             aria-label={`Archive ${m.name}`}
                           >

@@ -1,5 +1,6 @@
 import { useEffect, useId, useState } from 'react';
 import { Download, FileText, Loader2, Pencil, Trash2 } from 'lucide-react';
+import { BusyLabel } from '../ui/BusyLabel';
 import { formatBytes, formatDateTime, formatShortDate } from '../../lib/format';
 import type { DocFile, DocLinks, DocPatch } from '../../services/documentation/documentationService';
 import { DOCUMENT_CATEGORIES, type DocumentCategory } from '../../types';
@@ -74,7 +75,7 @@ export function DocViewer({ doc, links, canEdit, events, places, onClose, onSave
         <div className="flex gap-2">
           {canEdit && !editing && (
             <>
-              <button type="button" className="btn-ghost px-3 text-status-out" onClick={() => void remove()} disabled={Boolean(busy)} title="Delete (also in Google Drive)">
+              <button type="button" className="btn-ghost px-3 text-status-out" onClick={() => void remove()} disabled={Boolean(busy)} aria-busy={busy === 'remove' || undefined} title="Delete (also in Google Drive)">
                 {busy === 'remove' ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Trash2 className="h-4 w-4" aria-hidden />}
                 <span className="sr-only">Delete (also in Google Drive)</span>
               </button>
@@ -88,8 +89,8 @@ export function DocViewer({ doc, links, canEdit, events, places, onClose, onSave
               <button type="button" className="btn-ghost px-4" onClick={() => setEditing(false)} disabled={Boolean(busy)}>
                 Cancel
               </button>
-              <button type="button" className="btn-primary h-12 flex-1" onClick={() => void save()} disabled={Boolean(busy)}>
-                {busy === 'save' && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />} Save
+              <button type="button" className="btn-primary h-12 flex-1" onClick={() => void save()} disabled={Boolean(busy)} aria-busy={busy === 'save' || undefined}>
+                <BusyLabel busy={busy === 'save'} busyText="Saving…">Save changes</BusyLabel>
               </button>
             </>
           ) : (
@@ -139,12 +140,18 @@ export function DocViewer({ doc, links, canEdit, events, places, onClose, onSave
                   aria-pressed={draft.category === c}
                   // Only categories this kind of file fits (a video can't become a Photo).
                   disabled={!categoryAllows(c, doc.mimeType)}
+                  aria-describedby={categoryAllows(c, doc.mimeType) ? undefined : `${uid}-cat-why`}
                   onClick={() => setDraft((d) => ({ ...d, category: c as DocumentCategory }))}
                 >
                   {c}
                 </button>
               ))}
             </div>
+            {DOCUMENT_CATEGORIES.some((c) => !categoryAllows(c, doc.mimeType)) && (
+              <p id={`${uid}-cat-why`} className="-mt-2 text-xs text-muted">
+                The greyed-out kinds don’t fit this file.
+              </p>
+            )}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <label className="flex flex-col gap-1.5" htmlFor={`${uid}-taken`}>
                 <span className="text-sm font-semibold text-ink-soft">Taken or written on</span>

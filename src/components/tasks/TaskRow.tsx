@@ -204,11 +204,11 @@ export function TaskRow({ task: t, today, me, onToggle, onOpen, onMyDay, onStart
             {/* Your task: Start it, then Finish it (finishing one from someone else asks for an output). */}
             {onStart && !done && !pending && (t.assigneeId ?? t.createdById) === me && (
               t.status === 'in_progress' ? (
-                <button type="button" className="press rounded-full border border-status-in/40 bg-status-in/10 px-2.5 py-1 text-xs font-semibold text-status-in hover:bg-status-in/20" onClick={() => onToggle(t)}>
+                <button type="button" className="press rounded-full border border-status-in/40 bg-status-in/10 px-2.5 py-1 text-xs font-semibold text-status-in hover:bg-status-in/20" onClick={() => onToggle(t)} aria-label={`Finish “${t.title}”`}>
                   Finish
                 </button>
               ) : (
-                <button type="button" className="press rounded-full border border-status-low/40 bg-status-low/10 px-2.5 py-1 text-xs font-semibold text-status-low hover:bg-status-low/20" onClick={() => onStart(t)}>
+                <button type="button" className="press rounded-full border border-status-low/40 bg-status-low/10 px-2.5 py-1 text-xs font-semibold text-status-low hover:bg-status-low/20" onClick={() => onStart(t)} aria-label={`Start “${t.title}”`}>
                   Start
                 </button>
               )

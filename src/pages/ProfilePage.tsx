@@ -17,6 +17,7 @@ import { formatNumber, initialsOf } from '../lib/format';
 import { BADGES, badgesFor, levelFor } from '../lib/taskProgress';
 import { profileService } from '../services';
 import { PhotoCropper } from '../components/profile/PhotoCropper';
+import { BusyLabel } from '../components/ui/BusyLabel';
 import { AVATAR_COLORS, openPicture, type PersonProfile, type ProfilePatch, type ProfileProgress } from '../services/profiles/profileService';
 
 const DEFAULT_COLOR = '#7a0b0b';
@@ -430,6 +431,7 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
                 className="group relative shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-uplift focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
                 onClick={choosePhoto}
                 disabled={picBusy}
+                aria-busy={picBusy || undefined}
                 aria-label={d.avatar ? 'Change your photo' : 'Add a photo'}
                 title={d.avatar ? 'Change your photo' : 'Add a photo'}
               >
@@ -576,8 +578,8 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
         <button type="button" className="btn-ghost min-h-10 px-3 text-sm" onClick={() => (setD(start), setMessage(null))} disabled={busy} tabIndex={dirty ? 0 : -1}>
           Undo
         </button>
-        <button type="submit" className="btn-primary min-h-10 px-4 text-sm" disabled={busy || !dirty} tabIndex={dirty ? 0 : -1}>
-          {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />} Save changes
+        <button type="submit" className="btn-primary min-h-10 px-4 text-sm" disabled={busy || !dirty} tabIndex={dirty ? 0 : -1} aria-busy={busy || undefined}>
+          <BusyLabel busy={busy} busyText="Saving…">Save changes</BusyLabel>
         </button>
       </div>
     </form>

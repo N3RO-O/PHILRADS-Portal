@@ -287,7 +287,7 @@ export function DocumentationPage() {
               </button>
             )}
             {canUpload && !selecting && (
-              <button type="button" className="btn-primary hidden min-h-11 px-4 md:inline-flex" onClick={() => setUploadOpen(true)} disabled={!ready || !online} title={!ready ? 'Google Drive isn’t connected yet' : undefined}>
+              <button type="button" className={`${ready ? 'btn-primary' : 'btn-ghost'} hidden min-h-11 px-4 md:inline-flex`} onClick={() => setUploadOpen(true)} disabled={!ready || !online} title={!ready ? 'Google Drive isn’t connected yet' : undefined}>
                 <Upload className="h-4 w-4" aria-hidden /> Upload
               </button>
             )}
@@ -378,7 +378,7 @@ export function DocumentationPage() {
             title={all.length ? 'Nothing matches' : 'No documentation yet'}
             action={
               !all.length && canUpload && ready ? (
-                <button type="button" className="btn-primary min-h-10 px-4 text-sm" onClick={() => setUploadOpen(true)}>
+                <button type="button" className="btn-ghost min-h-10 px-4 text-sm" onClick={() => setUploadOpen(true)}>
                   <Upload className="h-4 w-4" aria-hidden /> Upload the first photos
                 </button>
               ) : undefined
@@ -438,7 +438,7 @@ export function DocumentationPage() {
           >
             {shown.length && shown.every((d) => selected.has(d.id)) ? 'Select none' : `Select all ${shown.length}`}
           </button>
-          <button type="button" className="btn-primary min-h-10 bg-status-out px-4 text-xs text-white" onClick={() => void deleteSelected()} disabled={!selected.size || deleting}>
+          <button type="button" className="btn-primary min-h-10 bg-status-out px-4 text-xs text-white" onClick={() => void deleteSelected()} disabled={!selected.size || deleting} aria-busy={deleting || undefined}>
             {deleting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Trash2 className="h-4 w-4" aria-hidden />} Delete
           </button>
         </div>
@@ -548,7 +548,7 @@ function DriveCard({ status, isAdmin, sample, onConnect }: { status: DriveStatus
         </p>
         {isAdmin && status.connected && !broken && !changing && (
           <button type="button" className="btn-ghost min-h-9 px-3 text-xs" onClick={() => setChanging(true)}>
-            Change
+            Change folder
           </button>
         )}
       </div>
@@ -573,7 +573,7 @@ function DriveCard({ status, isAdmin, sample, onConnect }: { status: DriveStatus
             <input className="field pl-10 text-xs" value={folder} onChange={(e) => setFolder(e.target.value)} placeholder="https://drive.google.com/drive/folders/…" />
           </label>
           <div className="flex flex-wrap gap-2">
-            <button type="submit" className="btn-primary min-h-11 px-4" disabled={busy || !folder.trim()}>
+            <button type="submit" className="btn-primary min-h-11 px-4" disabled={busy || !folder.trim()} aria-busy={busy || undefined}>
               {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <HardDrive className="h-4 w-4" aria-hidden />} Connect Google Drive
             </button>
             {changing && (

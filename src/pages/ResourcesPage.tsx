@@ -360,7 +360,7 @@ export function ResourcesPage() {
                   Clear filters
                 </button>
               ) : canManage ? (
-                <button type="button" className="btn-primary min-h-10 px-4 text-sm" onClick={() => setSheet({ resource: null })}>
+                <button type="button" className="btn-ghost min-h-10 px-4 text-sm" onClick={() => setSheet({ resource: null })}>
                   <Plus className="h-4 w-4" aria-hidden /> Add the first resource
                 </button>
               ) : (
@@ -410,7 +410,7 @@ export function ResourcesPage() {
           >
             {ordered.length && ordered.every((r) => selected.has(r.id)) ? 'Select none' : `Select all ${ordered.length}`}
           </button>
-          <button type="button" className="btn-primary min-h-10 bg-status-out px-4 text-xs text-white" onClick={() => void removeSelected()} disabled={!selected.size || removing}>
+          <button type="button" className="btn-primary min-h-10 bg-status-out px-4 text-xs text-white" onClick={() => void removeSelected()} disabled={!selected.size || removing} aria-busy={removing || undefined}>
             {removing ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Trash2 className="h-4 w-4" aria-hidden />} Remove
           </button>
         </div>

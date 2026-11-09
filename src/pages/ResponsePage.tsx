@@ -151,7 +151,7 @@ function ImsEvents() {
                       Show all events
                     </button>
                   ) : canRecord && imsUrl ? (
-                    <button type="button" className="btn-primary min-h-10 px-4 text-sm" onClick={() => setCreating(true)}>
+                    <button type="button" className="btn-ghost min-h-10 px-4 text-sm" onClick={() => setCreating(true)}>
                       <Plus className="h-4 w-4" aria-hidden /> New event
                     </button>
                   ) : undefined
@@ -270,8 +270,8 @@ function EventCard({ event: e, canRecord, onAdd }: { event: ImsEvent; canRecord:
       )}
 
       {canRecord && !closed && (
-        <button type="button" className="btn-primary mt-auto self-stretch sm:self-end" onClick={onAdd}>
-          <Plus className="h-4 w-4" aria-hidden /> Add served
+        <button type="button" className="btn-ghost mt-auto self-stretch sm:self-end" onClick={onAdd}>
+          <Plus className="h-4 w-4" aria-hidden /> Add people served
         </button>
       )}
     </li>

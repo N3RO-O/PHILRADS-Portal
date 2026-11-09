@@ -112,6 +112,7 @@ export function PersonTasks({ person, status, me, onClose, onChanged }: { person
                 type="button"
                 className="press group/n flex w-max items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:bg-surface"
                 disabled={busy === t.id}
+                aria-busy={busy === t.id || undefined}
                 onClick={() => void act(t.id, 'nudged', () => staffBoardService.nudge(t.id))}
                 title={t.nudgedAt ? `Last nudged ${formatShortDate(t.nudgedAt.slice(0, 10))}` : 'Send a gentle reminder'}
               >
@@ -128,7 +129,7 @@ export function PersonTasks({ person, status, me, onClose, onChanged }: { person
           {waitingForMe &&
             (declining === t.id ? (
               <>
-                <input className="field py-2 text-sm" placeholder="Why can’t you take it? (short)" value={reason} maxLength={280} onChange={(e) => setReason(e.target.value)} autoFocus />
+                <input className="field py-2 text-sm" aria-label="Why you can’t take it" placeholder="Why can’t you take it? (short)" value={reason} maxLength={280} onChange={(e) => setReason(e.target.value)} autoFocus />
                 <div className="flex gap-2">
                   <button type="button" className="btn-ghost min-h-9 flex-1 text-xs" onClick={() => setDeclining(null)}>
                     Back
@@ -137,16 +138,23 @@ export function PersonTasks({ person, status, me, onClose, onChanged }: { person
                     type="button"
                     className="btn min-h-9 flex-1 bg-status-out/20 text-xs text-status-out"
                     disabled={busy === t.id || reason.trim().length < 3}
+                    aria-busy={busy === t.id || undefined}
+                    aria-describedby={reason.trim().length < 3 ? `decline-why-${t.id}` : undefined}
                     onClick={() => void act(t.id, 'declined', () => staffBoardService.respond(t.id, false, reason.trim())).then(() => setDeclining(null))}
                   >
-                    Decline
+                    Decline task
                   </button>
                 </div>
+                {reason.trim().length < 3 && (
+                  <span id={`decline-why-${t.id}`} className="text-xs text-muted">
+                    Write why you can’t take it first.
+                  </span>
+                )}
               </>
             ) : (
               <div className="flex flex-wrap gap-2">
-                <button type="button" className="btn-primary press min-h-9 grow basis-28 whitespace-nowrap px-3 text-xs" disabled={busy === t.id} onClick={() => void act(t.id, 'accepted', () => staffBoardService.respond(t.id, true))}>
-                  {busy === t.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> : <Check className="h-3.5 w-3.5" aria-hidden />} Accept
+                <button type="button" className="btn-ghost press min-h-9 grow basis-28 whitespace-nowrap px-3 text-xs text-status-in" disabled={busy === t.id} aria-busy={busy === t.id || undefined} onClick={() => void act(t.id, 'accepted', () => staffBoardService.respond(t.id, true))}>
+                  {busy === t.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> : <Check className="h-3.5 w-3.5" aria-hidden />} Accept task
                 </button>
                 <button type="button" className="btn-ghost press min-h-9 grow basis-28 whitespace-nowrap px-3 text-xs" onClick={() => (setDeclining(t.id), setReason(''))}>
                   <TriangleAlert className="h-3.5 w-3.5" aria-hidden /> Can’t take it
@@ -184,8 +192,8 @@ export function PersonTasks({ person, status, me, onClose, onChanged }: { person
               <Plus className="h-4 w-4" aria-hidden /> Give a task
             </Link>
           )}
-          <Link to={mine ? '/profile' : `/profile/${person.id}`} className={`${!mine && canGive ? 'btn-ghost' : 'btn-primary'} h-12 px-3`} onClick={onClose}>
-            {mine ? 'My profile' : 'Profile'}
+          <Link to={mine ? '/profile' : `/profile/${person.id}`} className="btn-ghost h-12 px-3" onClick={onClose}>
+            {mine ? 'Open my profile' : 'Open profile'}
           </Link>
           <Link to={mine ? '/tasks' : `/tasks?view=team`} className="btn-ghost h-12 px-3" onClick={onClose}>
             {mine ? 'My tasks' : 'Open in Tasks'}

@@ -10,6 +10,7 @@ import { formatDateTime, formatDayHeading, formatNumber, formatTime, manilaDayKe
 import { auditService } from '../services';
 import { FLAG_ACTIONS, LOG_CATEGORIES, type LogCategory, type LogCounts, type LogEntry, type LogPeriod, type LogQuery } from '../services/audit/auditService';
 import { PersonAvatar } from '../components/ui/PersonAvatar';
+import { BusyLabel } from '../components/ui/BusyLabel';
 
 const PERIODS: [LogPeriod, string][] = [
   ['today', 'Today'],
@@ -206,7 +207,7 @@ export function LogsPage() {
               </option>
             ))}
           </select>
-          <button type="button" className="btn-ghost min-h-11 whitespace-nowrap px-4" onClick={() => void exportCsv()} disabled={exporting || !entries?.length}>
+          <button type="button" className="btn-ghost min-h-11 whitespace-nowrap px-4" onClick={() => void exportCsv()} disabled={exporting || !entries?.length} aria-busy={exporting || undefined}>
             {exporting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Download className="h-4 w-4" aria-hidden />} Export CSV
           </button>
         </div>
@@ -276,8 +277,8 @@ export function LogsPage() {
               </section>
             ))}
             {more && (
-              <button type="button" className="btn-ghost min-h-11 self-center px-5" onClick={() => void loadMore()} disabled={loadingMore}>
-                {loadingMore && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />} Show older entries
+              <button type="button" className="btn-ghost min-h-11 self-center px-5" onClick={() => void loadMore()} disabled={loadingMore} aria-busy={loadingMore || undefined}>
+                <BusyLabel busy={loadingMore} busyText="Loading older entries…">Show older entries</BusyLabel>
               </button>
             )}
           </div>

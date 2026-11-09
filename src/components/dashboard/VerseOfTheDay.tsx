@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { BookOpen, BookOpenText, Check, Copy, HandHeart, Loader2, MessageSquareQuote, Pencil, Sparkles, Trash2 } from 'lucide-react';
+import { BusyLabel } from '../ui/BusyLabel';
 import { devotionalFor } from '../../config/devotionals';
 import { verseOfTheDay } from '../../config/verse';
 import { formatTime } from '../../lib/format';
@@ -175,9 +176,8 @@ function Reflections({ verseRef }: { verseRef: string }) {
                   Cancel
                 </button>
               )}
-              <button type="button" className="btn-primary min-h-9 px-4 text-sm" onClick={() => void share()} disabled={busy || draft.trim().length < 3}>
-                {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
-                {editing ? 'Save' : 'Share'}
+              <button type="button" className="btn-primary min-h-9 px-4 text-sm" onClick={() => void share()} disabled={busy || draft.trim().length < 3} aria-busy={busy || undefined}>
+                <BusyLabel busy={busy} busyText={editing ? 'Saving…' : 'Sharing…'}>{editing ? 'Save reflection' : 'Share reflection'}</BusyLabel>
               </button>
             </span>
           </div>

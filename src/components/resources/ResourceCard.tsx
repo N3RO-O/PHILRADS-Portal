@@ -180,7 +180,7 @@ function MoreMenu({ title, openUrl, openLabel, downloadUrl, onCopy }: { title: s
       window.removeEventListener('resize', close);
     };
   }, [at, close]);
-  const item = 'flex min-h-10 w-full items-center gap-2.5 rounded-lg px-3 text-left text-sm text-ink hover:bg-ink/[0.06] focus-visible:bg-ink/[0.06] focus-visible:outline-none';
+  const item = 'flex min-h-10 w-full items-center gap-2.5 rounded-lg px-3 text-left text-sm text-ink hover:bg-ink/[0.06] focus-visible:bg-ink/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-uplift';
   const moveFocus = (e: KeyboardEvent) => {
     if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
     e.preventDefault();

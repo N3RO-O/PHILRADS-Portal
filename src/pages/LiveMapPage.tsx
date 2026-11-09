@@ -439,7 +439,7 @@ export function LiveMapPage() {
               <MapButton label="Show all places" onClick={showAll}>
                 <Maximize2 className="h-[1.125rem] w-[1.125rem]" aria-hidden />
               </MapButton>
-              <MapButton label="Show my location" onClick={() => void locateMe()}>
+              <MapButton label="Show my location" busy={locating} onClick={() => void locateMe()}>
                 {locating ? <Loader2 className="h-[1.125rem] w-[1.125rem] animate-spin" aria-hidden /> : <LocateFixed className="h-[1.125rem] w-[1.125rem]" aria-hidden />}
               </MapButton>
               <MapButton label={weather.mode ? 'Hide weather' : 'Show weather'} active={Boolean(weather.mode)} onClick={() => weather.setMode(weather.mode ? null : 'wind')}>
@@ -461,7 +461,7 @@ export function LiveMapPage() {
               <p className="text-sm font-semibold">No places pinned yet</p>
               <p className="text-xs text-muted">Pin warehouses, hubs and response sites so everyone can find them and see their stock.</p>
               {canManage && (
-                <button type="button" className="btn-primary min-h-10 px-4 text-sm" onClick={panelProps.onAdd}>
+                <button type="button" className="btn-ghost min-h-10 px-4 text-sm" onClick={panelProps.onAdd}>
                   <Plus className="h-4 w-4" aria-hidden /> Add the first place
                 </button>
               )}
@@ -507,7 +507,7 @@ export function LiveMapPage() {
               <span className="h-2 w-2 animate-pulse rounded-full bg-status-in" aria-hidden />
               <span className="max-w-[10rem] truncate font-semibold">Following {live.find((p) => p.profileId === following)?.name.split(' ')[0] ?? ''}</span>
               <button type="button" className="rounded-full border border-line px-2.5 py-1 font-semibold hover:bg-surface" onClick={() => setFollowing(null)}>
-                Stop
+                Stop following
               </button>
             </div>
           )}
@@ -755,13 +755,14 @@ function ShareButton({ live, onClick, disabled }: { live: boolean; onClick: () =
   );
 }
 
-function MapButton({ label, onClick, active = false, children }: { label: string; onClick: () => void; active?: boolean; children: ReactNode }) {
+function MapButton({ label, onClick, active = false, busy = false, children }: { label: string; onClick: () => void; active?: boolean; busy?: boolean; children: ReactNode }) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-label={label}
       aria-pressed={active || undefined}
+      aria-busy={busy || undefined}
       title={label}
       className={`grid h-11 w-11 place-items-center rounded-xl border bg-surface-raised shadow-xl shadow-black/50 transition hover:bg-surface-raised ${active ? 'border-burgundy-400 bg-burgundy-500 text-cloud' : 'border-line text-ink'}`}
     >
@@ -947,7 +948,7 @@ function PlacesPanel({ search, setSearch, layers, toggleLayer, places, shownPlac
           <div className="flex flex-col items-start gap-2 rounded-xl bg-ink/[0.02] px-3 py-3 text-xs text-muted">
             {places.length === 0 ? 'No places pinned yet.' : 'No places match. Try another word, or turn more layers on.'}
             {places.length === 0 && canManage && (
-              <button type="button" className="btn-primary min-h-9 px-3 text-xs" onClick={onAdd}>
+              <button type="button" className="btn-ghost min-h-9 px-3 text-xs" onClick={onAdd}>
                 <Plus className="h-3.5 w-3.5" aria-hidden /> Add the first place
               </button>
             )}

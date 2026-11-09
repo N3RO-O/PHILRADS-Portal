@@ -110,7 +110,7 @@ export function ActivePanel({ onClose, variant }: { onClose: () => void; variant
       </div>
 
       <div className="px-3 pb-1 pt-3">
-        <label className="flex h-9 items-center gap-2 rounded-lg bg-surface-sunken px-2.5 text-muted focus-within:ring-1 focus-within:ring-uplift">
+        <label className="flex h-9 items-center gap-2 rounded-lg bg-surface-sunken px-2.5 text-muted focus-within:ring-2 focus-within:ring-uplift">
           <Search className="h-3.5 w-3.5 shrink-0" aria-hidden />
           <span className="sr-only">Find someone</span>
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find someone" className="min-w-0 flex-1 bg-transparent text-sm text-ink placeholder:text-muted focus:outline-none" />

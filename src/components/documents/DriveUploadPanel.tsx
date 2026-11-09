@@ -120,11 +120,11 @@ export function DriveUploadPanel() {
           ))}
         </ul>
       )}
-      <button type="button" className="btn-primary self-start" disabled={busy || valid.length === 0 || Boolean(blockedReason)} onClick={() => void upload()}>
+      <button type="button" className="btn-primary self-start" disabled={busy || valid.length === 0 || Boolean(blockedReason)} aria-busy={busy || undefined} aria-describedby={blockedReason ? `${inputId}-why` : undefined} onClick={() => void upload()}>
         {busy ? 'Uploading…' : `Upload${valid.length ? ` ${valid.length} file${valid.length > 1 ? 's' : ''}` : ''}`}
       </button>
       {(blockedReason || message) && (
-        <p role="status" className="rounded-xl border border-line bg-surface-sunken px-4 py-3 text-sm text-ink">
+        <p id={`${inputId}-why`} role="status" className="rounded-xl border border-line bg-surface-sunken px-4 py-3 text-sm text-ink">
           {message ?? blockedReason}
         </p>
       )}

@@ -159,6 +159,7 @@ export function LiveSharingBubble() {
               type="button"
               className="btn min-h-10 flex-1 bg-status-out px-3 text-sm text-white hover:brightness-110"
               disabled={stopping}
+              aria-busy={stopping || undefined}
               onClick={async () => {
                 setStopping(true);
                 await live.stop();
@@ -166,7 +167,7 @@ export function LiveSharingBubble() {
                 setOpen(false);
               }}
             >
-              {stopping ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Square className="h-3.5 w-3.5 fill-current" aria-hidden />} Stop
+              {stopping ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Square className="h-3.5 w-3.5 fill-current" aria-hidden />} Stop sharing
             </button>
           </div>
         </div>

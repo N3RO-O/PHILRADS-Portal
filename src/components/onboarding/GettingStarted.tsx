@@ -165,7 +165,7 @@ function CoachMark({ target, text, below, onDone }: { target: RefObject<HTMLElem
       />
       <p className="text-ink">{text}</p>
       <button type="button" className="btn-primary mt-3 min-h-9 px-4 text-xs" onClick={onDone} data-autofocus>
-        Got it
+        Close the tip
       </button>
     </div>
   );

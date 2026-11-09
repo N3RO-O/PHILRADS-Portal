@@ -215,9 +215,9 @@ export function FolderBrowser({ resource, onFallback }: { resource: Resource; on
             {allOn ? 'Select none' : `Select all ${files.length}`}
           </button>
         )}
-        <button type="button" className="btn-primary min-h-11 px-4 text-sm" disabled={!selected.size || downloading || sample} onClick={() => void download()} title={sample ? 'Sample files can’t be downloaded' : undefined}>
+        <button type="button" className="btn-primary min-h-11 px-4 text-sm" disabled={!selected.size || downloading || sample} aria-busy={downloading || undefined} onClick={() => void download()} title={sample ? 'Sample files can’t be downloaded' : undefined}>
           {downloading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Download className="h-4 w-4" aria-hidden />}
-          Download{selected.size ? ` (${selected.size})` : ''}
+          {sample ? 'Samples can’t download' : selected.size ? `Download (${selected.size})` : 'Pick files to download'}
         </button>
       </div>
 

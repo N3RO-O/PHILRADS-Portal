@@ -244,10 +244,10 @@ export function PhotoSlot({ k, h = '60mm' }: { k: string; h?: string }) {
         }}
       />
       <span className="ff-photo-actions">
-        <button type="button" onClick={() => file.current?.click()}>{v ? 'Change' : 'Choose'}</button>
+        <button type="button" onClick={() => file.current?.click()}>{v ? 'Change photo' : 'Choose photo'}</button>
         {v && (
           <button type="button" onClick={() => set(k, '')}>
-            Remove
+            Remove photo
           </button>
         )}
       </span>

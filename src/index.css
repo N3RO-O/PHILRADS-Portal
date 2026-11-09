@@ -405,6 +405,11 @@
   font-family: inherit;
   outline: none;
 }
+/* The map pans with the arrow keys, so show when it has the keyboard (Buttons rule 5). */
+.leaflet-container:focus-visible {
+  outline: 2px solid #ec952a;
+  outline-offset: -2px;
+}
 .leaflet-container a {
   color: #ec952a;
 }

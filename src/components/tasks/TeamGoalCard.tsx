@@ -69,7 +69,7 @@ export function TeamGoalCard({ team, canManage, people, me, onSetGoal, onKudos }
           </label>
           <input id={`${uid}-goal`} type="number" min={1} max={100000} inputMode="numeric" className="field" value={goal} onChange={(e) => setGoal(e.target.value)} />
           <button type="submit" className="btn-primary shrink-0 px-4">
-            Save
+            Save goal
           </button>
           <button type="button" className="btn-ghost shrink-0 px-3" onClick={() => setEditing(false)}>
             Cancel
@@ -142,7 +142,12 @@ function KudosDialog({ open, people, onClose, onSend }: { open: boolean; people:
           </div>
           <textarea id={`${uid}-msg`} className="field min-h-24" rows={3} maxLength={280} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Thank you for…" />
         </div>
-        <button type="submit" className="btn-primary h-12" disabled={!to || !message.trim() || busy}>
+        {(!to || !message.trim()) && (
+          <p id={`${uid}-why`} className="-mb-2 text-xs text-muted">
+            {!to ? 'Choose who to thank first.' : 'Write a short thank-you first.'}
+          </p>
+        )}
+        <button type="submit" className="btn-primary h-12" disabled={!to || !message.trim() || busy} aria-busy={busy || undefined} aria-describedby={!to || !message.trim() ? `${uid}-why` : undefined}>
           {busy ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <HandHeart className="h-5 w-5" aria-hidden />} Send kudos
         </button>
       </form>

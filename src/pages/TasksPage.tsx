@@ -604,7 +604,7 @@ export function TasksPage() {
                 ))}
               </div>
               {online && waiting > 0 && (
-                <button type="button" className="btn-ghost min-h-9 shrink-0 px-3 text-xs" onClick={() => void syncNow()} disabled={syncing}>
+                <button type="button" className="btn-ghost min-h-9 shrink-0 px-3 text-xs" onClick={() => void syncNow()} disabled={syncing} aria-busy={syncing || undefined}>
                   {syncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> : <RefreshCw className="h-3.5 w-3.5" aria-hidden />} Sync now
                 </button>
               )}
@@ -630,7 +630,7 @@ export function TasksPage() {
                     <span className={`h-2 w-2 shrink-0 rounded-full bg-current ${LIST_STYLE[t.list].text}`} aria-hidden />
                     <span className="min-w-0 flex-1 truncate text-sm">{t.title}</span>
                     <span className={`shrink-0 text-xs ${t.dueDate && t.dueDate < today ? 'text-rose' : 'text-muted'}`}>{t.dueDate && t.dueDate < today ? 'Overdue' : t.dueDate === today ? 'Today' : 'Soon'}</span>
-                    <button type="button" className="btn-ghost min-h-9 shrink-0 px-2.5 text-xs" onClick={() => void toggleMyDay(t)}>
+                    <button type="button" className="btn-ghost min-h-9 shrink-0 px-2.5 text-xs" onClick={() => void toggleMyDay(t)} aria-label={`Add “${t.title}” to today`}>
                       <Sun className="h-3.5 w-3.5" aria-hidden /> Add
                     </button>
                   </li>
@@ -697,7 +697,7 @@ export function TasksPage() {
                 empty={view === 'assigned' ? 'No tasks from others right now. You can still plan your own.' : view === 'delegated' ? 'You haven’t given anyone a task.' : 'No open tasks here.'}
                 emptyAction={
                   view === 'delegated' ? (
-                    <button type="button" className="btn-primary min-h-10 px-4 text-sm" onClick={() => setSheet({ task: null, initial: null })}>
+                    <button type="button" className="btn-ghost min-h-10 px-4 text-sm" onClick={() => setSheet({ task: null, initial: null })}>
                       <Send className="h-4 w-4" aria-hidden /> Give someone a task
                     </button>
                   ) : undefined
@@ -871,7 +871,7 @@ function CompletedList({ tasks, awardOf, rowProps }: { tasks: Task[]; awardOf: M
       <Empty
         icon={<CheckCheck className="h-8 w-8 text-muted" aria-hidden />}
         action={
-          <Link to="/tasks?view=myday" className="btn-primary min-h-10 px-4 text-sm">
+          <Link to="/tasks?view=myday" className="btn-ghost min-h-10 px-4 text-sm">
             <Sun className="h-4 w-4" aria-hidden /> Open today’s tasks
           </Link>
         }
@@ -941,7 +941,7 @@ function AddTaskButton({ label = 'Add a task' }: { label?: string }) {
   return (
     <button
       type="button"
-      className="btn-primary min-h-10 px-4 text-sm"
+      className="btn-ghost min-h-10 px-4 text-sm"
       onClick={() => {
         const input = document.querySelector<HTMLInputElement>('[data-quick-add]');
         input?.scrollIntoView({ behavior: 'smooth', block: 'center' });

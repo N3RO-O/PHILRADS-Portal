@@ -77,9 +77,9 @@ export function QuickAdd({ today, defaults, onAdd, onMore, disabled }: Props) {
           <SlidersHorizontal className="h-4 w-4" aria-hidden />
           <span className="sr-only sm:not-sr-only">Details</span>
         </button>
-        <button type="submit" className="btn-primary shrink-0 px-4" disabled={disabled || busy || !parsed.title}>
+        <button type="submit" className="btn-primary shrink-0 px-4" disabled={disabled || busy || !parsed.title} aria-busy={busy || undefined}>
           {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Plus className="h-4 w-4" aria-hidden />}
-          <span className="sr-only sm:not-sr-only">Add</span>
+          <span className="sr-only sm:not-sr-only">Add task</span>
         </button>
       </div>
       {typed && (

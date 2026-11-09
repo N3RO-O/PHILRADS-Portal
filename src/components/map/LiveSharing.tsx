@@ -1,11 +1,12 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Loader2, Radio, ShieldCheck } from 'lucide-react';
+import { Radio, ShieldCheck } from 'lucide-react';
 import { currentPosition, distanceM, GOOD_M, ROUGH_M } from '../../lib/geo';
 import { formatTime, manilaDayKey } from '../../lib/format';
 import { mapService } from '../../services';
 import type { LiveFix } from '../../services/map/types';
 import { useAuth } from '../auth/AuthProvider';
 import { Switch } from '../ui/Switch';
+import { BusyLabel } from '../ui/BusyLabel';
 
 /** How long to share: a number of hours, or until the end of today (Manila time). */
 export type ShareFor = 1 | 4 | 'eod';
@@ -343,12 +344,14 @@ export function LiveShareCard() {
             type="button"
             className="btn-primary min-h-11"
             disabled={live.status === 'starting'}
+            aria-busy={live.status === 'starting' || undefined}
             onClick={async () => {
               if (await live.start(choice)) setChoosing(false);
             }}
           >
-            {live.status === 'starting' ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Radio className="h-4 w-4" aria-hidden />}
-            {live.status === 'starting' ? 'Finding you…' : 'Start sharing'}
+            <BusyLabel busy={live.status === 'starting'} busyText="Finding you…">
+              <Radio className="h-4 w-4" aria-hidden /> Start sharing my location
+            </BusyLabel>
           </button>
           <p className="flex items-start gap-2 text-xs text-muted">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />

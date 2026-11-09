@@ -1,5 +1,6 @@
 import { useEffect, useId, useState, type FormEvent } from 'react';
 import { Crosshair, Loader2, LocateFixed, MapPin, RefreshCw, ShieldCheck, Trash2 } from 'lucide-react';
+import { BusyLabel } from '../ui/BusyLabel';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { currentPosition, distanceM, formatDistance, formatLatLng, type GeoResult } from '../../lib/geo';
 import type { InventorySnapshot } from '../../services/inventory/types';
@@ -70,6 +71,7 @@ export function PlaceForm({ draft: d, snapshot, onChange, onPick, onSave, onRemo
               type="button"
               className="btn-ghost px-4 text-status-out"
               disabled={Boolean(busy) || !online}
+              aria-busy={busy === 'remove' || undefined}
               onClick={async () => {
                 if (!window.confirm(`Take “${d.name}” off the map? Its history is kept.`)) return;
                 setBusy('remove');
@@ -82,12 +84,11 @@ export function PlaceForm({ draft: d, snapshot, onChange, onPick, onSave, onRemo
               }}
             >
               {busy === 'remove' ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Trash2 className="h-4 w-4" aria-hidden />}
-              <span className="sr-only sm:not-sr-only">Remove</span>
+              <span className="sr-only sm:not-sr-only">Remove place</span>
             </button>
           )}
-          <button type="submit" form={`${uid}-form`} className="btn-primary h-12 flex-1 text-base" disabled={Boolean(busy) || !online}>
-            {busy === 'save' && <Loader2 className="h-5 w-5 animate-spin" aria-hidden />}
-            {!online ? 'Connect to save' : busy === 'save' ? 'Saving…' : d.id ? 'Save changes' : 'Add to the map'}
+          <button type="submit" form={`${uid}-form`} className="btn-primary h-12 flex-1 text-base" disabled={Boolean(busy) || !online} aria-busy={busy === 'save' || undefined}>
+            <BusyLabel busy={busy === 'save'} busyText="Saving…">{!online ? 'Connect to save' : d.id ? 'Save changes' : 'Add to the map'}</BusyLabel>
           </button>
         </div>
       }
@@ -142,8 +143,8 @@ export function PlaceForm({ draft: d, snapshot, onChange, onPick, onSave, onRemo
             <button type="button" className="btn-ghost min-h-11 whitespace-nowrap px-3 text-sm" onClick={onPick}>
               <Crosshair className="h-4 w-4" aria-hidden /> Pick on map
             </button>
-            <button type="button" className="btn-ghost min-h-11 whitespace-nowrap px-3 text-sm" onClick={() => void useGps()} disabled={busy === 'gps'}>
-              {busy === 'gps' ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <LocateFixed className="h-4 w-4" aria-hidden />} I’m here now
+            <button type="button" className="btn-ghost min-h-11 whitespace-nowrap px-3 text-sm" onClick={() => void useGps()} disabled={busy === 'gps'} aria-busy={busy === 'gps' || undefined}>
+              {busy === 'gps' ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <LocateFixed className="h-4 w-4" aria-hidden />} Use my location
             </button>
           </div>
         </div>
@@ -241,6 +242,8 @@ export function CheckInSheet({ places, onClose, onShare }: CheckInProps) {
           type="button"
           className="btn-primary h-12 w-full text-base"
           disabled={!pos?.ok || busy || !online}
+          aria-busy={busy || undefined}
+          aria-describedby={!pos?.ok ? `${uid}-where` : undefined}
           onClick={async () => {
             if (!pos?.ok) return;
             setBusy(true);
@@ -253,13 +256,12 @@ export function CheckInSheet({ places, onClose, onShare }: CheckInProps) {
             }
           }}
         >
-          {busy && <Loader2 className="h-5 w-5 animate-spin" aria-hidden />}
-          {!online ? 'Connect to check in' : busy ? 'Sharing…' : 'Share where I am'}
+          <BusyLabel busy={busy} busyText="Sharing…">{!online ? 'Connect to check in' : 'Share where I am'}</BusyLabel>
         </button>
       }
     >
       <div className="flex flex-col gap-5">
-        <div className="flex items-center gap-3 py-2" aria-live="polite">
+        <div id={`${uid}-where`} className="flex items-center gap-3 py-2" aria-live="polite">
           {!pos ? (
             <>
               <Loader2 className="h-5 w-5 shrink-0 animate-spin" aria-hidden />

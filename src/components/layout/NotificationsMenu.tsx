@@ -214,10 +214,10 @@ export function NotificationsMenu() {
                     <div className="flex items-center gap-2 rounded-xl bg-status-out/10 px-3 py-2">
                       <span className="flex-1 text-xs text-ink">Delete all notifications?</span>
                       <button type="button" className="rounded-lg px-2 py-1 text-xs font-semibold text-muted hover:text-ink" onClick={() => setConfirmClear(false)}>
-                        No
+                        Keep them
                       </button>
                       <button type="button" className="rounded-lg bg-status-out/80 px-2.5 py-1 text-xs font-semibold text-white" onClick={() => (void remove(list.map((n) => n.id)), setConfirmClear(false), setMore(false))}>
-                        Delete
+                        Delete all
                       </button>
                     </div>
                   ) : (

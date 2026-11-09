@@ -85,8 +85,8 @@ function ProfileLoadProblem({ message, onSignOut }: { message: string; onSignOut
         {state === 'idle' ? `${message} Reload the portal; if it keeps happening, close every PHILRADS tab (or the app) and open it again.` : 'Getting the latest version. This takes a moment.'}
       </p>
       <div className="flex flex-wrap justify-center gap-2">
-        <button type="button" className="btn-primary" onClick={reload} disabled={state !== 'idle'}>
-          <RefreshCw className={`h-4 w-4 ${state !== 'idle' ? 'animate-spin' : ''}`} aria-hidden /> Reload
+        <button type="button" className="btn-primary" onClick={reload} disabled={state !== 'idle'} aria-busy={state !== 'idle' || undefined}>
+          <RefreshCw className={`h-4 w-4 ${state !== 'idle' ? 'animate-spin' : ''}`} aria-hidden /> Reload the portal
         </button>
         <button type="button" className="btn-ghost" onClick={onSignOut}>
           Sign out

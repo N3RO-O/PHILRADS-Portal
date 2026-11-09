@@ -224,7 +224,7 @@ export function WhatsNew() {
               </>
             ) : (
               <button type="button" className="btn-primary w-full" onClick={whatsNew.close} data-autofocus>
-                Got it
+                Back to the portal
               </button>
             )}
           </div>

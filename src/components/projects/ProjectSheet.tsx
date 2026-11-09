@@ -1,5 +1,5 @@
 import { useEffect, useId, useState, type ReactNode } from 'react';
-import { Loader2 } from 'lucide-react';
+import { BusyLabel } from '../ui/BusyLabel';
 import { PROJECT_STATUSES, PROJECT_TYPES, type Project, type ProjectDraft, type ProjectStatus } from '../../services/projects/projectsService';
 import { Sheet } from '../ui/Sheet';
 
@@ -83,9 +83,8 @@ export function ProjectSheet({ open, project, people, canSetLead, canCost, onClo
       dirty={dirty}
       title={project ? 'Edit project' : 'New project'}
       footer={
-        <button type="button" className="btn-primary h-12 w-full text-base" onClick={() => void submit()} disabled={busy}>
-          {busy && <Loader2 className="h-5 w-5 animate-spin" aria-hidden />}
-          {project ? 'Save changes' : 'Start the project'}
+        <button type="button" className="btn-primary h-12 w-full text-base" onClick={() => void submit()} disabled={busy} aria-busy={busy || undefined}>
+          <BusyLabel busy={busy} busyText="Saving…">{project ? 'Save changes' : 'Start the project'}</BusyLabel>
         </button>
       }
     >

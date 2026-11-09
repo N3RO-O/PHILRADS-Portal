@@ -136,7 +136,7 @@ export function BreakNudge() {
           </p>
         </div>
         <button type="button" className="btn-primary relative min-h-12 px-8 text-base" onClick={back} autoFocus>
-          I’m back
+          End the break
         </button>
       </div>
     );
