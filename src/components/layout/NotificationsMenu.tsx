@@ -14,6 +14,7 @@ import { dashboardService } from '../../services';
 import type { NotificationItem } from '../../types';
 import { LoadError, Skeleton } from '../ui/Card';
 import { SampleBadge } from '../ui/SampleBadge';
+import { CountBadge, capCount } from '../ui/CountBadge';
 import { useAuth } from '../auth/AuthProvider';
 import { useOnboarding } from '../onboarding/OnboardingProvider';
 
@@ -120,6 +121,8 @@ export function NotificationsMenu() {
     }
   };
   const unread = list.filter((n) => !n.read);
+  // The bell counts only the notes that wait on a decision; the rest just make it show a yellow dot.
+  const decisions = unread.filter(needsDecision);
 
   const markRead = async (ids: string[]) => {
     const releases = ids.filter((id) => id.startsWith(NEWS)).map((id) => id.slice(NEWS.length));
@@ -152,20 +155,19 @@ export function NotificationsMenu() {
         ref={button}
         type="button"
         className="icon-btn relative"
-        aria-label={unread.length ? `Notifications, ${unread.length} unread` : 'Notifications'}
+        aria-label={
+          unread.length
+            ? `Notifications, ${decisions.length ? `${decisions.length} need${decisions.length === 1 ? 's' : ''} you, ` : ''}${unread.length} unread`
+            : 'Notifications'
+        }
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((o) => !o)}
       >
-        <Bell className="h-[1.125rem] w-[1.125rem]" aria-hidden />
-        {unread.length > 0 && (
-          <span
-            className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-rose px-1 text-[0.625rem] font-bold leading-none text-white ring-2 ring-page"
-            aria-hidden
-          >
-            {unread.length > 9 ? '9+' : unread.length}
-          </span>
-        )}
+        <span className="relative">
+          <Bell className="h-[1.125rem] w-[1.125rem]" aria-hidden />
+          {decisions.length > 0 ? <CountBadge key="act" tone="act" count={decisions.length} /> : unread.length > 0 && <CountBadge key="new" tone="new" />}
+        </span>
       </button>
       {open && (
         // Phones: pinned to the screen with even margins (the bell isn't at the edge, so a right-aligned panel spills off the left).
@@ -240,7 +242,7 @@ export function NotificationsMenu() {
                 onClick={() => setTab(t)}
                 className={`press rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${tab === t ? 'text-ink-soft' : 'bg-ink/[0.07] text-ink-soft hover:bg-ink/[0.1]'}`}
               >
-                {t === 'all' ? 'All' : `Unread${unread.length ? ` (${unread.length})` : ''}`}
+                {t === 'all' ? 'All' : `Unread${unread.length ? ` (${capCount(unread.length)})` : ''}`}
               </button>
             ))}
           </div>
@@ -266,6 +268,12 @@ const ago = (iso: string) => {
   if (ms < 7 * 86_400_000) return new Date(iso).toLocaleDateString('en-PH', { weekday: 'short', timeZone: 'Asia/Manila' });
   return new Date(iso).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', timeZone: 'Asia/Manila' });
 };
+/**
+ * Notes that wait on you to decide or act: a task offered to you, work sent back or nudged, a
+ * decline to handle, an output to check, an IMS release to approve. Red in the bell and on the row.
+ */
+const needsDecision = (n: Note) => !n.portal && /waiting for approval|asks you to take on|sent back|nudged you|declined|sent their output/i.test(n.title);
+
 /** A picture for each kind of note, from what it says. */
 const kindOf = (n: Note): { icon: LucideIcon; tint: string } => {
   const t = n.title.toLowerCase();
@@ -319,9 +327,10 @@ function NoteGroups({ list, unreadTab, onOpen, onRead, onDelete, onMyDay }: { li
                         {ago(n.createdAt)}
                       </span>
                     </span>
+                    {/* One signal per row: red if it waits on you, yellow if it is only new, nothing once read. */}
                     {!n.read && (
-                      <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-ink" title="Unread">
-                        <span className="sr-only">Unread</span>
+                      <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${needsDecision(n) ? 'bg-status-out' : 'bg-uplift'}`} title={needsDecision(n) ? 'Needs you' : 'New'}>
+                        <span className="sr-only">{needsDecision(n) ? 'Needs you' : 'New'}</span>
                       </span>
                     )}
                   </button>

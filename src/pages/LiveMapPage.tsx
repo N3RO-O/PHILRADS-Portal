@@ -25,6 +25,8 @@ import { groupSites, PROGRAMS, programMeta, withoutFunding, type ActivitySite } 
 import { useInventoryState } from '../services/inventory/inventoryStore';
 import type { InventorySnapshot } from '../services/inventory/types';
 import { kindMeta, PLACE_KINDS, type CheckIn, type LivePosition, type MapPlace, type PlaceDraft, type PlaceKind } from '../services/map/types';
+import { TopLayer } from '../components/ui/TopLayer';
+import { DoneCheck } from '../components/ui/DoneCheck';
 
 type Layer = PlaceKind | 'team' | 'activities';
 const ALL_LAYERS: Layer[] = [...PLACE_KINDS.map((k) => k.key), 'team', 'activities'];
@@ -710,19 +712,20 @@ export function LiveMapPage() {
         />
       )}
 
-      <div aria-live="polite" className="pointer-events-none fixed inset-x-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-[1100] flex justify-center md:bottom-6 md:left-auto md:right-6 md:justify-end">
+      <TopLayer raiseKey={toast} className="pointer-events-none fixed inset-x-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-[1100] flex justify-center md:bottom-6 md:left-auto md:right-6 md:justify-end">
         {toast && (
           <p
             role={toast.error ? 'alert' : undefined}
             className={`pointer-events-auto flex max-w-md animate-pop-in items-start gap-3 rounded-2xl border bg-surface-raised px-4 py-3 text-sm shadow-2xl shadow-black/50 ${toast.error ? 'border-status-out/50' : 'border-status-in/40'}`}
           >
+            {!toast.error && <DoneCheck key={toast.text} className="mt-px h-5 w-5 shrink-0" />}
             <span className="flex-1">{toast.text}</span>
             <button type="button" className="-m-1 grid h-8 w-8 shrink-0 place-items-center text-muted hover:text-ink" onClick={() => setToast(null)} aria-label="Dismiss">
               <X className="h-4 w-4" aria-hidden />
             </button>
           </p>
         )}
-      </div>
+      </TopLayer>
     </div>
   );
 }

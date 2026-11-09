@@ -11,6 +11,7 @@ import { imsActionUrl, openImsAction, useImsActionResults, useLiveRefresh } from
 import { inventoryStore } from '../services';
 import type { ImsEvent, ImsPendingEvent } from '../services/inventory/imsSnapshot';
 import { useInventoryState } from '../services/inventory/inventoryStore';
+import { TopLayer } from '../components/ui/TopLayer';
 
 const TYPE_LABEL: Record<string, string> = {
   disaster_relief: 'Disaster relief',
@@ -173,7 +174,7 @@ function ImsEvents() {
       {adding && imsUrl && <AddServed event={adding} imsUrl={imsUrl} onClose={() => setAdding(null)} onOpened={setToast} />}
       {creating && imsUrl && <NewEvent imsUrl={imsUrl} onClose={() => setCreating(false)} onOpened={setToast} />}
 
-      <div aria-live="polite" className="pointer-events-none fixed inset-x-4 bottom-[calc(1.5rem+env(safe-area-inset-bottom))] z-40 flex justify-center md:left-auto md:right-6 md:justify-end">
+      <TopLayer raiseKey={toast} className="pointer-events-none fixed inset-x-4 bottom-[calc(1.5rem+env(safe-area-inset-bottom))] z-40 flex justify-center md:left-auto md:right-6 md:justify-end">
         {toast && (
           <p className="pointer-events-auto flex max-w-md animate-pop-in items-start gap-3 rounded-2xl border border-status-in/40 bg-surface-raised px-4 py-3 text-sm shadow-2xl shadow-black/50">
             <span className="flex-1">{toast}</span>
@@ -182,7 +183,7 @@ function ImsEvents() {
             </button>
           </p>
         )}
-      </div>
+      </TopLayer>
     </div>
   );
 }

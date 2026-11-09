@@ -19,6 +19,8 @@ import { formatNumber } from '../lib/format';
 import { parseResourceLink } from '../lib/resourceLinks';
 import { resourcesService } from '../services';
 import { RESOURCE_CATEGORIES, type Resource } from '../services/resources/types';
+import { TopLayer } from '../components/ui/TopLayer';
+import { DoneCheck } from '../components/ui/DoneCheck';
 
 type GroupBy = 'category' | 'person';
 
@@ -445,16 +447,17 @@ export function ResourcesPage() {
         onDone={setToast}
       />
 
-      <div aria-live="polite" className="pointer-events-none fixed inset-x-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 flex justify-center md:bottom-6 md:left-auto md:right-6 md:justify-end">
+      <TopLayer raiseKey={toast} className="pointer-events-none fixed inset-x-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 flex justify-center md:bottom-6 md:left-auto md:right-6 md:justify-end">
         {toast && (
           <p className="pointer-events-auto flex max-w-md animate-pop-in items-start gap-3 rounded-2xl border border-status-in/40 bg-surface-raised px-4 py-3 text-sm shadow-2xl shadow-black/50">
+            {!toast.includes('couldn') && <DoneCheck key={toast} className="mt-px h-5 w-5 shrink-0" />}
             <span className="flex-1">{toast}</span>
             <button type="button" className="-m-1 grid h-8 w-8 shrink-0 place-items-center text-muted hover:text-ink" onClick={() => setToast(null)} aria-label="Dismiss">
               <X className="h-4 w-4" aria-hidden />
             </button>
           </p>
         )}
-      </div>
+      </TopLayer>
     </div>
   );
 }

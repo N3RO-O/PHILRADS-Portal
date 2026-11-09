@@ -1,5 +1,11 @@
 import { openedFromPasswordLink } from './supabase';
 
+/**
+ * Automatic sign-out (and the idle lock with quick unlock) is switched off for now (PHILRADS, 9 Nov 2026).
+ * Set this back to true to turn it on again; everything else is unchanged.
+ */
+export const AUTO_SIGN_OUT = false;
+
 /** Signed-in sessions end after this long without anyone using the portal (in any of its tabs). */
 export const IDLE_LIMIT_MS = 5 * 60_000;
 /** A warning with "Stay signed in" shows for the last minute. */

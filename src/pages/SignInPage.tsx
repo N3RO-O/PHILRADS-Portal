@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Check, Eye, HandHeart, Volume2, VolumeX, type LucideIcon } from 'lucide-react';
+import { AlertCircle, Check, Eye, HandHeart, Volume2, VolumeX, type LucideIcon } from 'lucide-react';
 import { launchSound, useLaunchSound } from '../lib/launchSound';
 import { z } from 'zod';
 import { useAuth } from '../components/auth/AuthProvider';
 import { CodeInput, haptic, type CodeInputHandle, type CodeState } from '../components/auth/CodeInput';
 import { PrismHero } from '../components/auth/PrismHero';
 import { BusyLabel } from '../components/ui/BusyLabel';
-import { PasswordField } from '../components/ui/PasswordField';
+import { FloatField } from '../components/auth/FloatField';
 import { SignInBackground } from '../components/auth/SignInBackground';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { takeIdleSignOut } from '../lib/idle';
@@ -21,6 +21,14 @@ const schema = z.object({
 
 const resetSchema = schema.pick({ email: true });
 const codeSchema = z.string().trim().regex(/^\d{6}$/, 'Enter the 6-digit code from the email.');
+
+const emailProblem = (v: string) =>
+  !v.trim() ? 'Enter your email address.' : schema.shape.email.safeParse(v).success ? null : 'Check the email address for typos.';
+const passwordProblem = (v: string) => (v ? null : 'Enter your password.');
+const FIELDS = [
+  { id: 'sign-in-email', label: 'Email', problem: emailProblem },
+  { id: 'sign-in-password', label: 'Password', problem: passwordProblem },
+] as const;
 
 export function SignInPage() {
   const { signIn, requestPasswordReset, sendCode, verifyCode } = useAuth();
@@ -42,6 +50,25 @@ export function SignInPage() {
   const card = useRef<HTMLDivElement>(null);
   // Counts failed tries, so the same message still shakes and fades in again.
   const [attempt, setAttempt] = useState(0);
+  // Bumped on each submit with something missing: the fields show their messages then, not while typing.
+  const [reveal, setReveal] = useState(0);
+  // The list of what to fix, at the top of the form, after a submit that had problems.
+  const [summary, setSummary] = useState(false);
+
+  /** Before sending: anything missing or mistyped is shown on its field, and the first one gets focus. */
+  const checkFields = (ids: string[], values: Record<string, string>) => {
+    const wrong = FIELDS.filter((f) => ids.includes(f.id) && f.problem(values[f.id]));
+    if (!wrong.length) return true;
+    setError(null);
+    setReveal((n) => n + 1);
+    document.getElementById(wrong[0].id)?.focus();
+    return false;
+  };
+  /** Typing again: the old server message goes. */
+  const typed = (set: (v: string) => void) => (v: string) => {
+    set(v);
+    if (error) setError(null);
+  };
 
   /** Something is wrong: the card shakes, then the message appears. */
   const fail = (message: string, shakeCard = true) => {
@@ -59,6 +86,8 @@ export function SignInPage() {
     setCodeSentTo(null);
     setCode('');
     setCodeState('idle');
+    setSummary(false);
+    setReveal(0);
   };
 
   /** Signed in: a short "yes" the hand can feel, while the portal opens. */
@@ -108,11 +137,9 @@ export function SignInPage() {
       return;
     }
     if (!codeSentTo) {
+      if (!checkFields(['sign-in-email'], { 'sign-in-email': email })) return;
       const parsed = resetSchema.safeParse({ email });
-      if (!parsed.success) {
-        fail(parsed.error.issues[0]?.message ?? 'Check your email address.');
-        return;
-      }
+      if (!parsed.success) return;
       setBusy(true);
       const failure = await sendCode(parsed.data.email);
       setBusy(false);
@@ -142,11 +169,9 @@ export function SignInPage() {
 
   const submitReset = async (e: FormEvent) => {
     e.preventDefault();
+    if (!checkFields(['sign-in-email'], { 'sign-in-email': email })) return;
     const parsed = resetSchema.safeParse({ email });
-    if (!parsed.success) {
-      fail(parsed.error.issues[0]?.message ?? 'Check your email address.');
-      return;
-    }
+    if (!parsed.success) return;
     if (!online) {
       fail('You are offline. Sending a reset link needs an internet connection.');
       return;
@@ -161,11 +186,13 @@ export function SignInPage() {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    const parsed = schema.safeParse({ email, password });
-    if (!parsed.success) {
-      fail(parsed.error.issues[0]?.message ?? 'Check your details.');
+    if (!checkFields(['sign-in-email', 'sign-in-password'], { 'sign-in-email': email, 'sign-in-password': password })) {
+      setSummary(true);
       return;
     }
+    setSummary(false);
+    const parsed = schema.safeParse({ email, password });
+    if (!parsed.success) return;
     if (!online) {
       fail('You are offline. Signing in needs an internet connection.');
       return;
@@ -207,35 +234,36 @@ export function SignInPage() {
         <div className="bg-surface-raised">
         {mode === 'sign-in' ? (
           <form onSubmit={submit} noValidate className="flex flex-col gap-4 p-6">
-            <h1 className="text-lg font-bold">Sign in</h1>
+            <div>
+              <h1 className="text-lg font-bold">Sign in</h1>
+              <ErrorSummary
+                open={summary}
+                items={FIELDS.flatMap((f) => {
+                  const problem = f.problem(f.id === 'sign-in-email' ? email : password);
+                  return problem ? [{ id: f.id, label: f.label, problem }] : [];
+                })}
+              />
+            </div>
             {idleOut && !error && (
               <p role="status" className="rounded-xl border border-line bg-surface-sunken px-4 py-3 text-sm text-ink-soft">
                 You were signed out after 5 minutes without activity. Sign in again to continue.
               </p>
             )}
-            <label className="flex flex-col gap-1.5 text-sm font-medium text-ink-soft">
-              Email
-              <input className="field" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            </label>
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="sign-in-password" className="text-sm font-medium text-ink-soft">
-                Password
-              </label>
-              <PasswordField
+            <div className="flex flex-col gap-1">
+              <EmailField value={email} onChange={typed(setEmail)} reveal={reveal} />
+              <FloatField
                 id="sign-in-password"
+                label="Password"
+                type="password"
                 autoComplete="current-password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                aria-invalid={Boolean(error) || undefined}
-                className={error ? 'border-rose/60' : ''}
+                onChange={typed(setPassword)}
+                validate={passwordProblem}
+                reveal={reveal}
                 required
               />
             </div>
-            {error && (
-              <p key={attempt} role="alert" className="animate-fade-in rounded-xl border border-rose/40 bg-rose/10 px-4 py-3 text-sm text-rose [animation-delay:380ms]">
-                {error}
-              </p>
-            )}
+            <ServerMessage error={error} attempt={attempt} />
             <SubmitButton busy={busy} done={signedIn} busyText="Signing in…">
               Sign in
             </SubmitButton>
@@ -276,16 +304,9 @@ export function SignInPage() {
                 autoFocus
               />
             ) : (
-              <label className="flex flex-col gap-1.5 text-sm font-medium text-ink-soft">
-                Email
-                <input className="field" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} autoFocus required />
-              </label>
+              <EmailField value={email} onChange={typed(setEmail)} reveal={reveal} autoFocus />
             )}
-            {error && (
-              <p key={attempt} role="alert" className="animate-fade-in rounded-xl border border-rose/40 bg-rose/10 px-4 py-3 text-sm text-rose [animation-delay:380ms]">
-                {error}
-              </p>
-            )}
+            <ServerMessage error={error} attempt={attempt} />
             <SubmitButton busy={busy} done={signedIn} busyText={codeSentTo ? 'Checking the code…' : 'Sending the code…'}>
               {codeSentTo ? 'Sign in' : 'Email me a code'}
             </SubmitButton>
@@ -304,15 +325,8 @@ export function SignInPage() {
               <h1 className="text-lg font-bold">Reset your password</h1>
               <p className="mt-1 text-sm text-muted">We will email you a link to choose a new one.</p>
             </div>
-            <label className="flex flex-col gap-1.5 text-sm font-medium text-ink-soft">
-              Email
-              <input className="field" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            </label>
-            {error && (
-              <p key={attempt} role="alert" className="animate-fade-in rounded-xl border border-rose/40 bg-rose/10 px-4 py-3 text-sm text-rose [animation-delay:380ms]">
-                {error}
-              </p>
-            )}
+            <EmailField value={email} onChange={typed(setEmail)} reveal={reveal} />
+            <ServerMessage error={error} attempt={attempt} />
             {resetSentTo && (
               <p role="status" className="rounded-xl border border-line bg-surface-sunken px-4 py-3 text-sm text-ink-soft">
                 If {resetSentTo} has a staff account, a reset link is on its way. Check your inbox and spam folder.
@@ -329,6 +343,87 @@ export function SignInPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+/** The email box all three forms share: praised (green check) as soon as it looks right. */
+function EmailField({ value, onChange, reveal, autoFocus }: { value: string; onChange: (v: string) => void; reveal: number; autoFocus?: boolean }) {
+  return (
+    <FloatField
+      id="sign-in-email"
+      label="Email"
+      type="email"
+      inputMode="email"
+      autoComplete="username"
+      autoCapitalize="none"
+      spellCheck={false}
+      value={value}
+      onChange={onChange}
+      validate={emailProblem}
+      reveal={reveal}
+      praise
+      autoFocus={autoFocus}
+      required
+    />
+  );
+}
+
+/**
+ * After a submit with something missing: what to fix, each a link to its field. It updates as you
+ * fix things and folds away (smoothly, no jump) once nothing is left.
+ */
+function ErrorSummary({ open, items }: { open: boolean; items: { id: string; label: string; problem: string }[] }) {
+  const show = open && items.length > 0;
+  return (
+    <div className="grid transition-[grid-template-rows] duration-300 ease-out" style={{ gridTemplateRows: show ? '1fr' : '0fr' }}>
+      <div className="min-h-0 overflow-hidden">
+        <div role="alert" className={`mt-3 rounded-xl border border-status-out/40 bg-status-out/10 px-4 py-3 text-sm ${show ? '' : 'invisible'}`}>
+          {show && (
+            <>
+              <p className="flex items-center gap-2 font-semibold text-status-out">
+                <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
+                {items.length === 1 ? 'One thing to fix before you sign in' : `${items.length} things to fix before you sign in`}
+              </p>
+              <ul className="mt-1.5 flex flex-col gap-1 pl-6">
+                {items.map((it) => (
+                  <li key={it.id}>
+                    <a
+                      href={`#${it.id}`}
+                      className="text-ink underline decoration-status-out/50 underline-offset-4 hover:decoration-status-out"
+                      onClick={(e) => (e.preventDefault(), document.getElementById(it.id)?.focus())}
+                    >
+                      {it.label}: {it.problem}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * What the server said (wrong password, offline...). It opens smoothly instead of shoving the
+ * button down, and the next keystroke folds it away again.
+ */
+function ServerMessage({ error, attempt }: { error: string | null; attempt: number }) {
+  const last = useRef(error);
+  if (error) last.current = error;
+  return (
+    <div className="-mt-4 grid transition-[grid-template-rows] duration-300 ease-out" style={{ gridTemplateRows: error ? '1fr' : '0fr' }}>
+      <div className="min-h-0 overflow-hidden">
+        <p
+          key={attempt}
+          role={error ? 'alert' : undefined}
+          className={`mt-4 rounded-xl border border-rose/40 bg-rose/10 px-4 py-3 text-sm text-rose ${error ? 'animate-fade-in [animation-delay:380ms]' : 'opacity-0 transition-opacity duration-200'}`}
+        >
+          {last.current}
+        </p>
+      </div>
+    </div>
   );
 }
 

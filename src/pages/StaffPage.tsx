@@ -16,6 +16,8 @@ import { staffService } from '../services';
 import { STAFF_ROLES, StaffRuleError, roleLabel, type StaffMember, type StaffRoleKey } from '../services/staff/types';
 import { PersonAvatar } from '../components/ui/PersonAvatar';
 import { Switch } from '../components/ui/Switch';
+import { TopLayer } from '../components/ui/TopLayer';
+import { DoneCheck } from '../components/ui/DoneCheck';
 
 type Filter = 'all' | 'active' | 'volunteers' | 'pending' | 'off' | 'archived';
 const FILTERS: [Filter, string][] = [
@@ -359,7 +361,7 @@ export function StaffPage() {
         onDone={(text) => setToast({ text })}
       />
 
-      <div aria-live="polite" className="pointer-events-none fixed inset-x-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 flex justify-center md:bottom-6 md:left-auto md:right-6 md:justify-end">
+      <TopLayer raiseKey={toast} className="pointer-events-none fixed inset-x-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 flex justify-center md:bottom-6 md:left-auto md:right-6 md:justify-end">
         {pending ? (
           <div key={pending.id} className="pointer-events-auto relative flex max-w-md animate-pop-in items-center gap-3 overflow-hidden rounded-2xl border border-line bg-surface-raised py-2 pl-4 pr-2 text-sm shadow-2xl shadow-black/50">
             <Archive className="h-4 w-4 shrink-0 text-muted" aria-hidden />
@@ -377,6 +379,7 @@ export function StaffPage() {
                 toast.error ? 'border-status-out/50' : 'border-status-in/40'
               }`}
             >
+              {!toast.error && <DoneCheck key={toast.text} className="mt-px h-5 w-5 shrink-0" />}
               <span className="flex-1">{toast.text}</span>
               <button type="button" className="-m-1 grid h-8 w-8 shrink-0 place-items-center text-muted hover:text-ink" onClick={() => setToast(null)} aria-label="Dismiss">
                 <X className="h-4 w-4" aria-hidden />
@@ -384,7 +387,7 @@ export function StaffPage() {
             </p>
           )
         )}
-      </div>
+      </TopLayer>
     </div>
   );
 }

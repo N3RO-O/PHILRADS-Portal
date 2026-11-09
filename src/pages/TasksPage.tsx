@@ -28,6 +28,8 @@ import { TASK_ANSWERED, type TaskAnswered } from '../services/tasks/staffBoard';
 import { FinishSheet } from '../components/tasks/FinishSheet';
 import type { OutputDraft } from '../services/tasks/staffBoard';
 import { TASK_LISTS, TaskRuleError, type Assignee, type Kudos, type Task, type TaskDraft, type TaskList, type TeamProgress, type WeekBonus, type XpAward } from '../services/tasks/types';
+import { TopLayer } from '../components/ui/TopLayer';
+import { DoneCheck } from '../components/ui/DoneCheck';
 
 type View = 'myday' | 'upcoming' | 'calendar' | 'assigned' | 'delegated' | 'team' | 'done' | 'list';
 type Where = 'all' | 'field' | 'office';
@@ -755,11 +757,12 @@ export function TasksPage() {
       <LevelUpDialog level={levelUp} onClose={() => setLevelUp(null)} onViewRewards={() => (setLevelUp(null), setParam({ rewards: 'levels' }))} />
       {printLevel && <Certificate name={profile?.displayName ?? 'Staff member'} level={printLevel} tasksDone={progress.stats.total} />}
 
-      <div aria-live="polite" className="pointer-events-none fixed inset-x-4 bottom-[calc(1.25rem+env(safe-area-inset-bottom))] z-40 flex justify-center md:bottom-6 md:left-auto md:right-6 md:justify-end">
+      <TopLayer raiseKey={toast} className="pointer-events-none fixed inset-x-4 bottom-[calc(1.25rem+env(safe-area-inset-bottom))] z-40 flex justify-center md:bottom-6 md:left-auto md:right-6 md:justify-end">
         {toast && (
           <div
             className={`pointer-events-auto flex max-w-md animate-pop-in items-start gap-3 rounded-2xl border px-4 py-3 text-sm shadow-2xl shadow-black/50 ${toast.tone === 'ok' ? 'border-uplift/40 bg-surface-raised' : 'border-status-out/50 bg-surface-raised'}`}
           >
+            {toast.tone === 'ok' && <DoneCheck key={String(toast.text)} className="mt-px h-5 w-5 shrink-0" />}
             <span className="flex-1">{toast.text}</span>
             {toast.undo && (
               <button type="button" className="link shrink-0 text-sm" onClick={() => (toast.undo?.(), setToast(null))}>
@@ -771,7 +774,7 @@ export function TasksPage() {
             </button>
           </div>
         )}
-      </div>
+      </TopLayer>
     </div>
   );
 

@@ -1,5 +1,38 @@
 [
   {
+    "id": "2026-11-09.3",
+    "version": "1.10.0",
+    "date": "2026-11-09",
+    "title": "Kinder sign-in, clearer badges, livelier taps",
+    "items": [
+      {
+        "icon": "key-round",
+        "title": "A kinder sign-in",
+        "body": "Labels stay in view and float up as you type. A mistake shows only when you leave the field, and it clears as soon as you type again; a valid email gets a green check right away. If something is missing when you press Sign in, a short list at the top takes you to each field."
+      },
+      {
+        "icon": "bell",
+        "title": "The bell counts what needs you",
+        "body": "A red number means something waits on your decision, like a task offered to you or a release to approve. A yellow dot means there's only news. Counts stop at 99+, and each note shows a single red or yellow dot."
+      },
+      {
+        "icon": "sparkles",
+        "title": "Taps you can feel",
+        "body": "Buttons sink when you press and spring back when you let go. Pulling down to refresh stretches and resists more the further you pull. Dragging a subtask lifts it, the others move aside, and it springs into its new place. Saved and sent messages draw a green check."
+      },
+      {
+        "icon": "messages",
+        "title": "Messages stay on top",
+        "body": "“Kudos sent” and other messages now show in full above any open sheet, instead of hiding behind it."
+      },
+      {
+        "icon": "lock",
+        "title": "No automatic sign-out for now",
+        "body": "The portal no longer signs you out or locks after a few idle minutes."
+      }
+    ]
+  },
+  {
     "id": "2026-11-09.2",
     "version": "1.9.9",
     "date": "2026-11-09",

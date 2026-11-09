@@ -1,17 +1,26 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { RefreshCw } from 'lucide-react';
 
-const RESIST = 0.35; // the content moves 35% of the finger
 const TRIGGER = 64; // px the content must move to refresh
+const LIMIT = 150; // the content can never move further than this
 
 /**
- * Pull to refresh on touch screens: at the top of the page, pulling down moves the page a third
- * of the way your finger goes (it resists), with a spinner that turns as you pull. Let go past the
- * mark and the page reloads its data.
+ * Rubber band: the first centimetre follows the finger closely, then every extra pixel moves it
+ * less, so the pull resists harder the further you go and never passes LIMIT.
+ */
+function resist(dy: number) {
+  return LIMIT * (1 - 1 / ((dy * 0.6) / LIMIT + 1));
+}
+
+/**
+ * Pull to refresh on touch screens: at the top of the page, pulling down stretches the page like
+ * a rubber band (it resists more the further you pull), with a spinner that turns as you pull.
+ * Past the mark the spinner turns yellow and you feel one tick: let go and the page reloads its data.
  */
 export function PullToRefresh({ onRefresh, children }: { onRefresh: () => void; children: ReactNode }) {
   const [pull, setPull] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const armed = pull >= TRIGGER;
   const start = useRef<number | null>(null);
   const pullRef = useRef(0);
 
@@ -31,8 +40,10 @@ export function PullToRefresh({ onRefresh, children }: { onRefresh: () => void; 
         setPull(0);
         return;
       }
-      pullRef.current = Math.min(dy * RESIST, 120);
-      setPull(pullRef.current);
+      const next = resist(dy);
+      if (next >= TRIGGER && pullRef.current < TRIGGER) navigator.vibrate?.(8);
+      pullRef.current = next;
+      setPull(next);
     };
     const up = () => {
       if (start.current === null) return;
@@ -40,7 +51,6 @@ export function PullToRefresh({ onRefresh, children }: { onRefresh: () => void; 
       if (pullRef.current >= TRIGGER) {
         setRefreshing(true);
         setPull(TRIGGER);
-        navigator.vibrate?.(15);
         onRefresh();
         setTimeout(() => {
           setRefreshing(false);
@@ -69,12 +79,17 @@ export function PullToRefresh({ onRefresh, children }: { onRefresh: () => void; 
         className="pointer-events-none absolute inset-x-0 top-0 flex justify-center"
         style={{ height: pull, opacity: Math.min(1, pull / TRIGGER) }}
       >
-        <span className="mt-auto mb-2 grid h-9 w-9 place-items-center rounded-full border border-line bg-surface-raised text-ink-soft shadow-lg">
+        <span
+          className={`mb-2 mt-auto grid h-9 w-9 place-items-center rounded-full border bg-surface-raised shadow-lg transition-colors duration-150 ${armed || refreshing ? 'border-uplift/60 text-uplift' : 'border-line text-ink-soft'}`}
+          style={{ transform: `scale(${refreshing ? 1 : 0.7 + 0.3 * Math.min(1, pull / TRIGGER)})` }}
+        >
           <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} style={refreshing ? undefined : { transform: `rotate(${pull * 4}deg)` }} aria-hidden />
         </span>
       </div>
       <div style={{ transform: pull ? `translateY(${pull}px)` : undefined, transition: dragging ? 'none' : 'transform 420ms cubic-bezier(0.34, 1.56, 0.64, 1)' }}>{children}</div>
-      {refreshing && <span className="sr-only" role="status">Refreshing</span>}
+      <span className="sr-only" role="status">
+        {refreshing ? 'Refreshing' : armed ? 'Release to refresh' : ''}
+      </span>
     </div>
   );
 }

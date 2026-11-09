@@ -3,7 +3,7 @@ import { Delete, Fingerprint, Loader2, LogOut, ShieldCheck } from 'lucide-react'
 import { useAuth } from './AuthProvider';
 import { useOnboarding } from '../onboarding/OnboardingProvider';
 import { biometricAvailable, biometricSetUp, forgetBiometric, setUpBiometric, verifyBiometric } from '../../lib/biometric';
-import { markActive } from '../../lib/idle';
+import { AUTO_SIGN_OUT, markActive } from '../../lib/idle';
 import { checkPin, clearQuickUnlock, markLocked, markUnlocked, pinSet, quickUnlockOn, setPin, unlockedThisSession } from '../../lib/quickUnlock';
 import { Avatar } from '../ui/Avatar';
 import { Sheet } from '../ui/Sheet';
@@ -333,7 +333,7 @@ export function QuickUnlockSheet({ open, onClose }: { open: boolean; onClose: ()
             </button>
           )}
           <p className="text-xs text-muted">
-            With quick unlock on, the portal locks after 5 idle minutes and when you reopen it, instead of signing you out. Five wrong PINs sign you out completely. Your PIN and fingerprint never leave this device.
+            With quick unlock on, the portal locks {AUTO_SIGN_OUT ? 'after 5 idle minutes and ' : ''}when you reopen it, instead of signing you out. Five wrong PINs sign you out completely. Your PIN and fingerprint never leave this device.
           </p>
         </div>
       ) : (

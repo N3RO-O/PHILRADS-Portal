@@ -53,6 +53,8 @@
   html {
     color-scheme: dark;
     -webkit-text-size-adjust: 100%;
+    /* The portal has its own pull to refresh (PullToRefresh.tsx); stop the browser's firing too. */
+    overscroll-behavior-y: contain;
   }
   html[data-theme='light'] {
     color-scheme: light;
@@ -99,6 +101,88 @@
 }
 
 @layer components {
+  /* Toast container in the top layer (TopLayer.tsx): undo the browser's popover box so the
+     page's own fixed-position utilities place it. */
+  .top-layer {
+    inset: auto;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    overflow: visible;
+    width: auto;
+    height: auto;
+  }
+  .top-layer:popover-open {
+    display: flex;
+  }
+  /* Sign-in fields (FloatField.tsx): the label floats to the top of the box on focus, once filled
+     or autofilled; a line under the box is kept for the message so nothing jumps. */
+  .field.ff-input {
+    padding-top: 1.5rem;
+    padding-bottom: 0.375rem;
+  }
+  .ff-label {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.875rem;
+    color: rgb(var(--ink-mute));
+    pointer-events: none;
+    transition:
+      top 180ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+      font-size 180ms ease,
+      color 150ms ease;
+  }
+  .ff-input:focus + .ff-label,
+  .ff-input:not(:placeholder-shown) + .ff-label {
+    top: 0.4375rem;
+    transform: none;
+    font-size: 0.6875rem;
+    line-height: 1;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  /* Separate rules: a browser that doesn't know one of these selectors drops the whole list. */
+  .ff-input:-webkit-autofill + .ff-label {
+    top: 0.4375rem;
+    transform: none;
+    font-size: 0.6875rem;
+    line-height: 1;
+    font-weight: 600;
+  }
+  .ff-input:autofill + .ff-label {
+    top: 0.4375rem;
+    transform: none;
+    font-size: 0.6875rem;
+    line-height: 1;
+    font-weight: 600;
+  }
+  .ff-input:focus + .ff-label {
+    color: rgb(var(--uplift));
+  }
+  .ff[data-state='error'] .ff-input {
+    border-color: rgb(var(--status-out) / 0.75);
+  }
+  .ff[data-state='error'] .ff-input:focus {
+    --tw-ring-color: rgb(var(--status-out) / 0.75);
+  }
+  .ff[data-state='error'] .ff-label {
+    color: rgb(var(--status-out));
+  }
+  .ff[data-state='good'] .ff-input:not(:focus) {
+    border-color: rgb(var(--status-in) / 0.55);
+  }
+  .ff-msg {
+    min-height: 1.25rem;
+    padding: 0.25rem 0.25rem 0;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    color: rgb(var(--status-out));
+  }
   /*
    * Design rules: docs/design-system.md. Three surface levels give depth (page, surface, raised);
    * no gradients, glows or blur.

@@ -51,7 +51,6 @@ export function Welcomer() {
     <dialog
       ref={ref}
       aria-labelledby="welcome-title"
-      aria-describedby="welcome-body"
       onClose={() => welcome.done()}
       {...backdrop.handlers}
       className="popover max-h-[calc(100dvh-1.5rem)] w-[min(26rem,calc(100vw-2rem))] animate-pop-in overflow-y-auto overflow-x-hidden p-0 text-ink backdrop:animate-fade-in backdrop:bg-black/70 backdrop:backdrop-blur-[2px]"
@@ -92,9 +91,6 @@ export function Welcomer() {
       </div>
 
       <div className="flex flex-col gap-4 px-6 pb-5 pt-5">
-        <p id="welcome-body" className="text-sm leading-relaxed text-ink-soft">
-          Everything is where you left it. Let’s make today count.
-        </p>
         <div className="flex flex-col gap-2">
           <button type="button" className="btn-primary min-h-11 w-full gap-2" onClick={close} autoFocus>
             Let’s go <ArrowRight className="h-4 w-4" aria-hidden />

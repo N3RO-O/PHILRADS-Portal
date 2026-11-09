@@ -10,6 +10,7 @@ import { NotificationToasts } from './NotificationToasts';
 import { QuickUnlockProvider } from '../auth/QuickUnlock';
 import { LiveSharingBubble } from '../map/LiveSharingBubble';
 import { IdleSignOut } from '../auth/IdleSignOut';
+import { AUTO_SIGN_OUT } from '../../lib/idle';
 import { OnboardingProvider } from '../onboarding/OnboardingProvider';
 import { UpdatePrompt } from '../pwa/UpdatePrompt';
 import { MobileDrawer } from './MobileDrawer';
@@ -186,8 +187,8 @@ export function AppLayout() {
       <Welcomer />
       {/* New bell notes pop in as they arrive. */}
       <NotificationToasts />
-      {/* Signed-in staff: signed out after 5 minutes without activity. */}
-      <IdleSignOut />
+      {/* Signed-in staff: signed out after 5 minutes without activity (off for now, see AUTO_SIGN_OUT). */}
+      {AUTO_SIGN_OUT && <IdleSignOut />}
     </div>
     </LiveSharingProvider>
     </QuickUnlockProvider>

@@ -6,6 +6,7 @@ import { usePresence } from '../../lib/presence';
 import { supabase } from '../../lib/supabase';
 import { notificationSound } from '../../lib/notificationSound';
 import { dashboardService } from '../../services';
+import { TopLayer } from '../ui/TopLayer';
 
 interface Toast {
   id: string;
@@ -90,7 +91,7 @@ export function NotificationToasts() {
   };
 
   return (
-    <div aria-live="polite" className="pointer-events-none fixed inset-x-3 top-[calc(4.5rem+env(safe-area-inset-top))] z-[1200] flex flex-col items-center gap-2 sm:inset-x-auto sm:right-5 sm:items-end">
+    <TopLayer className="pointer-events-none fixed inset-x-3 top-[calc(4.5rem+env(safe-area-inset-top))] z-[1200] flex flex-col items-center gap-2 sm:inset-x-auto sm:right-5 sm:items-end">
       {toasts.map((t, i) => (
         <div
           key={t.id}
@@ -117,6 +118,6 @@ export function NotificationToasts() {
           </button>
         </div>
       ))}
-    </div>
+    </TopLayer>
   );
 }
