@@ -60,8 +60,9 @@
   body {
     @apply bg-page font-sans text-ink antialiased;
   }
+  /* Focus is always visible (docs/design-system.md, Buttons): the Uplift ring, deeper on light for contrast. */
   :focus-visible {
-    outline: 2px solid #ec952a;
+    outline: 2px solid rgb(var(--uplift));
     outline-offset: 2px;
   }
   ::selection {

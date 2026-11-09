@@ -380,7 +380,7 @@ export function LiveMapPage() {
                 if (e.key === 'ArrowLeft') panel_.nudge(-24);
                 if (e.key === 'ArrowRight') panel_.nudge(24);
               }}
-              className={`group pointer-events-auto absolute inset-y-0 -left-1.5 flex w-3 cursor-col-resize items-center justify-center focus:outline-none`}
+              className={`group pointer-events-auto absolute inset-y-0 -left-1.5 flex w-3 cursor-col-resize items-center justify-center`}
             >
               <span className={`h-full w-0.5 transition-colors ${panel_.dragging ? 'bg-ink-mute' : 'bg-transparent group-hover:bg-ink-mute/60'}`} />
               <span className="absolute h-10 w-1.5 rounded-full bg-line transition-colors group-hover:bg-ink-mute" />

@@ -90,6 +90,36 @@ are semibold Cloud, notes are muted, figures are large and tabular.
 - SVG colours that follow the theme go in `style` (`style={{ stroke: 'rgb(var(--ink))' }}`), because
   CSS variables don't work in SVG attributes.
 
+## Buttons (2026-11-09)
+
+Six rules for every button.
+
+1. **Five parts, each with one job.**
+
+   | Part | Job |
+   | --- | --- |
+   | Focus ring | Shows where the keyboard is. A 2 px Uplift outline, 2 px out (`:focus-visible` in `src/index.css`). |
+   | Label | Says what pressing it does. |
+   | Border | Marks a secondary button (`.btn-ghost`) as something you can press. |
+   | Fill | Marks the one main action (`.btn-primary`). |
+   | Shadow | Lifts the main action off the page; secondary buttons have none. |
+
+2. **The label says the action.** A verb and what it acts on: "Add task", "Email me a code",
+   "Send it back". Not "OK", "Submit" or "Yes". An icon-only button has an `aria-label` that does the
+   same.
+3. **Loading keeps the width.** While it works, the label is swapped for a spinner in the same
+   space, so nothing around it jumps. Use `BusyLabel` (`src/components/ui/BusyLabel.tsx`) and set
+   `aria-busy` and `disabled` on the button; screen readers hear what is happening ("Signing in…").
+4. **One primary button per screen.** Only the main action is filled (`.btn-primary`). Cancel, Back
+   and the other choices are ghost (`.btn-ghost`), so people know where to land. A sheet or dialog
+   counts as its own screen.
+5. **Focus is always visible.** Never remove the outline (`outline-none`, `focus:outline-none`) on
+   something you can press, unless something just as clear takes its place, such as the outlined
+   box in the code input.
+6. **A disabled button says why.** Next to it, in words, say what to do first ("Write what still
+   needs doing first"), and link it with `aria-describedby`. If there is no room for a reason, leave
+   the button on and answer the press with the reason instead.
+
 ## Response to the user (gloss and sound)
 
 - `.btn-primary` / `.premium`: a glossy Uplift gradient that lifts and shines on hover and sinks on

@@ -1,0 +1,202 @@
+/*
+ * The one-time code boxes (CodeInput.tsx). One real input lies over six drawn boxes: it takes the
+ * taps, the keyboard, paste and the phone's code suggestion; the boxes only show what's typed.
+ * Only transform, opacity, colours and shadows move; prefers-reduced-motion stills it all (index.css
+ * shortens every animation, and the rules at the end drop the pop and pulse).
+ */
+.otp {
+  position: relative;
+}
+.otp-input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color: transparent;
+  caret-color: transparent;
+  /* 16px: iOS doesn't zoom the page when it gets focus. */
+  font-size: 16px;
+  letter-spacing: 2.5em;
+  outline: none;
+  opacity: 0.001;
+  cursor: text;
+}
+.otp-input::selection {
+  background: transparent;
+}
+.otp-input:disabled {
+  cursor: not-allowed;
+}
+.otp-boxes {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+.otp-box {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 3.5rem;
+  border-radius: 0.875rem;
+  border: 1.5px solid rgb(var(--line));
+  background: rgb(var(--surface-sunken));
+  color: rgb(var(--ink));
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  transition:
+    border-color 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+[data-theme='light'] .otp-box {
+  box-shadow: inset 0 1px 2px rgb(var(--shadow) / 0.06);
+}
+.otp-box[data-filled] {
+  border-color: rgb(var(--ink-mute) / 0.7);
+}
+/* The box the next digit goes into. */
+.otp-box[data-active] {
+  border-color: rgb(var(--uplift));
+  box-shadow: 0 0 0 3px rgb(var(--uplift) / 0.22);
+  transform: translateY(-1px);
+}
+/* All six in and still focused: the last box keeps the ring, so focus never disappears. */
+.otp[data-focused][data-full][data-state='idle'] .otp-box:last-child {
+  border-color: rgb(var(--uplift));
+  box-shadow: 0 0 0 3px rgb(var(--uplift) / 0.22);
+}
+.otp[data-disabled] .otp-box {
+  opacity: 0.6;
+}
+
+/* A digit drops into its box and settles. */
+.otp-digit {
+  display: block;
+  animation: otp-digit 280ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+@keyframes otp-digit {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.otp-caret {
+  width: 2px;
+  height: 1.5rem;
+  border-radius: 1px;
+  background: rgb(var(--uplift));
+  animation: otp-blink 1s steps(1) infinite;
+}
+@keyframes otp-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Checking: a soft wave runs across the boxes. */
+.otp[data-state='checking'] .otp-box {
+  border-color: rgb(var(--uplift) / 0.7);
+  animation: otp-wave 900ms cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  animation-delay: calc(var(--i) * 70ms);
+}
+@keyframes otp-wave {
+  0%,
+  100% {
+    transform: none;
+  }
+  35% {
+    transform: translateY(-4px);
+  }
+}
+
+/* Accepted: green, a glow, one after another, and a small check. */
+.otp[data-state='success'] .otp-box {
+  border-color: rgb(var(--status-in));
+  background: rgb(var(--status-in) / 0.12);
+  color: rgb(var(--status-in));
+  box-shadow: 0 0 0 3px rgb(var(--status-in) / 0.18), 0 6px 18px -6px rgb(var(--status-in) / 0.55);
+  animation: otp-yes 420ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  animation-delay: calc(var(--i) * 40ms);
+}
+@keyframes otp-yes {
+  40% {
+    transform: scale(1.1);
+  }
+  to {
+    transform: none;
+  }
+}
+.otp-check {
+  position: absolute;
+  top: -0.5rem;
+  right: -0.5rem;
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  background: rgb(var(--status-in));
+  color: rgb(var(--surface-raised));
+  box-shadow: 0 2px 8px rgb(var(--status-in) / 0.5);
+  animation: otp-check 360ms cubic-bezier(0.34, 1.56, 0.64, 1) 260ms backwards;
+}
+@keyframes otp-check {
+  from {
+    opacity: 0;
+    transform: scale(0.3) rotate(-30deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Rejected: red (the whole row also shakes, from code). */
+.otp[data-state='error'] .otp-box {
+  border-color: rgb(var(--status-out));
+  background: rgb(var(--status-out) / 0.1);
+  color: rgb(var(--status-out));
+}
+
+/* The sign-in button once it worked (staff and volunteers): green, a small pop and a check. */
+.btn-primary.sign-in-done:disabled {
+  opacity: 1;
+  filter: none;
+  cursor: default;
+  color: #fff;
+  background-color: rgb(22 140 66);
+  background-image: linear-gradient(180deg, #4ade80 0%, #22a356 50%, #168c42 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    0 0 0 3px rgb(var(--status-in) / 0.2),
+    0 10px 26px -10px rgba(34, 163, 86, 0.9);
+  animation: otp-yes 460ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.sign-in-done-check {
+  animation: otp-check 380ms cubic-bezier(0.34, 1.56, 0.64, 1) 120ms backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-primary.sign-in-done:disabled,
+  .sign-in-done-check,
+  .otp-digit,
+  .otp-check,
+  .otp[data-state='checking'] .otp-box,
+  .otp[data-state='success'] .otp-box {
+    animation: none;
+  }
+  .otp-box[data-active] {
+    transform: none;
+  }
+}

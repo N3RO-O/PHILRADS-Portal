@@ -1,10 +1,12 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Eye, HandHeart, Volume2, VolumeX, type LucideIcon } from 'lucide-react';
+import { Check, Eye, HandHeart, Volume2, VolumeX, type LucideIcon } from 'lucide-react';
 import { launchSound, useLaunchSound } from '../lib/launchSound';
 import { z } from 'zod';
 import { useAuth } from '../components/auth/AuthProvider';
+import { CodeInput, haptic, type CodeInputHandle, type CodeState } from '../components/auth/CodeInput';
 import { PrismHero } from '../components/auth/PrismHero';
+import { BusyLabel } from '../components/ui/BusyLabel';
 import { PasswordField } from '../components/ui/PasswordField';
 import { SignInBackground } from '../components/auth/SignInBackground';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
@@ -31,16 +33,22 @@ export function SignInPage() {
   const [error, setError] = useState<string | null>(null);
   const [resetSentTo, setResetSentTo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Code boxes: checking, rejected (red, shakes) or accepted (green). Cleared when the code changes.
+  const [codeState, setCodeState] = useState<CodeState>('idle');
+  const codeBox = useRef<CodeInputHandle>(null);
+  // Signed in: a moment of green before the portal takes over the screen.
+  const [signedIn, setSignedIn] = useState(false);
   const [idleOut] = useState(takeIdleSignOut);
   const card = useRef<HTMLDivElement>(null);
   // Counts failed tries, so the same message still shakes and fades in again.
   const [attempt, setAttempt] = useState(0);
 
   /** Something is wrong: the card shakes, then the message appears. */
-  const fail = (message: string) => {
+  const fail = (message: string, shakeCard = true) => {
     setError(message);
     setAttempt((n) => n + 1);
-    shake(card.current);
+    // The code boxes shake on their own; the card stays put then.
+    if (shakeCard) shake(card.current);
     errorSound.play();
   };
 
@@ -50,6 +58,46 @@ export function SignInPage() {
     setResetSentTo(null);
     setCodeSentTo(null);
     setCode('');
+    setCodeState('idle');
+  };
+
+  /** Signed in: a short "yes" the hand can feel, while the portal opens. */
+  const succeed = () => {
+    setError(null);
+    setSignedIn(true);
+    haptic([18, 50, 28]);
+  };
+
+  /** Check a full code (typed, pasted, suggested by the keyboard, or sent with the button). */
+  const checkCode = async (value: string) => {
+    if (!codeSentTo || busy) return;
+    if (!online) {
+      fail('You are offline. Signing in needs an internet connection.');
+      return;
+    }
+    const parsed = codeSchema.safeParse(value);
+    if (!parsed.success) {
+      setCodeState('error');
+      fail(parsed.error.issues[0]?.message ?? 'Check the code.', false);
+      return;
+    }
+    setBusy(true);
+    setCodeState('checking');
+    const failure = await verifyCode(codeSentTo, parsed.data);
+    setBusy(false);
+    if (failure) {
+      setCodeState('error');
+      fail(failure, false);
+      // After the shake: empty boxes, ready for the right code (the message stays until they type).
+      setTimeout(() => {
+        setCode('');
+        setCodeState('idle');
+        codeBox.current?.focus();
+      }, 700);
+    } else {
+      setCodeState('success');
+      succeed();
+    }
   };
 
   /** Volunteers: first the email (a code is sent), then the code. */
@@ -75,16 +123,7 @@ export function SignInPage() {
       }
       return;
     }
-    const parsed = codeSchema.safeParse(code);
-    if (!parsed.success) {
-      fail(parsed.error.issues[0]?.message ?? 'Check the code.');
-      return;
-    }
-    setBusy(true);
-    const failure = await verifyCode(codeSentTo, parsed.data);
-    setBusy(false);
-    if (failure) fail(failure);
-    else setError(null);
+    await checkCode(code);
   };
 
   const resend = async () => {
@@ -93,7 +132,12 @@ export function SignInPage() {
     const failure = await sendCode(codeSentTo);
     setBusy(false);
     if (failure) fail(failure);
-    else setError(null);
+    else {
+      setError(null);
+      setCode('');
+      setCodeState('idle');
+      codeBox.current?.focus();
+    }
   };
 
   const submitReset = async (e: FormEvent) => {
@@ -130,7 +174,7 @@ export function SignInPage() {
     const failure = await signIn(parsed.data.email, parsed.data.password);
     setBusy(false);
     if (failure) fail(failure);
-    else setError(null);
+    else succeed();
   };
 
   // The PRISM theme, softly, while this screen is open.
@@ -192,9 +236,9 @@ export function SignInPage() {
                 {error}
               </p>
             )}
-            <button type="submit" className="btn-primary" disabled={busy}>
-              {busy ? 'Signing in…' : 'Sign in'}
-            </button>
+            <SubmitButton busy={busy} done={signedIn} busyText="Signing in…">
+              Sign in
+            </SubmitButton>
             <button type="button" className="text-sm text-muted underline-offset-4 hover:text-ink hover:underline" onClick={() => switchMode('reset')}>
               Forgot your password?
             </button>
@@ -216,20 +260,21 @@ export function SignInPage() {
               </p>
             </div>
             {codeSentTo ? (
-              <label className="flex flex-col gap-1.5 text-sm font-medium text-ink-soft">
-                Code from the email
-                <input
-                  className="field text-center font-mono text-2xl tracking-[0.5em]"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  maxLength={6}
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  aria-invalid={Boolean(error) || undefined}
-                  autoFocus
-                  required
-                />
-              </label>
+              <CodeInput
+                ref={codeBox}
+                label="Code from the email"
+                value={code}
+                onChange={(next) => {
+                  setCode(next);
+                  // Typing again after a wrong code: the red and the message go.
+                  if (codeState === 'error') setCodeState('idle');
+                  if (error) setError(null);
+                }}
+                onComplete={(full) => void checkCode(full)}
+                state={codeState}
+                disabled={signedIn}
+                autoFocus
+              />
             ) : (
               <label className="flex flex-col gap-1.5 text-sm font-medium text-ink-soft">
                 Email
@@ -241,11 +286,11 @@ export function SignInPage() {
                 {error}
               </p>
             )}
-            <button type="submit" className="btn-primary" disabled={busy}>
-              {busy ? (codeSentTo ? 'Signing in…' : 'Sending…') : codeSentTo ? 'Sign in' : 'Email me a code'}
-            </button>
+            <SubmitButton busy={busy} done={signedIn} busyText={codeSentTo ? 'Checking the code…' : 'Sending the code…'}>
+              {codeSentTo ? 'Sign in' : 'Email me a code'}
+            </SubmitButton>
             {codeSentTo && (
-              <button type="button" className="text-sm text-muted underline-offset-4 hover:text-ink hover:underline" onClick={() => void resend()} disabled={busy}>
+              <button type="button" className="text-sm text-muted underline-offset-4 hover:text-ink hover:underline" onClick={() => void resend()} disabled={busy || signedIn}>
                 Send a new code
               </button>
             )}
@@ -273,9 +318,9 @@ export function SignInPage() {
                 If {resetSentTo} has a staff account, a reset link is on its way. Check your inbox and spam folder.
               </p>
             )}
-            <button type="submit" className="btn-primary" disabled={busy}>
-              {busy ? 'Sending…' : 'Email me a reset link'}
-            </button>
+            <SubmitButton busy={busy} done={false} busyText="Sending the link…">
+              Email me a reset link
+            </SubmitButton>
             <button type="button" className="btn-ghost" onClick={() => switchMode('sign-in')}>
               Back to sign in
             </button>
@@ -284,6 +329,28 @@ export function SignInPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+/** The form's main button: the label turns into a spinner while it works (same width), then green with a check once signed in. */
+function SubmitButton({ busy, done, busyText, children }: { busy: boolean; done: boolean; busyText: string; children: ReactNode }) {
+  return (
+    <button
+      type="submit"
+      className={`btn-primary ${done ? 'sign-in-done' : ''}`}
+      disabled={busy || done}
+      aria-busy={busy || undefined}
+    >
+      {done ? (
+        <>
+          <Check className="sign-in-done-check h-5 w-5" strokeWidth={3} aria-hidden /> Signed in
+        </>
+      ) : (
+        <BusyLabel busy={busy} busyText={busyText}>
+          {children}
+        </BusyLabel>
+      )}
+    </button>
   );
 }
 

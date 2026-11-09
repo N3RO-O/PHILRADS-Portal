@@ -3,6 +3,7 @@ import { Camera, Check, CheckCircle2, Lock, Loader2, Plus, RotateCcw, Sparkles, 
 import { addDays, LIST_META, RECURRENCE_LABEL, weekday } from '../../lib/tasks';
 import { XP_RULES } from '../../lib/taskProgress';
 import { TASK_LISTS, type Assignee, type Recurrence, type Task, type TaskDraft, type TaskList } from '../../services/tasks/types';
+import { BusyLabel } from '../ui/BusyLabel';
 import { DoneCheck } from '../ui/DoneCheck';
 import { Sheet } from '../ui/Sheet';
 import { Switch } from '../ui/Switch';
@@ -134,7 +135,11 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, canGive =
 
   const addSub = () => {
     const title = sub.trim();
-    if (!title) return;
+    // Nothing typed yet: the button stays on and points to the box (its placeholder says what to do).
+    if (!title) {
+      document.getElementById(`${uid}-sub`)?.focus();
+      return;
+    }
     set('subtasks', [...d.subtasks, { id: `s-${Date.now().toString(36)}`, title, done: false }]);
     setSub('');
   };
@@ -181,7 +186,7 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, canGive =
           {task && (
             <>
               {!given && (
-              <button type="button" className="btn-ghost px-3 text-status-out" onClick={() => void (setBusy('remove'), onRemove(task).finally(() => setBusy(null)))} disabled={Boolean(busy)} title="Remove task">
+              <button type="button" className="btn-ghost px-3 text-status-out" onClick={() => void (setBusy('remove'), onRemove(task).finally(() => setBusy(null)))} disabled={Boolean(busy)} aria-busy={busy === 'remove' || undefined} title="Remove task">
                 {busy === 'remove' ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Trash2 className="h-4 w-4" aria-hidden />}
                 <span className="sr-only">Remove task</span>
               </button>
@@ -189,14 +194,22 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, canGive =
               {!needsAnswer && (
               <button type="button" className="btn-ghost px-3" onClick={() => (onToggleDone(task), onClose())} disabled={Boolean(busy)}>
                 {done ? <RotateCcw className="h-4 w-4" aria-hidden /> : <CheckCircle2 className="h-4 w-4 text-status-in" aria-hidden />}
-                {done ? 'Re-open' : 'Done'}
+                {done ? 'Re-open' : 'Mark done'}
               </button>
               )}
             </>
           )}
-          <button type="submit" form={`${uid}-form`} className="btn-primary h-12 flex-1 text-base" disabled={Boolean(busy)}>
-            {busy === 'save' && <Loader2 className="h-5 w-5 animate-spin" aria-hidden />}
-            {task ? 'Save changes' : 'Add task'}
+          {/* One filled button per screen: while the task waits for an answer, Accept is the main action. */}
+          <button
+            type="submit"
+            form={`${uid}-form`}
+            className={`${needsAnswer ? 'btn-ghost' : 'btn-primary'} h-12 flex-1 text-base`}
+            disabled={Boolean(busy)}
+            aria-busy={busy === 'save' || undefined}
+          >
+            <BusyLabel busy={busy === 'save'} busyText="Saving…">
+              {task ? 'Save changes' : 'Add task'}
+            </BusyLabel>
           </button>
         </div>
       }
@@ -219,15 +232,19 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, canGive =
                   <button type="button" className="btn-ghost min-h-10 flex-1" onClick={() => setDeclining(false)}>
                     Back
                   </button>
-                  <button type="button" className="btn min-h-10 flex-1 bg-status-out/20 text-status-out" disabled={answering} onClick={() => void respond(false)}>
-                    {answering && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />} Decline
+                  <button type="button" className="btn min-h-10 flex-1 bg-status-out/20 text-status-out" disabled={answering} aria-busy={answering || undefined} onClick={() => void respond(false)}>
+                    <BusyLabel busy={answering} busyText="Declining…">
+                      Decline task
+                    </BusyLabel>
                   </button>
                 </div>
               </>
             ) : (
               <div className="flex gap-2">
-                <button type="button" className="btn-primary min-h-10 flex-1" disabled={answering} onClick={() => void respond(true)}>
-                  {answering ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Check className="h-4 w-4" aria-hidden />} Accept
+                <button type="button" className="btn-primary min-h-10 flex-1" disabled={answering} aria-busy={answering || undefined} onClick={() => void respond(true)}>
+                  <BusyLabel busy={answering} busyText="Accepting…">
+                    <Check className="h-4 w-4" aria-hidden /> Accept task
+                  </BusyLabel>
                 </button>
                 <button type="button" className="btn-ghost min-h-10 flex-1" onClick={() => (setDeclining(true), setReason(''))}>
                   Can’t take it
@@ -285,9 +302,25 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, canGive =
             </h3>
             <p className="text-xs text-muted">Send it back to {task?.assigneeName ?? 'them'} with what still needs doing. It re-opens and the XP is taken back until it’s done.</p>
             <textarea className="field min-h-20" rows={2} maxLength={280} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Only 40 of the 50 boxes were counted" aria-label="What still needs doing" />
-            <button type="button" className="btn-ghost min-h-11 self-start px-4" onClick={() => void sendBack()} disabled={Boolean(busy) || reason.trim().length < 3}>
-              {busy === 'sendBack' ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Undo2 className="h-4 w-4" aria-hidden />} Send it back
-            </button>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                className="btn-ghost min-h-11 px-4"
+                onClick={() => void sendBack()}
+                disabled={Boolean(busy) || reason.trim().length < 3}
+                aria-busy={busy === 'sendBack' || undefined}
+                aria-describedby={reason.trim().length < 3 ? `${uid}-back-why` : undefined}
+              >
+                <BusyLabel busy={busy === 'sendBack'} busyText="Sending it back…">
+                  <Undo2 className="h-4 w-4" aria-hidden /> Send it back
+                </BusyLabel>
+              </button>
+              {reason.trim().length < 3 && (
+                <span id={`${uid}-back-why`} className="text-xs text-muted">
+                  Write what still needs doing first.
+                </span>
+              )}
+            </div>
           </section>
         )}
         <fieldset disabled={fixed} className="contents">
@@ -296,8 +329,17 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, canGive =
         </Field>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
-          <Field id={`${uid}-list`} label="List">
-            <select id={`${uid}-list`} className="field" value={d.list} onChange={(e) => set('list', e.target.value as TaskList)}>
+          <Field id={`${uid}-list`} label="List" hint={d.setting === 'office' ? 'Field work only' : undefined}>
+            {/* Lists sort field work; an office task has none, so the select is greyed out (its value is kept for switching back). */}
+            <select
+              id={`${uid}-list`}
+              className="field transition-opacity duration-200 disabled:cursor-not-allowed disabled:opacity-40"
+              value={d.list}
+              onChange={(e) => set('list', e.target.value as TaskList)}
+              disabled={d.setting === 'office'}
+              aria-disabled={d.setting === 'office' || undefined}
+              aria-describedby={d.setting === 'office' ? `${uid}-list-hint` : undefined}
+            >
               {TASK_LISTS.map((l) => (
                 <option key={l} value={l}>
                   {LIST_META[l].label}
@@ -412,7 +454,7 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, canGive =
           {!fixed && (
           <div className="flex gap-2">
             <input id={`${uid}-sub`} className="field" value={sub} onChange={(e) => setSub(e.target.value)} onKeyDown={onSubKey} maxLength={200} placeholder="Add a step and press Enter" />
-            <button type="button" className="btn-ghost shrink-0 px-3" onClick={addSub} aria-label="Add subtask" disabled={!sub.trim()}>
+            <button type="button" className="btn-ghost shrink-0 px-3" onClick={addSub} aria-label="Add subtask">
               <Plus className="h-4 w-4" aria-hidden />
             </button>
           </div>
@@ -454,7 +496,11 @@ function Field({ id, label, hint, children }: { id?: string; label: string; hint
         ) : (
           <span className="text-sm font-semibold text-ink-soft">{label}</span>
         )}
-        {hint && <span className="text-xs text-muted">{hint}</span>}
+        {hint && (
+          <span id={id ? `${id}-hint` : undefined} className="text-xs text-muted">
+            {hint}
+          </span>
+        )}
       </div>
       {children}
     </div>
