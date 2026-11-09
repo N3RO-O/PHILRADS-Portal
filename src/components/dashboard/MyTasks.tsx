@@ -65,7 +65,7 @@ export function MyTasks({ tasks, search }: Props) {
               icon={SquareCheckBig}
               title="No tasks yet"
               action={
-                <Link to="/tasks?view=myday" className="btn-primary min-h-10 px-4 text-sm">
+                <Link to="/tasks?view=myday" className="btn-ghost min-h-10 px-4 text-sm">
                   <Plus className="h-4 w-4" aria-hidden /> Add a task
                 </Link>
               }

@@ -281,7 +281,7 @@ export function StaffPage() {
                         </div>
                       </div>
                       {m.archivedAt ? (
-                        <button type="button" className="btn-ghost sm:shrink-0" onClick={() => restore(m)} disabled={busy || !online} aria-busy={busy || undefined}>
+                        <button type="button" className="btn-ghost sm:shrink-0" onClick={() => restore(m)} disabled={busy || !online} aria-busy={busy || undefined} aria-label={`Restore ${m.name}`}>
                           {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <ArchiveRestore className="h-4 w-4" aria-hidden />} Restore
                         </button>
                       ) : (

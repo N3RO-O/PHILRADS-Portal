@@ -101,7 +101,7 @@ export function RecentActivity({ search }: { search: string }) {
               icon={Activity}
               title="Nothing has happened yet"
               action={
-                <Link to="/tasks?view=myday" className="btn-primary min-h-10 px-4 text-sm">
+                <Link to="/tasks?view=myday" className="btn-ghost min-h-10 px-4 text-sm">
                   Add your first task
                 </Link>
               }

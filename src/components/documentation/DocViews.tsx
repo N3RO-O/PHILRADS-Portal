@@ -366,8 +366,8 @@ export function DocSidePane({ mode, doc, links, projectName, onOpen }: { mode: E
           </>
         )}
         <div className="flex gap-2">
-          <button type="button" className="btn-primary min-h-10 flex-1 px-3 text-sm" onClick={onOpen}>
-            <Eye className="h-4 w-4" aria-hidden /> Open
+          <button type="button" className="btn-ghost min-h-10 flex-1 px-3 text-sm" onClick={onOpen}>
+            <Eye className="h-4 w-4" aria-hidden /> Open file
           </button>
           {links?.download && (
             <a className="btn-ghost min-h-10 px-3 text-sm" href={links.download} aria-label={`Download ${doc.title}`}>

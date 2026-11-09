@@ -93,7 +93,8 @@ function StepList({ onRun, nextRef, stacked }: { onRun: (s: Step) => void; nextR
           <button
             ref={isNext ? nextRef : undefined}
             type="button"
-            className={`${isNext ? 'btn-primary' : 'btn-ghost'} shrink-0 text-xs ${stacked ? 'mt-2.5 min-h-11 w-full' : 'min-h-9 px-3'}`}
+            // In the sheet (its own screen) the next step is the primary; on the Home card it stays ghost, picked out in Uplift.
+            className={`${isNext && stacked ? 'btn-primary' : isNext ? 'btn-ghost border-uplift/60 text-uplift' : 'btn-ghost'} shrink-0 text-xs ${stacked ? 'mt-2.5 min-h-11 w-full' : 'min-h-9 px-3'}`}
             onClick={() => onRun(s)}
           >
             {s.action}
@@ -164,7 +165,7 @@ function CoachMark({ target, text, below, onDone }: { target: RefObject<HTMLElem
         style={{ left: arrowLeft }}
       />
       <p className="text-ink">{text}</p>
-      <button type="button" className="btn-primary mt-3 min-h-9 px-4 text-xs" onClick={onDone} data-autofocus>
+      <button type="button" className="btn-ghost mt-3 min-h-9 px-4 text-xs" onClick={onDone} data-autofocus>
         Close the tip
       </button>
     </div>

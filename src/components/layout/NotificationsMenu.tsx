@@ -445,7 +445,7 @@ function NoteMenu({ note, onRead, onDelete }: { note: Note; onRead: () => void; 
             </button>
           )}
           <button type="button" className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-status-out hover:bg-status-out/10" onClick={() => (onDelete(), setOpen(null))}>
-            <Trash2 className="h-4 w-4" aria-hidden /> Delete
+            <Trash2 className="h-4 w-4" aria-hidden /> Delete notification
           </button>
         </span>,
         document.body,

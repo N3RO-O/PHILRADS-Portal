@@ -137,7 +137,7 @@ export function SyncSheet({ open, onClose, records, withFunding, onSynced }: Pro
       footer={
         done ? (
           <button type="button" className="btn-primary w-full" onClick={close}>
-            Close the sync
+            Close
           </button>
         ) : (
           <div className="flex flex-col gap-2">

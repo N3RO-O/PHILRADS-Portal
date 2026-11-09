@@ -288,7 +288,7 @@ export function DocumentationPage() {
             )}
             {canUpload && !selecting && (
               <button type="button" className={`${ready ? 'btn-primary' : 'btn-ghost'} hidden min-h-11 px-4 md:inline-flex`} onClick={() => setUploadOpen(true)} disabled={!ready || !online} title={!ready ? 'Google Drive isn’t connected yet' : undefined}>
-                <Upload className="h-4 w-4" aria-hidden /> Upload
+                <Upload className="h-4 w-4" aria-hidden /> Upload files
               </button>
             )}
             {canUpload && !selecting && (
@@ -439,7 +439,7 @@ export function DocumentationPage() {
             {shown.length && shown.every((d) => selected.has(d.id)) ? 'Select none' : `Select all ${shown.length}`}
           </button>
           <button type="button" className="btn-primary min-h-10 bg-status-out px-4 text-xs text-white" onClick={() => void deleteSelected()} disabled={!selected.size || deleting} aria-busy={deleting || undefined}>
-            {deleting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Trash2 className="h-4 w-4" aria-hidden />} Delete
+            {deleting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Trash2 className="h-4 w-4" aria-hidden />} Delete selected
           </button>
         </div>
       )}

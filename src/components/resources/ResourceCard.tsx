@@ -147,11 +147,11 @@ export function ResourceCard({ resource: r, canManage, onEdit, onPreview, select
         </p>
         {!selecting &&
           (link?.previewUrl ? (
-            <button type="button" className={main} onClick={() => onPreview(r)}>
+            <button type="button" className={main} onClick={() => onPreview(r)} aria-label={`Preview ${r.title}`}>
               <Eye className="h-3.5 w-3.5" aria-hidden /> Preview
             </button>
           ) : (
-            <a className={main} href={link?.openUrl ?? r.url} target="_blank" rel="noopener noreferrer">
+            <a className={main} href={link?.openUrl ?? r.url} target="_blank" rel="noopener noreferrer" aria-label={`Open ${r.title}`}>
               <ExternalLink className="h-3.5 w-3.5" aria-hidden /> Open
             </a>
           ))}
@@ -222,7 +222,7 @@ function MoreMenu({ title, openUrl, openLabel, downloadUrl, onCopy }: { title: s
             )}
             {downloadUrl && (
               <a role="menuitem" className={item} href={downloadUrl} target="_blank" rel="noopener noreferrer" onClick={close}>
-                <Download className="h-4 w-4 text-ink-soft" aria-hidden /> Download
+                <Download className="h-4 w-4 text-ink-soft" aria-hidden /> Download file
               </a>
             )}
             <button type="button" role="menuitem" className={item} onClick={() => (onCopy(), close())}>

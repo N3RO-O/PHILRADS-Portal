@@ -254,12 +254,12 @@ export function ResourceSidePane({
           </>
         )}
         <div className="grid grid-cols-2 gap-2">
-          <button type="button" className="btn-primary col-span-2 min-h-10 px-3 text-sm" onClick={() => onOpen(r)}>
-            {link?.previewUrl ? <Eye className="h-4 w-4" aria-hidden /> : <ExternalLink className="h-4 w-4" aria-hidden />} {link?.previewUrl ? 'Open preview' : 'Open'}
+          <button type="button" className="btn-ghost col-span-2 min-h-10 px-3 text-sm" onClick={() => onOpen(r)}>
+            {link?.previewUrl ? <Eye className="h-4 w-4" aria-hidden /> : <ExternalLink className="h-4 w-4" aria-hidden />} {link?.previewUrl ? 'Open preview' : 'Open link'}
           </button>
           {link?.downloadUrl && (
             <a className="btn-ghost min-h-10 px-3 text-sm" href={link.downloadUrl} target="_blank" rel="noopener noreferrer">
-              <Download className="h-4 w-4" aria-hidden /> Download
+              <Download className="h-4 w-4" aria-hidden /> Download file
             </a>
           )}
           <button
@@ -274,7 +274,7 @@ export function ResourceSidePane({
           </button>
           {canManage && (
             <button type="button" className="btn-ghost min-h-10 px-3 text-sm" onClick={() => onEdit(r)}>
-              <Pencil className="h-4 w-4" aria-hidden /> Edit
+              <Pencil className="h-4 w-4" aria-hidden /> Edit resource
             </button>
           )}
         </div>

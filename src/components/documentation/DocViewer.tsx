@@ -80,7 +80,7 @@ export function DocViewer({ doc, links, canEdit, events, places, onClose, onSave
                 <span className="sr-only">Delete (also in Google Drive)</span>
               </button>
               <button type="button" className="btn-ghost px-3" onClick={() => setEditing(true)}>
-                <Pencil className="h-4 w-4" aria-hidden /> Edit
+                <Pencil className="h-4 w-4" aria-hidden /> Edit details
               </button>
             </>
           )}
@@ -94,8 +94,8 @@ export function DocViewer({ doc, links, canEdit, events, places, onClose, onSave
               </button>
             </>
           ) : (
-            <a className={`btn-primary h-12 flex-1 ${links ? '' : 'pointer-events-none opacity-50'}`} href={links?.download} download={doc.fileName ?? doc.title}>
-              <Download className="h-4 w-4" aria-hidden /> Download
+            <a className={`btn-primary h-12 flex-1 ${links ? '' : 'pointer-events-none opacity-50'}`} href={links?.download} download={doc.fileName ?? doc.title} aria-disabled={!links || undefined}>
+              <Download className="h-4 w-4" aria-hidden /> {links ? 'Download file' : 'Getting the download link…'}
             </a>
           )}
         </div>

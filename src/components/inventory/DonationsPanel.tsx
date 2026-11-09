@@ -144,7 +144,7 @@ export function DonationsPanel({ donations, sample }: { donations: ImsDonation[]
             title="No donations recorded yet"
             action={
               env.imsUrl ? (
-                <a className="btn-primary min-h-10 px-4 text-sm" href={`${env.imsUrl}/donations.php`} target="_blank" rel="noopener noreferrer">
+                <a className="btn-ghost min-h-10 px-4 text-sm" href={`${env.imsUrl}/donations.php`} target="_blank" rel="noopener noreferrer">
                   Record a donation in the IMS
                 </a>
               ) : undefined

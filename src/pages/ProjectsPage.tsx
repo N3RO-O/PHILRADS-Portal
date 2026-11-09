@@ -380,7 +380,7 @@ function ProjectDetail({ project: p, me, canManage, canCost, people, onChanged, 
             )}
             {canManage && (
               <button type="button" className="btn-ghost min-h-10 px-3 text-xs" onClick={onEdit}>
-                <Pencil className="h-3.5 w-3.5" aria-hidden /> Edit
+                <Pencil className="h-3.5 w-3.5" aria-hidden /> Edit project
               </button>
             )}
           </div>
@@ -474,7 +474,7 @@ function PeopleToReach({ project: p, canManage, busy, act }: { project: Project;
         </p>
         {canManage && !editing && (
           <button type="button" className="btn-ghost min-h-9 px-3 text-xs" onClick={begin}>
-            <Pencil className="h-3.5 w-3.5" aria-hidden /> Change
+            <Pencil className="h-3.5 w-3.5" aria-hidden /> Change targets
           </button>
         )}
       </div>
@@ -502,7 +502,7 @@ function PeopleToReach({ project: p, canManage, busy, act }: { project: Project;
               Cancel
             </button>
             <button type="submit" className="btn-primary min-h-11 px-4" disabled={busy === 'people'} aria-busy={busy === 'people' || undefined}>
-              <BusyLabel busy={busy === 'people'} busyText="Saving…">Save the team</BusyLabel>
+              <BusyLabel busy={busy === 'people'} busyText="Saving…">Save targets</BusyLabel>
             </button>
           </div>
         </form>

@@ -126,7 +126,7 @@ export function ActivityLog({ movements, snapshot, initialType = '' }: Props) {
             title="No stock movements yet"
             action={
               imsUrl ? (
-                <a className="btn-primary min-h-10 px-4 text-sm" href={`${imsUrl}/inventory.php`} target="_blank" rel="noopener noreferrer">
+                <a className="btn-ghost min-h-10 px-4 text-sm" href={`${imsUrl}/inventory.php`} target="_blank" rel="noopener noreferrer">
                   Receive stock in the IMS
                 </a>
               ) : undefined

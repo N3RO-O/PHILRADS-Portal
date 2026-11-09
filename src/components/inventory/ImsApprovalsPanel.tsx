@@ -106,7 +106,7 @@ export function ImsApprovalsPanel({ releases, imsUrl, sample }: Props) {
                   if (!openImsAction(imsUrl, { act: 'release', id: r.id })) setBlocked(imsActionUrl(imsUrl, { act: 'release', id: r.id }));
                 }}
               >
-                <ExternalLink className="h-4 w-4" aria-hidden /> {imsUrl ? 'Review and approve in IMS' : 'Set the IMS link to approve'}
+                <ExternalLink className="h-4 w-4" aria-hidden /> {imsUrl ? 'Review and approve in IMS' : 'Approve in IMS (link not set up)'}
               </button>
             </li>
           );

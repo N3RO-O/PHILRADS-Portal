@@ -440,7 +440,7 @@ export function InventoryPage() {
                     )}
                     {(cat || loc || status || q) && (
                       <button type="button" className="chip shrink-0 justify-center gap-1" onClick={() => setParam({ cat: null, loc: null, status: null, within: null, q: null })}>
-                        <X className="h-3.5 w-3.5" aria-hidden /> Clear
+                        <X className="h-3.5 w-3.5" aria-hidden /> Clear filters
                       </button>
                     )}
                     <span className="ml-auto hidden shrink-0 text-xs text-muted sm:inline">

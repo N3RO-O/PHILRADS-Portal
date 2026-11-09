@@ -163,7 +163,7 @@ function FormEditor({ form }: { form: FormDef }) {
           </button>
         </div>
         <button type="button" className="btn-ghost min-h-10 px-3 text-sm" onClick={clear}>
-          <Eraser className="h-4 w-4" aria-hidden /> Clear
+          <Eraser className="h-4 w-4" aria-hidden /> Clear the form
         </button>
         <button type="button" className="btn-primary min-h-10 px-4 text-sm" onClick={print}>
           <Printer className="h-4 w-4" aria-hidden /> Print / Save as PDF

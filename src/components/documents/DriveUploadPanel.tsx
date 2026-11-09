@@ -5,6 +5,7 @@ import { formatBytes } from '../../lib/format';
 import { DriveNotConfiguredError, driveUploadService } from '../../services';
 import { drivePath, UPLOAD_RULES, uploadMetadataSchema, validateUploadFile } from '../../services/googleDrive';
 import { useAuth } from '../auth/AuthProvider';
+import { BusyLabel } from '../ui/BusyLabel';
 import { DOCUMENT_CATEGORIES, type DocumentCategory } from '../../types';
 
 interface Selected {
@@ -121,7 +122,7 @@ export function DriveUploadPanel() {
         </ul>
       )}
       <button type="button" className="btn-primary self-start" disabled={busy || valid.length === 0 || Boolean(blockedReason)} aria-busy={busy || undefined} aria-describedby={blockedReason ? `${inputId}-why` : undefined} onClick={() => void upload()}>
-        {busy ? 'Uploading…' : `Upload${valid.length ? ` ${valid.length} file${valid.length > 1 ? 's' : ''}` : ''}`}
+        <BusyLabel busy={busy} busyText="Uploading…">{`Upload${valid.length ? ` ${valid.length} file${valid.length > 1 ? 's' : ''}` : ' files'}`}</BusyLabel>
       </button>
       {(blockedReason || message) && (
         <p id={`${inputId}-why`} role="status" className="rounded-xl border border-line bg-surface-sunken px-4 py-3 text-sm text-ink">

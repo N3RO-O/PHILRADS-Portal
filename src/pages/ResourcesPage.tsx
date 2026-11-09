@@ -329,7 +329,7 @@ export function ResourcesPage() {
             </div>
             {filtersOn && (
               <button type="button" className="chip gap-1" onClick={() => (setSearch(''), setParam({ q: null, cat: null, by: null }))}>
-                <X className="h-3.5 w-3.5" aria-hidden /> Clear
+                <X className="h-3.5 w-3.5" aria-hidden /> Clear filters
               </button>
             )}
             {list.status === 'success' && (
@@ -411,7 +411,7 @@ export function ResourcesPage() {
             {ordered.length && ordered.every((r) => selected.has(r.id)) ? 'Select none' : `Select all ${ordered.length}`}
           </button>
           <button type="button" className="btn-primary min-h-10 bg-status-out px-4 text-xs text-white" onClick={() => void removeSelected()} disabled={!selected.size || removing} aria-busy={removing || undefined}>
-            {removing ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Trash2 className="h-4 w-4" aria-hidden />} Remove
+            {removing ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Trash2 className="h-4 w-4" aria-hidden />} Remove selected
           </button>
         </div>
       )}
