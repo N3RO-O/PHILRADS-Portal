@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-11-09.4",
+    "version": "1.10.1",
+    "date": "2026-11-09",
+    "title": "A new look for the sign-in screen",
+    "items": [
+      {
+        "icon": "palette",
+        "title": "Our work, behind the sign-in",
+        "body": "The sign-in screen now shows a collage of PHILRADS relief work that drifts slowly, warmed from burgundy to amber, with a soft light moving from photo to photo. It stays still if your phone is set to reduce motion."
+      },
+      {
+        "icon": "key-round",
+        "title": "Cleaner sign-in fields",
+        "body": "The faint box that showed under the email and password fields is gone."
+      }
+    ]
+  },
+  {
     "id": "2026-11-09.3",
     "version": "1.10.0",
     "date": "2026-11-09",

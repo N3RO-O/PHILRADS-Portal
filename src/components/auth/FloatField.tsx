@@ -17,7 +17,7 @@ type Props = Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value' | 
 };
 
 /**
- * A sign-in field that is kind about mistakes (see .ff in index.css):
+ * A sign-in field that is kind about mistakes (see .float-field in index.css):
  * - The label sits inside the box and floats to its top when you focus, type or the browser autofills,
  *   so it never disappears the way a placeholder does.
  * - Late to scold: no error while you are still typing; it shows when you leave the field or submit.
@@ -46,7 +46,7 @@ export const FloatField = forwardRef<HTMLInputElement, Props>(function FloatFiel
   const msgId = `${id}-msg`;
 
   return (
-    <div className="ff" data-state={showError ? 'error' : good ? 'good' : undefined}>
+    <div className="float-field" data-state={showError ? 'error' : good ? 'good' : undefined}>
       <div className="relative">
         <input
           ref={ref}
@@ -65,10 +65,10 @@ export const FloatField = forwardRef<HTMLInputElement, Props>(function FloatFiel
           }}
           aria-invalid={showError ? true : undefined}
           aria-describedby={msgId}
-          className={`field ff-input ${isPassword ? 'pr-12' : good ? 'pr-11' : ''} ${className}`}
+          className={`field float-field-input ${isPassword ? 'pr-12' : good ? 'pr-11' : ''} ${className}`}
           {...rest}
         />
-        <label htmlFor={id} className="ff-label">
+        <label htmlFor={id} className="float-field-label">
           {label}
         </label>
         {isPassword ? (
@@ -91,7 +91,7 @@ export const FloatField = forwardRef<HTMLInputElement, Props>(function FloatFiel
         )}
       </div>
       {/* Always here, so the form keeps its shape whether or not there is a message. */}
-      <p id={msgId} className="ff-msg" aria-live="polite">
+      <p id={msgId} className="float-field-msg" aria-live="polite">
         {showError ? <span key={problem} className="inline-block animate-fade-in">{problem}</span> : null}
       </p>
     </div>

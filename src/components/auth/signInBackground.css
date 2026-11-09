@@ -1,0 +1,179 @@
+/*
+ * Sign-in background (SignInBackground.tsx). Always dark, in both themes: the collage is a dark
+ * burgundy picture and the card is designed to sit on it.
+ */
+.sib {
+  background: #160b0d;
+}
+
+/* The collage, a little larger than the screen so it can drift without showing an edge. */
+.sib-photo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(112vw, 196vh);
+  height: max(112vh, 64vw);
+  max-width: none;
+  object-fit: cover;
+  transform: translate(-50%, -50%);
+  filter: saturate(1.15) contrast(1.06);
+  will-change: transform;
+  animation: sib-drift 64s ease-in-out infinite alternate;
+}
+@keyframes sib-drift {
+  0% {
+    transform: translate(-56%, -48%) scale(1);
+  }
+  50% {
+    transform: translate(-49%, -52%) scale(1.05);
+  }
+  100% {
+    transform: translate(-44%, -49%) scale(1.02);
+  }
+}
+
+/* Burgundy at the top, warm amber towards the bottom (the PRISM colours). */
+.sib-wash {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(122, 16, 22, 0.55) 0%, rgba(122, 16, 22, 0.18) 42%, rgba(214, 122, 28, 0.32) 100%),
+    linear-gradient(90deg, rgba(20, 8, 10, 0.55) 0%, rgba(20, 8, 10, 0) 30%, rgba(20, 8, 10, 0) 70%, rgba(20, 8, 10, 0.55) 100%);
+  mix-blend-mode: multiply;
+}
+/* A warm amber glow rising from the bottom, breathing slowly. */
+.sib-glow {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 90% 55% at 50% 108%, rgba(240, 150, 50, 0.42) 0%, rgba(240, 150, 50, 0) 70%),
+    radial-gradient(ellipse 50% 40% at 85% 0%, rgba(200, 40, 50, 0.3) 0%, rgba(200, 40, 50, 0) 70%);
+  mix-blend-mode: screen;
+  animation: sib-breathe 9s ease-in-out infinite alternate;
+}
+@keyframes sib-breathe {
+  from {
+    opacity: 0.7;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* A soft light that wanders from photo to photo, as if someone were looking through them. */
+.sib-spot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 56vmax;
+  height: 56vmax;
+  margin: -28vmax 0 0 -28vmax;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 196, 120, 0.55) 0%, rgba(255, 160, 80, 0.18) 35%, rgba(255, 160, 80, 0) 68%);
+  mix-blend-mode: soft-light;
+  will-change: transform;
+  animation: sib-wander 36s ease-in-out infinite;
+}
+@keyframes sib-wander {
+  0%,
+  100% {
+    transform: translate(18vw, 22vh);
+  }
+  20% {
+    transform: translate(70vw, 18vh);
+  }
+  40% {
+    transform: translate(84vw, 70vh);
+  }
+  60% {
+    transform: translate(42vw, 82vh);
+  }
+  80% {
+    transform: translate(12vw, 64vh);
+  }
+}
+
+/* Every so often a band of light sweeps across, corner to corner. */
+.sib-sweep {
+  position: absolute;
+  inset: -50%;
+  background: linear-gradient(115deg, transparent 44%, rgba(255, 214, 160, 0.16) 49%, rgba(255, 236, 200, 0.24) 50%, rgba(255, 214, 160, 0.16) 51%, transparent 56%);
+  mix-blend-mode: screen;
+  transform: translateX(-60%);
+  will-change: transform;
+  animation: sib-sweep 14s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+@keyframes sib-sweep {
+  0%,
+  55% {
+    transform: translateX(-60%);
+  }
+  100% {
+    transform: translateX(60%);
+  }
+}
+
+/* Halftone dots, strongest at the edges, like a printed poster. */
+.sib-dots {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 220, 190, 0.32) 1px, transparent 1.6px);
+  background-size: 6px 6px;
+  mix-blend-mode: overlay;
+  opacity: 0.55;
+  -webkit-mask-image: radial-gradient(ellipse at center, transparent 30%, #000 85%);
+  mask-image: radial-gradient(ellipse at center, transparent 30%, #000 85%);
+}
+
+/* A touch of film grain that flickers, so the picture feels alive even when it barely moves. */
+.sib-grain {
+  position: absolute;
+  inset: -20%;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  opacity: 0.09;
+  mix-blend-mode: overlay;
+  animation: sib-grain 0.9s steps(5) infinite;
+}
+@keyframes sib-grain {
+  0% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(-3%, 2%);
+  }
+  40% {
+    transform: translate(2%, -3%);
+  }
+  60% {
+    transform: translate(-2%, -1%);
+  }
+  80% {
+    transform: translate(3%, 3%);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+/* Dark edges and a quiet middle, so the eye lands on the card. */
+.sib-vignette {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 55% at 50% 50%, rgba(18, 8, 10, 0.35) 0%, rgba(18, 8, 10, 0) 70%),
+    radial-gradient(ellipse at center, rgba(12, 6, 8, 0) 45%, rgba(12, 6, 8, 0.78) 100%);
+}
+
+/* Less motion: the same picture, standing still (the global rule would only speed loops up). */
+@media (prefers-reduced-motion: reduce) {
+  .sib-photo,
+  .sib-spot,
+  .sib-sweep,
+  .sib-grain,
+  .sib-glow {
+    animation: none !important;
+  }
+  .sib-sweep {
+    display: none;
+  }
+}

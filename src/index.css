@@ -117,13 +117,13 @@
   .top-layer:popover-open {
     display: flex;
   }
-  /* Sign-in fields (FloatField.tsx): the label floats to the top of the box on focus, once filled
+  /* Sign-in fields (FloatField.tsx; not .ff, which is the forms page field): the label floats to the top of the box on focus, once filled
      or autofilled; a line under the box is kept for the message so nothing jumps. */
-  .field.ff-input {
+  .field.float-field-input {
     padding-top: 1.5rem;
     padding-bottom: 0.375rem;
   }
-  .ff-label {
+  .float-field-label {
     position: absolute;
     left: 1rem;
     top: 50%;
@@ -137,8 +137,8 @@
       font-size 180ms ease,
       color 150ms ease;
   }
-  .ff-input:focus + .ff-label,
-  .ff-input:not(:placeholder-shown) + .ff-label {
+  .float-field-input:focus + .float-field-label,
+  .float-field-input:not(:placeholder-shown) + .float-field-label {
     top: 0.4375rem;
     transform: none;
     font-size: 0.6875rem;
@@ -147,36 +147,36 @@
     letter-spacing: 0.02em;
   }
   /* Separate rules: a browser that doesn't know one of these selectors drops the whole list. */
-  .ff-input:-webkit-autofill + .ff-label {
+  .float-field-input:-webkit-autofill + .float-field-label {
     top: 0.4375rem;
     transform: none;
     font-size: 0.6875rem;
     line-height: 1;
     font-weight: 600;
   }
-  .ff-input:autofill + .ff-label {
+  .float-field-input:autofill + .float-field-label {
     top: 0.4375rem;
     transform: none;
     font-size: 0.6875rem;
     line-height: 1;
     font-weight: 600;
   }
-  .ff-input:focus + .ff-label {
+  .float-field-input:focus + .float-field-label {
     color: rgb(var(--uplift));
   }
-  .ff[data-state='error'] .ff-input {
+  .float-field[data-state='error'] .float-field-input {
     border-color: rgb(var(--status-out) / 0.75);
   }
-  .ff[data-state='error'] .ff-input:focus {
+  .float-field[data-state='error'] .float-field-input:focus {
     --tw-ring-color: rgb(var(--status-out) / 0.75);
   }
-  .ff[data-state='error'] .ff-label {
+  .float-field[data-state='error'] .float-field-label {
     color: rgb(var(--status-out));
   }
-  .ff[data-state='good'] .ff-input:not(:focus) {
+  .float-field[data-state='good'] .float-field-input:not(:focus) {
     border-color: rgb(var(--status-in) / 0.55);
   }
-  .ff-msg {
+  .float-field-msg {
     min-height: 1.25rem;
     padding: 0.25rem 0.25rem 0;
     font-size: 0.75rem;
