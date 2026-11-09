@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-11-09.5",
+    "version": "1.10.2",
+    "date": "2026-11-09",
+    "title": "A livelier sign-in background",
+    "items": [
+      {
+        "icon": "palette",
+        "title": "Our work, lit up one photo at a time",
+        "body": "The sign-in screen has a new, brighter collage of PHILRADS relief work. It drifts slowly, one photo at a time softly lights up, grain hovers over it and warm specks float up. On a computer it leans a little toward your mouse. It stays still if your device is set to reduce motion."
+      }
+    ]
+  },
+  {
     "id": "2026-11-09.4",
     "version": "1.10.1",
     "date": "2026-11-09",
