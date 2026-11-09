@@ -1,5 +1,38 @@
 [
   {
+    "id": "2026-11-09.1",
+    "version": "1.9.8",
+    "date": "2026-11-09",
+    "title": "A task timeline, a green check and a quicker code",
+    "items": [
+      {
+        "icon": "users",
+        "title": "Everyone's tasks as a timeline",
+        "body": "Tap a person in Active to see their tasks on a timeline: done work first, then what's under way and what's next by due date. The line fills up to where they are, the task they're working on glows, and late ones are marked in red."
+      },
+      {
+        "icon": "list-checks",
+        "title": "A green check when it's done",
+        "body": "Finished tasks and ticked subtasks now get a green check that pops in and draws itself."
+      },
+      {
+        "icon": "key-round",
+        "title": "The email code in six boxes",
+        "body": "Volunteers signing in type the emailed code into six boxes. Paste the whole code at once, or let your phone suggest it from the email; it signs you in as soon as the last digit is in."
+      },
+      {
+        "icon": "list-checks",
+        "title": "Office tasks skip the List",
+        "body": "When a new task is Office work, the List choice greys out, since lists are for field work."
+      },
+      {
+        "icon": "sparkles",
+        "title": "Clearer buttons",
+        "body": "Buttons now say what they do, each screen has one main button, and buttons keep their size while they work."
+      }
+    ]
+  },
+  {
     "id": "2026-11-07.8",
     "version": "1.9.7",
     "date": "2026-11-07",
