@@ -1,0 +1,916 @@
+<style>
+#dash-root { --dash-gutter: 0; }
+.ph {
+  --ph-burgundy: #640606;
+  --ph-burgundy-hover: #7a0b0b;
+  --ph-yellow: #EC952A;
+  --ph-accent: color-mix(in srgb, #9c1414 70%, var(--color-fg));
+  --ph-accent-soft: color-mix(in srgb, #9c1414 12%, transparent);
+  --ph-yellow-ink: color-mix(in srgb, #EC952A 72%, var(--color-fg));
+  --ph-yellow-soft: color-mix(in srgb, #EC952A 18%, transparent);
+  --ph-muted-soft: color-mix(in srgb, var(--color-fg) 7%, transparent);
+  --ph-head: "Archivo Black", "Arial Black", "Helvetica Neue", Arial, sans-serif;
+  --ph-body: "Montserrat", var(--font-anthropic-sans), system-ui, sans-serif;
+  container: ph / inline-size;
+  position: relative;
+  font-family: var(--ph-body);
+  font-size: var(--cds-font-size-body);
+  color: var(--color-fg);
+  line-height: 1.5;
+}
+.ph *, .ph *::before, .ph *::after { box-sizing: border-box; }
+.ph button { font: inherit; color: inherit; }
+.ph svg.ph-i { width: 1.125rem; height: 1.125rem; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ph :focus-visible { outline: 2px solid var(--ph-yellow); outline-offset: 2px; }
+.ph-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Shell */
+.ph-shell { display: grid; grid-template-columns: minmax(0, 1fr); min-height: 100%; }
+.ph-side { display: none; background: var(--ph-burgundy); color: #fff; width: 15.5rem; transition: width var(--cds-dur-slow) var(--cds-ease-out); }
+.ph[data-collapsed] .ph-side { width: 4.75rem; }
+.ph-side-in { position: sticky; top: 0; display: flex; flex-direction: column; gap: var(--cds-gap-lg); max-height: 100vh; overflow-y: auto; padding: var(--cds-pad-lg) var(--cds-pad-md); }
+.ph-brand { display: flex; align-items: center; gap: var(--cds-gap-sm); padding: 0 var(--cds-pad-xs); min-height: 2.75rem; }
+.ph-emblem { width: 2.5rem; height: 2.5rem; flex: none; display: block; }
+.ph-brand-txt { display: flex; flex-direction: column; line-height: 1.1; min-width: 0; }
+.ph-word { font-family: var(--ph-head); font-size: 1.25rem; letter-spacing: .02em; color: #fff; }
+.ph-brand-sub { font-size: var(--cds-font-size-caption); letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.72); }
+.ph[data-collapsed] .ph-brand-txt, .ph[data-collapsed] .ph-nav-label, .ph[data-collapsed] .ph-nav-group-label, .ph[data-collapsed] .ph-slogan, .ph[data-collapsed] .ph-collapse-label { display: none; }
+.ph[data-collapsed] .ph-brand { justify-content: center; padding: 0; }
+
+.ph-nav { display: flex; flex-direction: column; gap: var(--cds-gap-md); }
+.ph-nav-group { display: flex; flex-direction: column; gap: 2px; }
+.ph-nav-group-label { font-size: var(--cds-font-size-caption); font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.55); padding: 0 var(--cds-pad-sm) var(--cds-pad-xs); }
+.ph-nav-item { display: flex; align-items: center; gap: var(--cds-gap-sm); width: 100%; min-height: 2.75rem; padding: 0 var(--cds-pad-sm); border: 0; border-radius: var(--cds-radius); background: transparent; color: rgba(255,255,255,.84) !important; text-align: left; cursor: pointer; font-weight: 500; }
+.ph-nav-item:hover { background: rgba(255,255,255,.09); color: #fff !important; }
+.ph-nav-item[aria-current="page"] { background: rgba(255,255,255,.15); color: #fff !important; font-weight: 700; box-shadow: inset 3px 0 0 var(--ph-yellow); }
+.ph[data-collapsed] .ph-nav-item { justify-content: center; padding: 0; }
+.ph-side-foot { margin-top: auto; display: flex; flex-direction: column; gap: var(--cds-gap-sm); }
+.ph-slogan { margin: 0; padding: 0 var(--cds-pad-sm); font-size: var(--cds-font-size-caption); font-weight: 700; letter-spacing: .04em; color: var(--ph-yellow); }
+.ph-collapse { display: flex; align-items: center; gap: var(--cds-gap-sm); min-height: 2.5rem; padding: 0 var(--cds-pad-sm); border: 1px solid rgba(255,255,255,.18); border-radius: var(--cds-radius); background: transparent; color: rgba(255,255,255,.84) !important; cursor: pointer; font-size: var(--cds-font-size-caption); }
+.ph-collapse:hover { background: rgba(255,255,255,.09); }
+.ph[data-collapsed] .ph-collapse { justify-content: center; padding: 0; }
+.ph[data-collapsed] .ph-collapse svg { transform: scaleX(-1); }
+
+/* Mobile top bar + drawer */
+.ph-mtop { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: var(--cds-gap-sm); padding: var(--cds-pad-sm) var(--cds-pad-md); background: var(--ph-burgundy); color: #fff; }
+.ph-mtop .ph-emblem { width: 2rem; height: 2rem; }
+.ph-mtop .ph-word { font-size: 1.05rem; }
+.ph-iconbtn { display: inline-flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; border: 0; border-radius: var(--cds-radius); background: transparent; cursor: pointer; position: relative; }
+.ph-mtop .ph-iconbtn { color: #fff !important; }
+.ph-mtop .ph-iconbtn:hover { background: rgba(255,255,255,.1); }
+.ph-drawer { position: absolute; top: 100%; left: 0; right: 0; max-height: min(75vh, 34rem); overflow-y: auto; background: var(--ph-burgundy); padding: var(--cds-pad-sm) var(--cds-pad-md) var(--cds-pad-lg); border-top: 1px solid rgba(255,255,255,.14); box-shadow: 0 12px 24px rgba(0,0,0,.25); display: flex; flex-direction: column; gap: var(--cds-gap-md); }
+.ph-drawer[hidden] { display: none; }
+
+@container ph (min-width: 900px) {
+  .ph-shell { grid-template-columns: auto minmax(0, 1fr); }
+  .ph-side { display: block; }
+  .ph-mtop { display: none; }
+}
+
+/* Header */
+.ph-main { min-width: 0; display: flex; flex-direction: column; }
+.ph-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--cds-gap-md); padding: var(--cds-pad-lg) var(--cds-pad-lg) var(--cds-pad-md); border-bottom: 1px solid var(--color-border-line); }
+.ph-head-l { min-width: 0; }
+.ph-title { margin: 0; font-family: var(--ph-head); font-weight: 400; font-size: var(--cds-font-size-title); line-height: 1.15; color: var(--color-fg); }
+.ph-sub { margin: 2px 0 0; color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
+.ph-head-r { display: flex; align-items: center; gap: var(--cds-gap-sm); flex-wrap: wrap; flex: 1 1 22rem; justify-content: flex-end; }
+.ph-search { display: flex; align-items: center; gap: var(--cds-gap-xs); flex: 1 1 14rem; max-width: 24rem; min-height: 2.5rem; padding: 0 var(--cds-pad-sm); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: var(--color-panel); color: var(--color-fg-muted); }
+.ph-search:focus-within { border-color: var(--ph-accent); }
+.ph-search input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--color-fg); font: inherit; outline: none; padding: var(--cds-pad-xs) 0; }
+.ph-net { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: var(--cds-font-size-caption); font-weight: 600; background: var(--ph-muted-soft); color: var(--color-fg-muted); white-space: nowrap; }
+.ph-net::before { content: ""; width: .5rem; height: .5rem; border-radius: 50%; background: var(--color-ok); }
+.ph-net[data-state="off"] { background: var(--ph-yellow-soft); color: var(--color-fg); }
+.ph-net[data-state="off"]::before { background: var(--color-bad); }
+.ph-pop-wrap { position: relative; }
+.ph-head .ph-iconbtn { color: var(--color-fg); border: 1px solid var(--color-border-line); background: var(--color-panel); width: 2.5rem; height: 2.5rem; }
+.ph-head .ph-iconbtn:hover { border-color: var(--ph-accent); }
+.ph-dot { position: absolute; top: 7px; right: 8px; width: .5rem; height: .5rem; border-radius: 50%; background: var(--ph-yellow); box-shadow: 0 0 0 2px var(--color-panel); }
+.ph-profile-btn { display: inline-flex; align-items: center; gap: var(--cds-gap-xs); min-height: 2.5rem; padding: 3px 8px 3px 3px; border: 1px solid var(--color-border-line); border-radius: 999px; background: var(--color-panel); cursor: pointer; }
+.ph-profile-btn:hover { border-color: var(--ph-accent); }
+.ph-avatar { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: 50%; background: var(--ph-burgundy); color: #fff; font-weight: 700; font-size: var(--cds-font-size-caption); letter-spacing: .04em; flex: none; }
+.ph-profile-name { font-weight: 600; font-size: var(--cds-font-size-caption); max-width: 9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@container ph (max-width: 560px) { .ph-profile-name, .ph-profile-btn .ph-i { display: none; } .ph-profile-btn { padding: 3px; } }
+.ph-pop { position: absolute; top: calc(100% + 6px); right: 0; z-index: 40; width: min(22rem, calc(100vw - 2rem)); background: var(--cds-surface-popover); border: 1px solid var(--cds-border); border-radius: var(--cds-radius); box-shadow: var(--cds-shadow-popover); padding: var(--cds-pad-md); }
+.ph-pop[hidden] { display: none; }
+.ph-pop-title { margin: 0 0 var(--cds-gap-sm); display: flex; align-items: center; justify-content: space-between; gap: var(--cds-gap-sm); font-weight: 700; }
+.ph-pop-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.ph-pop-list li { padding: var(--cds-pad-sm) 0; border-top: 1px solid var(--color-border-line); }
+.ph-pop-list li:first-child { border-top: 0; }
+.ph-pop-item-title { font-weight: 600; font-size: var(--cds-font-size-caption); }
+.ph-pop-item-meta { color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
+.ph-menu-id { display: flex; gap: var(--cds-gap-sm); align-items: center; padding-bottom: var(--cds-pad-sm); border-bottom: 1px solid var(--color-border-line); }
+.ph-menu-id .ph-avatar { width: 2.5rem; height: 2.5rem; }
+.ph-menu-name { font-weight: 700; }
+.ph-menu-role { color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
+.ph-menu-items { display: flex; flex-direction: column; padding: var(--cds-pad-xs) 0; }
+.ph-menu-item { display: flex; align-items: center; gap: var(--cds-gap-sm); min-height: 2.5rem; padding: 0 var(--cds-pad-xs); border: 0; border-radius: var(--cds-radius); background: transparent; cursor: pointer; text-align: left; }
+.ph-menu-item:hover:not([aria-disabled="true"]) { background: var(--ph-muted-soft); }
+.ph-menu-item[aria-disabled="true"] { cursor: default; color: var(--color-fg-muted); }
+.ph-menu-note { margin: 0; padding-top: var(--cds-pad-sm); border-top: 1px solid var(--color-border-line); color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
+
+/* Content */
+.ph-content { container: phc / inline-size; padding: var(--cds-pad-lg); display: flex; flex-direction: column; gap: var(--cds-gap-lg); }
+.ph-page { display: flex; flex-direction: column; gap: var(--cds-gap-lg); }
+.ph-page[hidden] { display: none; }
+.ph-demo { display: flex; gap: var(--cds-gap-sm); align-items: flex-start; margin: 0; padding: var(--cds-pad-sm) var(--cds-pad-md); border-radius: var(--cds-radius); background: var(--ph-yellow-soft); border-left: 4px solid var(--ph-yellow); font-size: var(--cds-font-size-caption); }
+.ph-demo strong { font-weight: 700; }
+.ph-demo .ph-i { color: var(--ph-yellow-ink); margin-top: 1px; }
+
+.ph-welcome { display: grid; grid-template-columns: minmax(0, 1fr); background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); overflow: hidden; }
+.ph-welcome-txt { padding: var(--cds-pad-lg) var(--cds-pad-xl) var(--cds-pad-lg) var(--cds-pad-lg); display: flex; flex-direction: column; gap: var(--cds-gap-sm); border-top: 4px solid var(--ph-yellow); }
+.ph-eyebrow { margin: 0; font-size: var(--cds-font-size-caption); font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--ph-accent); }
+.ph-greet { margin: 0; font-family: var(--ph-head); font-weight: 400; font-size: clamp(1.5rem, 3.4cqi, 2.25rem); line-height: 1.15; color: var(--color-fg); }
+.ph-welcome-msg { margin: 0; max-width: 46rem; color: var(--color-fg-muted); }
+.ph-welcome-act { display: flex; flex-wrap: wrap; align-items: center; gap: var(--cds-gap-md); margin-top: var(--cds-gap-xs); }
+.ph-welcome-tile { display: none; background: var(--ph-burgundy); color: #fff; padding: var(--cds-pad-lg); flex-direction: column; align-items: center; justify-content: center; gap: var(--cds-gap-sm); text-align: center; }
+.ph-welcome-tile .ph-emblem { width: 5.5rem; height: 5.5rem; }
+.ph-welcome-tile .ph-slogan { padding: 0; font-size: var(--cds-font-size-body); max-width: 13rem; }
+@container phc (min-width: 640px) {
+  .ph-welcome { grid-template-columns: minmax(0, 1fr) 15rem; }
+  .ph-welcome-tile { display: flex; }
+  .ph-welcome-txt { border-top: 0; }
+  .ph-welcome-act .ph-slogan { display: none; }
+}
+.ph-welcome-act .ph-slogan { padding: 0; color: var(--ph-accent); }
+
+.ph-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--cds-gap-xs); min-height: 2.75rem; padding: 0 var(--cds-pad-md); border-radius: var(--cds-radius); border: 1px solid transparent; cursor: pointer; font-weight: 700; text-decoration: none; }
+.ph-btn-primary { background: var(--ph-burgundy); color: #fff !important; border-color: color-mix(in srgb, #fff 12%, var(--ph-burgundy)); }
+.ph-btn-primary:hover { background: var(--ph-burgundy-hover); }
+.ph-btn-ghost { background: transparent; border-color: var(--color-border-line); color: var(--color-fg); }
+.ph-btn-ghost:hover { border-color: var(--ph-accent); color: var(--ph-accent); }
+.ph-link { display: inline-flex; align-items: center; gap: 4px; border: 0; background: transparent; padding: 4px 0; color: var(--ph-accent) !important; font-weight: 700; font-size: var(--cds-font-size-caption); cursor: pointer; white-space: nowrap; }
+.ph-link:hover { text-decoration: underline; }
+.ph-link .ph-i { width: 1rem; height: 1rem; }
+
+/* Summary cards */
+.ph-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 10.5rem), 1fr)); gap: var(--cds-gap-md); }
+.ph-stat { display: flex; flex-direction: column; gap: var(--cds-gap-xs); text-align: left; padding: var(--cds-pad-md); background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); cursor: pointer; min-height: 8.5rem; }
+.ph-stat:hover { border-color: var(--ph-accent); }
+.ph-stat-top { display: flex; align-items: center; gap: var(--cds-gap-sm); }
+.ph-chip-ico { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: var(--cds-radius); background: var(--ph-accent-soft); color: var(--ph-accent); flex: none; }
+.ph-chip-ico.is-warn { background: var(--ph-yellow-soft); color: var(--ph-yellow-ink); }
+.ph-stat-label { font-size: var(--cds-font-size-caption); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--color-fg-muted); line-height: 1.25; }
+.ph-stat-num { display: block; margin-top: auto; font-family: var(--ph-head); font-weight: 400; font-size: 2rem; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--color-fg); min-height: 2.2rem; }
+.ph-stat-num.dash-skeleton { max-width: 4rem; }
+.ph-stat-note { display: block; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+
+/* Columns */
+.ph-cols { display: flex; flex-direction: column; gap: var(--cds-gap-lg); }
+.ph-col { display: contents; }
+.ph-o-qa { order: 1; } .ph-o-tasks { order: 2; } .ph-o-activity { order: 3; } .ph-o-verse { order: 4; } .ph-o-inv { order: 5; } .ph-o-chart { order: 6; }
+@container phc (min-width: 880px) {
+  .ph-cols { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); align-items: start; }
+  .ph-col { display: flex; flex-direction: column; gap: var(--cds-gap-lg); min-width: 0; }
+}
+
+.ph-card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); display: flex; flex-direction: column; gap: var(--cds-gap-md); min-width: 0; }
+.ph-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--cds-gap-sm); }
+.ph-card-title { margin: 0; font-size: var(--cds-font-size-caption); font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--color-fg); }
+.ph-card-note { margin: 2px 0 0; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.ph-tag { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 999px; background: var(--ph-yellow-soft); color: var(--color-fg); font-size: 0.6875rem; font-weight: 700; letter-spacing: .04em; text-transform: none; vertical-align: 1px; }
+
+.ph-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.ph-chipbtn { min-height: 2rem; padding: 0 12px; border-radius: 999px; border: 1px solid var(--color-border-line); background: transparent; cursor: pointer; font-size: var(--cds-font-size-caption); font-weight: 600; color: var(--color-fg-muted) !important; }
+.ph-chipbtn:hover { border-color: var(--ph-accent); }
+.ph-chipbtn[aria-pressed="true"] { background: var(--ph-burgundy); border-color: var(--ph-burgundy); color: #fff !important; }
+.ph-empty { margin: 0; padding: var(--cds-pad-md) 0; text-align: center; color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
+.ph-empty[hidden] { display: none; }
+
+/* Tables */
+.ph-table { width: 100%; border-collapse: collapse; font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; }
+.ph-table th { text-align: left; font-weight: 700; color: var(--color-fg-muted); letter-spacing: .04em; padding: 0 var(--cds-pad-sm) var(--cds-pad-xs); border-bottom: 1px solid var(--color-border-line); white-space: nowrap; }
+.ph-table td { padding: var(--cds-pad-sm); border-bottom: 1px solid var(--color-border-line); vertical-align: middle; }
+.ph-table tr:last-child td { border-bottom: 0; }
+.ph-table th:first-child, .ph-table td:first-child { padding-left: 0; }
+.ph-table th:last-child, .ph-table td:last-child { padding-right: 0; }
+.ph-table .num { text-align: right; }
+.ph-task-title { font-weight: 600; font-size: var(--cds-font-size-body); color: var(--color-fg); }
+.ph-pill { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 999px; font-weight: 700; font-size: 0.75rem; white-space: nowrap; background: var(--ph-muted-soft); color: var(--color-fg-muted); }
+.ph-pill[data-v="High"] { background: var(--ph-accent-soft); color: var(--ph-accent); }
+.ph-pill[data-v="Medium"] { background: var(--ph-yellow-soft); color: var(--color-fg); }
+.ph-status::before { content: ""; width: .45rem; height: .45rem; border-radius: 50%; background: var(--color-fg-muted); }
+.ph-status[data-v="In progress"]::before { background: var(--ph-yellow); }
+.ph-status[data-v="Review"]::before { background: var(--ph-accent); }
+.ph-status[data-v="Done"]::before { background: var(--color-ok); }
+.ph-status { background: transparent; color: var(--color-fg); padding-left: 0; font-weight: 600; }
+.ph-mod { color: var(--color-fg-muted); }
+@container phc (max-width: 600px) {
+  .ph-tasks thead { display: none; }
+  .ph-tasks, .ph-tasks tbody { display: block; }
+  .ph-tasks tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px var(--cds-gap-sm); padding: var(--cds-pad-sm) 0; border-bottom: 1px solid var(--color-border-line); }
+  .ph-tasks tr:last-child { border-bottom: 0; }
+  .ph-tasks td { display: block; padding: 0 !important; border: 0; }
+  .ph-tasks td.c-title { grid-column: 1 / -1; }
+  .ph-tasks td.c-mod { display: none; }
+  .ph-tasks td.c-due { grid-column: 1; grid-row: 2; color: var(--color-fg-muted); }
+  .ph-tasks td.c-due::before { content: "Due "; }
+  .ph-tasks td.c-pri { grid-column: 2; grid-row: 2; justify-self: end; }
+  .ph-tasks td.c-status { grid-column: 1 / -1; grid-row: 3; }
+  .ph-inv .c-wh { display: none; }
+}
+.ph-bar { display: block; height: 4px; margin-top: 4px; border-radius: 4px; background: var(--ph-muted-soft); overflow: hidden; min-width: 3rem; }
+.ph-bar > span { display: block; height: 100%; border-radius: 4px; background: var(--color-ok); }
+.ph-inv tr.is-low .ph-bar > span { background: var(--cds-chart-status-critical); }
+.ph-low-dot { display: inline-block; width: .45rem; height: .45rem; border-radius: 50%; margin-right: 6px; background: var(--cds-chart-status-critical); vertical-align: 1px; }
+.ph-inv-item { font-weight: 600; color: var(--color-fg); }
+
+/* Activity feed */
+.ph-feed { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 6rem; }
+.ph-feed-day { padding: var(--cds-pad-sm) 0 var(--cds-pad-xs); font-size: var(--cds-font-size-caption); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--color-fg-muted); }
+.ph-feed-day:first-child { padding-top: 0; }
+.ph-feed-item { display: grid; grid-template-columns: 2rem minmax(0, 1fr); gap: var(--cds-gap-sm); padding: var(--cds-pad-sm) 0; position: relative; }
+.ph-feed-item + .ph-feed-item::before { content: ""; position: absolute; left: 1rem; top: -0.5rem; height: 1rem; border-left: 1px solid var(--color-border-line); }
+.ph-feed-ico { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: 50%; background: var(--ph-muted-soft); color: var(--color-fg-muted); }
+.ph-feed-ico .ph-i { width: 1rem; height: 1rem; }
+.ph-feed-ico[data-t="Response"] { background: var(--ph-accent-soft); color: var(--ph-accent); }
+.ph-feed-ico[data-t="Inventory"] { background: var(--ph-yellow-soft); color: var(--ph-yellow-ink); }
+.ph-feed-title { font-weight: 600; }
+.ph-feed-detail { color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
+.ph-feed-meta { color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); margin-top: 2px; }
+.ph-feed-meta .ph-type { font-weight: 700; color: var(--color-fg); }
+
+/* Quick actions */
+.ph-qa { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 9rem), 1fr)); gap: var(--cds-gap-sm); }
+.ph-qa-btn { display: flex; flex-direction: column; align-items: flex-start; gap: var(--cds-gap-xs); min-height: 4.5rem; padding: var(--cds-pad-sm); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: transparent; cursor: pointer; text-align: left; font-weight: 600; font-size: var(--cds-font-size-caption); line-height: 1.3; }
+.ph-qa-btn:hover { border-color: var(--ph-accent); background: var(--ph-accent-soft); }
+.ph-qa-btn .ph-i { color: var(--ph-accent); }
+
+/* Verse */
+.ph-verse { position: relative; overflow: hidden; border-left: 4px solid var(--ph-yellow); }
+.ph-verse::after { content: "\201C"; position: absolute; right: 12px; top: -18px; font-family: var(--font-anthropic-serif); font-size: 8rem; line-height: 1; color: var(--ph-yellow-soft); pointer-events: none; }
+.ph-verse-q { margin: 0; position: relative; z-index: 1; }
+.ph-verse-text { margin: 0; font-family: var(--font-anthropic-serif); font-size: 1.2rem; line-height: 1.5; color: var(--color-fg); }
+.ph-verse-ref { margin-top: var(--cds-gap-sm); font-size: var(--cds-font-size-caption); font-weight: 700; letter-spacing: .06em; color: var(--ph-accent); }
+.ph-verse-act { display: flex; align-items: center; gap: var(--cds-gap-sm); flex-wrap: wrap; position: relative; z-index: 1; }
+.ph-copy-status { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+
+/* Chart */
+.ph-chart { position: relative; min-height: 200px; }
+.ph-chart svg { display: block; overflow: visible; }
+.ph-chart text { font-family: var(--ph-body); font-size: 11px; fill: var(--color-fg-muted); }
+.ph-chart .v { fill: var(--color-fg); font-weight: 700; }
+.ph-chart rect.bar { fill: var(--ph-accent); }
+.ph-chart rect.bar.is-hover { fill: var(--ph-burgundy); }
+.ph-tip { position: absolute; pointer-events: none; z-index: 5; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); border-radius: var(--cds-radius); box-shadow: var(--cds-shadow-popover); padding: var(--cds-pad-xs) var(--cds-pad-sm); font-size: var(--cds-font-size-caption); white-space: nowrap; }
+.ph-tip[hidden] { display: none; }
+.ph-tip-k { color: var(--cds-text-secondary); }
+.ph-tip-v { font-weight: 700; }
+
+/* Placeholder modules */
+.ph-ph { display: flex; flex-direction: column; gap: var(--cds-gap-md); max-width: 46rem; }
+.ph-ph-hero { display: flex; gap: var(--cds-gap-md); align-items: flex-start; }
+.ph-ph-hero .ph-chip-ico { width: 3rem; height: 3rem; }
+.ph-ph-hero .ph-chip-ico .ph-i { width: 1.5rem; height: 1.5rem; }
+.ph-ph h2 { margin: 0; font-family: var(--ph-head); font-weight: 400; font-size: var(--cds-font-size-title); line-height: 1.2; }
+.ph-ph p { margin: 0; }
+.ph-ph-status { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; padding: 2px 10px; border-radius: 999px; background: var(--ph-yellow-soft); font-size: var(--cds-font-size-caption); font-weight: 700; }
+.ph-ph-action { padding: var(--cds-pad-sm) var(--cds-pad-md); border-radius: var(--cds-radius); border: 1px dashed var(--color-border-line); font-size: var(--cds-font-size-caption); }
+.ph-ph-action[hidden] { display: none; }
+.ph-ph ul { margin: 0; padding-left: 1.25rem; display: flex; flex-direction: column; gap: 4px; }
+
+.ph-fail { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: inherit; height: 100%; color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
+.ph-fail::before { content: ""; width: .375rem; height: .375rem; border-radius: 50%; background: var(--color-bad); }
+
+.ph-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--cds-gap-sm); padding: var(--cds-pad-md) var(--cds-pad-lg); border-top: 1px solid var(--color-border-line); color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
+.ph-foot a { color: var(--ph-accent); font-weight: 600; }
+
+.ph [data-dash-source-state=refreshing] { opacity: .5; transition: opacity var(--cds-dur-slow); }
+.ph [data-dash-source-state=empty] { color: transparent; }
+
+@container ph (max-width: 560px) {
+  .ph-head { padding: var(--cds-pad-md); }
+  .ph-content { padding: var(--cds-pad-md); }
+  .ph-card { padding: var(--cds-pad-md); }
+  .ph-welcome-txt { padding: var(--cds-pad-md); }
+  .ph-search { max-width: none; flex-basis: 100%; order: -1; }
+  .ph-head-r { justify-content: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) { .ph-side { transition: none; } }
+</style>
+
+<div class="ph" id="ph">
+  <div class="ph-shell">
+    <aside class="ph-side" aria-label="Main navigation">
+      <div class="ph-side-in">
+        <div class="ph-brand">
+          <img class="ph-emblem" src="data:image/png;base64,__EMBLEM__" alt="PHILRADS emblem" width="40" height="40">
+          <div class="ph-brand-txt"><span class="ph-word">PHILRADS</span><span class="ph-brand-sub">Staff Portal</span></div>
+        </div>
+        <nav class="ph-nav" data-nav aria-label="Modules"></nav>
+        <div class="ph-side-foot">
+          <p class="ph-slogan">Serving People in Jesus&rsquo; Name.</p>
+          <button class="ph-collapse" type="button" aria-pressed="false" title="Collapse sidebar">
+            <svg class="ph-i" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/><path d="m16 15-3-3 3-3"/></svg>
+            <span class="ph-collapse-label">Collapse sidebar</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <div class="ph-main">
+      <div class="ph-mtop">
+        <button class="ph-iconbtn ph-menu-toggle" type="button" aria-expanded="false" aria-controls="ph-drawer" aria-label="Open navigation">
+          <svg class="ph-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <img class="ph-emblem" src="data:image/png;base64,__EMBLEM__" alt="" width="32" height="32">
+        <span class="ph-word">PHILRADS</span>
+        <div class="ph-drawer" id="ph-drawer" hidden>
+          <nav class="ph-nav" data-nav aria-label="Modules"></nav>
+          <p class="ph-slogan">Serving People in Jesus&rsquo; Name.</p>
+        </div>
+      </div>
+
+      <header class="ph-head">
+        <div class="ph-head-l">
+          <h1 class="ph-title" id="ph-title">Home</h1>
+          <p class="ph-sub">Welcome, <span data-source="sample_profile" data-field="display_name" data-row="0" class="dash-skeleton">&mdash;</span> &middot; <span class="ph-today"></span></p>
+        </div>
+        <div class="ph-head-r">
+          <label class="ph-search">
+            <svg class="ph-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <span class="ph-sr">Search tasks and activity</span>
+            <input class="ph-q" type="search" placeholder="Search tasks and activity" autocomplete="off">
+          </label>
+          <span class="ph-net" data-state="on" role="status">Online</span>
+          <div class="ph-pop-wrap">
+            <button class="ph-iconbtn" type="button" aria-expanded="false" aria-controls="ph-notif" aria-label="Notifications" data-pop="ph-notif">
+              <svg class="ph-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>
+              <span class="ph-dot" aria-hidden="true"></span>
+            </button>
+            <div class="ph-pop" id="ph-notif" hidden>
+              <p class="ph-pop-title">Notifications <span class="ph-tag">Sample</span></p>
+              <ul class="ph-pop-list" data-source="sample_activity"></ul>
+            </div>
+          </div>
+          <div class="ph-pop-wrap">
+            <button class="ph-profile-btn" type="button" aria-expanded="false" aria-controls="ph-menu" data-pop="ph-menu" aria-label="Account menu">
+              <span class="ph-avatar" data-source="sample_profile" data-field="initials" data-row="0">&mdash;</span>
+              <span class="ph-profile-name" data-source="sample_profile" data-field="display_name" data-row="0">&mdash;</span>
+              <svg class="ph-i" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div class="ph-pop" id="ph-menu" hidden>
+              <div class="ph-menu-id">
+                <span class="ph-avatar" data-source="sample_profile" data-field="initials" data-row="0">&mdash;</span>
+                <div>
+                  <div class="ph-menu-name" data-source="sample_profile" data-field="display_name" data-row="0">&mdash;</div>
+                  <div class="ph-menu-role"><span data-source="sample_profile" data-field="role" data-row="0">&mdash;</span> &middot; <span data-source="sample_profile" data-field="office" data-row="0">&mdash;</span></div>
+                </div>
+              </div>
+              <div class="ph-menu-items">
+                <button class="ph-menu-item" type="button" data-go="my-tasks">
+                  <svg class="ph-i" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/></svg>My tasks
+                </button>
+                <button class="ph-menu-item" type="button" aria-disabled="true">
+                  <svg class="ph-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>Install app &mdash; in the deployed portal
+                </button>
+              </div>
+              <p class="ph-menu-note">Demo profile. Staff sign-in arrives when the portal is connected to Supabase Auth.</p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="ph-content">
+        <section class="ph-page" data-page="home" id="home" aria-labelledby="ph-title">
+          <p class="ph-demo" role="note">
+            <svg class="ph-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            <span><strong>Sample data.</strong> Every figure, task and activity on this page is demonstration data, not live PHILRADS records. Live figures will come from Supabase once the portal is connected.</span>
+          </p>
+
+          <section class="ph-welcome" id="welcome" aria-label="Welcome">
+            <div class="ph-welcome-txt">
+              <p class="ph-eyebrow">PHILRADS Staff Portal</p>
+              <h2 class="ph-greet">Good day, <span data-source="sample_profile" data-field="display_name" data-row="0" class="dash-skeleton">&mdash;</span></h2>
+              <p class="ph-welcome-msg">Welcome to the PHILRADS Staff Portal. Manage your work, coordinate activities, and stay informed about our ongoing programs and response operations.</p>
+              <div class="ph-welcome-act">
+                <button class="ph-btn ph-btn-primary" type="button" data-go="my-tasks">
+                  View my tasks
+                  <svg class="ph-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </button>
+                <p class="ph-slogan">Serving People in Jesus&rsquo; Name.</p>
+              </div>
+            </div>
+            <div class="ph-welcome-tile" aria-hidden="true">
+              <img class="ph-emblem" src="data:image/png;base64,__EMBLEM__" alt="" width="88" height="88">
+              <p class="ph-slogan">Serving People in Jesus&rsquo; Name.</p>
+            </div>
+          </section>
+
+          <section class="ph-stats" id="overview" aria-label="Overview">
+            <button class="ph-stat" type="button" data-go="projects" id="stat-active-projects">
+              <span class="ph-stat-top"><span class="ph-chip-ico"><svg class="ph-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/><path d="M8 10v4"/><path d="M12 10v2"/><path d="M16 10v6"/></svg></span><span class="ph-stat-label">Active projects</span></span>
+              <span class="ph-stat-num dash-skeleton" data-source="sample_summary" data-field="value" data-where="key=active_projects">&mdash;</span>
+              <span class="ph-stat-note" data-source="sample_summary" data-field="note" data-where="key=active_projects">&mdash;</span>
+            </button>
+            <button class="ph-stat" type="button" data-go="my-tasks" id="stat-pending-tasks">
+              <span class="ph-stat-top"><span class="ph-chip-ico"><svg class="ph-i" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/></svg></span><span class="ph-stat-label">Pending tasks</span></span>
+              <span class="ph-stat-num dash-skeleton" data-source="sample_summary" data-field="value" data-where="key=pending_tasks">&mdash;</span>
+              <span class="ph-stat-note" data-source="sample_summary" data-field="note" data-where="key=pending_tasks">&mdash;</span>
+            </button>
+            <button class="ph-stat" type="button" data-go="inventory-alerts" id="stat-inventory-alerts">
+              <span class="ph-stat-top"><span class="ph-chip-ico is-warn"><svg class="ph-i" viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span><span class="ph-stat-label">Inventory alerts</span></span>
+              <span class="ph-stat-num dash-skeleton" data-source="inventory_alerts" data-field="alerts">&mdash;</span>
+              <span class="ph-stat-note">Items below reorder level</span>
+            </button>
+            <button class="ph-stat" type="button" data-go="response" id="stat-response">
+              <span class="ph-stat-top"><span class="ph-chip-ico"><svg class="ph-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/><circle cx="12" cy="12" r="4"/></svg></span><span class="ph-stat-label">Response activities</span></span>
+              <span class="ph-stat-num dash-skeleton" data-source="sample_summary" data-field="value" data-where="key=response_activities">&mdash;</span>
+              <span class="ph-stat-note" data-source="sample_summary" data-field="window" data-where="key=response_activities">&mdash;</span>
+            </button>
+            <button class="ph-stat" type="button" data-go="documentation" id="stat-documentation">
+              <span class="ph-stat-top"><span class="ph-chip-ico"><svg class="ph-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg></span><span class="ph-stat-label">Documentation updates</span></span>
+              <span class="ph-stat-num dash-skeleton" data-source="sample_summary" data-field="value" data-where="key=documentation_updates">&mdash;</span>
+              <span class="ph-stat-note" data-source="sample_summary" data-field="window" data-where="key=documentation_updates">&mdash;</span>
+            </button>
+            <button class="ph-stat" type="button" data-go="my-tasks" id="stat-deadlines">
+              <span class="ph-stat-top"><span class="ph-chip-ico is-warn"><svg class="ph-i" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span><span class="ph-stat-label">Upcoming deadlines</span></span>
+              <span class="ph-stat-num dash-skeleton" data-source="sample_summary" data-field="value" data-where="key=upcoming_deadlines">&mdash;</span>
+              <span class="ph-stat-note" data-source="sample_summary" data-field="window" data-where="key=upcoming_deadlines">&mdash;</span>
+            </button>
+          </section>
+
+          <div class="ph-cols">
+            <div class="ph-col">
+              <section class="ph-card ph-o-tasks" id="my-tasks" aria-labelledby="h-tasks">
+                <div class="ph-card-head">
+                  <div><h3 class="ph-card-title" id="h-tasks">My tasks <span class="ph-tag">Sample</span></h3><p class="ph-card-note">Assigned to you, soonest due first</p></div>
+                  <button class="ph-link" type="button" data-go="tasks">Open Tasks <svg class="ph-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button>
+                </div>
+                <div class="ph-chips" role="group" aria-label="Filter tasks by status" data-chips="task">
+                  <button class="ph-chipbtn" type="button" data-v="" aria-pressed="true">All</button>
+                  <button class="ph-chipbtn" type="button" data-v="To do" aria-pressed="false">To do</button>
+                  <button class="ph-chipbtn" type="button" data-v="In progress" aria-pressed="false">In progress</button>
+                  <button class="ph-chipbtn" type="button" data-v="Review" aria-pressed="false">Review</button>
+                </div>
+                <table class="ph-table ph-tasks" data-source="sample_tasks" data-row-key="title">
+                  <thead><tr><th data-field="title">Task</th><th data-field="module">Module</th><th data-field="priority">Priority</th><th data-field="due">Due</th><th data-field="status">Status</th></tr></thead>
+                  <tbody></tbody>
+                </table>
+                <p class="ph-empty" data-empty="task" hidden>No tasks match this filter.</p>
+              </section>
+
+              <section class="ph-card ph-o-activity" id="recent-activity" aria-labelledby="h-activity">
+                <div class="ph-card-head">
+                  <div><h3 class="ph-card-title" id="h-activity">Recent activity <span class="ph-tag">Sample</span></h3><p class="ph-card-note">Latest updates across projects, inventory, documents, tasks and response</p></div>
+                </div>
+                <div class="ph-chips" role="group" aria-label="Filter activity by type" data-chips="activity">
+                  <button class="ph-chipbtn" type="button" data-v="" aria-pressed="true">All</button>
+                  <button class="ph-chipbtn" type="button" data-v="Project" aria-pressed="false">Projects</button>
+                  <button class="ph-chipbtn" type="button" data-v="Inventory" aria-pressed="false">Inventory</button>
+                  <button class="ph-chipbtn" type="button" data-v="Document" aria-pressed="false">Documents</button>
+                  <button class="ph-chipbtn" type="button" data-v="Task" aria-pressed="false">Tasks</button>
+                  <button class="ph-chipbtn" type="button" data-v="Response" aria-pressed="false">Response</button>
+                </div>
+                <ol class="ph-feed dash-skeleton" data-source="sample_activity" aria-label="Activity feed"></ol>
+                <p class="ph-empty" data-empty="activity" hidden>No activity matches this filter.</p>
+              </section>
+
+              <section class="ph-card ph-o-chart" id="response-trend" aria-labelledby="h-trend">
+                <div class="ph-card-head">
+                  <div><h3 class="ph-card-title" id="h-trend">Response activities per week <span class="ph-tag">Sample</span></h3><p class="ph-card-note">Last 8 weeks &middot; field activities logged</p></div>
+                </div>
+                <div class="ph-chart dash-skeleton" id="ph-chart" data-source="sample_weekly_response"></div>
+              </section>
+            </div>
+
+            <div class="ph-col">
+              <section class="ph-card ph-o-qa" id="quick-actions" aria-labelledby="h-qa">
+                <div class="ph-card-head"><div><h3 class="ph-card-title" id="h-qa">Quick actions</h3><p class="ph-card-note">Shortcuts to common work</p></div></div>
+                <div class="ph-qa">
+                  <button class="ph-qa-btn" type="button" data-go="tasks" data-action="Create task"><svg class="ph-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>Create task</button>
+                  <button class="ph-qa-btn" type="button" data-go="inventory" data-action="Add inventory record"><svg class="ph-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 8.7 5 8.7-5"/></svg>Add inventory record</button>
+                  <button class="ph-qa-btn" type="button" data-go="documentation" data-action="Upload documentation"><svg class="ph-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>Upload documentation</button>
+                  <button class="ph-qa-btn" type="button" data-go="map" data-action="View live map"><svg class="ph-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M15 5.764v15"/><path d="M9 3.236v15"/></svg>View live map</button>
+                  <button class="ph-qa-btn" type="button" data-go="projects" data-action="Open projects"><svg class="ph-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>Open projects</button>
+                  <button class="ph-qa-btn" type="button" data-go="print" data-action="Create print document"><svg class="ph-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>Create print document</button>
+                </div>
+              </section>
+
+              <section class="ph-card ph-verse ph-o-verse" id="verse" aria-labelledby="h-verse">
+                <div class="ph-card-head"><h3 class="ph-card-title" id="h-verse">Verse of the day</h3></div>
+                <blockquote class="ph-verse-q">
+                  <p class="ph-verse-text" id="ph-verse-text">&ldquo;Whatever you do, work at it with all your heart, as working for the Lord, not for human masters.&rdquo;</p>
+                  <p class="ph-verse-ref" id="ph-verse-ref">Colossians 3:23 (NIV)</p>
+                </blockquote>
+                <div class="ph-verse-act">
+                  <button class="ph-btn ph-btn-ghost ph-copy" type="button">
+                    <svg class="ph-i" viewBox="0 0 24 24" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                    <span class="ph-copy-label">Copy verse</span>
+                  </button>
+                  <span class="ph-copy-status" aria-live="polite"></span>
+                </div>
+              </section>
+
+              <section class="ph-card ph-o-inv" id="inventory-alerts" aria-labelledby="h-inv">
+                <div class="ph-card-head">
+                  <div><h3 class="ph-card-title" id="h-inv">Stock levels <span class="ph-tag">Sample</span></h3>
+                  <p class="ph-card-note"><span data-source="inventory_alerts" data-field="alerts">&mdash;</span> of <span data-source="inventory_alerts" data-field="tracked">&mdash;</span> tracked items are below their reorder level</p></div>
+                  <button class="ph-link" type="button" data-go="inventory">Inventory <svg class="ph-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button>
+                </div>
+                <table class="ph-table ph-inv" data-source="sample_inventory" data-row-key="item">
+                  <thead><tr><th data-field="item">Item</th><th data-field="warehouse" class="c-wh">Location</th><th data-field="on_hand" class="num">On hand</th><th data-field="reorder_level" class="num">Reorder at</th></tr></thead>
+                  <tbody></tbody>
+                </table>
+              </section>
+            </div>
+          </div>
+        </section>
+
+        <section class="ph-page" data-page="module" id="module" hidden>
+          <div class="ph-ph">
+            <div class="ph-ph-hero">
+              <span class="ph-chip-ico ph-ph-ico"></span>
+              <div>
+                <h2 class="ph-ph-name"></h2>
+                <span class="ph-ph-status">Planned for a later milestone</span>
+              </div>
+            </div>
+            <p class="ph-ph-action" role="status" hidden></p>
+            <p class="ph-ph-blurb"></p>
+            <div class="ph-card">
+              <h3 class="ph-card-title">What this module will cover</h3>
+              <ul class="ph-ph-plan"></ul>
+            </div>
+            <div><button class="ph-btn ph-btn-ghost" type="button" data-page="home">Back to Home</button></div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="ph-foot">
+        <span>Philippine Relief and Development Services, Inc.</span>
+        <a href="https://philrads.org/" target="_blank" rel="noopener">philrads.org</a>
+      </footer>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const root = document.getElementById('ph');
+  const svg = (paths) => `<svg class="ph-i" viewBox="0 0 24 24" aria-hidden="true">${paths}</svg>`;
+  const ICON = {
+    home: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+    map: '<path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M15 5.764v15"/><path d="M9 3.236v15"/>',
+    package: '<path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="m7.5 4.27 9 5.15"/>',
+    clipboard: '<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/>',
+    file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+    lifebuoy: '<circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/><circle cx="12" cy="12" r="4"/>',
+    folder: '<path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/><path d="M8 10v4"/><path d="M12 10v2"/><path d="M16 10v6"/>',
+    check: '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/>',
+    printer: '<path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/>',
+    copy: '<rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+    done: '<path d="M20 6 9 17l-5-5"/>',
+  };
+  const MODULES = [
+    { id: 'home', label: 'Home', icon: 'home', group: 'Overview' },
+    { id: 'map', label: 'Live Map', icon: 'map', group: 'Field operations',
+      blurb: 'See response sites, warehouses and field teams on one map, so coordinators know where people and goods are.',
+      plan: ['Response sites, warehouses and distribution points', 'Field team check-ins', 'Filters by project and response operation'] },
+    { id: 'inventory', label: 'Inventory Management', icon: 'package', group: 'Field operations',
+      blurb: 'Track relief goods across warehouses and field hubs, with every receipt, release and transfer recorded.',
+      plan: ['Item catalogue and stock on hand per location', 'Inventory movements with who recorded them', 'Reorder-level alerts'] },
+    { id: 'pdm', label: 'PDM', icon: 'clipboard', group: 'Field operations',
+      blurb: 'The PDM workspace. Its scope and full name will be set once PHILRADS confirms the module definition.',
+      plan: ['Scope to be confirmed by PHILRADS'] },
+    { id: 'documentation', label: 'Documentation', icon: 'file', group: 'Field operations',
+      blurb: 'Upload photos, videos, PDFs and reports to the right Google Drive folder, with each file’s record kept in the portal.',
+      plan: ['Uploads to module- and project-specific Drive folders', 'Document category, file type and upload progress', 'Access limited to authorised staff, no public links by default'] },
+    { id: 'response', label: 'Response', icon: 'lifebuoy', group: 'Field operations',
+      blurb: 'Log and coordinate disaster response, from rapid needs assessment to distribution and reporting.',
+      plan: ['Response operations and activity logs', 'Assessments and distributions', 'Links to inventory and documentation'] },
+    { id: 'projects', label: 'Projects', icon: 'folder', group: 'Work',
+      blurb: 'Follow each program and project with its milestones, deadlines, budget status and team.',
+      plan: ['Project list with status and milestones', 'Deadlines and reporting dates', 'Related tasks, documents and activities'] },
+    { id: 'tasks', label: 'Tasks', icon: 'check', group: 'Work',
+      blurb: 'Create, assign and track tasks across teams and modules.',
+      plan: ['Create and assign tasks', 'Priorities, due dates and status', 'Your tasks and your team’s tasks'] },
+    { id: 'print', label: 'Print Docs', icon: 'printer', group: 'Work',
+      blurb: 'Create printable documents, such as forms and acknowledgement receipts, from approved templates.',
+      plan: ['Approved document templates', 'Fill from portal records', 'Print-ready layouts'] },
+  ];
+  const byId = Object.fromEntries(MODULES.map((m) => [m.id, m]));
+  const state = { page: 'home', q: '', taskStatus: '', actType: '' };
+
+  // Navigation
+  const groups = [...new Set(MODULES.map((m) => m.group))];
+  root.querySelectorAll('[data-nav]').forEach((nav) => {
+    nav.innerHTML = groups.map((g) => `<div class="ph-nav-group"><div class="ph-nav-group-label">${g}</div>${
+      MODULES.filter((m) => m.group === g).map((m) => `<button type="button" class="ph-nav-item" data-page="${m.id}" title="${m.label}">${svg(ICON[m.icon])}<span class="ph-nav-label">${m.label}</span></button>`).join('')
+    }</div>`).join('');
+  });
+
+  const drawer = root.querySelector('.ph-drawer');
+  const menuToggle = root.querySelector('.ph-menu-toggle');
+  const setDrawer = (open) => { drawer.hidden = !open; menuToggle.setAttribute('aria-expanded', String(open)); menuToggle.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation'); };
+  menuToggle.addEventListener('click', () => setDrawer(drawer.hidden));
+
+  const closePops = (except) => root.querySelectorAll('[data-pop]').forEach((b) => {
+    if (b === except) return;
+    b.setAttribute('aria-expanded', 'false');
+    document.getElementById(b.dataset.pop).hidden = true;
+  });
+
+  const modPage = root.querySelector('[data-page="module"]');
+  function show(id, opts = {}) {
+    const m = byId[id] || byId.home;
+    state.page = m.id;
+    root.querySelector('[data-page="home"]').hidden = m.id !== 'home';
+    modPage.hidden = m.id === 'home';
+    if (m.id !== 'home') {
+      modPage.querySelector('.ph-ph-ico').innerHTML = svg(ICON[m.icon]);
+      modPage.querySelector('.ph-ph-name').textContent = m.label;
+      modPage.querySelector('.ph-ph-blurb').textContent = m.blurb;
+      modPage.querySelector('.ph-ph-plan').replaceChildren(...m.plan.map((p) => { const li = document.createElement('li'); li.textContent = p; return li; }));
+      const act = modPage.querySelector('.ph-ph-action');
+      act.hidden = !opts.action;
+      act.textContent = opts.action ? `“${opts.action}” opens here once the ${m.label} module is built. Nothing has been created or saved.` : '';
+    }
+    root.querySelector('#ph-title').textContent = m.label;
+    root.querySelectorAll('.ph-nav-item').forEach((b) => { if (b.dataset.page === m.id) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+    setDrawer(false);
+    closePops();
+    dash.setLink(m.id);
+    if (m.id === 'home') requestAnimationFrame(renderChart);
+    if (!opts.keepScroll) root.scrollIntoView({ block: 'start' });
+  }
+
+  root.addEventListener('click', (e) => {
+    const pop = e.target.closest('[data-pop]');
+    if (pop) {
+      const panel = document.getElementById(pop.dataset.pop);
+      const open = panel.hidden;
+      closePops(pop);
+      panel.hidden = !open;
+      pop.setAttribute('aria-expanded', String(open));
+      return;
+    }
+    if (!e.target.closest('.ph-pop')) closePops();
+    const nav = e.target.closest('[data-page]');
+    if (nav && nav.tagName === 'BUTTON') { show(nav.dataset.page); return; }
+    const go = e.target.closest('[data-go]');
+    if (go) {
+      const target = go.dataset.go;
+      if (target === 'my-tasks' || target === 'inventory-alerts') {
+        show('home', { keepScroll: true });
+        const el = document.getElementById(target);
+        el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        dash.setLink(target);
+      } else {
+        show(target, { action: go.dataset.action });
+      }
+      return;
+    }
+    const chip = e.target.closest('.ph-chipbtn');
+    if (chip) {
+      const group = chip.closest('[data-chips]');
+      group.querySelectorAll('.ph-chipbtn').forEach((c) => c.setAttribute('aria-pressed', String(c === chip)));
+      if (group.dataset.chips === 'task') state.taskStatus = chip.dataset.v; else state.actType = chip.dataset.v;
+      renderTasks(); renderFeed();
+    }
+  });
+  document.addEventListener('click', (e) => { if (!root.contains(e.target)) closePops(); });
+  root.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    const openBtn = [...root.querySelectorAll('[data-pop][aria-expanded="true"]')][0];
+    closePops();
+    if (openBtn) openBtn.focus();
+    if (!drawer.hidden) { setDrawer(false); menuToggle.focus(); }
+  });
+
+  // Sidebar collapse
+  const collapse = root.querySelector('.ph-collapse');
+  collapse.addEventListener('click', () => {
+    const on = !root.hasAttribute('data-collapsed');
+    root.toggleAttribute('data-collapsed', on);
+    collapse.setAttribute('aria-pressed', String(on));
+    collapse.title = on ? 'Expand sidebar' : 'Collapse sidebar';
+    collapse.querySelector('.ph-collapse-label').textContent = on ? 'Expand sidebar' : 'Collapse sidebar';
+  });
+
+  // Search
+  const q = root.querySelector('.ph-q');
+  q.addEventListener('input', () => {
+    state.q = q.value.trim().toLowerCase();
+    if (state.page !== 'home' && state.q) show('home', { keepScroll: true });
+    renderTasks(); renderFeed();
+  });
+
+  // Online status
+  const net = root.querySelector('.ph-net');
+  const setNet = () => {
+    const on = navigator.onLine;
+    net.dataset.state = on ? 'on' : 'off';
+    net.textContent = on ? 'Online' : 'Offline';
+    net.title = on ? 'Connected' : 'You are offline. Saving and uploading need a connection.';
+  };
+  window.addEventListener('online', setNet);
+  window.addEventListener('offline', setNet);
+  setNet();
+
+  // Date (Manila time)
+  const setToday = () => {
+    const t = new Intl.DateTimeFormat('en-PH', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'Asia/Manila' }).format(new Date());
+    root.querySelectorAll('.ph-today').forEach((el) => { el.textContent = t; });
+  };
+  setToday();
+  setInterval(setToday, 60000);
+
+  // Verse copy
+  const copyBtn = root.querySelector('.ph-copy');
+  const copyLabel = root.querySelector('.ph-copy-label');
+  const copyStatus = root.querySelector('.ph-copy-status');
+  let copyTimer;
+  copyBtn.addEventListener('click', async () => {
+    const text = `${root.querySelector('#ph-verse-text').textContent} — ${root.querySelector('#ph-verse-ref').textContent}`;
+    clearTimeout(copyTimer);
+    try {
+      await navigator.clipboard.writeText(text);
+      copyBtn.querySelector('svg').innerHTML = ICON.done;
+      copyLabel.textContent = 'Copied';
+      copyStatus.textContent = '';
+    } catch {
+      const r = document.createRange();
+      r.selectNodeContents(root.querySelector('.ph-verse-q'));
+      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      copyStatus.textContent = 'Selected — press Ctrl+C to copy';
+    }
+    copyTimer = setTimeout(() => { copyBtn.querySelector('svg').innerHTML = ICON.copy; copyLabel.textContent = 'Copy verse'; copyStatus.textContent = ''; }, 2500);
+  });
+
+  // Data
+  dash.calc('inventory_alerts', {
+    inputs: ['sample_inventory'],
+    title: 'Items below reorder level',
+    description: 'Counts sample inventory items whose stock on hand is below their reorder level.',
+    fn: (sample_inventory) => [{
+      alerts: sample_inventory.filter((r) => Number(r.on_hand) < Number(r.reorder_level)).length,
+      tracked: sample_inventory.length,
+    }],
+  });
+
+  const fmtNum = d3.format(',');
+  const fmtDue = (s) => new Intl.DateTimeFormat('en-PH', { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(new Date(s.slice(0, 10) + 'T00:00:00Z'));
+  const fmtDay = (s) => new Intl.DateTimeFormat('en-PH', { weekday: 'long', month: 'short', day: 'numeric', timeZone: 'UTC' }).format(new Date(s.slice(0, 10) + 'T00:00:00Z'));
+  const fmtTime = (s) => new Intl.DateTimeFormat('en-PH', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Manila' }).format(new Date(s));
+  const rowsOf = (s) => (s.status === 'ok' && Array.isArray(s.data) ? s.data : []);
+  const failEl = () => { const d = document.createElement('div'); d.className = 'ph-fail'; d.textContent = 'Failed to load'; return d; };
+  const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+  const TYPE_ICON = { Project: 'folder', Inventory: 'package', Document: 'file', Task: 'check', Response: 'lifebuoy' };
+
+  function fillMarks(id) {
+    const s = dash.data(id);
+    const rows = rowsOf(s);
+    root.querySelectorAll(`[data-source="${id}"][data-field]`).forEach((n) => {
+      if (n.tagName === 'TH') return;
+      n.classList.toggle('dash-skeleton', s.status === 'loading');
+      let row;
+      if (n.dataset.where) {
+        const [k, v] = n.dataset.where.split('=');
+        row = rows.find((r) => String(r[k]) === decodeURIComponent(v));
+      } else {
+        row = rows[Number(n.dataset.row || 0)];
+      }
+      const val = row ? row[n.dataset.field] : null;
+      n.textContent = val == null || val === '' ? '—' : (typeof val === 'number' ? fmtNum(val) : String(val));
+    });
+  }
+
+  function matchesQ(...parts) { return !state.q || parts.join(' ').toLowerCase().includes(state.q); }
+
+  function renderTasks() {
+    const s = dash.data('sample_tasks');
+    const tbody = root.querySelector('.ph-tasks tbody');
+    const empty = root.querySelector('[data-empty="task"]');
+    tbody.replaceChildren();
+    if (s.status === 'error') { const tr = el('tr'); const td = el('td'); td.colSpan = 5; td.append(failEl()); tr.append(td); tbody.append(tr); empty.hidden = true; return; }
+    const rows = rowsOf(s)
+      .filter((r) => !state.taskStatus || r.status === state.taskStatus)
+      .filter((r) => matchesQ(r.title, r.module, r.priority, r.status))
+      .slice().sort((a, b) => String(a.due).localeCompare(String(b.due)));
+    rows.forEach((r) => {
+      const tr = el('tr');
+      const tTitle = el('td', 'c-title'); tTitle.append(el('span', 'ph-task-title', r.title));
+      const tMod = el('td', 'c-mod ph-mod', r.module);
+      const tPri = el('td', 'c-pri'); const p = el('span', 'ph-pill', r.priority); p.dataset.v = r.priority; tPri.append(p);
+      const tDue = el('td', 'c-due', fmtDue(r.due));
+      const tSt = el('td', 'c-status'); const st = el('span', 'ph-pill ph-status', r.status); st.dataset.v = r.status; tSt.append(st);
+      tr.append(tTitle, tMod, tPri, tDue, tSt);
+      tbody.append(tr);
+    });
+    empty.hidden = s.status !== 'ok' || rows.length > 0;
+  }
+
+  function renderFeed() {
+    const s = dash.data('sample_activity');
+    const feed = root.querySelector('.ph-feed');
+    const empty = root.querySelector('[data-empty="activity"]');
+    feed.classList.toggle('dash-skeleton', s.status === 'loading');
+    feed.replaceChildren();
+    if (s.status === 'error') { feed.append(failEl()); empty.hidden = true; return; }
+    const rows = rowsOf(s)
+      .filter((r) => !state.actType || r.type === state.actType)
+      .filter((r) => matchesQ(r.title, r.detail, r.actor, r.type))
+      .slice().sort((a, b) => String(b.at).localeCompare(String(a.at)));
+    let day = '';
+    rows.forEach((r) => {
+      const d = String(r.at).slice(0, 10);
+      if (d !== day) { day = d; feed.append(el('li', 'ph-feed-day', fmtDay(r.at))); }
+      const li = el('li', 'ph-feed-item');
+      const ico = el('span', 'ph-feed-ico'); ico.dataset.t = r.type; ico.innerHTML = svg(ICON[TYPE_ICON[r.type] || 'file']);
+      const body = el('div');
+      const meta = el('div', 'ph-feed-meta');
+      meta.append(el('span', 'ph-type', r.type), document.createTextNode(` · ${r.actor} · ${fmtTime(r.at)}`));
+      body.append(el('div', 'ph-feed-title', r.title), el('div', 'ph-feed-detail', r.detail), meta);
+      li.append(ico, body);
+      feed.append(li);
+    });
+    empty.hidden = s.status !== 'ok' || rows.length > 0;
+
+    const list = root.querySelector('.ph-pop-list');
+    list.replaceChildren();
+    if (s.status === 'error') { list.append(failEl()); return; }
+    rowsOf(s).slice().sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 4).forEach((r) => {
+      const li = el('li');
+      li.append(el('div', 'ph-pop-item-title', r.title), el('div', 'ph-pop-item-meta', `${r.type} · ${fmtDay(r.at)}, ${fmtTime(r.at)}`));
+      list.append(li);
+    });
+  }
+
+  function renderInventory() {
+    const s = dash.data('sample_inventory');
+    const tbody = root.querySelector('.ph-inv tbody');
+    tbody.replaceChildren();
+    if (s.status === 'error') { const tr = el('tr'); const td = el('td'); td.colSpan = 4; td.append(failEl()); tr.append(td); tbody.append(tr); return; }
+    rowsOf(s).slice()
+      .sort((a, b) => Number(a.on_hand) / Number(a.reorder_level) - Number(b.on_hand) / Number(b.reorder_level))
+      .forEach((r) => {
+        const onHand = Number(r.on_hand), reorder = Number(r.reorder_level);
+        const low = onHand < reorder;
+        const tr = el('tr'); tr.classList.toggle('is-low', low);
+        const tItem = el('td');
+        if (low) { const dot = el('span', 'ph-low-dot'); dot.setAttribute('aria-hidden', 'true'); tItem.append(dot); }
+        tItem.append(el('span', 'ph-inv-item', r.item));
+        if (low) tItem.append(el('span', 'ph-sr', ' (below reorder level)'));
+        const tWh = el('td', 'c-wh', r.warehouse);
+        const tOn = el('td', 'num');
+        tOn.append(el('span', null, fmtNum(onHand)));
+        const bar = el('span', 'ph-bar'); bar.setAttribute('aria-hidden', 'true');
+        const fill = el('span'); fill.style.width = `${Math.min(onHand / reorder, 1) * 100}%`; bar.append(fill); tOn.append(bar);
+        const tRe = el('td', 'num', fmtNum(reorder));
+        tr.append(tItem, tWh, tOn, tRe);
+        tbody.append(tr);
+      });
+  }
+
+  function renderChart() {
+    const box = root.querySelector('#ph-chart');
+    const s = dash.data('sample_weekly_response');
+    box.classList.toggle('dash-skeleton', s.status === 'loading');
+    box.replaceChildren();
+    if (s.status === 'error') { box.append(failEl()); return; }
+    const rows = rowsOf(s).map((r) => ({ d: new Date(String(r.week_start).slice(0, 10) + 'T00:00:00Z'), v: Number(r.activities) }));
+    if (!rows.length || state.page !== 'home') return;
+    const W = Math.max(box.clientWidth, 240), H = 200, m = { t: 22, r: 2, b: 26, l: 2 };
+    const x = d3.scaleBand(rows.map((r) => +r.d), [m.l, W - m.r]).padding(0.3);
+    const y = d3.scaleLinear([0, d3.max(rows, (r) => r.v) || 1], [H - m.b, m.t]);
+    const bw = Math.min(x.bandwidth(), 32);
+    const fmtWk = d3.utcFormat('%b %-d');
+    const s2 = d3.select(box).append('svg').attr('width', '100%').attr('height', H).attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', 'Bar chart of sample response activities per week');
+    s2.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', H - m.b + 0.5).attr('y2', H - m.b + 0.5).attr('stroke', 'var(--cds-chart-axis)');
+    const g = s2.selectAll('g.b').data(rows).join('g').attr('class', 'b');
+    const bars = g.append('rect').attr('class', 'bar')
+      .attr('x', (r) => x(+r.d) + (x.bandwidth() - bw) / 2).attr('width', bw)
+      .attr('y', (r) => y(r.v)).attr('height', (r) => Math.max(0, y(0) - y(r.v))).attr('rx', 4);
+    g.append('text').attr('class', 'v').attr('text-anchor', 'middle')
+      .attr('x', (r) => x(+r.d) + x.bandwidth() / 2).attr('y', (r) => y(r.v) - 6).text((r) => fmtNum(r.v));
+    const every = x.bandwidth() < 44 ? 2 : 1;
+    g.filter((r, i) => (rows.length - 1 - i) % every === 0).append('text').attr('text-anchor', 'middle')
+      .attr('x', (r) => x(+r.d) + x.bandwidth() / 2).attr('y', H - 8).text((r) => fmtWk(r.d));
+    const tip = el('div', 'ph-tip'); tip.hidden = true; box.append(tip);
+    g.append('rect').attr('x', (r) => x(+r.d) - (x.step() - x.bandwidth()) / 2).attr('width', x.step())
+      .attr('y', m.t).attr('height', H - m.t - m.b).attr('fill', 'transparent')
+      .on('mouseenter', function (event, r) {
+        bars.classed('is-hover', (b) => b === r);
+        tip.replaceChildren(el('div', 'ph-tip-k', `Week of ${fmtWk(r.d)}`), el('div', 'ph-tip-v', `${fmtNum(r.v)} ${r.v === 1 ? 'activity' : 'activities'}`));
+        tip.hidden = false;
+        const cx = x(+r.d) + x.bandwidth() / 2;
+        const tw = tip.offsetWidth;
+        tip.style.left = `${Math.max(0, Math.min(W - tw, cx - tw / 2))}px`;
+        tip.style.top = `${Math.max(0, y(r.v) - tip.offsetHeight - 26)}px`;
+      })
+      .on('mouseleave', () => { bars.classed('is-hover', false); tip.hidden = true; });
+  }
+
+  dash.onData(() => {
+    ['sample_profile', 'sample_summary', 'inventory_alerts'].forEach(fillMarks);
+    renderTasks();
+    renderFeed();
+    renderInventory();
+    renderChart();
+  });
+
+  const named = location.hash.slice(1);
+  if (byId[named] && named !== 'home') show(named, { keepScroll: true });
+  else if (named && document.getElementById(named)) document.getElementById(named).scrollIntoView();
+})();
+</script>

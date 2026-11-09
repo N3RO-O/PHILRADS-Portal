@@ -1,0 +1,37 @@
+[
+ {
+  "key": "active_projects",
+  "metric": "Active projects",
+  "value": 12,
+  "window": "Now",
+  "note": "Across all program areas"
+ },
+ {
+  "key": "pending_tasks",
+  "metric": "Pending tasks",
+  "value": 18,
+  "window": "Now",
+  "note": "Assigned to your teams"
+ },
+ {
+  "key": "response_activities",
+  "metric": "Response activities",
+  "value": 7,
+  "window": "Last 30 days",
+  "note": "Field response logs"
+ },
+ {
+  "key": "documentation_updates",
+  "metric": "Documentation updates",
+  "value": 23,
+  "window": "Last 7 days",
+  "note": "Photos, reports and files"
+ },
+ {
+  "key": "upcoming_deadlines",
+  "metric": "Upcoming deadlines",
+  "value": 6,
+  "window": "Next 14 days",
+  "note": "Project and report due dates"
+ }
+]

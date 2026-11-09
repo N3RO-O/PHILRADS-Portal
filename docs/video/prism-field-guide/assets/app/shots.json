@@ -1,0 +1,940 @@
+{
+ "signin": {
+  "marks": {
+   "sound": [
+    242.4,
+    69.9,
+    122.6,
+    48
+   ],
+   "email": [
+    41,
+    368.4,
+    308,
+    48
+   ],
+   "volunteer": [
+    41,
+    654.4,
+    150,
+    55.8
+   ],
+   "guest": [
+    199,
+    654.4,
+    150,
+    55.8
+   ]
+  },
+  "path": "/"
+ },
+ "signin-music": {
+  "marks": {
+   "sound": [
+    321,
+    69.9,
+    44,
+    48
+   ]
+  },
+  "path": "/"
+ },
+ "signin-muted": {
+  "marks": {
+   "sound": [
+    321,
+    69.9,
+    44,
+    48
+   ]
+  },
+  "path": "/"
+ },
+ "signin-typed": {
+  "marks": {
+   "eye": [
+    305,
+    462.4,
+    40,
+    40
+   ],
+   "submit": [
+    41,
+    522.4,
+    308,
+    48
+   ]
+  },
+  "path": "/"
+ },
+ "signin-shown": {
+  "marks": {
+   "submit": [
+    41,
+    522.4,
+    308,
+    48
+   ]
+  },
+  "path": "/"
+ },
+ "signin-error": {
+  "marks": {
+   "forgot": [
+    41,
+    627.4,
+    308,
+    20
+   ]
+  },
+  "path": "/"
+ },
+ "forgot": {
+  "marks": {
+   "send": [
+    41,
+    561.3,
+    308,
+    48
+   ]
+  },
+  "path": "/"
+ },
+ "vol-email": {
+  "marks": {
+   "send": [
+    41,
+    561.3,
+    308,
+    48
+   ]
+  },
+  "path": "/"
+ },
+ "vol-code": {
+  "marks": {
+   "code": [
+    41,
+    484.3,
+    308,
+    58
+   ]
+  },
+  "path": "/"
+ },
+ "vol-code-typed": {
+  "marks": {
+   "submit": [
+    41,
+    558.3,
+    308,
+    48
+   ]
+  },
+  "path": "/"
+ },
+ "guest": {
+  "marks": {
+   "back": [
+    112.7,
+    1299.5,
+    164.6,
+    44
+   ]
+  },
+  "path": "/guest"
+ },
+ "welcome": {
+  "marks": {
+   "go": [
+    44,
+    545.3,
+    304,
+    44
+   ]
+  },
+  "path": "/"
+ },
+ "home": {
+  "marks": {
+   "tasks": [
+    36,
+    308,
+    167.2,
+    48
+   ],
+   "menu": [
+    16,
+    8,
+    48,
+    48
+   ],
+   "search": [
+    57,
+    76,
+    300,
+    20
+   ],
+   "active": [
+    174,
+    12,
+    94,
+    40
+   ],
+   "bell": [
+    272,
+    8,
+    48,
+    48
+   ],
+   "account": [
+    324,
+    12,
+    68,
+    40
+   ]
+  },
+  "path": "/"
+ },
+ "home-tasks": {
+  "marks": {
+   "open": [
+    284.7,
+    90.5,
+    89.3,
+    16
+   ]
+  },
+  "path": "/"
+ },
+ "drawer": {
+  "marks": {
+   "pdm": [
+    12,
+    313,
+    247,
+    40
+   ],
+   "tasks": [
+    12,
+    181,
+    247,
+    40
+   ]
+  },
+  "path": "/"
+ },
+ "quick": {
+  "marks": {
+   "pin": [
+    297.4,
+    636,
+    71.6,
+    36
+   ]
+  },
+  "path": "/"
+ },
+ "bell": {
+  "marks": {
+   "first": [
+    21,
+    221,
+    350,
+    79.3
+   ],
+   "unread": [
+    91.6,
+    141,
+    106.8,
+    32
+   ]
+  },
+  "path": "/"
+ },
+ "bell-unread": {
+  "marks": {
+   "first": [
+    21,
+    221,
+    350,
+    79.3
+   ]
+  },
+  "path": "/"
+ },
+ "account": {
+  "marks": {
+   "sound": [
+    317,
+    448,
+    48,
+    28
+   ],
+   "status": [
+    115,
+    134,
+    262,
+    40
+   ],
+   "light": [
+    208,
+    355,
+    76,
+    32
+   ],
+   "news": [
+    115,
+    302,
+    262,
+    40
+   ]
+  },
+  "path": "/"
+ },
+ "account-status": {
+  "marks": {
+   "dnd": [
+    119,
+    301.5,
+    254,
+    69
+   ]
+  },
+  "path": "/"
+ },
+ "home-light": {
+  "marks": {},
+  "path": "/"
+ },
+ "tasks": {
+  "marks": {
+   "badges": [
+    16,
+    524.5,
+    358,
+    40
+   ],
+   "today": [
+    16,
+    601.5,
+    95.5,
+    48
+   ],
+   "assigned": [
+    359.2,
+    601.5,
+    115.9,
+    48
+   ],
+   "newtask": [
+    239.8,
+    773,
+    136.2,
+    56
+   ]
+  },
+  "path": "/tasks"
+ },
+ "tasks-list": {
+  "marks": {
+   "start": [
+    270,
+    240.5,
+    52,
+    26
+   ],
+   "card": [
+    52,
+    229.5,
+    186,
+    118.5
+   ],
+   "newtask": [
+    239.8,
+    869,
+    136.2,
+    56
+   ]
+  },
+  "path": "/tasks"
+ },
+ "tasks-assigned": {
+  "marks": {
+   "card": [
+    52,
+    296.5,
+    186,
+    118.5
+   ]
+  },
+  "path": "/tasks"
+ },
+ "task-detail": {
+  "marks": {
+   "progress": [
+    198,
+    180,
+    169,
+    48
+   ],
+   "save": [
+    117.9,
+    779,
+    253.1,
+    48
+   ]
+  },
+  "path": "/tasks"
+ },
+ "tasks-started": {
+  "marks": {
+   "finish": [
+    262.8,
+    235.5,
+    59.2,
+    26
+   ],
+   "card": [
+    52,
+    224.5,
+    178.8,
+    118.5
+   ]
+  },
+  "path": "/tasks"
+ },
+ "finish": {
+  "marks": {
+   "photo": [
+    21,
+    664.5,
+    81.5,
+    81.5
+   ],
+   "note": [
+    21,
+    454.5,
+    350,
+    66
+   ],
+   "done": [
+    21,
+    779,
+    350,
+    48
+   ]
+  },
+  "path": "/tasks"
+ },
+ "newtask": {
+  "marks": {
+   "title": [
+    21,
+    199.5,
+    350,
+    48
+   ]
+  },
+  "path": "/tasks"
+ },
+ "badges": {
+  "marks": {},
+  "path": "/tasks"
+ },
+ "map": {
+  "marks": {
+   "share": [
+    191.6,
+    756.5,
+    169.4,
+    48
+   ],
+   "weather": [
+    317,
+    418.5,
+    44,
+    44
+   ],
+   "full": [
+    317,
+    262.5,
+    44,
+    44
+   ],
+   "all": [
+    317,
+    314.5,
+    44,
+    44
+   ],
+   "list": [
+    29,
+    756.5,
+    103.2,
+    48
+   ],
+   "place": [
+    188,
+    466.5,
+    32,
+    42
+   ]
+  },
+  "path": "/live-map"
+ },
+ "map-share": {
+  "marks": {
+   "toggle": [
+    21,
+    543,
+    350,
+    86
+   ],
+   "checkin": [
+    38,
+    766,
+    316,
+    44
+   ]
+  },
+  "path": "/live-map"
+ },
+ "map-weather": {
+  "marks": {
+   "full": [
+    317,
+    262.5,
+    44,
+    44
+   ],
+   "all": [
+    317,
+    314.5,
+    44,
+    44
+   ]
+  },
+  "path": "/live-map"
+ },
+ "inv": {
+  "marks": {
+   "stock": [
+    16,
+    193.5,
+    114,
+    67.8
+   ]
+  },
+  "path": "/inventory"
+ },
+ "inv-list": {
+  "marks": {
+   "search": [
+    16,
+    110,
+    358,
+    48
+   ],
+   "export": [
+    197.2,
+    34,
+    66,
+    48
+   ],
+   "log": [
+    256,
+    -30,
+    114,
+    48
+   ]
+  },
+  "path": "/inventory"
+ },
+ "inv-search": {
+  "marks": {
+   "item": [
+    16,
+    419,
+    358,
+    97.4
+   ],
+   "location": [
+    199,
+    286,
+    175,
+    48
+   ]
+  },
+  "path": "/inventory"
+ },
+ "inv-item": {
+  "marks": {},
+  "path": "/inventory"
+ },
+ "inv-log": {
+  "marks": {},
+  "path": "/inventory"
+ },
+ "inv-export": {
+  "marks": {
+   "csv": [
+    25,
+    728,
+    342,
+    48
+   ]
+  },
+  "path": "/inventory"
+ },
+ "resp": {
+  "marks": {
+   "pending": [
+    32,
+    1308.5,
+    236.4,
+    44
+   ]
+  },
+  "path": "/response"
+ },
+ "resp-events": {
+  "marks": {
+   "event": [
+    32,
+    219.5,
+    260.5,
+    44
+   ]
+  },
+  "path": "/response"
+ },
+ "resp-event": {
+  "marks": {},
+  "path": "/response"
+ },
+ "docs": {
+  "marks": {
+   "upload": [
+    255.7,
+    773,
+    120.3,
+    56
+   ],
+   "media": [
+    136.7,
+    407.5,
+    116.7,
+    36
+   ]
+  },
+  "path": "/documentation"
+ },
+ "docs-media": {
+  "marks": {},
+  "path": "/documentation"
+ },
+ "forms": {
+  "marks": {
+   "report": [
+    16,
+    249.5,
+    358,
+    110.5
+   ]
+  },
+  "path": "/forms"
+ },
+ "form": {
+  "marks": {
+   "bigger": [
+    130,
+    319.5,
+    48,
+    48
+   ],
+   "print": [
+    29,
+    376.5,
+    192,
+    40
+   ],
+   "field": [
+    166.1,
+    599,
+    160.5,
+    8.3
+   ]
+  },
+  "path": "/forms/activity-report"
+ },
+ "form-big": {
+  "marks": {},
+  "path": "/forms/activity-report"
+ },
+ "projects": {
+  "marks": {
+   "project": [
+    16,
+    490.5,
+    358,
+    208
+   ]
+  },
+  "path": "/projects"
+ },
+ "project": {
+  "marks": {},
+  "path": "/projects/prj-kristine"
+ },
+ "res": {
+  "marks": {
+   "policies": [
+    227.8,
+    149.5,
+    168.2,
+    48
+   ],
+   "preview": [
+    267.4,
+    587.3,
+    89.6,
+    32
+   ],
+   "more": [
+    317,
+    389.5,
+    48,
+    48
+   ]
+  },
+  "path": "/resources"
+ },
+ "res-more": {
+  "marks": {
+   "google": [
+    146,
+    446.5,
+    214,
+    40
+   ]
+  },
+  "path": "/resources"
+ },
+ "stats": {
+  "marks": {
+   "year": [
+    101.8,
+    396.5,
+    55.6,
+    48
+   ]
+  },
+  "path": "/statistics"
+ },
+ "stats-numbers": {
+  "marks": {},
+  "path": "/statistics"
+ },
+ "pdm": {
+  "marks": {},
+  "path": "/pdm"
+ },
+ "profile": {
+  "marks": {
+   "photo": [
+    33,
+    331,
+    124,
+    124
+   ]
+  },
+  "path": "/profile"
+ },
+ "profile-crop": {
+  "marks": {
+   "save": [
+    232,
+    779,
+    131,
+    40
+   ]
+  },
+  "path": "/profile"
+ },
+ "profile-about": {
+  "marks": {
+   "frame": [
+    16,
+    -101,
+    358,
+    82
+   ],
+   "private": [
+    116.4,
+    604,
+    95.4,
+    40
+   ],
+   "bio": [
+    16,
+    396,
+    358,
+    126
+   ]
+  },
+  "path": "/profile"
+ },
+ "offline": {
+  "marks": {},
+  "path": "/"
+ },
+ "whatsnew": {
+  "marks": {
+   "ok": [
+    42,
+    712.5,
+    304,
+    48
+   ]
+  },
+  "path": "/"
+ },
+ "staff": {
+  "marks": {
+   "invite": [
+    16,
+    468.5,
+    101.3,
+    48
+   ]
+  },
+  "path": "/staff"
+ },
+ "logs": {
+  "marks": {
+   "flags": [
+    16,
+    351.5,
+    173,
+    104.5
+   ]
+  },
+  "path": "/logs"
+ },
+ "finish-photo": {
+  "marks": {
+   "done": [
+    21,
+    779,
+    350,
+    48
+   ]
+  },
+  "path": "/tasks"
+ },
+ "tasks-done": {
+  "marks": {},
+  "path": "/tasks"
+ },
+ "newtask-typed": {
+  "marks": {
+   "add": [
+    21,
+    779,
+    350,
+    48
+   ],
+   "priority": [
+    255.7,
+    689.5,
+    111.3,
+    48
+   ]
+  },
+  "path": "/tasks"
+ },
+ "map-sharing": {
+  "marks": {},
+  "path": "/live-map"
+ },
+ "docs-up": {
+  "marks": {
+   "project": [
+    21,
+    830.5,
+    350,
+    48
+   ],
+   "send": [
+    21,
+    779,
+    350,
+    48
+   ]
+  },
+  "path": "/documentation"
+ },
+ "form-sign": {
+  "marks": {
+   "pad": [
+    59.3,
+    380.1,
+    119.3,
+    18.8
+   ]
+  },
+  "path": "/forms/activity-report"
+ },
+ "sign-sheet": {
+  "marks": {
+   "canvas": [
+    23,
+    541,
+    346,
+    224
+   ]
+  },
+  "path": "/forms/activity-report"
+ },
+ "sign-drawn": {
+  "marks": {
+   "canvas": [
+    23,
+    541,
+    346,
+    224
+   ],
+   "use": [
+    166,
+    783,
+    205,
+    44
+   ]
+  },
+  "path": "/forms/activity-report"
+ },
+ "form-signed": {
+  "marks": {},
+  "path": "/forms/activity-report"
+ },
+ "project-tasks": {
+  "marks": {
+   "newtask": [
+    16,
+    300,
+    358,
+    48
+   ]
+  },
+  "path": "/projects/prj-kristine"
+ },
+ "staff-invite": {
+  "marks": {},
+  "path": "/staff"
+ },
+ "map-place": {
+  "marks": {},
+  "path": "/live-map"
+ }
+}

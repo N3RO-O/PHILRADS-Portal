@@ -1,0 +1,190 @@
+[
+  {
+    "id": "forms-1",
+    "at": 0,
+    "file": "capture/work/forms-1-000.png",
+    "cue": "Open Activity Report",
+    "target": [
+      84,
+      265.5,
+      268,
+      22
+    ],
+    "focus": null
+  },
+  {
+    "id": "forms-1",
+    "at": 0.53,
+    "file": "capture/work/forms-1-530.png",
+    "cue": "Fill in a field",
+    "target": [
+      175.31,
+      523.92,
+      170.42,
+      11
+    ],
+    "focus": null
+  },
+  {
+    "id": "forms-2",
+    "at": 0,
+    "file": "capture/work/forms-2-000.png",
+    "cue": "Adjust text size",
+    "target": [
+      29,
+      318.5,
+      150,
+      50
+    ],
+    "focus": null
+  },
+  {
+    "id": "forms-2",
+    "at": 0.52,
+    "file": "capture/work/forms-2-520.png",
+    "cue": "Set a readable size",
+    "target": [
+      29,
+      318.5,
+      150,
+      50
+    ],
+    "focus": null
+  },
+  {
+    "id": "forms-3",
+    "at": 0,
+    "file": "capture/work/forms-3-000.png",
+    "cue": "Tap a signature line",
+    "target": [
+      62.02,
+      410.09,
+      126.61,
+      19.91
+    ],
+    "focus": null
+  },
+  {
+    "id": "forms-3",
+    "at": 0.45,
+    "file": "capture/work/forms-3-450.png",
+    "cue": "Sign on screen",
+    "target": [
+      23,
+      537,
+      366,
+      224
+    ],
+    "focus": null
+  },
+  {
+    "id": "forms-4",
+    "at": 0,
+    "file": "capture/work/forms-4-000.png",
+    "cue": "Print / Save as PDF",
+    "target": [
+      29,
+      191,
+      191.97,
+      40
+    ],
+    "focus": null
+  },
+  {
+    "id": "forms-4",
+    "at": 0.57,
+    "file": "capture/work/forms-4-570.png",
+    "cue": "Use the form’s paper size",
+    "target": null,
+    "focus": null
+  },
+  {
+    "id": "projects-resources-statistics-1",
+    "at": 0,
+    "file": "capture/work/projects-resources-statistics-1-000.png",
+    "cue": "Open a project",
+    "target": [
+      16,
+      653.5,
+      380,
+      186
+    ],
+    "focus": null
+  },
+  {
+    "id": "projects-resources-statistics-1",
+    "at": 0.47,
+    "file": "capture/work/projects-resources-statistics-1-470.png",
+    "cue": "Find milestones, team and tasks",
+    "target": null,
+    "focus": null
+  },
+  {
+    "id": "projects-resources-statistics-2",
+    "at": 0,
+    "file": "capture/work/projects-resources-statistics-2-000.png",
+    "cue": "Preview a resource",
+    "target": [
+      289.42,
+      403.63,
+      89.58,
+      32
+    ],
+    "focus": null
+  },
+  {
+    "id": "projects-resources-statistics-2",
+    "at": 0.51,
+    "file": "capture/work/projects-resources-statistics-2-510.png",
+    "cue": "Read the preview in PRISM",
+    "target": null,
+    "focus": null
+  },
+  {
+    "id": "projects-resources-statistics-3",
+    "at": 0,
+    "file": "capture/work/projects-resources-statistics-3-000.png",
+    "cue": "Open the resource’s action menu",
+    "target": [
+      168,
+      532.5,
+      214,
+      40
+    ],
+    "focus": null
+  },
+  {
+    "id": "projects-resources-statistics-4",
+    "at": 0,
+    "file": "capture/work/projects-resources-statistics-4-000.png",
+    "cue": "Browse Statistics",
+    "target": [
+      16,
+      270.5,
+      380,
+      20
+    ],
+    "focus": null
+  },
+  {
+    "id": "projects-resources-statistics-4",
+    "at": 0.48,
+    "file": "capture/work/projects-resources-statistics-4-480.png",
+    "cue": "See who was served",
+    "target": [
+      38,
+      643.75,
+      152.22,
+      19.25
+    ],
+    "focus": null
+  },
+  {
+    "id": "projects-resources-statistics-4",
+    "at": 0.73,
+    "file": "capture/work/projects-resources-statistics-4-730.png",
+    "cue": "Find the activity on Live Map",
+    "target": null,
+    "focus": null
+  }
+]

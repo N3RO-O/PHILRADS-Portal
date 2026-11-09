@@ -1,0 +1,899 @@
+[
+  {
+    "id": "home-1",
+    "at": 0,
+    "file": "capture/home/home-1-000.png",
+    "cue": "Let’s go",
+    "target": [
+      44,
+      548.25,
+      324,
+      44
+    ],
+    "focus": null
+  },
+  {
+    "id": "home-2",
+    "at": 0,
+    "file": "capture/home/home-2-000.png",
+    "cue": "View my tasks",
+    "target": [
+      36,
+      308,
+      167.17,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "home-2",
+    "at": 0.36,
+    "file": "capture/home/home-2-360.png",
+    "cue": "Verse of the Day",
+    "target": [
+      16,
+      396,
+      380,
+      305.69
+    ],
+    "focus": null
+  },
+  {
+    "id": "home-2",
+    "at": 0.67,
+    "file": "capture/home/home-2-670.png",
+    "cue": "Calendar",
+    "target": [
+      16,
+      409.69,
+      233.41,
+      20
+    ],
+    "focus": null
+  },
+  {
+    "id": "home-3",
+    "at": 0,
+    "file": "capture/home/home-3-000.png",
+    "cue": "Needs your answer",
+    "target": [
+      16,
+      463.69,
+      380,
+      18
+    ],
+    "focus": null
+  },
+  {
+    "id": "home-3",
+    "at": 0.4,
+    "file": "capture/home/home-3-400.png",
+    "cue": "Today",
+    "target": [
+      16,
+      410.69,
+      380,
+      18
+    ],
+    "focus": null
+  },
+  {
+    "id": "home-3",
+    "at": 0.72,
+    "file": "capture/home/home-3-720.png",
+    "cue": "Coming up",
+    "target": [
+      16,
+      410.94,
+      380,
+      18
+    ],
+    "focus": null
+  },
+  {
+    "id": "notifications-1",
+    "at": 0,
+    "file": "capture/home/notifications-1-000.png",
+    "cue": "Tap the notification",
+    "target": [
+      27,
+      85,
+      318,
+      56.5
+    ],
+    "focus": null
+  },
+  {
+    "id": "notifications-1",
+    "at": 0.48,
+    "file": "capture/home/notifications-1-480.png",
+    "cue": "Staff Tasks",
+    "target": [
+      16,
+      153.5,
+      237.08,
+      30
+    ],
+    "focus": null
+  },
+  {
+    "id": "notifications-2",
+    "at": 0,
+    "file": "capture/home/notifications-2-000.png",
+    "cue": "Open the bell",
+    "target": [
+      276,
+      8,
+      48,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "notifications-2",
+    "at": 0.35,
+    "file": "capture/home/notifications-2-350.png",
+    "cue": "All or Unread",
+    "target": [
+      91.58,
+      141,
+      106.75,
+      32
+    ],
+    "focus": null
+  },
+  {
+    "id": "notifications-2",
+    "at": 0.68,
+    "file": "capture/home/notifications-2-680.png",
+    "cue": "Unread",
+    "target": [
+      91.58,
+      141,
+      106.75,
+      32
+    ],
+    "focus": null
+  },
+  {
+    "id": "notifications-3",
+    "at": 0,
+    "file": "capture/home/notifications-3-000.png",
+    "cue": "Sound on notifications",
+    "target": [
+      161,
+      442,
+      150,
+      40
+    ],
+    "focus": null
+  },
+  {
+    "id": "notifications-3",
+    "at": 0.48,
+    "file": "capture/home/notifications-3-480.png",
+    "cue": "Do not disturb",
+    "target": [
+      125,
+      301.5,
+      254,
+      69
+    ],
+    "focus": null
+  },
+  {
+    "id": "notifications-3",
+    "at": 0.77,
+    "file": "capture/home/notifications-3-770.png",
+    "cue": "Do not disturb",
+    "target": [
+      121,
+      134,
+      262,
+      40
+    ],
+    "focus": null
+  },
+  {
+    "id": "live-map-1",
+    "at": 0,
+    "file": "capture/home/live-map-1-000.png",
+    "cue": "Places and teammates",
+    "target": [
+      29,
+      752.5,
+      98.66,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "live-map-1",
+    "at": 0.46,
+    "file": "capture/home/live-map-1-460.png",
+    "cue": "Places and team",
+    "target": [
+      21,
+      96.2,
+      318,
+      22.5
+    ],
+    "focus": null
+  },
+  {
+    "id": "live-map-2",
+    "at": 0,
+    "file": "capture/home/live-map-2-000.png",
+    "cue": "Share location",
+    "target": [
+      213.59,
+      752.5,
+      169.41,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "live-map-2",
+    "at": 0.3,
+    "file": "capture/home/live-map-2-300.png",
+    "cue": "Share my live location",
+    "target": [
+      326,
+      568,
+      48,
+      28
+    ],
+    "focus": null
+  },
+  {
+    "id": "live-map-2",
+    "at": 0.57,
+    "file": "capture/home/live-map-2-570.png",
+    "cue": "Start sharing",
+    "target": [
+      38,
+      504,
+      336,
+      44
+    ],
+    "focus": null
+  },
+  {
+    "id": "live-map-2",
+    "at": 0.77,
+    "file": "capture/home/live-map-2-770.png",
+    "cue": "Sharing live",
+    "target": [
+      344,
+      520.8,
+      56,
+      56
+    ],
+    "focus": null
+  },
+  {
+    "id": "live-map-3",
+    "at": 0,
+    "file": "capture/home/live-map-3-000.png",
+    "cue": "Stop sharing",
+    "target": [
+      195,
+      681.8,
+      122,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "live-map-3",
+    "at": 0.48,
+    "file": "capture/home/live-map-3-480.png",
+    "cue": "Check in here",
+    "target": [
+      38,
+      762,
+      336,
+      44
+    ],
+    "focus": null
+  },
+  {
+    "id": "live-map-3",
+    "at": 0.75,
+    "file": "capture/home/live-map-3-750.png",
+    "cue": "Check in once",
+    "target": [
+      21,
+      448.5,
+      318,
+      22.5
+    ],
+    "focus": null
+  },
+  {
+    "id": "live-map-4",
+    "at": 0,
+    "file": "capture/home/live-map-4-000.png",
+    "cue": "Tap a place",
+    "target": [
+      21,
+      719.2,
+      370,
+      52
+    ],
+    "focus": null
+  },
+  {
+    "id": "pdm-1-short",
+    "at": 0,
+    "file": "capture/home/pdm-1-short-000.png",
+    "cue": "Open navigation",
+    "target": [
+      16,
+      8,
+      48,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "pdm-1-short",
+    "at": 0.56,
+    "file": "capture/home/pdm-1-short-560.png",
+    "cue": "Find PDM",
+    "target": [
+      12,
+      313,
+      247,
+      40
+    ],
+    "focus": null
+  },
+  {
+    "id": "pdm-2-short",
+    "at": 0,
+    "file": "capture/home/pdm-2-short-000.png",
+    "cue": "PDM",
+    "target": [
+      12,
+      313,
+      247,
+      40
+    ],
+    "focus": null
+  },
+  {
+    "id": "pdm-1",
+    "at": 0,
+    "file": "capture/home/pdm-1-000.png",
+    "cue": "PDM",
+    "target": [
+      12,
+      313,
+      247,
+      40
+    ],
+    "focus": null
+  },
+  {
+    "id": "pdm-1",
+    "at": 0.5,
+    "file": "capture/home/pdm-1-500.png",
+    "cue": "Coming soon",
+    "target": [
+      16,
+      153.5,
+      237.08,
+      30
+    ],
+    "focus": null
+  },
+  {
+    "id": "pdm-3-short",
+    "at": 0,
+    "file": "capture/home/pdm-3-short-000.png",
+    "cue": "Coming soon",
+    "target": [
+      16,
+      153.5,
+      237.08,
+      30
+    ],
+    "focus": null
+  },
+  {
+    "id": "profile-1",
+    "at": 0,
+    "file": "capture/home/profile-1-000.png",
+    "cue": "Change your photo",
+    "target": [
+      16,
+      392,
+      56,
+      56
+    ],
+    "focus": null
+  },
+  {
+    "id": "profile-1",
+    "at": 0.43,
+    "file": "capture/home/profile-1-430.png",
+    "cue": "Position your photo",
+    "target": [
+      318,
+      690,
+      48,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "profile-1",
+    "at": 0.73,
+    "file": "capture/home/profile-1-730.png",
+    "cue": "Drag or zoom",
+    "target": [
+      106,
+      710,
+      200,
+      8
+    ],
+    "focus": null
+  },
+  {
+    "id": "profile-2",
+    "at": 0,
+    "file": "capture/home/profile-2-000.png",
+    "cue": "Position",
+    "target": [
+      16,
+      396,
+      380,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "profile-2",
+    "at": 0.28,
+    "file": "capture/home/profile-2-280.png",
+    "cue": "About me",
+    "target": [
+      16,
+      572.75,
+      380,
+      126
+    ],
+    "focus": null
+  },
+  {
+    "id": "profile-2",
+    "at": 0.48,
+    "file": "capture/home/profile-2-480.png",
+    "cue": "Avatar frame",
+    "target": [
+      16,
+      378.75,
+      380,
+      82
+    ],
+    "focus": null
+  },
+  {
+    "id": "profile-2",
+    "at": 0.73,
+    "file": "capture/home/profile-2-730.png",
+    "cue": "Public or Private",
+    "target": [
+      116.41,
+      442.75,
+      95.41,
+      40
+    ],
+    "focus": null
+  },
+  {
+    "id": "profile-3",
+    "at": 0,
+    "file": "capture/home/profile-3-000.png",
+    "cue": "What’s new",
+    "target": [
+      121,
+      302,
+      262,
+      40
+    ],
+    "focus": null
+  },
+  {
+    "id": "profile-3",
+    "at": 0.28,
+    "file": "capture/home/profile-3-280.png",
+    "cue": "Dark · Light · Auto",
+    "target": [
+      214,
+      355,
+      76,
+      32
+    ],
+    "focus": null
+  },
+  {
+    "id": "profile-3",
+    "at": 0.57,
+    "file": "capture/home/profile-3-570.png",
+    "cue": "Light theme",
+    "target": [
+      214,
+      355,
+      76,
+      32
+    ],
+    "focus": null
+  },
+  {
+    "id": "profile-3",
+    "at": 0.81,
+    "file": "capture/home/profile-3-810.png",
+    "cue": "Sound switches",
+    "target": [
+      161,
+      410,
+      150,
+      20
+    ],
+    "focus": null
+  },
+  {
+    "id": "admin-1",
+    "at": 0,
+    "file": "capture/home/admin-1-000.png",
+    "cue": "Invite someone",
+    "target": [
+      286.59,
+      764,
+      109.41,
+      56
+    ],
+    "focus": null
+  },
+  {
+    "id": "admin-1",
+    "at": 0.39,
+    "file": "capture/home/admin-1-390.png",
+    "cue": "Invite someone",
+    "target": [
+      21,
+      96.2,
+      318,
+      22.5
+    ],
+    "focus": null
+  },
+  {
+    "id": "admin-1",
+    "at": 0.7,
+    "file": "capture/home/admin-1-700.png",
+    "cue": "Choose a role",
+    "target": [
+      38,
+      592.7,
+      13,
+      16
+    ],
+    "focus": null
+  },
+  {
+    "id": "admin-2",
+    "at": 0,
+    "file": "capture/home/admin-2-000.png",
+    "cue": "Role and account access",
+    "target": [
+      80,
+      407.5,
+      109.34,
+      24
+    ],
+    "focus": null
+  },
+  {
+    "id": "admin-2",
+    "at": 0.23,
+    "file": "capture/home/admin-2-230.png",
+    "cue": "Choose a role",
+    "target": [
+      28,
+      477.5,
+      244,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "admin-2",
+    "at": 0.42,
+    "file": "capture/home/admin-2-420.png",
+    "cue": "Switch account on or off",
+    "target": [
+      280,
+      487.5,
+      48,
+      28
+    ],
+    "focus": null
+  },
+  {
+    "id": "admin-2",
+    "at": 0.58,
+    "file": "capture/home/admin-2-580.png",
+    "cue": "Volunteer navigation",
+    "target": [
+      12,
+      137,
+      247,
+      40
+    ],
+    "focus": null
+  },
+  {
+    "id": "admin-3",
+    "at": 0,
+    "file": "capture/home/admin-3-000.png",
+    "cue": "Flags to look at",
+    "target": [
+      16,
+      357.5,
+      184,
+      104.5
+    ],
+    "focus": null
+  },
+  {
+    "id": "admin-3",
+    "at": 0.45,
+    "file": "capture/home/admin-3-450.png",
+    "cue": "Review flags",
+    "target": [
+      117.52,
+      615.5,
+      78.92,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "field-tips-1",
+    "at": 0,
+    "file": "capture/home/field-tips-1-000.png",
+    "cue": "Quick unlock",
+    "target": [
+      121,
+      484,
+      262,
+      40
+    ],
+    "focus": null
+  },
+  {
+    "id": "field-tips-1",
+    "at": 0.35,
+    "file": "capture/home/field-tips-1-350.png",
+    "cue": "Quick unlock",
+    "target": [
+      21,
+      513.5,
+      318,
+      22.5
+    ],
+    "focus": null
+  },
+  {
+    "id": "field-tips-1",
+    "at": 0.67,
+    "file": "capture/home/field-tips-1-670.png",
+    "cue": "Share location",
+    "target": [
+      213.59,
+      752.5,
+      169.41,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "field-tips-2",
+    "at": 0,
+    "file": "capture/home/field-tips-2-000.png",
+    "cue": "You’re offline",
+    "target": [
+      29,
+      456.5,
+      302,
+      50
+    ],
+    "focus": null
+  },
+  {
+    "id": "field-tips-2",
+    "at": 0.52,
+    "file": "capture/home/field-tips-2-520.png",
+    "cue": "Update now",
+    "target": [
+      172,
+      471.75,
+      196,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "home-4",
+    "at": 0,
+    "file": "capture/home/home-4-000.png",
+    "cue": "Search",
+    "target": [
+      57,
+      76,
+      322,
+      20
+    ],
+    "focus": null
+  },
+  {
+    "id": "home-4",
+    "at": 0.3,
+    "file": "capture/home/home-4-300.png",
+    "cue": "Active",
+    "target": [
+      178,
+      12,
+      94,
+      40
+    ],
+    "focus": null
+  },
+  {
+    "id": "home-4",
+    "at": 0.43,
+    "file": "capture/home/home-4-430.png",
+    "cue": "Active teammates",
+    "target": [
+      199,
+      19.5,
+      110.84,
+      24
+    ],
+    "focus": null
+  },
+  {
+    "id": "live-map-4",
+    "at": 0.43,
+    "file": "capture/home/live-map-4-430.png",
+    "cue": "Sampaguita Field Hub",
+    "target": [
+      21,
+      96.2,
+      318,
+      22.5
+    ],
+    "focus": null
+  },
+  {
+    "id": "live-map-4",
+    "at": 0.73,
+    "file": "capture/home/live-map-4-730.png",
+    "cue": "Stock and response",
+    "target": [
+      21,
+      192.7,
+      101.11,
+      20
+    ],
+    "focus": null
+  },
+  {
+    "id": "live-map-5",
+    "at": 0,
+    "file": "capture/home/live-map-5-000.png",
+    "cue": "Show weather",
+    "target": [
+      339,
+      418.5,
+      44,
+      44
+    ],
+    "focus": null
+  },
+  {
+    "id": "live-map-5",
+    "at": 0.35,
+    "file": "capture/home/live-map-5-350.png",
+    "cue": "Weather layers",
+    "target": [
+      339,
+      418.5,
+      44,
+      44
+    ],
+    "focus": null
+  },
+  {
+    "id": "live-map-5",
+    "at": 0.61,
+    "file": "capture/home/live-map-5-610.png",
+    "cue": "Full screen",
+    "target": [
+      339,
+      262.5,
+      44,
+      44
+    ],
+    "focus": null
+  },
+  {
+    "id": "live-map-5",
+    "at": 0.79,
+    "file": "capture/home/live-map-5-790.png",
+    "cue": "Show all places",
+    "target": [
+      339,
+      314.5,
+      44,
+      44
+    ],
+    "focus": null
+  },
+  {
+    "id": "home-4",
+    "at": 0.56,
+    "file": "capture/home/home-4-560.png",
+    "cue": "Notifications",
+    "target": [
+      276,
+      8,
+      48,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "home-4",
+    "at": 0.8,
+    "file": "capture/home/home-4-800.png",
+    "cue": "Account",
+    "target": [
+      328,
+      12,
+      68,
+      40
+    ],
+    "focus": null
+  },
+  {
+    "id": "home-5",
+    "at": 0,
+    "file": "capture/home/home-5-000.png",
+    "cue": "Open navigation",
+    "target": [
+      16,
+      8,
+      48,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "home-5",
+    "at": 0.36,
+    "file": "capture/home/home-5-360.png",
+    "cue": "Switch modules",
+    "target": [
+      12,
+      137,
+      247,
+      40
+    ],
+    "focus": null
+  }
+]

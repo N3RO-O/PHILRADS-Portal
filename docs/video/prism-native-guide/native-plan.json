@@ -1,0 +1,6272 @@
+{
+  "main": {
+    "seconds": 300,
+    "chapters": [
+      {
+        "id": "opening",
+        "title": "PRISM field guide",
+        "context": "Response, inventory and our team",
+        "seconds": 10,
+        "start": 0,
+        "beats": [
+          {
+            "id": "opening-1",
+            "start": 0,
+            "seconds": 10,
+            "cue": "PRISM by PHILRADS",
+            "brand": true,
+            "shots": [],
+            "captions": [
+              [
+                1,
+                3.733,
+                "This is PRISM, PHILRADS’s app for response,"
+              ],
+              [
+                3.733,
+                5.328,
+                "inventory and our team."
+              ],
+              [
+                5.328,
+                7.549,
+                "Here’s how to use it in the field."
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sign-in",
+        "title": "Install and sign in",
+        "context": "Get PRISM ready on your phone",
+        "seconds": 34,
+        "start": 10,
+        "beats": [
+          {
+            "id": "sign-in-1",
+            "start": 0,
+            "seconds": 5,
+            "cue": "Add to Home Screen",
+            "brand": false,
+            "shots": [
+              {
+                "id": "sign-in-1",
+                "at": 0,
+                "file": "capture/core/sign-in-1-000.png",
+                "cue": "Add to Home Screen",
+                "target": [
+                  139.58,
+                  475,
+                  151.47,
+                  18
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.69,
+                "Open the PRISM link in your phone browser."
+              ],
+              [
+                2.69,
+                4.3,
+                "Choose Add to Home Screen."
+              ]
+            ]
+          },
+          {
+            "id": "sign-in-2",
+            "start": 5,
+            "seconds": 4.5,
+            "cue": "Open PRISM · mute the theme",
+            "brand": false,
+            "shots": [
+              {
+                "id": "sign-in-2",
+                "at": 0,
+                "file": "capture/core/sign-in-2-000.png",
+                "cue": "Tap for music",
+                "target": [
+                  264.38,
+                  67.88,
+                  122.63,
+                  48
+                ],
+                "focus": null
+              },
+              {
+                "id": "sign-in-2",
+                "at": 0.52,
+                "file": "capture/core/sign-in-2-520.png",
+                "cue": "Tap the speaker to mute",
+                "target": [
+                  343,
+                  67.88,
+                  44,
+                  48
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.057,
+                "The first tap starts the theme."
+              ],
+              [
+                2.057,
+                3.664,
+                "Tap the speaker to mute it."
+              ]
+            ]
+          },
+          {
+            "id": "sign-in-3",
+            "start": 9.5,
+            "seconds": 5.5,
+            "cue": "Email and password",
+            "brand": false,
+            "shots": [
+              {
+                "id": "sign-in-3",
+                "at": 0,
+                "file": "capture/core/sign-in-3-000.png",
+                "cue": "Enter your staff credentials",
+                "target": [
+                  41,
+                  456.38,
+                  330,
+                  48
+                ],
+                "focus": null
+              },
+              {
+                "id": "sign-in-3",
+                "at": 0.36,
+                "file": "capture/core/sign-in-3-360.png",
+                "cue": "Show password",
+                "target": [
+                  327,
+                  460.38,
+                  40,
+                  40
+                ],
+                "focus": null
+              },
+              {
+                "id": "sign-in-3",
+                "at": 0.69,
+                "file": "capture/core/sign-in-3-690.png",
+                "cue": "Sign in",
+                "target": [
+                  41,
+                  520.38,
+                  330,
+                  48
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.475,
+                "Staff, enter your email and password."
+              ],
+              [
+                2.475,
+                3.746,
+                "The eye reveals it."
+              ],
+              [
+                3.746,
+                4.646,
+                "Tap Sign in."
+              ]
+            ]
+          },
+          {
+            "id": "sign-in-4",
+            "start": 15,
+            "seconds": 4.5,
+            "cue": "Forgot your password?",
+            "brand": false,
+            "shots": [
+              {
+                "id": "sign-in-4",
+                "at": 0,
+                "file": "capture/core/sign-in-4-000.png",
+                "cue": "Check your password",
+                "target": [
+                  41,
+                  489.38,
+                  330,
+                  46
+                ],
+                "focus": null
+              },
+              {
+                "id": "sign-in-4",
+                "at": 0.52,
+                "file": "capture/core/sign-in-4-520.png",
+                "cue": "Email me a reset link",
+                "target": [
+                  41,
+                  549.25,
+                  330,
+                  48
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.177,
+                "If it shakes, check your password."
+              ],
+              [
+                2.177,
+                4.5,
+                "Forgot your password? sends a reset email."
+              ]
+            ]
+          },
+          {
+            "id": "sign-in-5",
+            "start": 19.5,
+            "seconds": 4.5,
+            "cue": "Volunteer · Email code",
+            "brand": false,
+            "shots": [
+              {
+                "id": "sign-in-5",
+                "at": 0,
+                "file": "capture/core/sign-in-5-000.png",
+                "cue": "Volunteer · Email code",
+                "target": [
+                  41,
+                  652.38,
+                  161,
+                  55.75
+                ],
+                "focus": null
+              },
+              {
+                "id": "sign-in-5",
+                "at": 0.51,
+                "file": "capture/core/sign-in-5-510.png",
+                "cue": "Email me a code",
+                "target": [
+                  41,
+                  559.25,
+                  330,
+                  48
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.733,
+                "Volunteers, use your invited email."
+              ],
+              [
+                2.733,
+                4.285,
+                "Tap Email me a code."
+              ]
+            ]
+          },
+          {
+            "id": "sign-in-6",
+            "start": 24,
+            "seconds": 4,
+            "cue": "Enter the 6-digit code",
+            "brand": false,
+            "shots": [
+              {
+                "id": "sign-in-6",
+                "at": 0,
+                "file": "capture/core/sign-in-6-000.png",
+                "cue": "Enter the 6-digit code",
+                "target": [
+                  41,
+                  546.25,
+                  330,
+                  48
+                ],
+                "focus": null
+              },
+              {
+                "id": "sign-in-6",
+                "at": 0.65,
+                "file": "capture/core/sign-in-6-650.png",
+                "cue": "Guest · Look around",
+                "target": [
+                  210,
+                  652.38,
+                  161,
+                  55.75
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.368,
+                "Enter the six-digit code, then tap Sign in."
+              ],
+              [
+                2.368,
+                4,
+                "Guest lets visitors look around."
+              ]
+            ]
+          },
+          {
+            "id": "sign-in-7",
+            "start": 28,
+            "seconds": 6,
+            "cue": "Quick unlock · PIN or fingerprint",
+            "brand": false,
+            "shots": [
+              {
+                "id": "sign-in-7",
+                "at": 0,
+                "file": "capture/core/sign-in-7-000.png",
+                "cue": "Quick unlock",
+                "target": [
+                  319.44,
+                  632,
+                  71.56,
+                  36
+                ],
+                "focus": null
+              },
+              {
+                "id": "sign-in-7",
+                "at": 0.54,
+                "file": "capture/core/sign-in-7-540.png",
+                "cue": "Choose a 6-digit PIN",
+                "target": [
+                  109.47,
+                  371,
+                  193.05,
+                  28
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                1.569,
+                "Set up quick unlock."
+              ],
+              [
+                1.569,
+                3.837,
+                "Staff lock or sign out after five idle"
+              ],
+              [
+                3.837,
+                6,
+                "minutes, except during live sharing."
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "home",
+        "title": "Welcome and Home",
+        "context": "Find your work and get around",
+        "seconds": 22,
+        "start": 44,
+        "beats": [
+          {
+            "id": "home-1",
+            "start": 0,
+            "seconds": 4,
+            "cue": "Let’s go",
+            "brand": false,
+            "shots": [
+              {
+                "id": "home-1",
+                "at": 0,
+                "file": "capture/home/home-1-000.png",
+                "cue": "Let’s go",
+                "target": [
+                  44,
+                  548.25,
+                  324,
+                  44
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.184,
+                "The welcome greets you by name."
+              ],
+              [
+                2.184,
+                3.151,
+                "Tap Let’s go."
+              ]
+            ]
+          },
+          {
+            "id": "home-2",
+            "start": 4,
+            "seconds": 6,
+            "cue": "View my tasks",
+            "brand": false,
+            "shots": [
+              {
+                "id": "home-2",
+                "at": 0,
+                "file": "capture/home/home-2-000.png",
+                "cue": "View my tasks",
+                "target": [
+                  36,
+                  308,
+                  167.17,
+                  48
+                ],
+                "focus": null
+              },
+              {
+                "id": "home-2",
+                "at": 0.36,
+                "file": "capture/home/home-2-360.png",
+                "cue": "Verse of the Day",
+                "target": [
+                  16,
+                  396,
+                  380,
+                  305.69
+                ],
+                "focus": null
+              },
+              {
+                "id": "home-2",
+                "at": 0.67,
+                "file": "capture/home/home-2-670.png",
+                "cue": "Calendar",
+                "target": [
+                  16,
+                  409.69,
+                  233.41,
+                  20
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.605,
+                "Home has View my tasks, Verse of the"
+              ],
+              [
+                2.605,
+                5.649,
+                "Day, and a calendar with deadlines and holidays."
+              ]
+            ]
+          },
+          {
+            "id": "home-3",
+            "start": 10,
+            "seconds": 4,
+            "cue": "Needs your answer · Today · Coming up",
+            "brand": false,
+            "shots": [
+              {
+                "id": "home-3",
+                "at": 0,
+                "file": "capture/home/home-3-000.png",
+                "cue": "Needs your answer",
+                "target": [
+                  16,
+                  463.69,
+                  380,
+                  18
+                ],
+                "focus": null
+              },
+              {
+                "id": "home-3",
+                "at": 0.4,
+                "file": "capture/home/home-3-400.png",
+                "cue": "Today",
+                "target": [
+                  16,
+                  410.69,
+                  380,
+                  18
+                ],
+                "focus": null
+              },
+              {
+                "id": "home-3",
+                "at": 0.72,
+                "file": "capture/home/home-3-720.png",
+                "cue": "Coming up",
+                "target": [
+                  16,
+                  410.94,
+                  380,
+                  18
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.214,
+                "My tasks groups work by what needs your"
+              ],
+              [
+                2.214,
+                4,
+                "answer, today and what’s coming up."
+              ]
+            ]
+          },
+          {
+            "id": "home-4",
+            "start": 14,
+            "seconds": 4,
+            "cue": "Search · Active · Bell · Account",
+            "brand": false,
+            "shots": [
+              {
+                "id": "home-4",
+                "at": 0,
+                "file": "capture/home/home-4-000.png",
+                "cue": "Search",
+                "target": [
+                  57,
+                  76,
+                  322,
+                  20
+                ],
+                "focus": null
+              },
+              {
+                "id": "home-4",
+                "at": 0.3,
+                "file": "capture/home/home-4-300.png",
+                "cue": "Active",
+                "target": [
+                  178,
+                  12,
+                  94,
+                  40
+                ],
+                "focus": null
+              },
+              {
+                "id": "home-4",
+                "at": 0.43,
+                "file": "capture/home/home-4-430.png",
+                "cue": "Active teammates",
+                "target": [
+                  199,
+                  19.5,
+                  110.84,
+                  24
+                ],
+                "focus": null
+              },
+              {
+                "id": "home-4",
+                "at": 0.56,
+                "file": "capture/home/home-4-560.png",
+                "cue": "Notifications",
+                "target": [
+                  276,
+                  8,
+                  48,
+                  48
+                ],
+                "focus": null
+              },
+              {
+                "id": "home-4",
+                "at": 0.8,
+                "file": "capture/home/home-4-800.png",
+                "cue": "Account",
+                "target": [
+                  328,
+                  12,
+                  68,
+                  40
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.543,
+                "The top bar has Search, Active, the bell"
+              ],
+              [
+                2.543,
+                3.663,
+                "and your account."
+              ]
+            ]
+          },
+          {
+            "id": "home-5",
+            "start": 18,
+            "seconds": 4,
+            "cue": "Open the menu",
+            "brand": false,
+            "shots": [
+              {
+                "id": "home-5",
+                "at": 0,
+                "file": "capture/home/home-5-000.png",
+                "cue": "Open navigation",
+                "target": [
+                  16,
+                  8,
+                  48,
+                  48
+                ],
+                "focus": null
+              },
+              {
+                "id": "home-5",
+                "at": 0.36,
+                "file": "capture/home/home-5-360.png",
+                "cue": "Switch modules",
+                "target": [
+                  12,
+                  137,
+                  247,
+                  40
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.295,
+                "Tap the menu to move between modules."
+              ],
+              [
+                2.295,
+                4,
+                "Admin tools are at the bottom."
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "notifications",
+        "title": "Notifications",
+        "context": "Go straight to the right task",
+        "seconds": 16,
+        "start": 66,
+        "beats": [
+          {
+            "id": "notifications-1",
+            "start": 0,
+            "seconds": 5,
+            "cue": "Tap the notification",
+            "brand": false,
+            "shots": [
+              {
+                "id": "notifications-1",
+                "at": 0,
+                "file": "capture/home/notifications-1-000.png",
+                "cue": "Tap the notification",
+                "target": [
+                  27,
+                  85,
+                  318,
+                  56.5
+                ],
+                "focus": null
+              },
+              {
+                "id": "notifications-1",
+                "at": 0.48,
+                "file": "capture/home/notifications-1-480.png",
+                "cue": "Staff Tasks",
+                "target": [
+                  16,
+                  153.5,
+                  237.08,
+                  30
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.12,
+                "Tap a new note to open the right"
+              ],
+              [
+                2.12,
+                5,
+                "task. Phone notifications work when PRISM is closed."
+              ]
+            ]
+          },
+          {
+            "id": "notifications-2",
+            "start": 5,
+            "seconds": 5,
+            "cue": "All or Unread",
+            "brand": false,
+            "shots": [
+              {
+                "id": "notifications-2",
+                "at": 0,
+                "file": "capture/home/notifications-2-000.png",
+                "cue": "Open the bell",
+                "target": [
+                  276,
+                  8,
+                  48,
+                  48
+                ],
+                "focus": null
+              },
+              {
+                "id": "notifications-2",
+                "at": 0.35,
+                "file": "capture/home/notifications-2-350.png",
+                "cue": "All or Unread",
+                "target": [
+                  91.58,
+                  141,
+                  106.75,
+                  32
+                ],
+                "focus": null
+              },
+              {
+                "id": "notifications-2",
+                "at": 0.68,
+                "file": "capture/home/notifications-2-680.png",
+                "cue": "Unread",
+                "target": [
+                  91.58,
+                  141,
+                  106.75,
+                  32
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.975,
+                "Open the bell and switch between All and Unread."
+              ]
+            ]
+          },
+          {
+            "id": "notifications-3",
+            "start": 10,
+            "seconds": 6,
+            "cue": "Sounds · Do not disturb",
+            "brand": false,
+            "shots": [
+              {
+                "id": "notifications-3",
+                "at": 0,
+                "file": "capture/home/notifications-3-000.png",
+                "cue": "Sound on notifications",
+                "target": [
+                  161,
+                  442,
+                  150,
+                  40
+                ],
+                "focus": null
+              },
+              {
+                "id": "notifications-3",
+                "at": 0.48,
+                "file": "capture/home/notifications-3-480.png",
+                "cue": "Do not disturb",
+                "target": [
+                  125,
+                  301.5,
+                  254,
+                  69
+                ],
+                "focus": null
+              },
+              {
+                "id": "notifications-3",
+                "at": 0.77,
+                "file": "capture/home/notifications-3-770.png",
+                "cue": "Do not disturb",
+                "target": [
+                  121,
+                  134,
+                  262,
+                  40
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                3.038,
+                "In the account menu, switch notification or"
+              ],
+              [
+                3.038,
+                6,
+                "error sounds. Choose Do not disturb for quiet."
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "staff-tasks",
+        "title": "Staff Tasks",
+        "context": "Accept, start and send proof",
+        "seconds": 49,
+        "start": 82,
+        "beats": [
+          {
+            "id": "staff-tasks-1",
+            "start": 0,
+            "seconds": 5,
+            "cue": "Today · Upcoming · Assigned",
+            "brand": false,
+            "shots": [
+              {
+                "id": "staff-tasks-1",
+                "at": 0,
+                "file": "capture/core/staff-tasks-1-000.png",
+                "cue": "Mine · Given · Team",
+                "target": [
+                  64.13,
+                  597.5,
+                  35.73,
+                  20
+                ],
+                "focus": null
+              },
+              {
+                "id": "staff-tasks-1",
+                "at": 0.55,
+                "file": "capture/core/staff-tasks-1-550.png",
+                "cue": "Choose a task view",
+                "target": null,
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.079,
+                "Use Mine, Given or Team."
+              ],
+              [
+                2.079,
+                4.853,
+                "Lists follow the six PHILRADS programs."
+              ]
+            ]
+          },
+          {
+            "id": "staff-tasks-2",
+            "start": 5,
+            "seconds": 6,
+            "cue": "Tasks given to you",
+            "brand": false,
+            "shots": [
+              {
+                "id": "staff-tasks-2",
+                "at": 0,
+                "file": "capture/core/staff-tasks-2-000.png",
+                "cue": "Open a task request",
+                "target": [
+                  52,
+                  410.5,
+                  264,
+                  19.25
+                ],
+                "focus": null
+              },
+              {
+                "id": "staff-tasks-2",
+                "at": 0.49,
+                "file": "capture/core/staff-tasks-2-490.png",
+                "cue": "Accept or Can’t take it",
+                "target": [
+                  38,
+                  244.7,
+                  163,
+                  40
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.046,
+                "In Today, open the request."
+              ],
+              [
+                2.046,
+                4.348,
+                "Tap Accept to take it, or Can’t take"
+              ],
+              [
+                4.348,
+                5.414,
+                "it to decline."
+              ]
+            ]
+          },
+          {
+            "id": "staff-tasks-3",
+            "start": 11,
+            "seconds": 5,
+            "cue": "Start · check off steps",
+            "brand": false,
+            "shots": [
+              {
+                "id": "staff-tasks-3",
+                "at": 0,
+                "file": "capture/core/staff-tasks-3-000.png",
+                "cue": "Start",
+                "target": [
+                  292,
+                  406.5,
+                  52,
+                  26
+                ],
+                "focus": null
+              },
+              {
+                "id": "staff-tasks-3",
+                "at": 0.54,
+                "file": "capture/core/staff-tasks-3-540.png",
+                "cue": "Check off a step",
+                "target": [
+                  29,
+                  451.7,
+                  32,
+                  32
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                1.777,
+                "Tap Start when you begin."
+              ],
+              [
+                1.777,
+                3.559,
+                "Check off the steps as you go."
+              ]
+            ]
+          },
+          {
+            "id": "staff-tasks-4",
+            "start": 16,
+            "seconds": 5,
+            "cue": "Finish",
+            "brand": false,
+            "shots": [
+              {
+                "id": "staff-tasks-4",
+                "at": 0,
+                "file": "capture/core/staff-tasks-4-000.png",
+                "cue": "Finish",
+                "target": [
+                  284.8,
+                  406.5,
+                  59.2,
+                  26
+                ],
+                "focus": null
+              },
+              {
+                "id": "staff-tasks-4",
+                "at": 0.49,
+                "file": "capture/core/staff-tasks-4-490.png",
+                "cue": "Swipe a task row",
+                "target": [
+                  52,
+                  395.5,
+                  200.8,
+                  38.5
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.568,
+                "Tap Finish or swipe right to finish."
+              ],
+              [
+                2.568,
+                5,
+                "Swipe left to plan the task for Today."
+              ]
+            ]
+          },
+          {
+            "id": "staff-tasks-5",
+            "start": 21,
+            "seconds": 6,
+            "cue": "Add a photo for proof",
+            "brand": false,
+            "shots": [
+              {
+                "id": "staff-tasks-5",
+                "at": 0,
+                "file": "capture/core/staff-tasks-5-000.png",
+                "cue": "Add a note and photo",
+                "target": [
+                  21,
+                  445.5,
+                  370,
+                  66
+                ],
+                "focus": null
+              },
+              {
+                "id": "staff-tasks-5",
+                "at": 0.5,
+                "file": "capture/core/staff-tasks-5-500.png",
+                "cue": "Add photos",
+                "target": [
+                  21,
+                  655.5,
+                  86.5,
+                  86.5
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.238,
+                "Add a note and links if needed."
+              ],
+              [
+                2.238,
+                4.502,
+                "This task needs a photo, so take one"
+              ],
+              [
+                4.502,
+                5.883,
+                "at the distribution."
+              ]
+            ]
+          },
+          {
+            "id": "staff-tasks-6",
+            "start": 27,
+            "seconds": 5,
+            "cue": "Finish and send",
+            "brand": false,
+            "shots": [
+              {
+                "id": "staff-tasks-6",
+                "at": 0,
+                "file": "capture/core/staff-tasks-6-000.png",
+                "cue": "Finish and send",
+                "target": [
+                  284.8,
+                  406.5,
+                  59.2,
+                  26
+                ],
+                "focus": null
+              },
+              {
+                "id": "staff-tasks-6",
+                "at": 0.65,
+                "file": "capture/core/staff-tasks-6-650.png",
+                "cue": "Photo proof attached",
+                "target": null,
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                1.527,
+                "Tap Finish and send."
+              ],
+              [
+                1.527,
+                3.723,
+                "On tasks where a photo is optional, it"
+              ],
+              [
+                3.723,
+                5,
+                "earns five extra XP."
+              ]
+            ]
+          },
+          {
+            "id": "staff-tasks-7",
+            "start": 32,
+            "seconds": 5,
+            "cue": "Read the giver’s note",
+            "brand": false,
+            "shots": [
+              {
+                "id": "staff-tasks-7",
+                "at": 0,
+                "file": "capture/core/staff-tasks-7-000.png",
+                "cue": "Review work you assigned",
+                "target": [
+                  38,
+                  426.2,
+                  147.44,
+                  44
+                ],
+                "focus": null
+              },
+              {
+                "id": "staff-tasks-7",
+                "at": 0.46,
+                "file": "capture/core/staff-tasks-7-460.png",
+                "cue": "Say what still needs doing",
+                "target": [
+                  38,
+                  352.2,
+                  336,
+                  66
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.625,
+                "The giver can edit, reassign, send back or"
+              ],
+              [
+                2.625,
+                5,
+                "remove it. Read the note if it comes back."
+              ]
+            ]
+          },
+          {
+            "id": "staff-tasks-8",
+            "start": 37,
+            "seconds": 6,
+            "cue": "New task",
+            "brand": false,
+            "shots": [
+              {
+                "id": "staff-tasks-8",
+                "at": 0,
+                "file": "capture/core/staff-tasks-8-000.png",
+                "cue": "New task",
+                "target": [
+                  259.83,
+                  764,
+                  136.17,
+                  56
+                ],
+                "focus": null
+              },
+              {
+                "id": "staff-tasks-8",
+                "at": 0.38,
+                "file": "capture/core/staff-tasks-8-380.png",
+                "cue": "Choose a person, due date, list and priority",
+                "target": [
+                  21,
+                  535.2,
+                  181,
+                  48
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                1.944,
+                "Tap New task to assign work."
+              ],
+              [
+                1.944,
+                4.1,
+                "Pick a person or the whole team, then"
+              ],
+              [
+                4.1,
+                6,
+                "the due date, list and priority."
+              ]
+            ]
+          },
+          {
+            "id": "staff-tasks-9",
+            "start": 43,
+            "seconds": 6,
+            "cue": "Your week · XP · badges",
+            "brand": false,
+            "shots": [
+              {
+                "id": "staff-tasks-9",
+                "at": 0,
+                "file": "capture/core/staff-tasks-9-000.png",
+                "cue": "See your weekly progress",
+                "target": [
+                  16,
+                  497,
+                  305.19,
+                  20
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                3.125,
+                "Finish a task each workday for twenty-five XP."
+              ],
+              [
+                3.125,
+                6,
+                "See your levels, program badges and team goal."
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "live-map",
+        "title": "Live Map",
+        "context": "Let the team know where you are",
+        "seconds": 25,
+        "start": 131,
+        "beats": [
+          {
+            "id": "live-map-1",
+            "start": 0,
+            "seconds": 5,
+            "cue": "Places and teammates",
+            "brand": false,
+            "shots": [
+              {
+                "id": "live-map-1",
+                "at": 0,
+                "file": "capture/home/live-map-1-000.png",
+                "cue": "Places and teammates",
+                "target": [
+                  29,
+                  752.5,
+                  98.66,
+                  48
+                ],
+                "focus": null
+              },
+              {
+                "id": "live-map-1",
+                "at": 0.46,
+                "file": "capture/home/live-map-1-460.png",
+                "cue": "Places and team",
+                "target": [
+                  21,
+                  96.2,
+                  318,
+                  22.5
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                3,
+                "Live Map shows warehouses, response sites, project"
+              ],
+              [
+                3,
+                5,
+                "and activity places, and teammates."
+              ]
+            ]
+          },
+          {
+            "id": "live-map-2",
+            "start": 5,
+            "seconds": 5,
+            "cue": "Share location",
+            "brand": false,
+            "shots": [
+              {
+                "id": "live-map-2",
+                "at": 0,
+                "file": "capture/home/live-map-2-000.png",
+                "cue": "Share location",
+                "target": [
+                  213.59,
+                  752.5,
+                  169.41,
+                  48
+                ],
+                "focus": null
+              },
+              {
+                "id": "live-map-2",
+                "at": 0.3,
+                "file": "capture/home/live-map-2-300.png",
+                "cue": "Share my live location",
+                "target": [
+                  326,
+                  568,
+                  48,
+                  28
+                ],
+                "focus": null
+              },
+              {
+                "id": "live-map-2",
+                "at": 0.57,
+                "file": "capture/home/live-map-2-570.png",
+                "cue": "Start sharing",
+                "target": [
+                  38,
+                  504,
+                  336,
+                  44
+                ],
+                "focus": null
+              },
+              {
+                "id": "live-map-2",
+                "at": 0.77,
+                "file": "capture/home/live-map-2-770.png",
+                "cue": "Sharing live",
+                "target": [
+                  344,
+                  520.8,
+                  56,
+                  56
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.185,
+                "Tap Share location, then Start sharing."
+              ],
+              [
+                2.185,
+                4.164,
+                "Share while you’re out so the team knows"
+              ],
+              [
+                4.164,
+                5,
+                "where you are."
+              ]
+            ]
+          },
+          {
+            "id": "live-map-3",
+            "start": 10,
+            "seconds": 4.5,
+            "cue": "Stop · Check in here",
+            "brand": false,
+            "shots": [
+              {
+                "id": "live-map-3",
+                "at": 0,
+                "file": "capture/home/live-map-3-000.png",
+                "cue": "Stop sharing",
+                "target": [
+                  195,
+                  681.8,
+                  122,
+                  48
+                ],
+                "focus": null
+              },
+              {
+                "id": "live-map-3",
+                "at": 0.48,
+                "file": "capture/home/live-map-3-480.png",
+                "cue": "Check in here",
+                "target": [
+                  38,
+                  762,
+                  336,
+                  44
+                ],
+                "focus": null
+              },
+              {
+                "id": "live-map-3",
+                "at": 0.75,
+                "file": "capture/home/live-map-3-750.png",
+                "cue": "Check in once",
+                "target": [
+                  21,
+                  448.5,
+                  318,
+                  22.5
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.397,
+                "Tap Stop on the floating bubble when you’re"
+              ],
+              [
+                2.397,
+                4.5,
+                "done. For one check-in, tap Check in here."
+              ]
+            ]
+          },
+          {
+            "id": "live-map-4",
+            "start": 14.5,
+            "seconds": 5.5,
+            "cue": "Tap a place",
+            "brand": false,
+            "shots": [
+              {
+                "id": "live-map-4",
+                "at": 0,
+                "file": "capture/home/live-map-4-000.png",
+                "cue": "Tap a place",
+                "target": [
+                  21,
+                  719.2,
+                  370,
+                  52
+                ],
+                "focus": null
+              },
+              {
+                "id": "live-map-4",
+                "at": 0.43,
+                "file": "capture/home/live-map-4-430.png",
+                "cue": "Sampaguita Field Hub",
+                "target": [
+                  21,
+                  96.2,
+                  318,
+                  22.5
+                ],
+                "focus": null
+              },
+              {
+                "id": "live-map-4",
+                "at": 0.73,
+                "file": "capture/home/live-map-4-730.png",
+                "cue": "Stock and response",
+                "target": [
+                  21,
+                  192.7,
+                  101.11,
+                  20
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.246,
+                "Tap a place to see its live stock"
+              ],
+              [
+                2.246,
+                3.664,
+                "and the people served."
+              ]
+            ]
+          },
+          {
+            "id": "live-map-5",
+            "start": 20,
+            "seconds": 5,
+            "cue": "Weather · Full screen · All places",
+            "brand": false,
+            "shots": [
+              {
+                "id": "live-map-5",
+                "at": 0,
+                "file": "capture/home/live-map-5-000.png",
+                "cue": "Show weather",
+                "target": [
+                  339,
+                  418.5,
+                  44,
+                  44
+                ],
+                "focus": null
+              },
+              {
+                "id": "live-map-5",
+                "at": 0.35,
+                "file": "capture/home/live-map-5-350.png",
+                "cue": "Weather layers",
+                "target": [
+                  339,
+                  418.5,
+                  44,
+                  44
+                ],
+                "focus": null
+              },
+              {
+                "id": "live-map-5",
+                "at": 0.61,
+                "file": "capture/home/live-map-5-610.png",
+                "cue": "Full screen",
+                "target": [
+                  339,
+                  262.5,
+                  44,
+                  44
+                ],
+                "focus": null
+              },
+              {
+                "id": "live-map-5",
+                "at": 0.79,
+                "file": "capture/home/live-map-5-790.png",
+                "cue": "Show all places",
+                "target": [
+                  339,
+                  314.5,
+                  44,
+                  44
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                3.034,
+                "Use the map controls for weather, temperature,"
+              ],
+              [
+                3.034,
+                5,
+                "Full screen or Show all places."
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "inventory",
+        "title": "Inventory Management",
+        "context": "Check what’s on hand",
+        "seconds": 20,
+        "start": 156,
+        "beats": [
+          {
+            "id": "inventory-1",
+            "start": 0,
+            "seconds": 5,
+            "cue": "Search and filter stock",
+            "brand": false,
+            "shots": [
+              {
+                "id": "inventory-1",
+                "at": 0,
+                "file": "capture/field/inventory-1-000.png",
+                "cue": "Search stock",
+                "target": [
+                  16,
+                  396,
+                  380,
+                  48
+                ],
+                "focus": null
+              },
+              {
+                "id": "inventory-1",
+                "at": 0.46,
+                "file": "capture/field/inventory-1-460.png",
+                "cue": "Filter by category",
+                "target": [
+                  16,
+                  452,
+                  186,
+                  48
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                1.706,
+                "Search for an item."
+              ],
+              [
+                1.706,
+                4.253,
+                "Filter stock by category or location."
+              ]
+            ]
+          },
+          {
+            "id": "inventory-2",
+            "start": 5,
+            "seconds": 5,
+            "cue": "Low stock",
+            "brand": false,
+            "shots": [
+              {
+                "id": "inventory-2",
+                "at": 0,
+                "file": "capture/field/inventory-2-000.png",
+                "cue": "Find the Low stock badge",
+                "target": [
+                  32,
+                  432.45,
+                  91.16,
+                  22.5
+                ],
+                "focus": null
+              },
+              {
+                "id": "inventory-2",
+                "at": 0.5,
+                "file": "capture/field/inventory-2-500.png",
+                "cue": "Open the stock card",
+                "target": [
+                  21,
+                  121,
+                  318,
+                  22.5
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.381,
+                "Open an item marked Low stock."
+              ],
+              [
+                2.381,
+                5,
+                "The quantities come from PHILRADS IMS."
+              ]
+            ]
+          },
+          {
+            "id": "inventory-3",
+            "start": 10,
+            "seconds": 5,
+            "cue": "Activity log",
+            "brand": false,
+            "shots": [
+              {
+                "id": "inventory-3",
+                "at": 0,
+                "file": "capture/field/inventory-3-000.png",
+                "cue": "Open Activity",
+                "target": [
+                  270.66,
+                  396,
+                  121.34,
+                  48
+                ],
+                "focus": null
+              },
+              {
+                "id": "inventory-3",
+                "at": 0.37,
+                "file": "capture/field/inventory-3-370.png",
+                "cue": "Browse stock movements",
+                "target": [
+                  16,
+                  368,
+                  380,
+                  104
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                3.851,
+                "Open Activity log for receipts, releases and transfers."
+              ]
+            ]
+          },
+          {
+            "id": "inventory-4",
+            "start": 15,
+            "seconds": 5,
+            "cue": "Export the stock list",
+            "brand": false,
+            "shots": [
+              {
+                "id": "inventory-4",
+                "at": 0,
+                "file": "capture/field/inventory-4-000.png",
+                "cue": "Tap Export",
+                "target": [
+                  265.91,
+                  396,
+                  66,
+                  48
+                ],
+                "focus": null
+              },
+              {
+                "id": "inventory-4",
+                "at": 0.36,
+                "file": "capture/field/inventory-4-360.png",
+                "cue": "Choose CSV or printable report",
+                "target": [
+                  16,
+                  710,
+                  380,
+                  114
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                3.102,
+                "In Stock, tap Export and choose a spreadsheet"
+              ],
+              [
+                3.102,
+                4.642,
+                "or a printable report."
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "response",
+        "title": "Response",
+        "context": "Coordinate a relief event",
+        "seconds": 18,
+        "start": 176,
+        "beats": [
+          {
+            "id": "response-1",
+            "start": 0,
+            "seconds": 5,
+            "cue": "Open Response",
+            "brand": false,
+            "shots": [
+              {
+                "id": "response-1",
+                "at": 0,
+                "file": "capture/field/response-1-000.png",
+                "cue": "Open Response",
+                "target": [
+                  16,
+                  399.5,
+                  133.33,
+                  40
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                3.051,
+                "Use Response to coordinate needs assessment,"
+              ],
+              [
+                3.051,
+                4.88,
+                "distribution and reporting."
+              ]
+            ]
+          },
+          {
+            "id": "response-2",
+            "start": 5,
+            "seconds": 7,
+            "cue": "Relief events",
+            "brand": false,
+            "shots": [
+              {
+                "id": "response-2",
+                "at": 0,
+                "file": "capture/field/response-2-000.png",
+                "cue": "Enter event details",
+                "target": [
+                  44,
+                  156,
+                  324,
+                  48
+                ],
+                "focus": null
+              },
+              {
+                "id": "response-2",
+                "at": 0.6,
+                "file": "capture/field/response-2-600.png",
+                "cue": "Continue in PHILRADS IMS",
+                "target": [
+                  44,
+                  726,
+                  324,
+                  48
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.041,
+                "Start a new relief event."
+              ],
+              [
+                2.041,
+                5.265,
+                "Add the details and continue in IMS for approval."
+              ]
+            ]
+          },
+          {
+            "id": "response-3",
+            "start": 12,
+            "seconds": 6,
+            "cue": "Waiting for approval · Live Map",
+            "brand": false,
+            "shots": [
+              {
+                "id": "response-3",
+                "at": 0,
+                "file": "capture/field/response-3-000.png",
+                "cue": "Find the response on Live Map",
+                "target": [
+                  29,
+                  637.5,
+                  103.84,
+                  48
+                ],
+                "focus": null
+              },
+              {
+                "id": "response-3",
+                "at": 0.42,
+                "file": "capture/field/response-3-420.png",
+                "cue": "Open a sample distribution site",
+                "target": [
+                  21,
+                  638.2,
+                  370,
+                  52
+                ],
+                "focus": null
+              },
+              {
+                "id": "response-3",
+                "at": 0.72,
+                "file": "capture/field/response-3-720.png",
+                "cue": "See the linked relief event",
+                "target": [
+                  21,
+                  96.2,
+                  318,
+                  22.5
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.68,
+                "Once the event is approved in IMS, it"
+              ],
+              [
+                2.68,
+                4.127,
+                "appears on Live Map."
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "documentation",
+        "title": "Documentation",
+        "context": "File proof from the field",
+        "seconds": 20,
+        "start": 194,
+        "beats": [
+          {
+            "id": "documentation-1",
+            "start": 0,
+            "seconds": 5,
+            "cue": "Tap Upload",
+            "brand": false,
+            "shots": [
+              {
+                "id": "documentation-1",
+                "at": 0,
+                "file": "capture/field/documentation-1-000.png",
+                "cue": "Tap Upload",
+                "target": [
+                  275.66,
+                  764,
+                  120.34,
+                  56
+                ],
+                "focus": null
+              },
+              {
+                "id": "documentation-1",
+                "at": 0.42,
+                "file": "capture/field/documentation-1-420.png",
+                "cue": "Choose the file type",
+                "target": [
+                  21,
+                  423.7,
+                  370,
+                  148
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.375,
+                "In Documentation, tap Upload."
+              ],
+              [
+                2.375,
+                5,
+                "Pick photos, videos, PDFs or reports."
+              ]
+            ]
+          },
+          {
+            "id": "documentation-2",
+            "start": 5,
+            "seconds": 6,
+            "cue": "Choose the project or activity",
+            "brand": false,
+            "shots": [
+              {
+                "id": "documentation-2",
+                "at": 0,
+                "file": "capture/field/documentation-2-000.png",
+                "cue": "Link the file to a project or response",
+                "target": [
+                  21,
+                  495.2,
+                  370,
+                  48
+                ],
+                "focus": null
+              },
+              {
+                "id": "documentation-2",
+                "at": 0.68,
+                "file": "capture/field/documentation-2-680.png",
+                "cue": "Upload the selected file",
+                "target": [
+                  21,
+                  775,
+                  370,
+                  48
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.246,
+                "Choose the right project or activity."
+              ],
+              [
+                2.246,
+                3.719,
+                "Upload while you’re there."
+              ],
+              [
+                3.719,
+                6,
+                "Don’t wait until you’re back at the office."
+              ]
+            ]
+          },
+          {
+            "id": "documentation-3",
+            "start": 11,
+            "seconds": 5,
+            "cue": "Google Drive and PRISM",
+            "brand": false,
+            "shots": [
+              {
+                "id": "documentation-3",
+                "at": 0,
+                "file": "capture/field/documentation-3-000.png",
+                "cue": "PRISM records the upload",
+                "target": [
+                  16,
+                  249.5,
+                  380,
+                  67
+                ],
+                "focus": null
+              },
+              {
+                "id": "documentation-3",
+                "at": 0.52,
+                "file": "capture/field/documentation-3-520.png",
+                "cue": "Find the saved documentation",
+                "target": [
+                  16,
+                  385.5,
+                  335.94,
+                  16
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.84,
+                "The file goes to its Google Drive folder."
+              ],
+              [
+                2.84,
+                4.305,
+                "PRISM keeps a record."
+              ]
+            ]
+          },
+          {
+            "id": "documentation-4",
+            "start": 16,
+            "seconds": 4,
+            "cue": "All · Media · Records",
+            "brand": false,
+            "shots": [
+              {
+                "id": "documentation-4",
+                "at": 0,
+                "file": "capture/field/documentation-4-000.png",
+                "cue": "Open Media",
+                "target": [
+                  144,
+                  401.5,
+                  124,
+                  36
+                ],
+                "focus": null
+              },
+              {
+                "id": "documentation-4",
+                "at": 0.4,
+                "file": "capture/field/documentation-4-400.png",
+                "cue": "Switch to Records",
+                "target": [
+                  268,
+                  401.5,
+                  124,
+                  36
+                ],
+                "focus": null
+              },
+              {
+                "id": "documentation-4",
+                "at": 0.72,
+                "file": "capture/field/documentation-4-720.png",
+                "cue": "Browse records by type",
+                "target": [
+                  268,
+                  401.5,
+                  124,
+                  36
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                3.554,
+                "Use All, Media or Records to find what you need."
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "forms",
+        "title": "Forms",
+        "context": "Fill in, sign and save",
+        "seconds": 20,
+        "start": 214,
+        "beats": [
+          {
+            "id": "forms-1",
+            "start": 0,
+            "seconds": 5,
+            "cue": "Open a form and type",
+            "brand": false,
+            "shots": [
+              {
+                "id": "forms-1",
+                "at": 0,
+                "file": "capture/work/forms-1-000.png",
+                "cue": "Open Activity Report",
+                "target": [
+                  84,
+                  265.5,
+                  268,
+                  22
+                ],
+                "focus": null
+              },
+              {
+                "id": "forms-1",
+                "at": 0.53,
+                "file": "capture/work/forms-1-530.png",
+                "cue": "Fill in a field",
+                "target": [
+                  175.31,
+                  523.92,
+                  170.42,
+                  11
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.664,
+                "Open a form. Type into the fields laid"
+              ],
+              [
+                2.664,
+                4.517,
+                "out like the paper original."
+              ]
+            ]
+          },
+          {
+            "id": "forms-2",
+            "start": 5,
+            "seconds": 5,
+            "cue": "Bigger or smaller text",
+            "brand": false,
+            "shots": [
+              {
+                "id": "forms-2",
+                "at": 0,
+                "file": "capture/work/forms-2-000.png",
+                "cue": "Adjust text size",
+                "target": [
+                  29,
+                  318.5,
+                  150,
+                  50
+                ],
+                "focus": null
+              },
+              {
+                "id": "forms-2",
+                "at": 0.52,
+                "file": "capture/work/forms-2-520.png",
+                "cue": "Set a readable size",
+                "target": [
+                  29,
+                  318.5,
+                  150,
+                  50
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.553,
+                "Use the text size controls to make your"
+              ],
+              [
+                2.553,
+                4.175,
+                "entries bigger or smaller."
+              ]
+            ]
+          },
+          {
+            "id": "forms-3",
+            "start": 10,
+            "seconds": 5,
+            "cue": "Sign with your finger",
+            "brand": false,
+            "shots": [
+              {
+                "id": "forms-3",
+                "at": 0,
+                "file": "capture/work/forms-3-000.png",
+                "cue": "Tap a signature line",
+                "target": [
+                  62.02,
+                  410.09,
+                  126.61,
+                  19.91
+                ],
+                "focus": null
+              },
+              {
+                "id": "forms-3",
+                "at": 0.45,
+                "file": "capture/work/forms-3-450.png",
+                "cue": "Sign on screen",
+                "target": [
+                  23,
+                  537,
+                  366,
+                  224
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.445,
+                "When the form asks for a signature, sign"
+              ],
+              [
+                2.445,
+                4.006,
+                "on screen with your finger."
+              ]
+            ]
+          },
+          {
+            "id": "forms-4",
+            "start": 15,
+            "seconds": 5,
+            "cue": "Print / Save as PDF",
+            "brand": false,
+            "shots": [
+              {
+                "id": "forms-4",
+                "at": 0,
+                "file": "capture/work/forms-4-000.png",
+                "cue": "Print / Save as PDF",
+                "target": [
+                  29,
+                  191,
+                  191.97,
+                  40
+                ],
+                "focus": null
+              },
+              {
+                "id": "forms-4",
+                "at": 0.57,
+                "file": "capture/work/forms-4-570.png",
+                "cue": "Use the form’s paper size",
+                "target": null,
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.121,
+                "Tap Print or Save as PDF."
+              ],
+              [
+                2.121,
+                4.678,
+                "Use the paper size set for the form."
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "projects-resources-statistics",
+        "title": "Projects, Resources &amp; Statistics",
+        "context": "Find project work, files and results",
+        "seconds": 25,
+        "start": 234,
+        "beats": [
+          {
+            "id": "projects-resources-statistics-1",
+            "start": 0,
+            "seconds": 7,
+            "cue": "Projects",
+            "brand": false,
+            "shots": [
+              {
+                "id": "projects-resources-statistics-1",
+                "at": 0,
+                "file": "capture/work/projects-resources-statistics-1-000.png",
+                "cue": "Open a project",
+                "target": [
+                  16,
+                  653.5,
+                  380,
+                  186
+                ],
+                "focus": null
+              },
+              {
+                "id": "projects-resources-statistics-1",
+                "at": 0.47,
+                "file": "capture/work/projects-resources-statistics-1-470.png",
+                "cue": "Find milestones, team and tasks",
+                "target": null,
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                3.345,
+                "Open a project for its schedule, team, tasks,"
+              ],
+              [
+                3.345,
+                6.625,
+                "files and cost. Assign a task to several people."
+              ]
+            ]
+          },
+          {
+            "id": "projects-resources-statistics-2",
+            "start": 7,
+            "seconds": 5,
+            "cue": "Resources · Preview",
+            "brand": false,
+            "shots": [
+              {
+                "id": "projects-resources-statistics-2",
+                "at": 0,
+                "file": "capture/work/projects-resources-statistics-2-000.png",
+                "cue": "Preview a resource",
+                "target": [
+                  289.42,
+                  403.63,
+                  89.58,
+                  32
+                ],
+                "focus": null
+              },
+              {
+                "id": "projects-resources-statistics-2",
+                "at": 0.51,
+                "file": "capture/work/projects-resources-statistics-2-510.png",
+                "cue": "Read the preview in PRISM",
+                "target": null,
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.133,
+                "Swipe the resource categories."
+              ],
+              [
+                2.133,
+                3.855,
+                "Tap Preview to open a file."
+              ]
+            ]
+          },
+          {
+            "id": "projects-resources-statistics-3",
+            "start": 12,
+            "seconds": 5,
+            "cue": "The ⋯ menu",
+            "brand": false,
+            "shots": [
+              {
+                "id": "projects-resources-statistics-3",
+                "at": 0,
+                "file": "capture/work/projects-resources-statistics-3-000.png",
+                "cue": "Open the resource’s action menu",
+                "target": [
+                  168,
+                  532.5,
+                  214,
+                  40
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.995,
+                "The three-dot menu lets you Open in Google,"
+              ],
+              [
+                2.995,
+                4.539,
+                "Download or Copy link."
+              ]
+            ]
+          },
+          {
+            "id": "projects-resources-statistics-4",
+            "start": 17,
+            "seconds": 8,
+            "cue": "Statistics · since 2023",
+            "brand": false,
+            "shots": [
+              {
+                "id": "projects-resources-statistics-4",
+                "at": 0,
+                "file": "capture/work/projects-resources-statistics-4-000.png",
+                "cue": "Browse Statistics",
+                "target": [
+                  16,
+                  270.5,
+                  380,
+                  20
+                ],
+                "focus": null
+              },
+              {
+                "id": "projects-resources-statistics-4",
+                "at": 0.48,
+                "file": "capture/work/projects-resources-statistics-4-480.png",
+                "cue": "See who was served",
+                "target": [
+                  38,
+                  643.75,
+                  152.22,
+                  19.25
+                ],
+                "focus": null
+              },
+              {
+                "id": "projects-resources-statistics-4",
+                "at": 0.73,
+                "file": "capture/work/projects-resources-statistics-4-730.png",
+                "cue": "Find the activity on Live Map",
+                "target": null,
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.71,
+                "Statistics shows where and when PHILRADS worked,"
+              ],
+              [
+                2.71,
+                5.076,
+                "and who was served, since twenty twenty-three."
+              ],
+              [
+                5.076,
+                6.19,
+                "See it on Live Map."
+              ],
+              [
+                6.19,
+                8,
+                "Funding and donors are restricted."
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "pdm",
+        "title": "PDM",
+        "context": "Coming soon",
+        "seconds": 6,
+        "start": 259,
+        "beats": [
+          {
+            "id": "pdm-1",
+            "start": 0,
+            "seconds": 6,
+            "cue": "PDM · Coming soon",
+            "brand": false,
+            "shots": [
+              {
+                "id": "pdm-1",
+                "at": 0,
+                "file": "capture/home/pdm-1-000.png",
+                "cue": "PDM",
+                "target": [
+                  12,
+                  313,
+                  247,
+                  40
+                ],
+                "focus": null
+              },
+              {
+                "id": "pdm-1",
+                "at": 0.5,
+                "file": "capture/home/pdm-1-500.png",
+                "cue": "Coming soon",
+                "target": [
+                  16,
+                  153.5,
+                  237.08,
+                  30
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                3.486,
+                "PDM is in the menu and marked Coming soon."
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "profile",
+        "title": "Profile and settings",
+        "context": "Make PRISM work for you",
+        "seconds": 16,
+        "start": 265,
+        "beats": [
+          {
+            "id": "profile-1",
+            "start": 0,
+            "seconds": 5,
+            "cue": "Tap your photo",
+            "brand": false,
+            "shots": [
+              {
+                "id": "profile-1",
+                "at": 0,
+                "file": "capture/home/profile-1-000.png",
+                "cue": "Change your photo",
+                "target": [
+                  16,
+                  392,
+                  56,
+                  56
+                ],
+                "focus": null
+              },
+              {
+                "id": "profile-1",
+                "at": 0.43,
+                "file": "capture/home/profile-1-430.png",
+                "cue": "Position your photo",
+                "target": [
+                  318,
+                  690,
+                  48,
+                  48
+                ],
+                "focus": null
+              },
+              {
+                "id": "profile-1",
+                "at": 0.73,
+                "file": "capture/home/profile-1-730.png",
+                "cue": "Drag or zoom",
+                "target": [
+                  106,
+                  710,
+                  200,
+                  8
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.02,
+                "Tap your photo to change it."
+              ],
+              [
+                2.02,
+                3.683,
+                "Drag and zoom to frame it."
+              ]
+            ]
+          },
+          {
+            "id": "profile-2",
+            "start": 5,
+            "seconds": 5,
+            "cue": "Position · Bio · Avatar frame",
+            "brand": false,
+            "shots": [
+              {
+                "id": "profile-2",
+                "at": 0,
+                "file": "capture/home/profile-2-000.png",
+                "cue": "Position",
+                "target": [
+                  16,
+                  396,
+                  380,
+                  48
+                ],
+                "focus": null
+              },
+              {
+                "id": "profile-2",
+                "at": 0.28,
+                "file": "capture/home/profile-2-280.png",
+                "cue": "About me",
+                "target": [
+                  16,
+                  572.75,
+                  380,
+                  126
+                ],
+                "focus": null
+              },
+              {
+                "id": "profile-2",
+                "at": 0.48,
+                "file": "capture/home/profile-2-480.png",
+                "cue": "Avatar frame",
+                "target": [
+                  16,
+                  378.75,
+                  380,
+                  82
+                ],
+                "focus": null
+              },
+              {
+                "id": "profile-2",
+                "at": 0.73,
+                "file": "capture/home/profile-2-730.png",
+                "cue": "Public or Private",
+                "target": [
+                  116.41,
+                  442.75,
+                  95.41,
+                  40
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.014,
+                "Add your position and a short bio."
+              ],
+              [
+                2.014,
+                3.96,
+                "Choose a frame and set your profile to"
+              ],
+              [
+                3.96,
+                5,
+                "Public or Private."
+              ]
+            ]
+          },
+          {
+            "id": "profile-3",
+            "start": 10,
+            "seconds": 6,
+            "cue": "Dark · Light · Auto",
+            "brand": false,
+            "shots": [
+              {
+                "id": "profile-3",
+                "at": 0,
+                "file": "capture/home/profile-3-000.png",
+                "cue": "What’s new",
+                "target": [
+                  121,
+                  302,
+                  262,
+                  40
+                ],
+                "focus": null
+              },
+              {
+                "id": "profile-3",
+                "at": 0.28,
+                "file": "capture/home/profile-3-280.png",
+                "cue": "Dark · Light · Auto",
+                "target": [
+                  214,
+                  355,
+                  76,
+                  32
+                ],
+                "focus": null
+              },
+              {
+                "id": "profile-3",
+                "at": 0.57,
+                "file": "capture/home/profile-3-570.png",
+                "cue": "Light theme",
+                "target": [
+                  214,
+                  355,
+                  76,
+                  32
+                ],
+                "focus": null
+              },
+              {
+                "id": "profile-3",
+                "at": 0.81,
+                "file": "capture/home/profile-3-810.png",
+                "cue": "Sound switches",
+                "target": [
+                  161,
+                  410,
+                  150,
+                  20
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.925,
+                "Your account menu has themes, sound switches,"
+              ],
+              [
+                2.925,
+                4.476,
+                "What’s new and Sign out."
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "field-tips",
+        "title": "Before you head out",
+        "context": "Four habits for field work",
+        "seconds": 19,
+        "start": 281,
+        "beats": [
+          {
+            "id": "field-tips-1",
+            "start": 0,
+            "seconds": 5,
+            "cue": "Unlock · Share · Finish · Upload",
+            "brand": false,
+            "shots": [
+              {
+                "id": "field-tips-1",
+                "at": 0,
+                "file": "capture/home/field-tips-1-000.png",
+                "cue": "Quick unlock",
+                "target": [
+                  121,
+                  484,
+                  262,
+                  40
+                ],
+                "focus": null
+              },
+              {
+                "id": "field-tips-1",
+                "at": 0.35,
+                "file": "capture/home/field-tips-1-350.png",
+                "cue": "Quick unlock",
+                "target": [
+                  21,
+                  513.5,
+                  318,
+                  22.5
+                ],
+                "focus": null
+              },
+              {
+                "id": "field-tips-1",
+                "at": 0.67,
+                "file": "capture/home/field-tips-1-670.png",
+                "cue": "Share location",
+                "target": [
+                  213.59,
+                  752.5,
+                  169.41,
+                  48
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.414,
+                "Unlock quickly. Share your location."
+              ],
+              [
+                2.414,
+                3.733,
+                "Finish with a photo."
+              ],
+              [
+                3.733,
+                5,
+                "Upload on the spot."
+              ]
+            ]
+          },
+          {
+            "id": "field-tips-2",
+            "start": 5,
+            "seconds": 7,
+            "cue": "Weak signal or an update?",
+            "brand": false,
+            "shots": [
+              {
+                "id": "field-tips-2",
+                "at": 0,
+                "file": "capture/home/field-tips-2-000.png",
+                "cue": "You’re offline",
+                "target": [
+                  29,
+                  456.5,
+                  302,
+                  50
+                ],
+                "focus": null
+              },
+              {
+                "id": "field-tips-2",
+                "at": 0.52,
+                "file": "capture/home/field-tips-2-520.png",
+                "cue": "Update now",
+                "target": [
+                  172,
+                  471.75,
+                  196,
+                  48
+                ],
+                "focus": null
+              }
+            ],
+            "captions": [
+              [
+                0.25,
+                2.676,
+                "Offline, work with what’s already loaded."
+              ],
+              [
+                2.676,
+                4.311,
+                "Updates install when safe."
+              ],
+              [
+                4.311,
+                7,
+                "If What’s new asks, tap Update now when ready."
+              ]
+            ]
+          },
+          {
+            "id": "field-tips-3",
+            "start": 12,
+            "seconds": 7,
+            "cue": "One system, three jobs",
+            "brand": true,
+            "shots": [],
+            "captions": [
+              [
+                1,
+                4.264,
+                "One system, three jobs: response, inventory"
+              ],
+              [
+                4.264,
+                6.779,
+                "and our team. PRISM by PHILRADS."
+              ]
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "clips": {
+    "opening": {
+      "seconds": 20,
+      "chapters": [
+        {
+          "id": "opening",
+          "title": "PRISM field guide",
+          "context": "Response, inventory and our team",
+          "seconds": 20,
+          "start": 0,
+          "beats": [
+            {
+              "id": "opening-1",
+              "start": 0,
+              "seconds": 10,
+              "cue": "PRISM by PHILRADS",
+              "brand": true,
+              "shots": [],
+              "captions": [
+                [
+                  1,
+                  3.733,
+                  "This is PRISM, PHILRADS’s app for response,"
+                ],
+                [
+                  3.733,
+                  5.328,
+                  "inventory and our team."
+                ],
+                [
+                  5.328,
+                  7.549,
+                  "Here’s how to use it in the field."
+                ]
+              ]
+            },
+            {
+              "id": "opening-2-short",
+              "start": 10,
+              "seconds": 10,
+              "cue": "Find a task. Send proof.",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "home-2",
+                  "at": 0,
+                  "file": "capture/home/home-2-000.png",
+                  "cue": "View my tasks",
+                  "target": [
+                    36,
+                    308,
+                    167.17,
+                    48
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "home-2",
+                  "at": 0.36,
+                  "file": "capture/home/home-2-360.png",
+                  "cue": "Verse of the Day",
+                  "target": [
+                    16,
+                    396,
+                    380,
+                    305.69
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "home-2",
+                  "at": 0.67,
+                  "file": "capture/home/home-2-670.png",
+                  "cue": "Calendar",
+                  "target": [
+                    16,
+                    409.69,
+                    233.41,
+                    20
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.863,
+                  "In this guide, you’ll open PRISM, find your"
+                ],
+                [
+                  2.863,
+                  5.258,
+                  "tasks, and send a photo from the field."
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "sign-in": {
+      "seconds": 37,
+      "chapters": [
+        {
+          "id": "sign-in",
+          "title": "Install and sign in",
+          "context": "Get PRISM ready on your phone",
+          "seconds": 37,
+          "start": 0,
+          "beats": [
+            {
+              "id": "sign-in-1",
+              "start": 0,
+              "seconds": 5.433333333333334,
+              "cue": "Add to Home Screen",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "sign-in-1",
+                  "at": 0,
+                  "file": "capture/core/sign-in-1-000.png",
+                  "cue": "Add to Home Screen",
+                  "target": [
+                    139.58,
+                    475,
+                    151.47,
+                    18
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.69,
+                  "Open the PRISM link in your phone browser."
+                ],
+                [
+                  2.69,
+                  4.3,
+                  "Choose Add to Home Screen."
+                ]
+              ]
+            },
+            {
+              "id": "sign-in-2",
+              "start": 5.433333333333334,
+              "seconds": 4.9,
+              "cue": "Open PRISM · mute the theme",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "sign-in-2",
+                  "at": 0,
+                  "file": "capture/core/sign-in-2-000.png",
+                  "cue": "Tap for music",
+                  "target": [
+                    264.38,
+                    67.88,
+                    122.63,
+                    48
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "sign-in-2",
+                  "at": 0.52,
+                  "file": "capture/core/sign-in-2-520.png",
+                  "cue": "Tap the speaker to mute",
+                  "target": [
+                    343,
+                    67.88,
+                    44,
+                    48
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.057,
+                  "The first tap starts the theme."
+                ],
+                [
+                  2.057,
+                  3.664,
+                  "Tap the speaker to mute it."
+                ]
+              ]
+            },
+            {
+              "id": "sign-in-3",
+              "start": 10.333333333333334,
+              "seconds": 5.999999999999998,
+              "cue": "Email and password",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "sign-in-3",
+                  "at": 0,
+                  "file": "capture/core/sign-in-3-000.png",
+                  "cue": "Enter your staff credentials",
+                  "target": [
+                    41,
+                    456.38,
+                    330,
+                    48
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "sign-in-3",
+                  "at": 0.36,
+                  "file": "capture/core/sign-in-3-360.png",
+                  "cue": "Show password",
+                  "target": [
+                    327,
+                    460.38,
+                    40,
+                    40
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "sign-in-3",
+                  "at": 0.69,
+                  "file": "capture/core/sign-in-3-690.png",
+                  "cue": "Sign in",
+                  "target": [
+                    41,
+                    520.38,
+                    330,
+                    48
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.475,
+                  "Staff, enter your email and password."
+                ],
+                [
+                  2.475,
+                  3.746,
+                  "The eye reveals it."
+                ],
+                [
+                  3.746,
+                  4.646,
+                  "Tap Sign in."
+                ]
+              ]
+            },
+            {
+              "id": "sign-in-4",
+              "start": 16.333333333333332,
+              "seconds": 4.900000000000002,
+              "cue": "Forgot your password?",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "sign-in-4",
+                  "at": 0,
+                  "file": "capture/core/sign-in-4-000.png",
+                  "cue": "Check your password",
+                  "target": [
+                    41,
+                    489.38,
+                    330,
+                    46
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "sign-in-4",
+                  "at": 0.52,
+                  "file": "capture/core/sign-in-4-520.png",
+                  "cue": "Email me a reset link",
+                  "target": [
+                    41,
+                    549.25,
+                    330,
+                    48
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.299,
+                  "If it shakes, check your password."
+                ],
+                [
+                  2.299,
+                  4.769,
+                  "Forgot your password? sends a reset email."
+                ]
+              ]
+            },
+            {
+              "id": "sign-in-5",
+              "start": 21.233333333333334,
+              "seconds": 4.899999999999999,
+              "cue": "Volunteer · Email code",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "sign-in-5",
+                  "at": 0,
+                  "file": "capture/core/sign-in-5-000.png",
+                  "cue": "Volunteer · Email code",
+                  "target": [
+                    41,
+                    652.38,
+                    161,
+                    55.75
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "sign-in-5",
+                  "at": 0.51,
+                  "file": "capture/core/sign-in-5-510.png",
+                  "cue": "Email me a code",
+                  "target": [
+                    41,
+                    559.25,
+                    330,
+                    48
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.733,
+                  "Volunteers, use your invited email."
+                ],
+                [
+                  2.733,
+                  4.285,
+                  "Tap Email me a code."
+                ]
+              ]
+            },
+            {
+              "id": "sign-in-6",
+              "start": 26.133333333333333,
+              "seconds": 4.333333333333332,
+              "cue": "Enter the 6-digit code",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "sign-in-6",
+                  "at": 0,
+                  "file": "capture/core/sign-in-6-000.png",
+                  "cue": "Enter the 6-digit code",
+                  "target": [
+                    41,
+                    546.25,
+                    330,
+                    48
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "sign-in-6",
+                  "at": 0.65,
+                  "file": "capture/core/sign-in-6-650.png",
+                  "cue": "Guest · Look around",
+                  "target": [
+                    210,
+                    652.38,
+                    161,
+                    55.75
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.556,
+                  "Enter the six-digit code, then tap Sign in."
+                ],
+                [
+                  2.556,
+                  4.333,
+                  "Guest lets visitors look around."
+                ]
+              ]
+            },
+            {
+              "id": "sign-in-7",
+              "start": 30.466666666666665,
+              "seconds": 6.533333333333335,
+              "cue": "Quick unlock · PIN or fingerprint",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "sign-in-7",
+                  "at": 0,
+                  "file": "capture/core/sign-in-7-000.png",
+                  "cue": "Quick unlock",
+                  "target": [
+                    319.44,
+                    632,
+                    71.56,
+                    36
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "sign-in-7",
+                  "at": 0.54,
+                  "file": "capture/core/sign-in-7-540.png",
+                  "cue": "Choose a 6-digit PIN",
+                  "target": [
+                    109.47,
+                    371,
+                    193.05,
+                    28
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  1.679,
+                  "Set up quick unlock."
+                ],
+                [
+                  1.679,
+                  4.137,
+                  "Staff lock or sign out after five idle"
+                ],
+                [
+                  4.137,
+                  6.481,
+                  "minutes, except during live sharing."
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "home": {
+      "seconds": 25,
+      "chapters": [
+        {
+          "id": "home",
+          "title": "Welcome and Home",
+          "context": "Find your work and get around",
+          "seconds": 25,
+          "start": 0,
+          "beats": [
+            {
+              "id": "home-1",
+              "start": 0,
+              "seconds": 4.533333333333333,
+              "cue": "Let’s go",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "home-1",
+                  "at": 0,
+                  "file": "capture/home/home-1-000.png",
+                  "cue": "Let’s go",
+                  "target": [
+                    44,
+                    548.25,
+                    324,
+                    44
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.184,
+                  "The welcome greets you by name."
+                ],
+                [
+                  2.184,
+                  3.151,
+                  "Tap Let’s go."
+                ]
+              ]
+            },
+            {
+              "id": "home-2",
+              "start": 4.533333333333333,
+              "seconds": 6.833333333333334,
+              "cue": "View my tasks",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "home-2",
+                  "at": 0,
+                  "file": "capture/home/home-2-000.png",
+                  "cue": "View my tasks",
+                  "target": [
+                    36,
+                    308,
+                    167.17,
+                    48
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "home-2",
+                  "at": 0.36,
+                  "file": "capture/home/home-2-360.png",
+                  "cue": "Verse of the Day",
+                  "target": [
+                    16,
+                    396,
+                    380,
+                    305.69
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "home-2",
+                  "at": 0.67,
+                  "file": "capture/home/home-2-670.png",
+                  "cue": "Calendar",
+                  "target": [
+                    16,
+                    409.69,
+                    233.41,
+                    20
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.605,
+                  "Home has View my tasks, Verse of the"
+                ],
+                [
+                  2.605,
+                  5.649,
+                  "Day, and a calendar with deadlines and holidays."
+                ]
+              ]
+            },
+            {
+              "id": "home-3",
+              "start": 11.366666666666667,
+              "seconds": 4.533333333333333,
+              "cue": "Needs your answer · Today · Coming up",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "home-3",
+                  "at": 0,
+                  "file": "capture/home/home-3-000.png",
+                  "cue": "Needs your answer",
+                  "target": [
+                    16,
+                    463.69,
+                    380,
+                    18
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "home-3",
+                  "at": 0.4,
+                  "file": "capture/home/home-3-400.png",
+                  "cue": "Today",
+                  "target": [
+                    16,
+                    410.69,
+                    380,
+                    18
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "home-3",
+                  "at": 0.72,
+                  "file": "capture/home/home-3-720.png",
+                  "cue": "Coming up",
+                  "target": [
+                    16,
+                    410.94,
+                    380,
+                    18
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.494,
+                  "My tasks groups work by what needs your"
+                ],
+                [
+                  2.494,
+                  4.533,
+                  "answer, today and what’s coming up."
+                ]
+              ]
+            },
+            {
+              "id": "home-4",
+              "start": 15.9,
+              "seconds": 4.566666666666665,
+              "cue": "Search · Active · Bell · Account",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "home-4",
+                  "at": 0,
+                  "file": "capture/home/home-4-000.png",
+                  "cue": "Search",
+                  "target": [
+                    57,
+                    76,
+                    322,
+                    20
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "home-4",
+                  "at": 0.3,
+                  "file": "capture/home/home-4-300.png",
+                  "cue": "Active",
+                  "target": [
+                    178,
+                    12,
+                    94,
+                    40
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "home-4",
+                  "at": 0.43,
+                  "file": "capture/home/home-4-430.png",
+                  "cue": "Active teammates",
+                  "target": [
+                    199,
+                    19.5,
+                    110.84,
+                    24
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "home-4",
+                  "at": 0.56,
+                  "file": "capture/home/home-4-560.png",
+                  "cue": "Notifications",
+                  "target": [
+                    276,
+                    8,
+                    48,
+                    48
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "home-4",
+                  "at": 0.8,
+                  "file": "capture/home/home-4-800.png",
+                  "cue": "Account",
+                  "target": [
+                    328,
+                    12,
+                    68,
+                    40
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.543,
+                  "The top bar has Search, Active, the bell"
+                ],
+                [
+                  2.543,
+                  3.663,
+                  "and your account."
+                ]
+              ]
+            },
+            {
+              "id": "home-5",
+              "start": 20.466666666666665,
+              "seconds": 4.533333333333335,
+              "cue": "Open the menu",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "home-5",
+                  "at": 0,
+                  "file": "capture/home/home-5-000.png",
+                  "cue": "Open navigation",
+                  "target": [
+                    16,
+                    8,
+                    48,
+                    48
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "home-5",
+                  "at": 0.36,
+                  "file": "capture/home/home-5-360.png",
+                  "cue": "Switch modules",
+                  "target": [
+                    12,
+                    137,
+                    247,
+                    40
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.586,
+                  "Tap the menu to move between modules."
+                ],
+                [
+                  2.586,
+                  4.533,
+                  "Admin tools are at the bottom."
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "notifications": {
+      "seconds": 21,
+      "chapters": [
+        {
+          "id": "notifications",
+          "title": "Notifications",
+          "context": "Go straight to the right task",
+          "seconds": 21,
+          "start": 0,
+          "beats": [
+            {
+              "id": "notifications-1",
+              "start": 0,
+              "seconds": 6.566666666666666,
+              "cue": "Tap the notification",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "notifications-1",
+                  "at": 0,
+                  "file": "capture/home/notifications-1-000.png",
+                  "cue": "Tap the notification",
+                  "target": [
+                    27,
+                    85,
+                    318,
+                    56.5
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "notifications-1",
+                  "at": 0.48,
+                  "file": "capture/home/notifications-1-480.png",
+                  "cue": "Staff Tasks",
+                  "target": [
+                    16,
+                    153.5,
+                    237.08,
+                    30
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.324,
+                  "Tap a new note to open the right"
+                ],
+                [
+                  2.324,
+                  5.52,
+                  "task. Phone notifications work when PRISM is closed."
+                ]
+              ]
+            },
+            {
+              "id": "notifications-2",
+              "start": 6.566666666666666,
+              "seconds": 6.566666666666666,
+              "cue": "All or Unread",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "notifications-2",
+                  "at": 0,
+                  "file": "capture/home/notifications-2-000.png",
+                  "cue": "Open the bell",
+                  "target": [
+                    276,
+                    8,
+                    48,
+                    48
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "notifications-2",
+                  "at": 0.35,
+                  "file": "capture/home/notifications-2-350.png",
+                  "cue": "All or Unread",
+                  "target": [
+                    91.58,
+                    141,
+                    106.75,
+                    32
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "notifications-2",
+                  "at": 0.68,
+                  "file": "capture/home/notifications-2-680.png",
+                  "cue": "Unread",
+                  "target": [
+                    91.58,
+                    141,
+                    106.75,
+                    32
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.975,
+                  "Open the bell and switch between All and Unread."
+                ]
+              ]
+            },
+            {
+              "id": "notifications-3",
+              "start": 13.133333333333333,
+              "seconds": 7.866666666666667,
+              "cue": "Sounds · Do not disturb",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "notifications-3",
+                  "at": 0,
+                  "file": "capture/home/notifications-3-000.png",
+                  "cue": "Sound on notifications",
+                  "target": [
+                    161,
+                    442,
+                    150,
+                    40
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "notifications-3",
+                  "at": 0.48,
+                  "file": "capture/home/notifications-3-480.png",
+                  "cue": "Do not disturb",
+                  "target": [
+                    125,
+                    301.5,
+                    254,
+                    69
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "notifications-3",
+                  "at": 0.77,
+                  "file": "capture/home/notifications-3-770.png",
+                  "cue": "Do not disturb",
+                  "target": [
+                    121,
+                    134,
+                    262,
+                    40
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  3.092,
+                  "In the account menu, switch notification or"
+                ],
+                [
+                  3.092,
+                  6.112,
+                  "error sounds. Choose Do not disturb for quiet."
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "staff-tasks": {
+      "seconds": 39,
+      "chapters": [
+        {
+          "id": "staff-tasks",
+          "title": "Staff Tasks",
+          "context": "Accept, start and send proof",
+          "seconds": 39,
+          "start": 0,
+          "beats": [
+            {
+              "id": "staff-tasks-1-short",
+              "start": 0,
+              "seconds": 3.966666666666667,
+              "cue": "Today · Upcoming · Assigned",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "staff-tasks-1",
+                  "at": 0,
+                  "file": "capture/core/staff-tasks-1-000.png",
+                  "cue": "Mine · Given · Team",
+                  "target": [
+                    64.13,
+                    597.5,
+                    35.73,
+                    20
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "staff-tasks-1",
+                  "at": 0.55,
+                  "file": "capture/core/staff-tasks-1-550.png",
+                  "cue": "Choose a task view",
+                  "target": null,
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  1.757,
+                  "Open Mine, Given or Team."
+                ],
+                [
+                  1.757,
+                  3.967,
+                  "Tasks follow the six PHILRADS programs."
+                ]
+              ]
+            },
+            {
+              "id": "staff-tasks-2-short",
+              "start": 3.966666666666667,
+              "seconds": 4.800000000000001,
+              "cue": "Tasks given to you",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "staff-tasks-2",
+                  "at": 0,
+                  "file": "capture/core/staff-tasks-2-000.png",
+                  "cue": "Open a task request",
+                  "target": [
+                    52,
+                    410.5,
+                    264,
+                    19.25
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "staff-tasks-2",
+                  "at": 0.49,
+                  "file": "capture/core/staff-tasks-2-490.png",
+                  "cue": "Accept or Can’t take it",
+                  "target": [
+                    38,
+                    244.7,
+                    163,
+                    40
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.83,
+                  "In Today, tap Accept or Can’t take it."
+                ]
+              ]
+            },
+            {
+              "id": "staff-tasks-3-short",
+              "start": 8.766666666666667,
+              "seconds": 3.966666666666665,
+              "cue": "Start · check off steps",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "staff-tasks-3",
+                  "at": 0,
+                  "file": "capture/core/staff-tasks-3-000.png",
+                  "cue": "Start",
+                  "target": [
+                    292,
+                    406.5,
+                    52,
+                    26
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "staff-tasks-3",
+                  "at": 0.54,
+                  "file": "capture/core/staff-tasks-3-540.png",
+                  "cue": "Check off a step",
+                  "target": [
+                    29,
+                    451.7,
+                    32,
+                    32
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.277,
+                  "Tap Start. Check off each step."
+                ]
+              ]
+            },
+            {
+              "id": "staff-tasks-4-short",
+              "start": 12.733333333333333,
+              "seconds": 3.966666666666667,
+              "cue": "Finish",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "staff-tasks-4",
+                  "at": 0,
+                  "file": "capture/core/staff-tasks-4-000.png",
+                  "cue": "Finish",
+                  "target": [
+                    284.8,
+                    406.5,
+                    59.2,
+                    26
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "staff-tasks-4",
+                  "at": 0.49,
+                  "file": "capture/core/staff-tasks-4-490.png",
+                  "cue": "Swipe a task row",
+                  "target": [
+                    52,
+                    395.5,
+                    200.8,
+                    38.5
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  3.364,
+                  "Swipe right to finish, or left to plan for Today."
+                ]
+              ]
+            },
+            {
+              "id": "staff-tasks-5-short",
+              "start": 16.7,
+              "seconds": 4.800000000000001,
+              "cue": "Add a photo for proof",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "staff-tasks-5",
+                  "at": 0,
+                  "file": "capture/core/staff-tasks-5-000.png",
+                  "cue": "Add a note and photo",
+                  "target": [
+                    21,
+                    445.5,
+                    370,
+                    66
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "staff-tasks-5",
+                  "at": 0.5,
+                  "file": "capture/core/staff-tasks-5-500.png",
+                  "cue": "Add photos",
+                  "target": [
+                    21,
+                    655.5,
+                    86.5,
+                    86.5
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  1.584,
+                  "Add a note or link."
+                ],
+                [
+                  1.584,
+                  3.362,
+                  "Take a photo when required."
+                ]
+              ]
+            },
+            {
+              "id": "staff-tasks-6-short",
+              "start": 21.5,
+              "seconds": 3.966666666666665,
+              "cue": "Finish and send",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "staff-tasks-6",
+                  "at": 0,
+                  "file": "capture/core/staff-tasks-6-000.png",
+                  "cue": "Finish and send",
+                  "target": [
+                    284.8,
+                    406.5,
+                    59.2,
+                    26
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "staff-tasks-6",
+                  "at": 0.65,
+                  "file": "capture/core/staff-tasks-6-650.png",
+                  "cue": "Photo proof attached",
+                  "target": null,
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  1.749,
+                  "Tap Finish and send."
+                ],
+                [
+                  1.749,
+                  3.967,
+                  "An optional photo earns five XP."
+                ]
+              ]
+            },
+            {
+              "id": "staff-tasks-7-short",
+              "start": 25.466666666666665,
+              "seconds": 3.9666666666666686,
+              "cue": "Read the giver’s note",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "staff-tasks-7",
+                  "at": 0,
+                  "file": "capture/core/staff-tasks-7-000.png",
+                  "cue": "Review work you assigned",
+                  "target": [
+                    38,
+                    426.2,
+                    147.44,
+                    44
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "staff-tasks-7",
+                  "at": 0.46,
+                  "file": "capture/core/staff-tasks-7-460.png",
+                  "cue": "Say what still needs doing",
+                  "target": [
+                    38,
+                    352.2,
+                    336,
+                    66
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.742,
+                  "If the giver sends it back, read their note."
+                ]
+              ]
+            },
+            {
+              "id": "staff-tasks-8-short",
+              "start": 29.433333333333334,
+              "seconds": 4.800000000000001,
+              "cue": "New task",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "staff-tasks-8",
+                  "at": 0,
+                  "file": "capture/core/staff-tasks-8-000.png",
+                  "cue": "New task",
+                  "target": [
+                    259.83,
+                    764,
+                    136.17,
+                    56
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "staff-tasks-8",
+                  "at": 0.38,
+                  "file": "capture/core/staff-tasks-8-380.png",
+                  "cue": "Choose a person, due date, list and priority",
+                  "target": [
+                    21,
+                    535.2,
+                    181,
+                    48
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.607,
+                  "Tap New task. Choose who, when, a list"
+                ],
+                [
+                  2.607,
+                  3.703,
+                  "and a priority."
+                ]
+              ]
+            },
+            {
+              "id": "staff-tasks-9-short",
+              "start": 34.233333333333334,
+              "seconds": 4.766666666666666,
+              "cue": "Your week · XP · badges",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "staff-tasks-9",
+                  "at": 0,
+                  "file": "capture/core/staff-tasks-9-000.png",
+                  "cue": "See your weekly progress",
+                  "target": [
+                    16,
+                    497,
+                    305.19,
+                    20
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  3.594,
+                  "Finish one task each workday for twenty-five XP."
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "live-map": {
+      "seconds": 28,
+      "chapters": [
+        {
+          "id": "live-map",
+          "title": "Live Map",
+          "context": "Let the team know where you are",
+          "seconds": 28,
+          "start": 0,
+          "beats": [
+            {
+              "id": "live-map-1",
+              "start": 0,
+              "seconds": 5.6,
+              "cue": "Places and teammates",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "live-map-1",
+                  "at": 0,
+                  "file": "capture/home/live-map-1-000.png",
+                  "cue": "Places and teammates",
+                  "target": [
+                    29,
+                    752.5,
+                    98.66,
+                    48
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "live-map-1",
+                  "at": 0.46,
+                  "file": "capture/home/live-map-1-460.png",
+                  "cue": "Places and team",
+                  "target": [
+                    21,
+                    96.2,
+                    318,
+                    22.5
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  3.347,
+                  "Live Map shows warehouses, response sites, project"
+                ],
+                [
+                  3.347,
+                  5.6,
+                  "and activity places, and teammates."
+                ]
+              ]
+            },
+            {
+              "id": "live-map-2",
+              "start": 5.6,
+              "seconds": 5.6,
+              "cue": "Share location",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "live-map-2",
+                  "at": 0,
+                  "file": "capture/home/live-map-2-000.png",
+                  "cue": "Share location",
+                  "target": [
+                    213.59,
+                    752.5,
+                    169.41,
+                    48
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "live-map-2",
+                  "at": 0.3,
+                  "file": "capture/home/live-map-2-300.png",
+                  "cue": "Share my live location",
+                  "target": [
+                    326,
+                    568,
+                    48,
+                    28
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "live-map-2",
+                  "at": 0.57,
+                  "file": "capture/home/live-map-2-570.png",
+                  "cue": "Start sharing",
+                  "target": [
+                    38,
+                    504,
+                    336,
+                    44
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "live-map-2",
+                  "at": 0.77,
+                  "file": "capture/home/live-map-2-770.png",
+                  "cue": "Sharing live",
+                  "target": [
+                    344,
+                    520.8,
+                    56,
+                    56
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.388,
+                  "Tap Share location, then Start sharing."
+                ],
+                [
+                  2.388,
+                  4.574,
+                  "Share while you’re out so the team knows"
+                ],
+                [
+                  4.574,
+                  5.497,
+                  "where you are."
+                ]
+              ]
+            },
+            {
+              "id": "live-map-3",
+              "start": 11.2,
+              "seconds": 5.033333333333335,
+              "cue": "Stop · Check in here",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "live-map-3",
+                  "at": 0,
+                  "file": "capture/home/live-map-3-000.png",
+                  "cue": "Stop sharing",
+                  "target": [
+                    195,
+                    681.8,
+                    122,
+                    48
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "live-map-3",
+                  "at": 0.48,
+                  "file": "capture/home/live-map-3-480.png",
+                  "cue": "Check in here",
+                  "target": [
+                    38,
+                    762,
+                    336,
+                    44
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "live-map-3",
+                  "at": 0.75,
+                  "file": "capture/home/live-map-3-750.png",
+                  "cue": "Check in once",
+                  "target": [
+                    21,
+                    448.5,
+                    318,
+                    22.5
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.667,
+                  "Tap Stop on the floating bubble when you’re"
+                ],
+                [
+                  2.667,
+                  5.033,
+                  "done. For one check-in, tap Check in here."
+                ]
+              ]
+            },
+            {
+              "id": "live-map-4",
+              "start": 16.233333333333334,
+              "seconds": 6.166666666666664,
+              "cue": "Tap a place",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "live-map-4",
+                  "at": 0,
+                  "file": "capture/home/live-map-4-000.png",
+                  "cue": "Tap a place",
+                  "target": [
+                    21,
+                    719.2,
+                    370,
+                    52
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "live-map-4",
+                  "at": 0.43,
+                  "file": "capture/home/live-map-4-430.png",
+                  "cue": "Sampaguita Field Hub",
+                  "target": [
+                    21,
+                    96.2,
+                    318,
+                    22.5
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "live-map-4",
+                  "at": 0.73,
+                  "file": "capture/home/live-map-4-730.png",
+                  "cue": "Stock and response",
+                  "target": [
+                    21,
+                    192.7,
+                    101.11,
+                    20
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.246,
+                  "Tap a place to see its live stock"
+                ],
+                [
+                  2.246,
+                  3.664,
+                  "and the people served."
+                ]
+              ]
+            },
+            {
+              "id": "live-map-5",
+              "start": 22.4,
+              "seconds": 5.600000000000001,
+              "cue": "Weather · Full screen · All places",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "live-map-5",
+                  "at": 0,
+                  "file": "capture/home/live-map-5-000.png",
+                  "cue": "Show weather",
+                  "target": [
+                    339,
+                    418.5,
+                    44,
+                    44
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "live-map-5",
+                  "at": 0.35,
+                  "file": "capture/home/live-map-5-350.png",
+                  "cue": "Weather layers",
+                  "target": [
+                    339,
+                    418.5,
+                    44,
+                    44
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "live-map-5",
+                  "at": 0.61,
+                  "file": "capture/home/live-map-5-610.png",
+                  "cue": "Full screen",
+                  "target": [
+                    339,
+                    262.5,
+                    44,
+                    44
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "live-map-5",
+                  "at": 0.79,
+                  "file": "capture/home/live-map-5-790.png",
+                  "cue": "Show all places",
+                  "target": [
+                    339,
+                    314.5,
+                    44,
+                    44
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  3.137,
+                  "Use the map controls for weather, temperature,"
+                ],
+                [
+                  3.137,
+                  5.175,
+                  "Full screen or Show all places."
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "inventory": {
+      "seconds": 23,
+      "chapters": [
+        {
+          "id": "inventory",
+          "title": "Inventory Management",
+          "context": "Check what’s on hand",
+          "seconds": 23,
+          "start": 0,
+          "beats": [
+            {
+              "id": "inventory-1",
+              "start": 0,
+              "seconds": 5.766666666666667,
+              "cue": "Search and filter stock",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "inventory-1",
+                  "at": 0,
+                  "file": "capture/field/inventory-1-000.png",
+                  "cue": "Search stock",
+                  "target": [
+                    16,
+                    396,
+                    380,
+                    48
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "inventory-1",
+                  "at": 0.46,
+                  "file": "capture/field/inventory-1-460.png",
+                  "cue": "Filter by category",
+                  "target": [
+                    16,
+                    452,
+                    186,
+                    48
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  1.706,
+                  "Search for an item."
+                ],
+                [
+                  1.706,
+                  4.253,
+                  "Filter stock by category or location."
+                ]
+              ]
+            },
+            {
+              "id": "inventory-2",
+              "start": 5.766666666666667,
+              "seconds": 5.733333333333333,
+              "cue": "Low stock",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "inventory-2",
+                  "at": 0,
+                  "file": "capture/field/inventory-2-000.png",
+                  "cue": "Find the Low stock badge",
+                  "target": [
+                    32,
+                    432.45,
+                    91.16,
+                    22.5
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "inventory-2",
+                  "at": 0.5,
+                  "file": "capture/field/inventory-2-500.png",
+                  "cue": "Open the stock card",
+                  "target": [
+                    21,
+                    121,
+                    318,
+                    22.5
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.385,
+                  "Open an item marked Low stock."
+                ],
+                [
+                  2.385,
+                  5.007,
+                  "The quantities come from PHILRADS IMS."
+                ]
+              ]
+            },
+            {
+              "id": "inventory-3",
+              "start": 11.5,
+              "seconds": 5.766666666666666,
+              "cue": "Activity log",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "inventory-3",
+                  "at": 0,
+                  "file": "capture/field/inventory-3-000.png",
+                  "cue": "Open Activity",
+                  "target": [
+                    270.66,
+                    396,
+                    121.34,
+                    48
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "inventory-3",
+                  "at": 0.37,
+                  "file": "capture/field/inventory-3-370.png",
+                  "cue": "Browse stock movements",
+                  "target": [
+                    16,
+                    368,
+                    380,
+                    104
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  3.851,
+                  "Open Activity log for receipts, releases and transfers."
+                ]
+              ]
+            },
+            {
+              "id": "inventory-4",
+              "start": 17.266666666666666,
+              "seconds": 5.733333333333334,
+              "cue": "Export the stock list",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "inventory-4",
+                  "at": 0,
+                  "file": "capture/field/inventory-4-000.png",
+                  "cue": "Tap Export",
+                  "target": [
+                    265.91,
+                    396,
+                    66,
+                    48
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "inventory-4",
+                  "at": 0.36,
+                  "file": "capture/field/inventory-4-360.png",
+                  "cue": "Choose CSV or printable report",
+                  "target": [
+                    16,
+                    710,
+                    380,
+                    114
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  3.102,
+                  "In Stock, tap Export and choose a spreadsheet"
+                ],
+                [
+                  3.102,
+                  4.642,
+                  "or a printable report."
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "response": {
+      "seconds": 21,
+      "chapters": [
+        {
+          "id": "response",
+          "title": "Response",
+          "context": "Coordinate a relief event",
+          "seconds": 21,
+          "start": 0,
+          "beats": [
+            {
+              "id": "response-1",
+              "start": 0,
+              "seconds": 5.833333333333333,
+              "cue": "Open Response",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "response-1",
+                  "at": 0,
+                  "file": "capture/field/response-1-000.png",
+                  "cue": "Open Response",
+                  "target": [
+                    16,
+                    399.5,
+                    133.33,
+                    40
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  3.051,
+                  "Use Response to coordinate needs assessment,"
+                ],
+                [
+                  3.051,
+                  4.88,
+                  "distribution and reporting."
+                ]
+              ]
+            },
+            {
+              "id": "response-2",
+              "start": 5.833333333333333,
+              "seconds": 8.166666666666668,
+              "cue": "Relief events",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "response-2",
+                  "at": 0,
+                  "file": "capture/field/response-2-000.png",
+                  "cue": "Enter event details",
+                  "target": [
+                    44,
+                    156,
+                    324,
+                    48
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "response-2",
+                  "at": 0.6,
+                  "file": "capture/field/response-2-600.png",
+                  "cue": "Continue in PHILRADS IMS",
+                  "target": [
+                    44,
+                    726,
+                    324,
+                    48
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.041,
+                  "Start a new relief event."
+                ],
+                [
+                  2.041,
+                  5.265,
+                  "Add the details and continue in IMS for approval."
+                ]
+              ]
+            },
+            {
+              "id": "response-3",
+              "start": 14,
+              "seconds": 7,
+              "cue": "Waiting for approval · Live Map",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "response-3",
+                  "at": 0,
+                  "file": "capture/field/response-3-000.png",
+                  "cue": "Find the response on Live Map",
+                  "target": [
+                    29,
+                    637.5,
+                    103.84,
+                    48
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "response-3",
+                  "at": 0.42,
+                  "file": "capture/field/response-3-420.png",
+                  "cue": "Open a sample distribution site",
+                  "target": [
+                    21,
+                    638.2,
+                    370,
+                    52
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "response-3",
+                  "at": 0.72,
+                  "file": "capture/field/response-3-720.png",
+                  "cue": "See the linked relief event",
+                  "target": [
+                    21,
+                    96.2,
+                    318,
+                    22.5
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.68,
+                  "Once the event is approved in IMS, it"
+                ],
+                [
+                  2.68,
+                  4.127,
+                  "appears on Live Map."
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "documentation": {
+      "seconds": 24,
+      "chapters": [
+        {
+          "id": "documentation",
+          "title": "Documentation",
+          "context": "File proof from the field",
+          "seconds": 24,
+          "start": 0,
+          "beats": [
+            {
+              "id": "documentation-1",
+              "start": 0,
+              "seconds": 6,
+              "cue": "Tap Upload",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "documentation-1",
+                  "at": 0,
+                  "file": "capture/field/documentation-1-000.png",
+                  "cue": "Tap Upload",
+                  "target": [
+                    275.66,
+                    764,
+                    120.34,
+                    56
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "documentation-1",
+                  "at": 0.42,
+                  "file": "capture/field/documentation-1-420.png",
+                  "cue": "Choose the file type",
+                  "target": [
+                    21,
+                    423.7,
+                    370,
+                    148
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.759,
+                  "In Documentation, tap Upload."
+                ],
+                [
+                  2.759,
+                  5.859,
+                  "Pick photos, videos, PDFs or reports."
+                ]
+              ]
+            },
+            {
+              "id": "documentation-2",
+              "start": 6,
+              "seconds": 7.199999999999999,
+              "cue": "Choose the project or activity",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "documentation-2",
+                  "at": 0,
+                  "file": "capture/field/documentation-2-000.png",
+                  "cue": "Link the file to a project or response",
+                  "target": [
+                    21,
+                    495.2,
+                    370,
+                    48
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "documentation-2",
+                  "at": 0.68,
+                  "file": "capture/field/documentation-2-680.png",
+                  "cue": "Upload the selected file",
+                  "target": [
+                    21,
+                    775,
+                    370,
+                    48
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.336,
+                  "Choose the right project or activity."
+                ],
+                [
+                  2.336,
+                  3.876,
+                  "Upload while you’re there."
+                ],
+                [
+                  3.876,
+                  6.26,
+                  "Don’t wait until you’re back at the office."
+                ]
+              ]
+            },
+            {
+              "id": "documentation-3",
+              "start": 13.2,
+              "seconds": 6,
+              "cue": "Google Drive and PRISM",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "documentation-3",
+                  "at": 0,
+                  "file": "capture/field/documentation-3-000.png",
+                  "cue": "PRISM records the upload",
+                  "target": [
+                    16,
+                    249.5,
+                    380,
+                    67
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "documentation-3",
+                  "at": 0.52,
+                  "file": "capture/field/documentation-3-520.png",
+                  "cue": "Find the saved documentation",
+                  "target": [
+                    16,
+                    385.5,
+                    335.94,
+                    16
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.84,
+                  "The file goes to its Google Drive folder."
+                ],
+                [
+                  2.84,
+                  4.305,
+                  "PRISM keeps a record."
+                ]
+              ]
+            },
+            {
+              "id": "documentation-4",
+              "start": 19.2,
+              "seconds": 4.800000000000001,
+              "cue": "All · Media · Records",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "documentation-4",
+                  "at": 0,
+                  "file": "capture/field/documentation-4-000.png",
+                  "cue": "Open Media",
+                  "target": [
+                    144,
+                    401.5,
+                    124,
+                    36
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "documentation-4",
+                  "at": 0.4,
+                  "file": "capture/field/documentation-4-400.png",
+                  "cue": "Switch to Records",
+                  "target": [
+                    268,
+                    401.5,
+                    124,
+                    36
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "documentation-4",
+                  "at": 0.72,
+                  "file": "capture/field/documentation-4-720.png",
+                  "cue": "Browse records by type",
+                  "target": [
+                    268,
+                    401.5,
+                    124,
+                    36
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  3.554,
+                  "Use All, Media or Records to find what you need."
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "forms": {
+      "seconds": 23,
+      "chapters": [
+        {
+          "id": "forms",
+          "title": "Forms",
+          "context": "Fill in, sign and save",
+          "seconds": 23,
+          "start": 0,
+          "beats": [
+            {
+              "id": "forms-1",
+              "start": 0,
+              "seconds": 5.766666666666667,
+              "cue": "Open a form and type",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "forms-1",
+                  "at": 0,
+                  "file": "capture/work/forms-1-000.png",
+                  "cue": "Open Activity Report",
+                  "target": [
+                    84,
+                    265.5,
+                    268,
+                    22
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "forms-1",
+                  "at": 0.53,
+                  "file": "capture/work/forms-1-530.png",
+                  "cue": "Fill in a field",
+                  "target": [
+                    175.31,
+                    523.92,
+                    170.42,
+                    11
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.664,
+                  "Open a form. Type into the fields laid"
+                ],
+                [
+                  2.664,
+                  4.517,
+                  "out like the paper original."
+                ]
+              ]
+            },
+            {
+              "id": "forms-2",
+              "start": 5.766666666666667,
+              "seconds": 5.733333333333333,
+              "cue": "Bigger or smaller text",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "forms-2",
+                  "at": 0,
+                  "file": "capture/work/forms-2-000.png",
+                  "cue": "Adjust text size",
+                  "target": [
+                    29,
+                    318.5,
+                    150,
+                    50
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "forms-2",
+                  "at": 0.52,
+                  "file": "capture/work/forms-2-520.png",
+                  "cue": "Set a readable size",
+                  "target": [
+                    29,
+                    318.5,
+                    150,
+                    50
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.553,
+                  "Use the text size controls to make your"
+                ],
+                [
+                  2.553,
+                  4.175,
+                  "entries bigger or smaller."
+                ]
+              ]
+            },
+            {
+              "id": "forms-3",
+              "start": 11.5,
+              "seconds": 5.766666666666666,
+              "cue": "Sign with your finger",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "forms-3",
+                  "at": 0,
+                  "file": "capture/work/forms-3-000.png",
+                  "cue": "Tap a signature line",
+                  "target": [
+                    62.02,
+                    410.09,
+                    126.61,
+                    19.91
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "forms-3",
+                  "at": 0.45,
+                  "file": "capture/work/forms-3-450.png",
+                  "cue": "Sign on screen",
+                  "target": [
+                    23,
+                    537,
+                    366,
+                    224
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.445,
+                  "When the form asks for a signature, sign"
+                ],
+                [
+                  2.445,
+                  4.006,
+                  "on screen with your finger."
+                ]
+              ]
+            },
+            {
+              "id": "forms-4",
+              "start": 17.266666666666666,
+              "seconds": 5.733333333333334,
+              "cue": "Print / Save as PDF",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "forms-4",
+                  "at": 0,
+                  "file": "capture/work/forms-4-000.png",
+                  "cue": "Print / Save as PDF",
+                  "target": [
+                    29,
+                    191,
+                    191.97,
+                    40
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "forms-4",
+                  "at": 0.57,
+                  "file": "capture/work/forms-4-570.png",
+                  "cue": "Use the form’s paper size",
+                  "target": null,
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.121,
+                  "Tap Print or Save as PDF."
+                ],
+                [
+                  2.121,
+                  4.678,
+                  "Use the paper size set for the form."
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "projects-resources-statistics": {
+      "seconds": 28,
+      "chapters": [
+        {
+          "id": "projects-resources-statistics",
+          "title": "Projects, Resources &amp; Statistics",
+          "context": "Find project work, files and results",
+          "seconds": 28,
+          "start": 0,
+          "beats": [
+            {
+              "id": "projects-resources-statistics-1",
+              "start": 0,
+              "seconds": 7.833333333333333,
+              "cue": "Projects",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "projects-resources-statistics-1",
+                  "at": 0,
+                  "file": "capture/work/projects-resources-statistics-1-000.png",
+                  "cue": "Open a project",
+                  "target": [
+                    16,
+                    653.5,
+                    380,
+                    186
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "projects-resources-statistics-1",
+                  "at": 0.47,
+                  "file": "capture/work/projects-resources-statistics-1-470.png",
+                  "cue": "Find milestones, team and tasks",
+                  "target": null,
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  3.345,
+                  "Open a project for its schedule, team, tasks,"
+                ],
+                [
+                  3.345,
+                  6.625,
+                  "files and cost. Assign a task to several people."
+                ]
+              ]
+            },
+            {
+              "id": "projects-resources-statistics-2",
+              "start": 7.833333333333333,
+              "seconds": 5.6000000000000005,
+              "cue": "Resources · Preview",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "projects-resources-statistics-2",
+                  "at": 0,
+                  "file": "capture/work/projects-resources-statistics-2-000.png",
+                  "cue": "Preview a resource",
+                  "target": [
+                    289.42,
+                    403.63,
+                    89.58,
+                    32
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "projects-resources-statistics-2",
+                  "at": 0.51,
+                  "file": "capture/work/projects-resources-statistics-2-510.png",
+                  "cue": "Read the preview in PRISM",
+                  "target": null,
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.133,
+                  "Swipe the resource categories."
+                ],
+                [
+                  2.133,
+                  3.855,
+                  "Tap Preview to open a file."
+                ]
+              ]
+            },
+            {
+              "id": "projects-resources-statistics-3",
+              "start": 13.433333333333334,
+              "seconds": 5.600000000000001,
+              "cue": "The ⋯ menu",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "projects-resources-statistics-3",
+                  "at": 0,
+                  "file": "capture/work/projects-resources-statistics-3-000.png",
+                  "cue": "Open the resource’s action menu",
+                  "target": [
+                    168,
+                    532.5,
+                    214,
+                    40
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.995,
+                  "The three-dot menu lets you Open in Google,"
+                ],
+                [
+                  2.995,
+                  4.539,
+                  "Download or Copy link."
+                ]
+              ]
+            },
+            {
+              "id": "projects-resources-statistics-4",
+              "start": 19.033333333333335,
+              "seconds": 8.966666666666665,
+              "cue": "Statistics · since 2023",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "projects-resources-statistics-4",
+                  "at": 0,
+                  "file": "capture/work/projects-resources-statistics-4-000.png",
+                  "cue": "Browse Statistics",
+                  "target": [
+                    16,
+                    270.5,
+                    380,
+                    20
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "projects-resources-statistics-4",
+                  "at": 0.48,
+                  "file": "capture/work/projects-resources-statistics-4-480.png",
+                  "cue": "See who was served",
+                  "target": [
+                    38,
+                    643.75,
+                    152.22,
+                    19.25
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "projects-resources-statistics-4",
+                  "at": 0.73,
+                  "file": "capture/work/projects-resources-statistics-4-730.png",
+                  "cue": "Find the activity on Live Map",
+                  "target": null,
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  3.016,
+                  "Statistics shows where and when PHILRADS worked,"
+                ],
+                [
+                  3.016,
+                  5.678,
+                  "and who was served, since twenty twenty-three."
+                ],
+                [
+                  5.678,
+                  6.931,
+                  "See it on Live Map."
+                ],
+                [
+                  6.931,
+                  8.967,
+                  "Funding and donors are restricted."
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "pdm": {
+      "seconds": 20,
+      "chapters": [
+        {
+          "id": "pdm",
+          "title": "PDM",
+          "context": "Coming soon",
+          "seconds": 20,
+          "start": 0,
+          "beats": [
+            {
+              "id": "pdm-1-short",
+              "start": 0,
+              "seconds": 6,
+              "cue": "Open the menu",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "pdm-1-short",
+                  "at": 0,
+                  "file": "capture/home/pdm-1-short-000.png",
+                  "cue": "Open navigation",
+                  "target": [
+                    16,
+                    8,
+                    48,
+                    48
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "pdm-1-short",
+                  "at": 0.56,
+                  "file": "capture/home/pdm-1-short-560.png",
+                  "cue": "Find PDM",
+                  "target": [
+                    12,
+                    313,
+                    247,
+                    40
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  3.554,
+                  "From Home, tap the menu icon to find PDM."
+                ]
+              ]
+            },
+            {
+              "id": "pdm-2-short",
+              "start": 6,
+              "seconds": 7,
+              "cue": "Find PDM",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "pdm-2-short",
+                  "at": 0,
+                  "file": "capture/home/pdm-2-short-000.png",
+                  "cue": "PDM",
+                  "target": [
+                    12,
+                    313,
+                    247,
+                    40
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  3.843,
+                  "PDM sits below Response and above Documentation."
+                ],
+                [
+                  3.843,
+                  5.945,
+                  "Volunteers can see it too."
+                ]
+              ]
+            },
+            {
+              "id": "pdm-3-short",
+              "start": 13,
+              "seconds": 7,
+              "cue": "PDM · Coming soon",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "pdm-3-short",
+                  "at": 0,
+                  "file": "capture/home/pdm-3-short-000.png",
+                  "cue": "Coming soon",
+                  "target": [
+                    16,
+                    153.5,
+                    237.08,
+                    30
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.891,
+                  "The PDM page is marked Coming soon."
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "profile": {
+      "seconds": 21,
+      "chapters": [
+        {
+          "id": "profile",
+          "title": "Profile and settings",
+          "context": "Make PRISM work for you",
+          "seconds": 21,
+          "start": 0,
+          "beats": [
+            {
+              "id": "profile-1",
+              "start": 0,
+              "seconds": 6.566666666666666,
+              "cue": "Tap your photo",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "profile-1",
+                  "at": 0,
+                  "file": "capture/home/profile-1-000.png",
+                  "cue": "Change your photo",
+                  "target": [
+                    16,
+                    392,
+                    56,
+                    56
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "profile-1",
+                  "at": 0.43,
+                  "file": "capture/home/profile-1-430.png",
+                  "cue": "Position your photo",
+                  "target": [
+                    318,
+                    690,
+                    48,
+                    48
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "profile-1",
+                  "at": 0.73,
+                  "file": "capture/home/profile-1-730.png",
+                  "cue": "Drag or zoom",
+                  "target": [
+                    106,
+                    710,
+                    200,
+                    8
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.02,
+                  "Tap your photo to change it."
+                ],
+                [
+                  2.02,
+                  3.683,
+                  "Drag and zoom to frame it."
+                ]
+              ]
+            },
+            {
+              "id": "profile-2",
+              "start": 6.566666666666666,
+              "seconds": 6.566666666666666,
+              "cue": "Position · Bio · Avatar frame",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "profile-2",
+                  "at": 0,
+                  "file": "capture/home/profile-2-000.png",
+                  "cue": "Position",
+                  "target": [
+                    16,
+                    396,
+                    380,
+                    48
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "profile-2",
+                  "at": 0.28,
+                  "file": "capture/home/profile-2-280.png",
+                  "cue": "About me",
+                  "target": [
+                    16,
+                    572.75,
+                    380,
+                    126
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "profile-2",
+                  "at": 0.48,
+                  "file": "capture/home/profile-2-480.png",
+                  "cue": "Avatar frame",
+                  "target": [
+                    16,
+                    378.75,
+                    380,
+                    82
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "profile-2",
+                  "at": 0.73,
+                  "file": "capture/home/profile-2-730.png",
+                  "cue": "Public or Private",
+                  "target": [
+                    116.41,
+                    442.75,
+                    95.41,
+                    40
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.356,
+                  "Add your position and a short bio."
+                ],
+                [
+                  2.356,
+                  4.677,
+                  "Choose a frame and set your profile to"
+                ],
+                [
+                  4.677,
+                  5.919,
+                  "Public or Private."
+                ]
+              ]
+            },
+            {
+              "id": "profile-3",
+              "start": 13.133333333333333,
+              "seconds": 7.866666666666667,
+              "cue": "Dark · Light · Auto",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "profile-3",
+                  "at": 0,
+                  "file": "capture/home/profile-3-000.png",
+                  "cue": "What’s new",
+                  "target": [
+                    121,
+                    302,
+                    262,
+                    40
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "profile-3",
+                  "at": 0.28,
+                  "file": "capture/home/profile-3-280.png",
+                  "cue": "Dark · Light · Auto",
+                  "target": [
+                    214,
+                    355,
+                    76,
+                    32
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "profile-3",
+                  "at": 0.57,
+                  "file": "capture/home/profile-3-570.png",
+                  "cue": "Light theme",
+                  "target": [
+                    214,
+                    355,
+                    76,
+                    32
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "profile-3",
+                  "at": 0.81,
+                  "file": "capture/home/profile-3-810.png",
+                  "cue": "Sound switches",
+                  "target": [
+                    161,
+                    410,
+                    150,
+                    20
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.925,
+                  "Your account menu has themes, sound switches,"
+                ],
+                [
+                  2.925,
+                  4.476,
+                  "What’s new and Sign out."
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "admin": {
+      "seconds": 23,
+      "chapters": [
+        {
+          "id": "admin",
+          "title": "Coordinators and admins",
+          "context": "Optional staff administration clip",
+          "seconds": 23,
+          "start": 0,
+          "beats": [
+            {
+              "id": "admin-1",
+              "start": 0,
+              "seconds": 6.9,
+              "cue": "Staff & volunteers",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "admin-1",
+                  "at": 0,
+                  "file": "capture/home/admin-1-000.png",
+                  "cue": "Invite someone",
+                  "target": [
+                    286.59,
+                    764,
+                    109.41,
+                    56
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "admin-1",
+                  "at": 0.39,
+                  "file": "capture/home/admin-1-390.png",
+                  "cue": "Invite someone",
+                  "target": [
+                    21,
+                    96.2,
+                    318,
+                    22.5
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "admin-1",
+                  "at": 0.7,
+                  "file": "capture/home/admin-1-700.png",
+                  "cue": "Choose a role",
+                  "target": [
+                    38,
+                    592.7,
+                    13,
+                    16
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.766,
+                  "In Staff and volunteers, tap Invite to add"
+                ],
+                [
+                  2.766,
+                  4.64,
+                  "a teammate. Choose their role."
+                ]
+              ]
+            },
+            {
+              "id": "admin-2",
+              "start": 6.9,
+              "seconds": 8.066666666666666,
+              "cue": "Set role and account access",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "admin-2",
+                  "at": 0,
+                  "file": "capture/home/admin-2-000.png",
+                  "cue": "Role and account access",
+                  "target": [
+                    80,
+                    407.5,
+                    109.34,
+                    24
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "admin-2",
+                  "at": 0.23,
+                  "file": "capture/home/admin-2-230.png",
+                  "cue": "Choose a role",
+                  "target": [
+                    28,
+                    477.5,
+                    244,
+                    48
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "admin-2",
+                  "at": 0.42,
+                  "file": "capture/home/admin-2-420.png",
+                  "cue": "Switch account on or off",
+                  "target": [
+                    280,
+                    487.5,
+                    48,
+                    28
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "admin-2",
+                  "at": 0.58,
+                  "file": "capture/home/admin-2-580.png",
+                  "cue": "Volunteer navigation",
+                  "target": [
+                    12,
+                    137,
+                    247,
+                    40
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.557,
+                  "Set their role and turn accounts on or"
+                ],
+                [
+                  2.557,
+                  5.133,
+                  "off. Volunteers see the modules shown here."
+                ]
+              ]
+            },
+            {
+              "id": "admin-3",
+              "start": 14.966666666666667,
+              "seconds": 8.033333333333333,
+              "cue": "Review Logs",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "admin-3",
+                  "at": 0,
+                  "file": "capture/home/admin-3-000.png",
+                  "cue": "Flags to look at",
+                  "target": [
+                    16,
+                    357.5,
+                    184,
+                    104.5
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "admin-3",
+                  "at": 0.45,
+                  "file": "capture/home/admin-3-450.png",
+                  "cue": "Review flags",
+                  "target": [
+                    117.52,
+                    615.5,
+                    78.92,
+                    48
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.425,
+                  "Open Logs to see what happened."
+                ],
+                [
+                  2.425,
+                  5.687,
+                  "Check flagged activity. Nobody can edit or delete"
+                ],
+                [
+                  5.687,
+                  6.714,
+                  "log entries."
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "field-tips": {
+      "seconds": 23,
+      "chapters": [
+        {
+          "id": "field-tips",
+          "title": "Before you head out",
+          "context": "Four habits for field work",
+          "seconds": 23,
+          "start": 0,
+          "beats": [
+            {
+              "id": "field-tips-1",
+              "start": 0,
+              "seconds": 6.066666666666666,
+              "cue": "Unlock · Share · Finish · Upload",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "field-tips-1",
+                  "at": 0,
+                  "file": "capture/home/field-tips-1-000.png",
+                  "cue": "Quick unlock",
+                  "target": [
+                    121,
+                    484,
+                    262,
+                    40
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "field-tips-1",
+                  "at": 0.35,
+                  "file": "capture/home/field-tips-1-350.png",
+                  "cue": "Quick unlock",
+                  "target": [
+                    21,
+                    513.5,
+                    318,
+                    22.5
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "field-tips-1",
+                  "at": 0.67,
+                  "file": "capture/home/field-tips-1-670.png",
+                  "cue": "Share location",
+                  "target": [
+                    213.59,
+                    752.5,
+                    169.41,
+                    48
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.433,
+                  "Unlock quickly. Share your location."
+                ],
+                [
+                  2.433,
+                  3.764,
+                  "Finish with a photo."
+                ],
+                [
+                  3.764,
+                  5.042,
+                  "Upload on the spot."
+                ]
+              ]
+            },
+            {
+              "id": "field-tips-2",
+              "start": 6.066666666666666,
+              "seconds": 8.466666666666667,
+              "cue": "Weak signal or an update?",
+              "brand": false,
+              "shots": [
+                {
+                  "id": "field-tips-2",
+                  "at": 0,
+                  "file": "capture/home/field-tips-2-000.png",
+                  "cue": "You’re offline",
+                  "target": [
+                    29,
+                    456.5,
+                    302,
+                    50
+                  ],
+                  "focus": null
+                },
+                {
+                  "id": "field-tips-2",
+                  "at": 0.52,
+                  "file": "capture/home/field-tips-2-520.png",
+                  "cue": "Update now",
+                  "target": [
+                    172,
+                    471.75,
+                    196,
+                    48
+                  ],
+                  "focus": null
+                }
+              ],
+              "captions": [
+                [
+                  0.25,
+                  2.849,
+                  "Offline, work with what’s already loaded."
+                ],
+                [
+                  2.849,
+                  4.6,
+                  "Updates install when safe."
+                ],
+                [
+                  4.6,
+                  7.482,
+                  "If What’s new asks, tap Update now when ready."
+                ]
+              ]
+            },
+            {
+              "id": "field-tips-3",
+              "start": 14.533333333333333,
+              "seconds": 8.466666666666667,
+              "cue": "One system, three jobs",
+              "brand": true,
+              "shots": [],
+              "captions": [
+                [
+                  1,
+                  4.264,
+                  "One system, three jobs: response, inventory"
+                ],
+                [
+                  4.264,
+                  6.779,
+                  "and our team. PRISM by PHILRADS."
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

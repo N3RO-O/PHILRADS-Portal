@@ -1,0 +1,44 @@
+[
+ {
+  "item": "Family food packs",
+  "warehouse": "Main warehouse",
+  "on_hand": 140,
+  "reorder_level": 300,
+  "unit": "packs"
+ },
+ {
+  "item": "Hygiene kits",
+  "warehouse": "Main warehouse",
+  "on_hand": 85,
+  "reorder_level": 150,
+  "unit": "kits"
+ },
+ {
+  "item": "Water containers 20L",
+  "warehouse": "Field hub A",
+  "on_hand": 40,
+  "reorder_level": 100,
+  "unit": "pcs"
+ },
+ {
+  "item": "Solar lamps",
+  "warehouse": "Field hub B",
+  "on_hand": 18,
+  "reorder_level": 50,
+  "unit": "pcs"
+ },
+ {
+  "item": "Tarpaulins",
+  "warehouse": "Field hub A",
+  "on_hand": 260,
+  "reorder_level": 200,
+  "unit": "pcs"
+ },
+ {
+  "item": "Sleeping mats",
+  "warehouse": "Main warehouse",
+  "on_hand": 120,
+  "reorder_level": 100,
+  "unit": "pcs"
+ }
+]

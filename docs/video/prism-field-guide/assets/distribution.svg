@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 560">
+  <defs>
+    <linearGradient id="sky" x2="0" y2="1">
+      <stop stop-color="#f1bd91"/>
+      <stop offset="1" stop-color="#ffe0aa"/>
+    </linearGradient>
+    <pattern id="tape" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
+      <rect width="12" height="12" fill="#c68b4d"/><rect width="5" height="12" fill="#dc9e57"/>
+    </pattern>
+  </defs>
+  <path fill="url(#sky)" d="M0 0h900v560H0z"/>
+  <circle cx="737" cy="95" r="53" fill="#fff3d6"/>
+  <path d="M0 260 180 170 314 235l121-41 150 58 158-97 157 70v335H0Z" fill="#c48c72"/>
+  <path d="m0 320 130-44 160 19 180-38 172 34 130-52 128 18v303H0Z" fill="#6c7260"/>
+  <path d="m0 408 154-38 196 18 193-33 189 36 168-34v203H0Z" fill="#b88864"/>
+  <path d="M34 513c193-18 331 22 502-5s252-16 361-4v56H0v-44Z" fill="#9b664e"/>
+  <g fill="#586551">
+    <path d="m790 377 20-169h7l-8 169z"/>
+    <path d="M813 221q-30-67-81-55 33 3 70 60m10-8q21-57 84-62-38 18-76 68m-9-4q-44-34-69-13l64 26m5-12q56-29 81-4l-73 16"/>
+  </g>
+  <path d="m56 220 105-106h464l114 106Z" fill="#fbecd2"/>
+  <path d="m160 114-44 106h120l36-106Zm215 0-14 106h123l-10-106Zm204 0 34 106h126L625 114Z" fill="#a7252a"/>
+  <path d="M56 220h684v35H56Z" fill="#6e1922"/>
+  <text x="396" y="244" text-anchor="middle" font-family="Arial,sans-serif" font-size="17" font-weight="700" letter-spacing="5" fill="#fff0d5">RELIEF DISTRIBUTION</text>
+  <path d="M76 251h9v248h-9zm638 0h9v248h-9z" fill="#4c3430"/>
+  <g transform="translate(213 263)">
+    <path d="m14 130-16 105h31l20-84 23 84h28l-11-105Z" fill="#26323a"/>
+    <path d="M18 37q30-18 59 0l19 71-11 32H8L1 74Z" fill="#8c1414"/>
+    <path d="m14 47-28 70 44 13 5-16-23-15 24-42m49-12 24 58 43 4-4 16-57 2-22-60" fill="#bd7756"/>
+    <path d="M31 13h29v26l-18 10-11-12Z" fill="#aa654b"/>
+    <path d="M22-11q10-33 40-16 18 10 9 37-9 23-25 19-21-3-24-40" fill="#cd9069"/>
+    <path d="M22-3q-15-39 22-44 26 0 29 25-15-8-29-2L27-10Z" fill="#231d22"/>
+    <text x="19" y="76" font-family="Arial,sans-serif" font-size="9" letter-spacing="1" fill="#fff1e3">PHILRADS</text>
+    <path d="m-4 233 35-1v14h-53v-8zm77 0h26l17 8v6H74Z" fill="#20232c"/>
+  </g>
+  <g transform="translate(508 273)">
+    <path d="M13 129-1 226h29l23-71 11 71h29l-1-95Z" fill="#3b373e"/>
+    <path d="M15 38q27-13 53 1l25 101H3Z" fill="#dd9b42"/>
+    <path d="m17 48-29 63-35 9 5 14 50-2 28-54m40-29 16 71-24 12-6-13 10-18-13-38" fill="#a76248"/>
+    <path d="M31 12h28v29l-14 6-14-8Z" fill="#9e5b41"/>
+    <path d="M22-11q11-23 35-14 20 9 11 37-6 20-22 17-25-5-24-40" fill="#be7c59"/>
+    <path d="M23 2q-15-26 4-41 35-17 45 15l-15 3-18-2-9 24Z" fill="#282128"/>
+    <path d="M0 225h28v14h-43v-8zm63 0h27l14 9v6H62Z" fill="#272531"/>
+  </g>
+  <path d="M291 402h226v24H291Z" fill="#b46748"/>
+  <path d="M307 426h14l-5 75h-14zm183 0h14l7 75h-14z" fill="#503632"/>
+  <path d="M354 351h103v53H354Z" fill="#d2a171"/>
+  <path d="M354 351l14-12h103l-14 12Zm103 0 14-12v55l-14 10Z" fill="#9f6e46"/>
+  <path d="M395 340h20v64h-20Z" fill="url(#tape)"/>
+  <path d="M129 463h96v63h-96Z" fill="#d2a171"/>
+  <path d="M129 463l12-13h96l-12 13Zm96 0 12-13v63l-12 13Z" fill="#9f6e46"/>
+  <path d="M167 450h17v76h-17Z" fill="url(#tape)"/>
+  <path d="M614 450h83v59h-83Z" fill="#e6b681"/>
+  <path d="M646 450h14v59h-14Z" fill="url(#tape)"/>
+</svg>

@@ -56,6 +56,18 @@
         "--strictPort"
       ],
       "port": 4173
+    },
+    {
+      "name": "field-guide",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "3180",
+        "-d",
+        "docs/video/prism-field-guide"
+      ],
+      "port": 3180
     }
   ]
 }

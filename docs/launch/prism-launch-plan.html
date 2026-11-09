@@ -1,0 +1,661 @@
+<title>PRISM Launch Plan</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a field-manual binder. Sticky tab strip (Plan / Domain move / Terms / Privacy), one column of readable sections, checklist rows with owner and timing chips. */
+:root {
+  --bg: #f4f6f8;
+  --panel: #ffffff;
+  --ink: #14212c;
+  --ink-soft: #4a5a68;
+  --line: #d9e0e6;
+  --accent: #0b6a86;
+  --accent-soft: #e2f0f4;
+  --warn: #9a5b00;
+  --warn-soft: #fbeed8;
+  --ok: #1f7a4a;
+  --ok-soft: #e1f2e8;
+  --crit: #a3302a;
+  --crit-soft: #f8e3e1;
+  --ph: #6b3fa0;
+  --ph-soft: #efe6f8;
+  --f-display: 'Archivo', 'Segoe UI', system-ui, sans-serif;
+  --f-body: 'Source Sans 3', 'Segoe UI', system-ui, sans-serif;
+  --f-legal: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --f-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e151b; --panel: #151f27; --ink: #e4ebf0; --ink-soft: #9fb0bd; --line: #26343f;
+    --accent: #4fb6d3; --accent-soft: #12303a; --warn: #f0b35a; --warn-soft: #3a2a12;
+    --ok: #5fcf8f; --ok-soft: #12301f; --crit: #f08a82; --crit-soft: #3a1714; --ph: #c4a2ec; --ph-soft: #2b1f3b;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e151b; --panel: #151f27; --ink: #e4ebf0; --ink-soft: #9fb0bd; --line: #26343f;
+  --accent: #4fb6d3; --accent-soft: #12303a; --warn: #f0b35a; --warn-soft: #3a2a12;
+  --ok: #5fcf8f; --ok-soft: #12301f; --crit: #f08a82; --crit-soft: #3a1714; --ph: #c4a2ec; --ph-soft: #2b1f3b;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.55 var(--f-body); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--panel); }
+.wrap { max-width: 880px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header.top { background: var(--panel); border-bottom: 1px solid var(--line); }
+header.top .wrap { padding-block: 28px 18px; display: grid; gap: 10px; }
+.eyebrow { font: 600 12px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font: 800 clamp(28px, 5vw, 40px)/1.05 var(--f-display); margin: 0; letter-spacing: -.01em; text-wrap: balance; }
+.lede { margin: 0; color: var(--ink-soft); max-width: 62ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 18px; font: 13px/1.4 var(--f-mono); color: var(--ink-soft); }
+.meta b { color: var(--ink); font-weight: 600; }
+.progress { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
+.bar { flex: 1; height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--ok); transition: width .3s ease; }
+.progress span { font: 600 13px/1 var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--panel); border-bottom: 1px solid var(--line); }
+nav.tabs .wrap { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+nav.tabs a { flex: none; padding: 12px 14px; font: 700 14px/1 var(--f-display); color: var(--ink-soft); text-decoration: none; border-bottom: 3px solid transparent; }
+nav.tabs a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+nav.tabs a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+main .wrap { padding-block: 28px 64px; display: grid; gap: 36px; }
+section.view { display: grid; gap: 36px; }
+.block { display: grid; gap: 12px; min-width: 0; }
+h2 { font: 800 22px/1.2 var(--f-display); margin: 0; text-wrap: balance; }
+h3 { font: 700 17px/1.3 var(--f-display); margin: 0; }
+p { margin: 0; max-width: 68ch; }
+.note { color: var(--ink-soft); font-size: 15px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px; font-size: 13px; color: var(--ink-soft); align-items: center; }
+.chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 99px; font: 600 11px/1.6 var(--f-mono); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+.c-now { background: var(--crit-soft); color: var(--crit); }
+.c-launch { background: var(--warn-soft); color: var(--warn); }
+.c-store { background: var(--accent-soft); color: var(--accent); }
+.c-later { background: var(--line); color: var(--ink-soft); }
+.who { background: transparent; border: 1px solid var(--line); color: var(--ink-soft); }
+ul.check { list-style: none; margin: 0; padding: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+ul.check li { display: grid; grid-template-columns: 24px 1fr; gap: 12px; padding: 14px 16px; border-top: 1px solid var(--line); }
+ul.check li:first-child { border-top: 0; }
+ul.check input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--ok); }
+ul.check .body { display: grid; gap: 6px; min-width: 0; }
+ul.check .row { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; }
+ul.check label { font-weight: 700; cursor: pointer; }
+ul.check li.done label { text-decoration: line-through; color: var(--ink-soft); }
+ul.check .why { color: var(--ink-soft); font-size: 15px; }
+code, .mono { font-family: var(--f-mono); font-size: .88em; }
+code { background: var(--accent-soft); color: var(--ink); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.callout { background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 8px; padding: 14px 16px; display: grid; gap: 6px; }
+.callout.warn { border-left-color: var(--warn); }
+ol.steps { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+ol.steps > li { counter-increment: s; display: grid; grid-template-columns: 14px 1fr; gap: 12px; padding: 16px; border-top: 1px solid var(--line); }
+ol.steps > li:first-child { border-top: 0; }
+ol.steps > li::before { content: ""; width: 10px; height: 10px; margin-top: 7px; border-radius: 50%; background: var(--accent); }
+ol.steps .body { display: grid; gap: 6px; min-width: 0; }
+.scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+th, td { text-align: left; padding: 10px 14px; border-top: 1px solid var(--line); vertical-align: top; }
+thead th { border-top: 0; font: 700 12px/1.3 var(--f-mono); text-transform: uppercase; letter-spacing: .05em; color: var(--ink-soft); background: var(--bg); }
+td.n { font-variant-numeric: tabular-nums; white-space: nowrap; font-family: var(--f-mono); font-size: 14px; }
+.legal { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: clamp(18px, 4vw, 36px); font: 17px/1.65 var(--f-legal); display: grid; gap: 14px; }
+.legal h3 { font: 700 18px/1.3 var(--f-display); margin-top: 10px; }
+.legal p, .legal li { max-width: 68ch; }
+.legal ul, .legal ol { margin: 0; padding-left: 22px; display: grid; gap: 6px; }
+.ph { background: var(--ph-soft); color: var(--ph); padding: 0 4px; border-radius: 3px; font-family: var(--f-body); font-size: .92em; font-weight: 600; }
+.bar-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+button.copy { font: 700 14px/1 var(--f-display); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: var(--panel); cursor: pointer; }
+button.copy.ghost { background: transparent; color: var(--accent); }
+.toast { font-size: 14px; color: var(--ok); }
+.add { display: grid; gap: 6px; padding: 14px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+.add .tag { font: 600 11px/1 var(--f-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--accent); }
+.add blockquote { margin: 0; padding: 10px 14px; border-left: 3px solid var(--line); font: 16px/1.6 var(--f-legal); color: var(--ink); }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 6px; align-content: start; }
+.card .big { font: 800 24px/1.1 var(--f-display); font-variant-numeric: tabular-nums; }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill { font: 600 13px/1 var(--f-body); padding: 8px 12px; border-radius: 99px; border: 1px solid var(--line); background: var(--panel); color: var(--ink-soft); cursor: pointer; }
+.pill[aria-pressed="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+.tgroups { display: grid; gap: 28px; }
+.tgroup { display: grid; gap: 10px; }
+.tgroup h3 { display: flex; align-items: baseline; gap: 10px; }
+.tgroup h3 small { font: 600 12px/1 var(--f-mono); color: var(--ink-soft); }
+.tasks { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.task { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; grid-template-columns: 24px 1fr; gap: 12px; }
+.task input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--ok); }
+.task .body { display: grid; gap: 8px; min-width: 0; }
+.task .row { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+.task label { font: 700 16px/1.35 var(--f-display); cursor: pointer; flex: 1 1 260px; min-width: 0; }
+.task.done label { text-decoration: line-through; color: var(--ink-soft); }
+.task.done .detail { display: none; }
+.task .why { color: var(--ink-soft); font-size: 15px; }
+.task .how { font-size: 15px; max-width: 68ch; }
+.task .done-when { font-size: 15px; padding: 8px 10px; border-radius: 6px; background: var(--ok-soft); }
+.task .done-when b { color: var(--ok); }
+.task .foot { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.task .mini { font: 600 13px/1 var(--f-display); padding: 7px 10px; border-radius: 6px; border: 1px solid var(--line); background: transparent; color: var(--accent); cursor: pointer; }
+.task .copied { font-size: 13px; color: var(--ok); }
+footer { color: var(--ink-soft); font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { .bar i { transition: none; } }
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="eyebrow">PRISM by PHILRADS · Go-live binder</div>
+    <h1>PRISM launch plan</h1>
+    <p class="lede">Everything between today's web app at philrads-portal.vercel.app and an app staff can rely on at prism.philrads.org: the domain move, email, the legal papers, store packaging and the day-to-day running. It also lists the features still to build and the known issues. Each task says who does it, what to do, and how you know it’s done.</p>
+    <div class="meta"><span>Target <b>prism.philrads.org</b></span><span>Live <b>v1.9.6</b></span><span>Ready to ship <b>v1.9.7</b></span><span>Prepared <b>7 Nov 2026</b></span></div>
+    <div class="progress" aria-live="polite"><div class="bar"><i id="bar"></i></div><span id="count">0 of 0 done</span></div>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="Sections">
+  <div class="wrap">
+    <a href="#plan" data-view="plan">Tasks</a>
+    <a href="#domain" data-view="domain">Domain move</a>
+    <a href="#terms" data-view="terms">Terms of Use</a>
+    <a href="#privacy" data-view="privacy">Privacy updates</a>
+    <a href="#costs" data-view="costs">Running costs</a>
+  </div>
+</nav>
+
+<main>
+<div class="wrap">
+
+<!-- ============ CHECKLIST ============ -->
+<section class="view" id="v-plan">
+  <div class="block">
+    <h2>Launch tasks</h2>
+    <p class="note">Each card is a task you can hand to someone: who does it, why it matters, what to do, and how you know it's done. Use <strong>Copy task</strong> to paste it into PRISM Tasks or a chat. Ticks stay in this browser only.</p>
+    <div class="filters" role="group" aria-label="Show tasks for">
+      <button type="button" class="pill" data-owner="" aria-pressed="true">Everyone</button>
+      <button type="button" class="pill" data-owner="You" aria-pressed="false">You</button>
+      <button type="button" class="pill" data-owner="Claude" aria-pressed="false">Claude</button>
+      <button type="button" class="pill" data-owner="Supervisor" aria-pressed="false">Supervisor</button>
+      <button type="button" class="pill" data-owner="DPO" aria-pressed="false">DPO / lawyer</button>
+      <button type="button" class="pill" data-owner="Admin" aria-pressed="false">Admin</button>
+    </div>
+    <div class="legend">When: <span class="chip c-now">Now</span><span class="chip c-launch">Before launch</span><span class="chip c-store">Before stores</span><span class="chip c-later">After launch</span></div>
+  </div>
+  <div id="task-groups" class="tgroups"></div>
+</section>
+
+<!-- ============ DOMAIN ============ -->
+<section class="view" id="v-domain" hidden>
+  <div class="block">
+    <h2>Moving to prism.philrads.org</h2>
+    <p class="note">The browser treats a new address as a new app, so some things on each phone start fresh. Announce the move three days ahead and do it on a quiet day, not during a response.</p>
+  </div>
+
+  <div class="block">
+    <h3>What each person has to redo</h3>
+    <div class="scroll"><table>
+      <thead><tr><th>On the phone</th><th>After the move</th><th>What to tell staff</th></tr></thead>
+      <tbody>
+        <tr><td>Work saved offline</td><td>Stays on the old address</td><td>Open PRISM with signal and let it sync <strong>before</strong> the move day</td></tr>
+        <tr><td>Home-screen app</td><td>Still opens the old address</td><td>Remove it, open prism.philrads.org, add it again</td></tr>
+        <tr><td>Sign-in</td><td>Signed out</td><td>Sign in once with the same email and password</td></tr>
+        <tr><td>Quick Unlock (fingerprint / face)</td><td>Off; it's tied to the address</td><td>Turn it on again in Profile</td></tr>
+        <tr><td>Notifications</td><td>Off</td><td>Allow notifications again when asked</td></tr>
+        <tr><td>Theme, map layers, last tab</td><td>Back to defaults</td><td>Nothing to do</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="block">
+    <h3>What to do, in this order</h3>
+    <ol class="steps">
+      <li><div class="body"><strong>Add the domain in Vercel</strong><p class="note">Project → Settings → Domains → add <code>prism.philrads.org</code>. Vercel shows the DNS record it expects.</p></div></li>
+      <li><div class="body"><strong>Add the DNS record where philrads.org is managed</strong><p class="note">Type <code>CNAME</code>, name <code>prism</code>, value as Vercel shows it (usually <code>cname.vercel-dns.com</code>). Wait until Vercel says "Valid configuration". The HTTPS certificate is issued automatically.</p></div></li>
+      <li><div class="body"><strong>Allow the new address in Supabase</strong><p class="note">Authentication → URL Configuration. Site URL <code>https://prism.philrads.org</code>. Redirect URLs: add <code>https://prism.philrads.org/**</code> and keep the old one until the grace period ends.</p></div></li>
+      <li><div class="body"><strong>Allow it in Google Cloud</strong><p class="note">OAuth client: add <code>https://prism.philrads.org</code> to Authorized JavaScript origins, plus the Drive redirect URI on the new host. API key: add <code>https://prism.philrads.org/*</code> to the allowed websites.</p></div></li>
+      <li><div class="body"><strong>Point the IMS at the new address</strong><p class="note">In the live IMS settings, change the sync target to <code>https://prism.philrads.org/api/ims-sync</code> and update any "Open PRISM" links.</p></div></li>
+      <li><div class="body"><strong>Claude updates the code and deploys</strong><p class="note">New address in the Privacy Policy and push settings, the "PRISM has moved" banner for the old address, and (later) the Android link file.</p></div></li>
+      <li><div class="body"><strong>Test on two real phones</strong><p class="note">Sign in, password reset email, Quick Unlock, a Drive upload, a push notification, an IMS sync, the Live Map with sharing on, and saving a task offline then syncing.</p></div></li>
+      <li><div class="body"><strong>Grace period: two weeks</strong><p class="note">The old address keeps working with the banner, so offline work can sync. Then Vercel redirects philrads-portal.vercel.app to prism.philrads.org, and you remove the old address from Supabase and Google.</p></div></li>
+      <li><div class="body"><strong>Update links elsewhere</strong><p class="note">philrads.org website, the Google consent screen, email signatures, printed QR codes, and the store listing.</p></div></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============ TERMS ============ -->
+<section class="view" id="v-terms" hidden>
+  <div class="block">
+    <h2>Terms of Use · draft</h2>
+    <p class="note">Written for PRISM as it works today: invite-only staff and volunteer accounts, field data about beneficiaries, optional location sharing, Google Drive and the IMS. <span class="ph">Highlighted</span> parts need a decision from PHILRADS. Have the DPO or a lawyer review it before publishing.</p>
+    <div class="bar-actions"><button class="copy" type="button" data-copy="terms-text" id="copy-terms">Copy the Terms text</button><span class="toast" id="toast-terms" role="status"></span></div>
+  </div>
+
+  <article class="legal" id="terms-text">
+    <p><strong>PRISM Terms of Use</strong><br>Effective <span class="ph">[date of launch]</span> · Version 1.0</p>
+
+    <h3>1. About these terms</h3>
+    <p>PRISM (Response, Inventory and Staff Management) is the internal work system of Philippine Relief and Development Services, Inc. ("PHILRADS", "we"), available at prism.philrads.org and as a mobile app. These terms apply to everyone who signs in to PRISM. By signing in, you agree to them and to the PRISM Privacy Policy. If you work for PHILRADS, these terms add to your employment or volunteer agreement and PHILRADS policies; where they conflict, your agreement and those policies apply.</p>
+
+    <h3>2. Who may use PRISM</h3>
+    <p>PRISM is not open to the public. Only staff, volunteers and partners invited by a PHILRADS administrator may use it, and only for PHILRADS work. You must be at least 18 years old, or <span class="ph">[16 with written consent of a parent or guardian, if PHILRADS accepts younger volunteers]</span>.</p>
+
+    <h3>3. Your account</h3>
+    <ul>
+      <li>Your account is personal. Do not share your password, your Quick Unlock device or a signed-in phone with anyone.</li>
+      <li>Keep your name, role and contact details correct.</li>
+      <li>Tell your supervisor or <span class="ph">[support@philrads.org]</span> right away if your phone is lost or stolen, or if you think someone else used your account.</li>
+      <li>You are responsible for what is done with your account until you report it.</li>
+      <li>Your administrator sets your role, which decides what you can see and change. Do not try to reach information your role does not allow.</li>
+    </ul>
+
+    <h3>4. Using PRISM properly</h3>
+    <p>Use PRISM only for PHILRADS work, and enter information that is true and complete to the best of your knowledge. You must not:</p>
+    <ul>
+      <li>record false stock counts, distributions, attendance, locations or reports;</li>
+      <li>copy, export, photograph or share PRISM information outside PHILRADS without permission from your supervisor;</li>
+      <li>upload anything unlawful, hateful, sexually explicit, or that infringes someone else's rights;</li>
+      <li>use PRISM to harass, track or monitor a person outside work duties;</li>
+      <li>try to break, overload, reverse-engineer or get around PRISM's security, or use automated tools against it;</li>
+      <li>use another person's account, or let someone use yours.</li>
+    </ul>
+
+    <h3>5. Information about the people we serve</h3>
+    <p>PRISM holds personal information about beneficiaries, including names, households, locations and sometimes ages or needs. This information is confidential. Collect only what the task needs, use it only for the response or program it was collected for, and never share it on social media, personal chats or with anyone outside PHILRADS and its authorized partners. Follow the PHILRADS data protection and safeguarding policies at all times.</p>
+
+    <h3>6. Location features</h3>
+    <p>Live location sharing on the Live Map is off until you turn it on, and you can turn it off at any time. While it is on, your position is visible to the PRISM users your role allows, and check-ins you make are kept as part of the work record. PHILRADS uses location to coordinate teams and keep staff safe in the field, not to monitor you outside work. <span class="ph">[If PHILRADS requires sharing during deployments, say so here and in the deployment policy.]</span></p>
+
+    <h3>7. Photos, videos and documents</h3>
+    <ul>
+      <li>Ask for consent before photographing or recording a person. For a child, ask a parent or guardian.</li>
+      <li>Respect people's dignity: avoid images that show someone in distress, undressed or identifiable as a recipient of aid without their agreement.</li>
+      <li>Files you upload for PHILRADS work belong to PHILRADS and are stored in the PHILRADS Google Drive. PHILRADS may use them for reports, donors and communications in line with its policies and the consent given.</li>
+      <li>Upload only files you took yourself or have the right to share.</li>
+    </ul>
+
+    <h3>8. Connected services</h3>
+    <p>PRISM works with other services to run: Supabase (accounts and data), Vercel (hosting), Google Drive (file storage), the PHILRADS Inventory Management System (stock records), and the push services of Google, Apple and Mozilla (notifications). Their own terms also apply to how they handle the data they keep. PRISM is not responsible for interruptions caused by these services.</p>
+
+    <h3>9. Notifications</h3>
+    <p>PRISM can send notifications on your device about tasks, mentions and inventory events. You can turn them off in your device settings or in PRISM. Notifications may show short work details on your lock screen, so set your phone accordingly.</p>
+
+    <h3>10. Working offline</h3>
+    <p>Some changes can be saved on your device without signal and sent when you are back online. Until they sync, they exist only on that device and can be lost if the app is removed or the device is reset. Sync as soon as you can, especially before leaving a deployment.</p>
+
+    <h3>11. Ownership</h3>
+    <p>PRISM, its design, name and logo, and the records in it belong to PHILRADS. You may not copy or reuse PRISM or its contents except for your PHILRADS work. Records you create in PRISM are PHILRADS work records.</p>
+
+    <h3>12. Availability and changes</h3>
+    <p>We work to keep PRISM available and your data safe, but PRISM is provided "as is" and may sometimes be unavailable, slow or incomplete, especially in areas with weak signal or during disasters. Do not rely on PRISM alone for urgent safety decisions; follow PHILRADS emergency procedures and use phone or radio when needed. We may change, add or remove features at any time.</p>
+
+    <h3>13. Suspending or ending access</h3>
+    <p>PHILRADS may suspend or end your access at any time, including when your work with PHILRADS ends or if you break these terms. Your access usually ends on your last day. Records you created stay with PHILRADS as required by law and its retention policy. You may ask for your account to be deleted from Profile → Account or by writing to <span class="ph">[support@philrads.org]</span>; see the Privacy Policy for what is kept and why.</p>
+
+    <h3>14. Responsibility</h3>
+    <p>To the extent the law allows, PHILRADS is not liable for indirect or incidental loss arising from your use of PRISM, or for loss caused by your device, your connection, or your breach of these terms. Nothing in these terms limits rights you have under Philippine law that cannot be waived.</p>
+
+    <h3>15. Privacy</h3>
+    <p>How PRISM collects, uses and protects personal information is explained in the PRISM Privacy Policy at prism.philrads.org/privacy.html, in line with the Data Privacy Act of 2012 (Republic Act No. 10173).</p>
+
+    <h3>16. Changes to these terms</h3>
+    <p>We may update these terms. When we make an important change, PRISM will show you the new version and ask you to agree before you continue. The version and effective date are shown at the top.</p>
+
+    <h3>17. Governing law</h3>
+    <p>These terms are governed by the laws of the Republic of the Philippines. Disputes will be brought before the proper courts of <span class="ph">[Quezon City]</span>.</p>
+
+    <h3>18. Contact</h3>
+    <p>Philippine Relief and Development Services, Inc. (PHILRADS)<br>1st/F Evangelical Center, 62 Molave St., Project 3, Quezon City 1102, Philippines<br>Support: <span class="ph">[support@philrads.org]</span> · Data Protection Officer: <span class="ph">[dpo@philrads.org]</span></p>
+  </article>
+</section>
+
+<!-- ============ PRIVACY ============ -->
+<section class="view" id="v-privacy" hidden>
+  <div class="block">
+    <h2>Privacy Policy · what to add</h2>
+    <p class="note">The current policy (<code>public/privacy.html</code>, 26 October 2026) already covers your account, work data, optional location, the activity log, Supabase and Vercel, and Google Drive. These additions bring it in line with RA 10173 and the store forms. Each block is ready to paste.</p>
+    <div class="bar-actions"><button class="copy ghost" type="button" data-copy="privacy-text" id="copy-privacy">Copy all additions</button><span class="toast" id="toast-privacy" role="status"></span></div>
+  </div>
+
+  <div class="block" id="privacy-text">
+    <div class="add"><span class="tag">New · Data Protection Officer</span><blockquote>PHILRADS has a Data Protection Officer who answers questions and requests about personal information in PRISM. Write to <span class="ph">[dpo@philrads.org]</span> or to the address below, marked "Attention: Data Protection Officer".</blockquote></div>
+    <div class="add"><span class="tag">New · Why we may use your information</span><blockquote>We process staff and volunteer information to manage your work with PHILRADS and to meet our legal duties. We process beneficiary information to deliver relief and development programs and to report on them, as our legitimate interest and, where the law requires, with consent. Location sharing and photos of people are based on consent, which you can withdraw at any time without affecting past processing.</blockquote></div>
+    <div class="add"><span class="tag">New · People we serve, and children</span><blockquote>PRISM holds information about people who receive help from PHILRADS, entered by our staff. Only staff whose role needs it can see it. We photograph people only with their consent, and children only with a parent's or guardian's consent. Beneficiaries can ask about their information through the Data Protection Officer.</blockquote></div>
+    <div class="add"><span class="tag">New · How long we keep it</span><blockquote>Account details: while you work with PHILRADS and <span class="ph">[2]</span> years after. Live location: only the latest position while sharing is on; check-ins are kept with the work record. Tasks, inventory and response records: <span class="ph">[5]</span> years, for audits and donor reporting. Activity log: <span class="ph">[1]</span> year. Photos and documents: as set by the PHILRADS records policy. After that, we delete or anonymize the information.</blockquote></div>
+    <div class="add"><span class="tag">New · Where it's stored</span><blockquote>PRISM data is stored with Supabase in <span class="ph">[the region of your Supabase project, for example Singapore]</span>, served by Vercel, and files are kept in the PHILRADS Google Drive. These providers may process data outside the Philippines; we use providers with strong security and contractual protections, and we remain responsible for your information.</blockquote></div>
+    <div class="add"><span class="tag">New · Notifications and the Inventory system</span><blockquote>If you allow notifications, your device's push service (Google, Apple or Mozilla) delivers short messages to you; we store a device address so we can reach it, and delete it when you turn notifications off or sign out. Stock records are copied into PRISM from the PHILRADS Inventory Management System so the Live Map and reports stay current.</blockquote></div>
+    <div class="add"><span class="tag">New · Your rights</span><blockquote>Under the Data Privacy Act of 2012 you have the right to be informed, to access your information, to object, to have it corrected, to have it erased or blocked, to data portability, and to damages. You can ask for your account to be deleted from Profile → Account. Some records may be kept where the law or an audit requires it, and we will tell you which. If you believe your rights were violated, you may file a complaint with the National Privacy Commission (privacy.gov.ph).</blockquote></div>
+    <div class="add"><span class="tag">New · If something goes wrong</span><blockquote>If a security incident puts your information at risk, we will notify the National Privacy Commission and the people affected within 72 hours of learning of it, as the law requires, and tell you what we are doing about it.</blockquote></div>
+    <div class="add"><span class="tag">Change · Address and version</span><blockquote>Replace philrads-portal.vercel.app with prism.philrads.org, link to the Terms of Use, and show "Version 2.0 · Effective <span class="ph">[launch date]</span>". When this policy changes in an important way, PRISM will show you the new version when you next sign in.</blockquote></div>
+  </div>
+</section>
+
+<!-- ============ COSTS ============ -->
+<section class="view" id="v-costs" hidden>
+  <div class="block">
+    <h2>Running costs</h2>
+    <p class="note">Rough list prices as of late 2026. Check each provider's current page and nonprofit discounts before budgeting.</p>
+  </div>
+  <div class="grid2">
+    <div class="card"><span class="eyebrow">Monthly, recommended</span><span class="big">≈ US$45–65</span><p class="note">Supabase Pro plus Vercel Pro for one member, and a free or low-cost email sender.</p></div>
+    <div class="card"><span class="eyebrow">One-time</span><span class="big">≈ US$25</span><p class="note">Google Play developer registration. D-U-N-S number is free.</p></div>
+    <div class="card"><span class="eyebrow">Yearly, only for iPhone store</span><span class="big">US$99</span><p class="note">Apple Developer Program. Skip while iPhones use the home-screen app.</p></div>
+  </div>
+  <div class="scroll"><table>
+    <thead><tr><th>Service</th><th>What for</th><th>Plan</th><th>Approx. cost</th></tr></thead>
+    <tbody>
+      <tr><td>Supabase</td><td>Accounts, database, backups</td><td>Pro</td><td class="n">$25 / month</td></tr>
+      <tr><td>Vercel</td><td>Hosting, API routes</td><td>Pro, 1 member</td><td class="n">$20 / month</td></tr>
+      <tr><td>Email sender</td><td>Invites, password resets</td><td>Resend or Brevo free tier</td><td class="n">$0–20 / month</td></tr>
+      <tr><td>Domain</td><td>philrads.org (already owned)</td><td>Renewal</td><td class="n">existing</td></tr>
+      <tr><td>Error tracking</td><td>Crash reports from phones</td><td>Sentry Developer</td><td class="n">$0</td></tr>
+      <tr><td>Uptime monitor</td><td>Alerts when PRISM is down</td><td>UptimeRobot free</td><td class="n">$0</td></tr>
+      <tr><td>Google Cloud</td><td>Drive uploads, sign-in</td><td>Within free quota</td><td class="n">$0</td></tr>
+      <tr><td>Google Play</td><td>Android store app</td><td>One-time</td><td class="n">$25 once</td></tr>
+      <tr><td>Apple Developer</td><td>iPhone store app (optional)</td><td>Yearly</td><td class="n">$99 / year</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<footer>Prepared for PHILRADS by Claude from the PRISM codebase. Not legal advice; the Terms and Privacy text are drafts for the DPO or a lawyer to review.</footer>
+</div>
+</main>
+
+<script>
+var WHEN = { now: ['c-now', 'Now'], launch: ['c-launch', 'Before launch'], store: ['c-store', 'Before stores'], later: ['c-later', 'After launch'] };
+var GROUPS = [
+ { title: "This week", tasks: [
+  { id: "ship-197", t: "Release 1.9.7 and bring every phone up to date", who: ["Claude", "You"], when: "now",
+    why: "The live site runs 1.9.6. Version 1.9.7 makes the sign-in music and the notification sounds start on the first tap. Phones still on 1.9.5 or older use the old update logic, so they need one manual update before updates install on their own.",
+    how: "Tell Claude \"deploy\", and Claude pushes 1.9.7 and waits until the live site serves it. Then ask every staff member to open PRISM once with signal and tap Update now when What’s new appears. If the home-screen icon still shows the old logo, they remove the app and add it again from the browser.",
+    done: "Profile shows v1.9.7 on every staff phone, and the new PRISM icon is on their home screens." },
+  { id: "tell-staff", t: "Tell staff what changed this week", who: ["You"], when: "now",
+    why: "Several changes affect how people sign in, and staff may take some of them for bugs.",
+    how: "Send a short message to the team explaining that staff accounts now sign out after 5 minutes without activity unless a PIN or fingerprint is set up, and that sharing live location keeps them signed in. Explain that the sign-in music only starts after the first tap because phones block sound until then, and that the speaker button turns it off. Mention that volunteers now sign in with an emailed code and that the Guest door is only a preview for now.",
+    done: "The message is posted in the staff group chat and nobody reports the music or the sign-out as a bug." },
+  { id: "test-volunteer", t: "Try volunteer sign-in with one real volunteer", who: ["You", "Admin"], when: "now",
+    why: "The emailed-code sign-in is live but hasn’t been tried end to end by a real volunteer.",
+    how: "Invite one volunteer from Staff & volunteers with the Volunteer role. Have them tap Volunteer on the sign-in screen, enter their email and type the 6-digit code from the email. Check that they only see the Live Map, Tasks, Forms, PDM and Documentation. If the code never arrives, the email limit is the likely cause, and the task to send emails from philrads.org fixes it.",
+    done: "A volunteer signs in with a code and sees only the volunteer pages." },
+  { id: "clean-data", t: "Clear test data before real users arrive", who: ["You"], when: "launch",
+    why: "First impressions matter, so staff should see real work instead of test rows.",
+    how: "List the test tasks, places, check-ins and uploads, then delete them yourself or ask Claude for a cleanup script that you run. Keep sample data only in the reviewer account.",
+    done: "Home, Tasks and the Live Map show only real PHILRADS work." }
+ ]},
+ { title: "Domain and email", tasks: [
+  { id: "domain", t: "Move PRISM to prism.philrads.org", who: ["You", "Claude"], when: "launch",
+    why: "An official address is needed for the store app and for email, and it earns trust.",
+    how: "Announce the move to staff three days ahead so they sync any offline work first. Follow the Domain move tab to add the address in Vercel, add the DNS record, and allow the new address in Supabase, Google Cloud and the IMS. Claude then updates the code, adds the \"PRISM has moved\" banner and deploys. Test on two phones, and after two weeks redirect the old address.",
+    done: "Sign-in, password reset, a Drive upload, a push notification and an IMS sync all work on prism.philrads.org." },
+  { id: "smtp", t: "Send PRISM emails from philrads.org", who: ["You"], when: "launch",
+    why: "Supabase’s built-in sender allows only a few emails an hour, so invites, password resets and volunteer sign-in codes will stop arriving once more people use PRISM.",
+    how: "Open a Resend or Brevo account and add philrads.org to it. Add the SPF, DKIM and DMARC records it gives you at the DNS host. Enter the SMTP details yourself in Supabase under Authentication, SMTP, with noreply@philrads.org as the sender. Then send yourself an invite, a password reset and a volunteer code.",
+    done: "All three emails land in a Gmail inbox, not spam, from noreply@philrads.org." },
+  { id: "templates", t: "Rename the remaining sign-in emails to PRISM", who: ["Claude", "You"], when: "launch",
+    why: "The volunteer code email already says PRISM, but the invite, password reset and email-change emails still say \"Staff Portal\".",
+    how: "Claude writes the three templates in the PRISM style. You paste them into Supabase under Authentication, Emails, and send one of each to yourself.",
+    done: "No email mentions \"Staff Portal\", and every link points to the PRISM address." },
+  { id: "support-mail", t: "Create support@philrads.org", who: ["Admin"], when: "launch",
+    why: "The Terms, the Privacy Policy and the store listing need a contact that isn’t a personal Gmail.",
+    how: "Create the mailbox, or an alias that forwards to two people, and send the address to Claude so it goes into the app and the documents.",
+    done: "A test message reaches two people." }
+ ]},
+ { title: "Legal and privacy", tasks: [
+  { id: "dpo", t: "Name a Data Protection Officer", who: ["Supervisor"], when: "launch",
+    why: "The Data Privacy Act (RA 10173) requires one for any organization that handles personal information.",
+    how: "Choose the person, who can be a part-time staff member, and create dpo@philrads.org for them. Tell staff who it is and what they should report to them.",
+    done: "The DPO’s name and email are in the Privacy Policy." },
+  { id: "npc", t: "Check whether PHILRADS must register with the NPC", who: ["DPO"], when: "launch",
+    why: "Registration is required with 250 or more employees, or sensitive data on 1,000 or more people (NPC Circular 2022-04).",
+    how: "Count the employees and estimate how many beneficiaries have ages, health or family details in PRISM or the IMS. If either limit is reached, register on the NPC portal.",
+    done: "PHILRADS is registered, or there is a short written note of why it isn’t needed." },
+  { id: "pia", t: "Do a Privacy Impact Assessment", who: ["DPO", "You"], when: "launch",
+    why: "It shows what PRISM collects, who sees it and how the risks are handled, and the NPC asks for it.",
+    how: "List the data PRISM holds: accounts, live location, photos, beneficiary records and IMS stock. For each one, write down who can see it, how long it’s kept and what could go wrong, then note the fixes and sign it.",
+    done: "A signed PIA is on file." },
+  { id: "breach", t: "Write a one-page breach response plan", who: ["DPO", "You"], when: "launch",
+    why: "The law gives 72 hours to notify the NPC and the people affected.",
+    how: "Name who decides and who acts, list the keys to change (see the key rotation task), and draft the notices to the NPC and to the people affected.",
+    done: "The page is shared with every admin." },
+  { id: "photo-rule", t: "Set the photo consent rule", who: ["Supervisor", "Claude"], when: "launch",
+    why: "Field photos show beneficiaries, sometimes children.",
+    how: "Write a five-line rule: ask first, ask a guardian for minors, and avoid shots of distress or ones that identify a home. Claude adds a consent reminder to the upload sheet, and you brief the field staff.",
+    done: "Field staff confirm they’ve read it." },
+  { id: "legal-review", t: "Review the Terms and Privacy drafts", who: ["DPO"], when: "launch",
+    why: "The drafts on the next tabs need PHILRADS decisions and a legal read.",
+    how: "Fill in every highlighted part, review the text with the DPO or a lawyer, and send the approved version to Claude.",
+    done: "Approved versions exist, each with an effective date." },
+  { id: "publish-legal", t: "Publish the Terms and Privacy Policy and ask everyone to agree once", who: ["Claude"], when: "launch",
+    why: "People must see and accept the rules, and PHILRADS needs a record that they did.",
+    how: "Claude adds /terms.html, updates /privacy.html and links both from the sign-in screen, Profile and About. A one-time \"I agree\" screen saves the version and the date for each account.",
+    done: "Every active account has an agreement on record." },
+  { id: "dsa", t: "Sign data sharing agreements with partners", who: ["Supervisor"], when: "later",
+    why: "LGUs, donors and partners sometimes receive beneficiary lists from PRISM.",
+    how: "List who receives exports, and use the NPC’s data sharing agreement template with each of them.",
+    done: "Each regular recipient has a signed agreement." }
+ ]},
+ { title: "Features to build", tasks: [
+  { id: "ims-live", t: "Confirm the Inventory page shows the official IMS stock", who: ["You", "Claude"], when: "launch",
+    why: "The local XAMPP copy of the IMS is test data. Only the live IMS on InfinityFree is official, and it pushes its stock to PRISM.",
+    how: "Open Inventory Management in PRISM and compare a few items with the live IMS. Claude checks that the last sync time is recent and that no local test figures are left in PRISM.",
+    done: "PRISM shows the same numbers as the live IMS, updated within the last day." },
+  { id: "pdm", t: "Decide what PDM does, then build it", who: ["Supervisor", "Claude"], when: "later",
+    why: "PDM shows as \"Coming soon\" in the menu, and its scope hasn’t been decided yet.",
+    how: "The supervisor writes down what PDM should cover, who fills it in and what reports come out of it, with a sample of the paper form if there is one. Claude then builds it; the volunteer menu already lists it.",
+    done: "PDM opens without the \"Coming soon\" label, and a test entry can be saved and reported." },
+  { id: "guest-map", t: "Guest Live Map", who: ["Claude"], when: "later",
+    why: "Visitors should see where PHILRADS is responding and where projects run, without seeing any staff.",
+    how: "Claude builds a public map from response sites and project places only, with no staff or volunteer positions and no stock numbers, and links it from the Guest page.",
+    done: "A signed-out visitor sees the sites and no people." },
+  { id: "guest-news", t: "Disaster News for guests", who: ["Supervisor", "Claude"], when: "later",
+    why: "Guests should be able to follow emergencies affecting the communities PHILRADS serves.",
+    how: "The supervisor chooses the sources, such as PAGASA and NDRRMC advisories, and decides whether staff also post updates by hand. Claude builds the news list from that choice.",
+    done: "The Guest page shows current advisories from the chosen sources." },
+  { id: "philreads", t: "PHILReads stories", who: ["Supervisor", "Claude"], when: "later",
+    why: "Stories from responses show donors and visitors the work in a human way.",
+    how: "The supervisor names who writes and who approves stories. Claude builds a simple editor for staff and a reading page for guests, with photos following the photo consent rule.",
+    done: "An approved story appears on the Guest page, and drafts stay hidden." },
+  { id: "drives", t: "Donation Drives with progress bars", who: ["Supervisor", "Claude"], when: "later",
+    why: "Visitors should see current drives and how close each one is to its goal.",
+    how: "Admins set each drive’s goal and update the amount raised, and the Guest page shows a progress bar for every drive. Taking money online would need a payment provider and a legal review, so the first version only shows how to give.",
+    done: "A test drive shows the right progress, and only admins can change the amount." },
+  { id: "merch", t: "Merch page", who: ["Supervisor", "Claude"], when: "later",
+    why: "PHILRADS shirts and items support the work.",
+    how: "The supervisor sends the items, prices and photos and decides how orders are taken, by message or through an outside shop. Claude builds the catalogue page.",
+    done: "Guests can browse the items and know how to order." },
+  { id: "feedback", t: "Guest feedback form", who: ["Claude"], when: "later",
+    why: "Communities and visitors need a way to tell PHILRADS how it did or what they need.",
+    how: "Claude builds a short form that saves to a feedback table, protects it against spam and shows the entries to admins. It asks for contact details only if the person wants a reply.",
+    done: "A test message from a signed-out visitor appears for admins." },
+  { id: "delete-account", t: "Account deletion request and admin offboarding", who: ["Claude"], when: "store",
+    why: "Apple and Google require deletion from inside the app, and admins need a clean way to remove people who leave.",
+    how: "People can tap \"Request account deletion\" in Profile, under Account, and admins see the requests in Staff. Deactivating an account blocks sign-in, stops location sharing and removes push devices, while keeping the work records.",
+    done: "A test account is deactivated and can’t sign in, and its tasks remain." },
+  { id: "loc-explain", t: "Explain location before the phone asks", who: ["Claude"], when: "store",
+    why: "Store reviewers look for it, and staff are more likely to allow location when they understand it.",
+    how: "Before the phone’s permission prompt, a short screen explains who sees your position, when, and how to stop sharing.",
+    done: "The first tap on \"Share location\" shows the explanation, then the phone’s prompt." },
+  { id: "report", t: "Add \"Report a problem\"", who: ["Claude"], when: "launch",
+    why: "Bug reports should arrive with the version, the device and the page attached.",
+    how: "Claude adds a form in Profile that saves to a support table, and admins see the reports in Logs.",
+    done: "A test report shows up with its version and page." },
+  { id: "errors", t: "Turn on error tracking", who: ["You", "Claude"], when: "launch",
+    why: "Today a crash on a phone in the field leaves no trace.",
+    how: "You create a free Sentry account and share the project key with Claude, who wires it in without sending personal data.",
+    done: "A test error appears in Sentry within a minute." },
+  { id: "video", t: "Make the staff how-to video", who: ["You"], when: "later",
+    why: "Field staff learn faster from a short phone-first video than from a manual.",
+    how: "Use the brief in docs/video/prism-how-to-video-prompt.md with your animation tool. Ask Claude to refresh it first, since it was written for 1.9.4 and doesn’t yet show the new logo, the music that starts on a tap, or any module that changes before production.",
+    done: "The full video and the short clips are shared with staff." },
+  { id: "a11y", t: "Accessibility pass", who: ["Claude"], when: "later",
+    why: "PRISM should be readable for everyone, in sunlight and with large text.",
+    how: "Claude checks contrast in both themes, adds screen-reader labels where they are missing and makes every touch target at least 44 pixels.",
+    done: "An automated check shows no serious issues." }
+ ]},
+ { title: "Known issues to fix", tasks: [
+  { id: "chunk-reload", t: "Pages can fail to open on a phone that missed a release", who: ["Claude"], when: "launch",
+    why: "Pages such as Inventory, Response and the Live Map load in pieces. When a phone still has an old version open after a release, those pieces may no longer exist, and the page shows an error instead of opening.",
+    how: "Claude makes PRISM reload itself once when a page piece is missing, so it picks up the new version, and shows a clear message if that still fails.",
+    done: "After a release, an old tab opens the Live Map without an error." },
+  { id: "email-limit", t: "Sign-in emails stop after a few an hour", who: ["You"], when: "launch",
+    why: "Until PRISM sends its own email, Supabase limits invites, resets and volunteer codes to a few an hour, which a training day or a response would use up quickly.",
+    how: "The task to send PRISM emails from philrads.org fixes this. Until then, invite people a few at a time.",
+    done: "Ten volunteer codes sent within an hour all arrive." },
+  { id: "old-icon", t: "Old logo on some home screens", who: ["You"], when: "now",
+    why: "Phones keep the icon they were given when PRISM was added, so some will show the old logo until the app is added again.",
+    how: "Ask staff who still see the old icon to remove PRISM from the home screen and add it again from the browser. Their account and settings stay.",
+    done: "Every staff phone shows the new PRISM icon." },
+  { id: "oauth", t: "The Google consent screen still needs the PRISM name", who: ["You"], when: "launch",
+    why: "People see this screen when they connect Google Drive, and it should say PRISM with PHILRADS links.",
+    how: "Set the app name to PRISM with the logo, the home page and the Privacy and Terms links on philrads.org. Verify philrads.org in Search Console and add it as an authorized domain, then publish and request Google’s review if it asks.",
+    done: "Connecting Drive shows \"PRISM\" with PHILRADS links." },
+  { id: "nlt", t: "The 25 daily verses need checking and an NLT credit line", who: ["You"], when: "launch",
+    why: "Tyndale allows limited quoting only with their credit line.",
+    how: "Read all 25 verses against the NLT text, and send Claude the credit wording from Tyndale’s permissions page so it goes on the About page.",
+    done: "The verses are checked and the credit shows on About." },
+  { id: "gif", t: "The welcome window still uses a meme GIF", who: ["You"], when: "launch",
+    why: "A meme clip may belong to someone else, and a store app should use PHILRADS’s own image.",
+    how: "Pick a short PHILRADS clip or use the PRISM mark, and send it to Claude.",
+    done: "The welcome window shows PHILRADS’s own image." }
+ ]},
+ { title: "Running it", tasks: [
+  { id: "plans", t: "Move Supabase and Vercel to paid plans", who: ["Admin"], when: "launch",
+    why: "Free Supabase pauses after a quiet week and has no daily backups, and Vercel’s free plan is for personal use.",
+    how: "Move Supabase to Pro (about $25 a month) and Vercel to Pro, or ask Vercel about nonprofit pricing. Bill both to a PHILRADS card, not a personal one.",
+    done: "Daily backups are listed in Supabase, and both accounts are billed to PHILRADS." },
+  { id: "access", t: "Give a second admin access to every account", who: ["Admin"], when: "launch",
+    why: "PRISM must keep running if one person is away or leaves.",
+    how: "Add a second owner to Vercel, Supabase, Google Cloud, the domain registrar and the IMS host, using PHILRADS email addresses.",
+    done: "Two people can sign in to each one." },
+  { id: "keys", t: "Rotate keys into a shared password manager", who: ["You"], when: "launch",
+    why: "Keys made during development have been in many hands.",
+    how: "Do it together with the domain move, since notifications get turned on again then anyway. Make a new PORTAL_SYNC_KEY (and put it in the IMS too), a new Supabase service key, Google key and VAPID pair, and store them in a PHILRADS password manager.",
+    done: "The old keys no longer work, and the new ones are in the shared vault." },
+  { id: "security", t: "Security check of the database", who: ["Claude"], when: "launch",
+    why: "It confirms every table only shows people what their role allows, now including volunteers and the new task ownership rules.",
+    how: "Claude runs the Supabase security advisor and fixes what it finds, with your approval for each change.",
+    done: "The advisor shows no errors." },
+  { id: "uptime", t: "Set up an uptime monitor", who: ["You"], when: "launch",
+    why: "You should know PRISM is down before staff tell you.",
+    how: "Set up UptimeRobot (free) to check the home page and /api/weather every five minutes, with alerts going to support@philrads.org.",
+    done: "A test alert arrives." },
+  { id: "runbook", t: "Write the runbook", who: ["Claude"], when: "later",
+    why: "Anyone on the team should be able to deploy, roll back or restore.",
+    how: "Claude writes how to deploy, roll back, restore the database, run a migration, invite staff and volunteers, and reset the IMS sync.",
+    done: "A second admin follows it and deploys once." }
+ ]},
+ { title: "App store (Android first)", tasks: [
+  { id: "duns", t: "Get a D-U-N-S number for PHILRADS", who: ["Admin"], when: "store",
+    why: "Google and Apple need it for an organization developer account. It’s free but takes weeks, so start early.",
+    how: "Apply on the Dun & Bradstreet site using the name and address exactly as registered with the SEC.",
+    done: "The number is received." },
+  { id: "play", t: "Open a Google Play developer account as an organization", who: ["Admin"], when: "store",
+    why: "Organization accounts skip the 12-tester, 14-day closed test.",
+    how: "Sign up with a PHILRADS Google account and the D-U-N-S number, pay the one-time fee and verify identity. Then add the people who will manage releases as users.",
+    done: "The Play Console opens for PHILRADS." },
+  { id: "twa", t: "Build the Android app", who: ["Claude"], when: "store",
+    why: "It’s the same PRISM, installable from the Play Store, and site updates reach it automatically.",
+    how: "After the domain move, Claude publishes /.well-known/assetlinks.json, packages the app with Bubblewrap, signs it and uploads it to an internal test track.",
+    done: "The app installs from the test track and opens without a browser bar." },
+  { id: "listing", t: "Store listing and Data safety form", who: ["Claude", "You"], when: "store",
+    why: "Both are required before review.",
+    how: "Claude drafts the descriptions, the Data safety answers and the screenshots. You add the 512-pixel icon and the 1024×500 graphic and approve the listing.",
+    done: "The Play Console shows no missing items." },
+  { id: "reviewer", t: "Create a reviewer account", who: ["You"], when: "store",
+    why: "Sign-up is invite-only, so store reviewers need a login with sample data.",
+    how: "Invite reviewer@philrads.org with a role that only sees sample data.",
+    done: "The login works and shows no real beneficiaries." },
+  { id: "private", t: "Decide on a public or private listing", who: ["Supervisor"], when: "store",
+    why: "A staff-only app can be private to PHILRADS through managed Google Play, which needs Google Workspace.",
+    how: "Check whether PHILRADS uses Google Workspace, then choose public or private.",
+    done: "The decision is written in this plan." }
+ ]}
+];
+(function () {
+
+  // Launch tasks
+  var KEY = 'prism-launch-checks';
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; }
+  var owner = '';
+  var host = document.getElementById('task-groups');
+  function esc(x) { return String(x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function asText(k) {
+    return k.t + '\n\nWho: ' + k.who.join(', ') + ' \u00b7 When: ' + WHEN[k.when][1] + '\nWhy: ' + k.why + '\n\nHow: ' + k.how + '\n\nDone when: ' + k.done;
+  }
+  function render() {
+    var all = 0, done = 0;
+    host.innerHTML = GROUPS.map(function (g) {
+      var list = g.tasks.filter(function (k) { return !owner || k.who.indexOf(owner) >= 0; });
+      g.tasks.forEach(function (k) { all++; if (state[k.id]) done++; });
+      if (!list.length) return '';
+      var left = list.filter(function (k) { return !state[k.id]; }).length;
+      return '<div class="tgroup"><h3>' + esc(g.title) + ' <small>' + left + ' to do</small></h3><ul class="tasks">' + list.map(function (k) {
+        var w = WHEN[k.when];
+        return '<li class="task' + (state[k.id] ? ' done' : '') + '" data-id="' + k.id + '">' +
+          '<input type="checkbox" id="ck-' + k.id + '"' + (state[k.id] ? ' checked' : '') + '>' +
+          '<div class="body"><div class="row"><label for="ck-' + k.id + '">' + esc(k.t) + '</label>' +
+          '<span class="chip ' + w[0] + '">' + w[1] + '</span>' +
+          k.who.map(function (p) { return '<span class="chip who">' + esc(p) + '</span>'; }).join('') + '</div>' +
+          '<div class="detail" style="display:grid;gap:8px"><p class="why">' + esc(k.why) + '</p>' +
+          '<p class="how">' + esc(k.how) + '</p>' +
+          '<p class="done-when"><b>Done when</b> ' + esc(k.done) + '</p>' +
+          '<div class="foot"><button type="button" class="mini" data-copy-task="' + k.id + '">Copy task</button><span class="copied" role="status"></span></div></div>' +
+          '</div></li>';
+      }).join('') + '</ul></div>';
+    }).join('');
+    document.getElementById('count').textContent = done + ' of ' + all + ' done';
+    document.getElementById('bar').style.width = (all ? (done / all) * 100 : 0) + '%';
+  }
+  host.addEventListener('change', function (e) {
+    var li = e.target.closest('.task'); if (!li) return;
+    state[li.dataset.id] = e.target.checked;
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (err) {}
+    render();
+  });
+  host.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-copy-task]'); if (!b) return;
+    var k; GROUPS.forEach(function (g) { g.tasks.forEach(function (x) { if (x.id === b.dataset.copyTask) k = x; }); });
+    var note = b.nextElementSibling, text = asText(k);
+    function fallback() {
+      var r = document.createRange(); r.selectNodeContents(b.closest('.body'));
+      var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      note.textContent = 'Selected. Press Ctrl+C to copy.';
+    }
+    try { navigator.clipboard.writeText(text).then(function () { note.textContent = 'Copied.'; }, fallback); } catch (err) { fallback(); }
+  });
+  document.querySelectorAll('.pill').forEach(function (p) {
+    p.addEventListener('click', function () {
+      owner = p.dataset.owner;
+      document.querySelectorAll('.pill').forEach(function (q) { q.setAttribute('aria-pressed', String(q === p)); });
+      render();
+    });
+  });
+  render();
+
+  var views = ['plan', 'domain', 'terms', 'privacy', 'costs'];
+  function show() {
+    var v = (location.hash || '').slice(1);
+    if (views.indexOf(v) < 0) v = 'plan';
+    views.forEach(function (n) { document.getElementById('v-' + n).hidden = n !== v; });
+    document.querySelectorAll('nav.tabs a').forEach(function (a) {
+      if (a.dataset.view === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
+  }
+  window.addEventListener('hashchange', function () { show(); window.scrollTo(0, 0); });
+  show();
+
+  function textOf(el) {
+    return el.innerText.replace(/\n{3,}/g, '\n\n').trim();
+  }
+  document.querySelectorAll('button.copy').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var src = document.getElementById(b.dataset.copy);
+      var toast = document.getElementById(b.id === 'copy-terms' ? 'toast-terms' : 'toast-privacy');
+      var text = textOf(src);
+      function fallback() {
+        var r = document.createRange(); r.selectNodeContents(src);
+        var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        toast.textContent = 'Selected. Press Ctrl+C (or ⌘C) to copy.';
+      }
+      try {
+        navigator.clipboard.writeText(text).then(function () { toast.textContent = 'Copied.'; }, fallback);
+      } catch (e) { fallback(); }
+    });
+  });
+})();
+</script>

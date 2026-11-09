@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PRISM by PHILRADS · Field guide</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="assets/gsap.min.js"></script>
+</head>
+<body>
+  <main id="prism-guide" class="composition" data-composition-id="prism-guide" data-start="0" data-duration="300" data-width="1080" data-height="1920">
+    <div class="stage" aria-hidden="true" data-layout-allow-overflow>
+      <div class="beams" data-layout-allow-overflow><i class="beam b1"></i><i class="beam b2"></i><i class="beam b3"></i></div>
+      <div class="grid-dots"></div>
+      <div class="big-number" data-layout-allow-overflow></div>
+    </div>
+    <header class="mast"><img class="app-logo" src="assets/prism-icon.svg" alt=""><span class="mast-word"><b>P</b>RISM &nbsp;/&nbsp; Field guide</span><span class="count"></span></header>
+    <div class="rail" aria-hidden="true"></div>
+    <section class="chapter"><div class="kicker"></div><h1></h1><p></p><div class="accent"></div></section>
+    <div class="device-layer">
+      <div class="device-shadow"></div>
+      <div class="device">
+        <div class="screen">
+          <img class="shot shot-a" alt=""><img class="shot shot-b" alt="">
+          <div class="os-layer"></div>
+          <div class="glare"></div>
+        </div>
+        <div class="island"></div>
+      </div>
+      <div class="focus" aria-hidden="true"><i></i></div>
+      <div class="touch-ring" aria-hidden="true"></div><div class="touch" aria-hidden="true"></div>
+    </div>
+    <svg class="callout-lines" aria-hidden="true" data-layout-allow-overflow><path class="leader"/><circle class="anchor" r="7"/></svg>
+    <div class="callout"><span class="callout-step"></span><span class="callout-text"></span></div>
+    <div class="tips hidden"></div>
+    <div class="sweep" aria-hidden="true" data-layout-allow-overflow><i></i><i></i><i></i></div>
+    <div class="prism-stage hidden">
+      <div class="prism-art">
+        <svg viewBox="0 0 850 320" aria-hidden="true">
+          <defs>
+            <linearGradient id="spectrum" x1="0" y1="0" x2="0" y2="1">
+              <stop stop-color="#fff0d9"/><stop offset=".49" stop-color="#ec952a"/><stop offset="1" stop-color="#ff685d"/>
+            </linearGradient>
+          </defs>
+          <path class="ray in" d="M26 161 309 161" pathLength="1"/>
+          <path d="M365 35 488 250H243Z" fill="#fbf2f20c" stroke="#fbf2f2" stroke-width="8" stroke-linejoin="round"/>
+          <path d="M310 161 430 156" stroke="#fff0db" stroke-opacity=".55" stroke-width="4"/>
+          <path class="spectrum" d="m430 156 190-83v166Z" fill="url(#spectrum)" opacity=".22"/>
+          <path class="ray r1" d="M430 155 620 74" pathLength="1"/>
+          <path class="ray r2" d="M430 156 620 156" pathLength="1"/>
+          <path class="ray r3" d="M430 157 620 239" pathLength="1"/>
+          <text class="src" x="26" y="140">Office</text><text class="job" x="640" y="83">Response</text><text class="job" x="640" y="164">Inventory</text><text class="job" x="640" y="247">Staff</text>
+        </svg>
+        <div class="brand-word" aria-label="PRISM"><span class="p">P</span><span>R</span><span>I</span><span>S</span><span>M</span></div>
+        <div class="brand-by">BY PHILRADS</div>
+        <div class="brand-line"><span>Office</span><i></i><span>Field</span><em>live</em></div>
+        <p class="brand-note">One bridge from the office to the field, so we can follow every response as it happens.</p>
+      </div>
+    </div>
+    <div class="captions" data-track-kind="captions" aria-label="English captions"></div>
+    <footer class="folio"><span class="version">PRISM v1.9.7</span><span class="example">Real app · sample data</span></footer>
+    <audio id="field-guide-mix" class="clip" data-start="0" data-duration="300" data-track-index="1" src="assets/main-mix.m4a" preload="metadata"></audio>
+  </main>
+  <script type="module" src="stage.mjs"></script>
+</body>
+</html>

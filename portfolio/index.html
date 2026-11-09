@@ -1,0 +1,375 @@
+<title>PHILRADS Staff Portal</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Montserrat:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+  /* Layout: one reading column for the story; screenshots break out wider, motion strips run as filmstrips. */
+  :root {
+    color-scheme: dark;
+    --page: #141518;
+    --surface: #1d1e23;
+    --line: #2e3038;
+    --ink: #f3f1ec;
+    --soft: #b9b7b2;
+    --mute: #8d8b87;
+    --uplift: #ec952a;
+    --rose: #e07a7a;
+    --display: 'Archivo Black', 'Arial Black', system-ui, sans-serif;
+    --body: 'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    background: var(--page);
+    color: var(--ink);
+    font: 400 1rem/1.6 var(--body);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 0 4rem;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 5rem; }
+  .prose { max-width: 66ch; }
+  h1, h2 { font-family: var(--display); font-weight: 400; letter-spacing: 0.01em; text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(2.4rem, 6vw, 4.2rem); line-height: 1.02; }
+  h2 { font-size: clamp(1.6rem, 3.4vw, 2.3rem); line-height: 1.1; }
+  h3 { font-size: 1.05rem; font-weight: 700; margin: 0; }
+  p { margin: 0; }
+  .eyebrow { font: 600 0.75rem/1 var(--body); letter-spacing: 0.18em; text-transform: uppercase; color: var(--uplift); }
+  .lede { font-size: 1.15rem; color: var(--soft); }
+  section { display: flex; flex-direction: column; gap: 1.75rem; }
+  .head { display: flex; flex-direction: column; gap: 0.75rem; }
+  .head p { color: var(--soft); }
+
+  /* Opening */
+  .hero { padding-top: 3.5rem; display: grid; gap: 2.25rem; }
+  .hero .intro { display: flex; flex-direction: column; gap: 1.1rem; }
+  .meta { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .meta span { border: 1px solid var(--line); border-radius: 999px; padding: 0.3rem 0.8rem; font-size: 0.8rem; color: var(--soft); }
+  .note { font-size: 0.85rem; color: var(--mute); }
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .facts div { background: var(--surface); padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.2rem; }
+  .facts b { font: 400 1.6rem/1.1 var(--display); color: var(--uplift); font-variant-numeric: tabular-nums; }
+  .facts span { font-size: 0.82rem; color: var(--soft); }
+
+  /* Screenshots */
+  .zoom { all: unset; display: block; cursor: zoom-in; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: var(--surface); }
+  .zoom:focus-visible { outline: 2px solid var(--uplift); outline-offset: 3px; }
+  .zoom img { display: block; width: 100%; height: auto; max-width: 100%; transition: transform 500ms cubic-bezier(0.22, 1, 0.36, 1); }
+  .zoom:hover img { transform: scale(1.012); }
+  .shot { margin: 0; display: flex; flex-direction: column; gap: 0.8rem; min-width: 0; }
+  .shot figcaption { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.92rem; color: var(--soft); }
+  .shot figcaption strong { color: var(--ink); font-size: 1rem; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 2.5rem 1.75rem; }
+  .pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 1.25rem; }
+  .tag { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.75rem; font-weight: 600; border-radius: 999px; padding: 0.2rem 0.65rem; border: 1px solid; width: fit-content; }
+  .tag.yes { color: var(--uplift); border-color: color-mix(in srgb, var(--uplift) 45%, transparent); }
+  .tag.no { color: var(--mute); border-color: var(--line); }
+
+  /* Sync: four steps in order */
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 1.25rem; counter-reset: step; list-style: none; padding: 0; margin: 0; }
+  .steps li { display: flex; flex-direction: column; gap: 0.7rem; counter-increment: step; min-width: 0; }
+  .steps li p { font-size: 0.88rem; color: var(--soft); }
+  .steps li p::before { content: counter(step) '  '; font: 500 0.8rem var(--mono); color: var(--uplift); }
+
+  /* Motion filmstrips */
+  .motion { display: flex; flex-direction: column; gap: 1rem; padding: 1.4rem; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; min-width: 0; }
+  .motion header { display: flex; flex-direction: column; gap: 0.3rem; }
+  .motion header p, .how { color: var(--soft); font-size: 0.9rem; max-width: 70ch; }
+  .how { color: var(--mute); font-size: 0.82rem; }
+  .frames { list-style: none; margin: 0; padding: 0 0 0.25rem; display: grid; grid-template-columns: repeat(var(--n), minmax(140px, 1fr)); gap: 0.6rem; overflow-x: auto; }
+  .frames li { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; }
+  .frames .zoom { border-radius: 8px; background: var(--page); }
+  .t { font: 500 0.72rem var(--mono); color: var(--uplift); font-variant-numeric: tabular-nums; }
+  .motion.tall .frames { grid-template-columns: repeat(var(--n), minmax(120px, 1fr)); }
+  .motion-grid { display: grid; gap: 1.25rem; }
+
+  /* Phone */
+  .phones { display: grid; grid-template-columns: repeat(5, minmax(150px, 1fr)); gap: 1rem; overflow-x: auto; padding-bottom: 0.25rem; }
+  .phones .zoom { border-radius: 22px; border-width: 3px; border-color: #2a2b31; }
+
+  /* Under the hood */
+  .hood { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .hood div { background: var(--surface); padding: 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 0.35rem; }
+  .hood p { font-size: 0.88rem; color: var(--soft); }
+  footer { color: var(--mute); font-size: 0.82rem; border-top: 1px solid var(--line); padding-top: 1.5rem; }
+
+  /* Enlarged view */
+  dialog { border: 0; padding: 0; background: transparent; max-width: min(96vw, 1600px); max-height: 94vh; }
+  dialog::backdrop { background: rgb(8 8 10 / 0.88); }
+  dialog img { display: block; max-width: 100%; max-height: 90vh; width: auto; height: auto; border-radius: 10px; }
+  dialog button { position: absolute; top: 0.5rem; right: 0.5rem; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 999px; padding: 0.35rem 0.85rem; font: 600 0.8rem var(--body); cursor: pointer; }
+  @media (prefers-reduced-motion: reduce) { .zoom img { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="intro prose">
+      <p class="eyebrow">Case study · Progressive web app</p>
+      <h1>PHILRADS Staff Portal</h1>
+      <p class="lede">One place for the staff and volunteers of a Philippine relief and development organization: relief stock, field operations, every activity since 2023, tasks, files and forms. It works on a phone in the field with a weak signal, and on a desktop in the office.</p>
+      <div class="meta"><span>React 18 + TypeScript</span><span>Vite PWA, works offline</span><span>Supabase Postgres + row-level security</span><span>Tailwind CSS</span><span>Leaflet</span><span>Google Drive</span></div>
+      <p class="note">Every screenshot uses invented sample data. No real beneficiaries, staff or donors appear.</p>
+    </div>
+    <div class="facts">
+      <div><b>13</b><span>working modules behind one sign-in</span></div>
+      <div><b>4</b><span>roles; each permission enforced in the database</span></div>
+      <div><b>227</b><span>automated database checks for who can see and change what</span></div>
+      <div><b>390 px</b><span>phone width it is designed and tested at</span></div>
+    </div>
+  </header>
+
+  <section aria-labelledby="new">
+    <div class="head prose">
+      <p class="eyebrow">Latest release</p>
+      <h2 id="new">Funding kept private, a spreadsheet that syncs, and top donors</h2>
+      <p>The organization’s statistics lived in one Excel workbook per year. The portal now holds every activity, and three changes made it safe and practical to keep it current.</p>
+    </div>
+
+    <div class="pair">
+      <figure class="shot ">
+        <button class="zoom" type="button" data-full="img/d-statistics.webp" aria-label="Enlarge: Administrator view"><img src="img/d-statistics.webp" alt="Administrator view" width="2880" height="1800" loading="lazy"></button>
+        <figcaption><strong>Administrator view</strong><span><span class="tag yes">Funding visible</span> Funding recorded, donors and the sync button, for administrators and coordinators.</span></figcaption>
+      </figure>
+      <figure class="shot ">
+        <button class="zoom" type="button" data-full="img/d-statistics-staff.webp" aria-label="Enlarge: Staff view of the same page"><img src="img/d-statistics-staff.webp" alt="Staff view of the same page" width="2880" height="1800" loading="lazy"></button>
+        <figcaption><strong>Staff view of the same page</strong><span><span class="tag no">Funding hidden</span> Same activities and people served; no amounts, no donors, no sync. The database withholds them, so they never reach the device.</span></figcaption>
+      </figure>
+    </div>
+
+    
+      <figure class="shot ">
+        <button class="zoom" type="button" data-full="img/d-statistics-donors.webp" aria-label="Enlarge: Top donors"><img src="img/d-statistics-donors.webp" alt="Top donors" width="2880" height="1800" loading="lazy"></button>
+        <figcaption><strong>Top donors</strong><span>Who supported the most activities this month, this year or since records began, ranked by funding or by number of activities. Spellings of the same donor are merged, and shared funding is split between co-donors.</span></figcaption>
+      </figure>
+
+    <div class="head prose">
+      <h3>Drop to sync the statistics workbook</h3>
+      <p>Drop the Excel file, choose this month or this year, and see every change before anything is saved. Empty fields are filled; values that differ from the portal are left for a person to decide; nothing is ever deleted; and the sync is saved all at once or not at all.</p>
+    </div>
+    <ol class="steps">
+      <li><button class="zoom" type="button" data-full="img/d-sync-drop.webp" aria-label="Enlarge: Drop zone"><img src="img/d-sync-drop.webp" alt="Drop zone" width="2880" height="1800" loading="lazy"></button><p>Drop the workbook or choose it. One sheet per year is read in the browser.</p></li>
+      <li><button class="zoom" type="button" data-full="img/d-sync-review.webp" aria-label="Enlarge: Review of new records"><img src="img/d-sync-review.webp" alt="Review of new records" width="2880" height="1800" loading="lazy"></button><p>Pick the period. New activities are listed, each with its row number in the sheet.</p></li>
+      <li><button class="zoom" type="button" data-full="img/d-sync-updates.webp" aria-label="Enlarge: Field updates"><img src="img/d-sync-updates.webp" alt="Field updates" width="2880" height="1800" loading="lazy"></button><p>Updates show the sheet and portal values side by side. Differences start unticked.</p></li>
+      <li><button class="zoom" type="button" data-full="img/d-sync-done.webp" aria-label="Enlarge: Sync applied"><img src="img/d-sync-done.webp" alt="Sync applied" width="2880" height="1800" loading="lazy"></button><p>Applied in one transaction. Records the sheet doesn’t list are kept.</p></li>
+    </ol>
+  </section>
+
+  <section aria-labelledby="motion">
+    <div class="head prose">
+      <p class="eyebrow">Interaction detail</p>
+      <h2 id="motion">Motion that helps you keep your place</h2>
+      <p>Each strip is the real interface, paused at the moments shown (milliseconds after the tap). Every animation is switched off for people who ask their device for reduced motion.</p>
+    </div>
+    <div class="motion-grid">
+      
+      <article class="motion" id="switch-on">
+        <header>
+          <h3>Switches that move like real ones</h3>
+          <p>The knob stretches as it sets off, overshoots the end, then settles. Used for on/off settings such as map layers, account access and keeping the screen on.</p>
+        </header>
+        <ol class="frames" style="--n:6">
+          <li><button class="zoom" type="button" data-full="img/m-switch-on-1.webp" aria-label="Enlarge: Switches that move like real ones, 0 ms"><img src="img/m-switch-on-1.webp" alt="Switches that move like real ones, 0 ms" width="2880" height="1800" loading="lazy"></button><span class="t">0 ms</span></li>
+          <li><button class="zoom" type="button" data-full="img/m-switch-on-2.webp" aria-label="Enlarge: Switches that move like real ones, 90 ms"><img src="img/m-switch-on-2.webp" alt="Switches that move like real ones, 90 ms" width="2880" height="1800" loading="lazy"></button><span class="t">90 ms</span></li>
+          <li><button class="zoom" type="button" data-full="img/m-switch-on-3.webp" aria-label="Enlarge: Switches that move like real ones, 170 ms"><img src="img/m-switch-on-3.webp" alt="Switches that move like real ones, 170 ms" width="2880" height="1800" loading="lazy"></button><span class="t">170 ms</span></li>
+          <li><button class="zoom" type="button" data-full="img/m-switch-on-4.webp" aria-label="Enlarge: Switches that move like real ones, 260 ms"><img src="img/m-switch-on-4.webp" alt="Switches that move like real ones, 260 ms" width="2880" height="1800" loading="lazy"></button><span class="t">260 ms</span></li>
+          <li><button class="zoom" type="button" data-full="img/m-switch-on-5.webp" aria-label="Enlarge: Switches that move like real ones, 360 ms"><img src="img/m-switch-on-5.webp" alt="Switches that move like real ones, 360 ms" width="2880" height="1800" loading="lazy"></button><span class="t">360 ms</span></li>
+          <li><button class="zoom" type="button" data-full="img/m-switch-on-6.webp" aria-label="Enlarge: Switches that move like real ones, 700 ms"><img src="img/m-switch-on-6.webp" alt="Switches that move like real ones, 700 ms" width="2880" height="1800" loading="lazy"></button><span class="t">700 ms</span></li>
+        </ol>
+        <p class="how">Position eases with a spring curve that overshoots; a separate squash-and-stretch plays on the knob’s scale.</p>
+      </article>
+      
+      <article class="motion" id="pill">
+        <header>
+          <h3>Tabs: the highlight glides to your choice</h3>
+          <p>Instead of jumping, the highlight travels slowly from the old tab to the new one, so the eye follows it to what changed.</p>
+        </header>
+        <ol class="frames" style="--n:6">
+          <li><button class="zoom" type="button" data-full="img/m-pill-1.webp" aria-label="Enlarge: Tabs: the highlight glides to your choice, 0 ms"><img src="img/m-pill-1.webp" alt="Tabs: the highlight glides to your choice, 0 ms" width="2880" height="1800" loading="lazy"></button><span class="t">0 ms</span></li>
+          <li><button class="zoom" type="button" data-full="img/m-pill-2.webp" aria-label="Enlarge: Tabs: the highlight glides to your choice, 130 ms"><img src="img/m-pill-2.webp" alt="Tabs: the highlight glides to your choice, 130 ms" width="2880" height="1800" loading="lazy"></button><span class="t">130 ms</span></li>
+          <li><button class="zoom" type="button" data-full="img/m-pill-3.webp" aria-label="Enlarge: Tabs: the highlight glides to your choice, 260 ms"><img src="img/m-pill-3.webp" alt="Tabs: the highlight glides to your choice, 260 ms" width="2880" height="1800" loading="lazy"></button><span class="t">260 ms</span></li>
+          <li><button class="zoom" type="button" data-full="img/m-pill-4.webp" aria-label="Enlarge: Tabs: the highlight glides to your choice, 390 ms"><img src="img/m-pill-4.webp" alt="Tabs: the highlight glides to your choice, 390 ms" width="2880" height="1800" loading="lazy"></button><span class="t">390 ms</span></li>
+          <li><button class="zoom" type="button" data-full="img/m-pill-5.webp" aria-label="Enlarge: Tabs: the highlight glides to your choice, 520 ms"><img src="img/m-pill-5.webp" alt="Tabs: the highlight glides to your choice, 520 ms" width="2880" height="1800" loading="lazy"></button><span class="t">520 ms</span></li>
+          <li><button class="zoom" type="button" data-full="img/m-pill-6.webp" aria-label="Enlarge: Tabs: the highlight glides to your choice, 700 ms"><img src="img/m-pill-6.webp" alt="Tabs: the highlight glides to your choice, 700 ms" width="2880" height="1800" loading="lazy"></button><span class="t">700 ms</span></li>
+        </ol>
+        <p class="how">One shared component measures the active option and moves a single pill behind the tabs. Used in every tab bar and segmented control.</p>
+      </article>
+      
+      <article class="motion" id="row">
+        <header>
+          <h3>Deleting a row: it slides away, nothing jumps</h3>
+          <p>The removed task slides off to the left, then the rows below glide up into its place, so the list never jumps and you never lose your place.</p>
+        </header>
+        <ol class="frames" style="--n:6">
+          <li><button class="zoom" type="button" data-full="img/m-row-1.webp" aria-label="Enlarge: Deleting a row: it slides away, nothing jumps, 0 ms"><img src="img/m-row-1.webp" alt="Deleting a row: it slides away, nothing jumps, 0 ms" width="2880" height="1800" loading="lazy"></button><span class="t">0 ms</span></li>
+          <li><button class="zoom" type="button" data-full="img/m-row-2.webp" aria-label="Enlarge: Deleting a row: it slides away, nothing jumps, 160 ms"><img src="img/m-row-2.webp" alt="Deleting a row: it slides away, nothing jumps, 160 ms" width="2880" height="1800" loading="lazy"></button><span class="t">160 ms</span></li>
+          <li><button class="zoom" type="button" data-full="img/m-row-3.webp" aria-label="Enlarge: Deleting a row: it slides away, nothing jumps, 330 ms"><img src="img/m-row-3.webp" alt="Deleting a row: it slides away, nothing jumps, 330 ms" width="2880" height="1800" loading="lazy"></button><span class="t">330 ms</span></li>
+          <li><button class="zoom" type="button" data-full="img/m-row-4.webp" aria-label="Enlarge: Deleting a row: it slides away, nothing jumps, 480 ms"><img src="img/m-row-4.webp" alt="Deleting a row: it slides away, nothing jumps, 480 ms" width="2880" height="1800" loading="lazy"></button><span class="t">480 ms</span></li>
+          <li><button class="zoom" type="button" data-full="img/m-row-5.webp" aria-label="Enlarge: Deleting a row: it slides away, nothing jumps, 620 ms"><img src="img/m-row-5.webp" alt="Deleting a row: it slides away, nothing jumps, 620 ms" width="2880" height="1800" loading="lazy"></button><span class="t">620 ms</span></li>
+          <li><button class="zoom" type="button" data-full="img/m-row-6.webp" aria-label="Enlarge: Deleting a row: it slides away, nothing jumps, 780 ms"><img src="img/m-row-6.webp" alt="Deleting a row: it slides away, nothing jumps, 780 ms" width="2880" height="1800" loading="lazy"></button><span class="t">780 ms</span></li>
+        </ol>
+        <p class="how">The delete runs while the row leaves; if it fails, the row slides back. In grid views the remaining cards glide to their new spots.</p>
+      </article>
+      
+      <article class="motion" id="shake">
+        <header>
+          <h3>Wrong password: a shake before a word</h3>
+          <p>The card shakes first, like a head saying no; the message fades in once it settles. The eye button shows what was typed.</p>
+        </header>
+        <ol class="frames" style="--n:5">
+          <li><button class="zoom" type="button" data-full="img/m-shake-1.webp" aria-label="Enlarge: Wrong password: a shake before a word, 0 ms"><img src="img/m-shake-1.webp" alt="Wrong password: a shake before a word, 0 ms" width="2880" height="1800" loading="lazy"></button><span class="t">0 ms</span></li>
+          <li><button class="zoom" type="button" data-full="img/m-shake-2.webp" aria-label="Enlarge: Wrong password: a shake before a word, 80 ms"><img src="img/m-shake-2.webp" alt="Wrong password: a shake before a word, 80 ms" width="2880" height="1800" loading="lazy"></button><span class="t">80 ms</span></li>
+          <li><button class="zoom" type="button" data-full="img/m-shake-3.webp" aria-label="Enlarge: Wrong password: a shake before a word, 160 ms"><img src="img/m-shake-3.webp" alt="Wrong password: a shake before a word, 160 ms" width="2880" height="1800" loading="lazy"></button><span class="t">160 ms</span></li>
+          <li><button class="zoom" type="button" data-full="img/m-shake-4.webp" aria-label="Enlarge: Wrong password: a shake before a word, 300 ms"><img src="img/m-shake-4.webp" alt="Wrong password: a shake before a word, 300 ms" width="2880" height="1800" loading="lazy"></button><span class="t">300 ms</span></li>
+          <li><button class="zoom" type="button" data-full="img/m-shake-5.webp" aria-label="Enlarge: Wrong password: a shake before a word, 700 ms"><img src="img/m-shake-5.webp" alt="Wrong password: a shake before a word, 700 ms" width="2880" height="1800" loading="lazy"></button><span class="t">700 ms</span></li>
+        </ol>
+        <p class="how">Shown here with the offline message, which uses the same motion as a wrong password.</p>
+      </article>
+      <article class="motion tall" id="nav">
+        <header>
+          <h3>Navigation: the highlight follows you between pages</h3>
+          <p>Moving from Statistics to Tasks, the yellow highlight travels down the sidebar rather than blinking from one item to the other.</p>
+        </header>
+        <ol class="frames" style="--n:4">
+          <li><button class="zoom" type="button" data-full="img/m-nav-1.webp" aria-label="Enlarge: Navigation, before"><img src="img/m-nav-1.webp" alt="Navigation, before" width="1020" height="1240" loading="lazy"></button><span class="t">before</span></li>
+          <li><button class="zoom" type="button" data-full="img/m-nav-3.webp" aria-label="Enlarge: Navigation, 300 ms"><img src="img/m-nav-3.webp" alt="Navigation, 300 ms" width="1020" height="1240" loading="lazy"></button><span class="t">300 ms</span></li>
+          <li><button class="zoom" type="button" data-full="img/m-nav-4.webp" aria-label="Enlarge: Navigation, 440 ms"><img src="img/m-nav-4.webp" alt="Navigation, 440 ms" width="1020" height="1240" loading="lazy"></button><span class="t">440 ms</span></li>
+          <li><button class="zoom" type="button" data-full="img/m-nav-5.webp" aria-label="Enlarge: Navigation, 700 ms"><img src="img/m-nav-5.webp" alt="Navigation, 700 ms" width="1020" height="1240" loading="lazy"></button><span class="t">700 ms</span></li>
+        </ol>
+      </article>
+    </div>
+  </section>
+
+  <section aria-labelledby="tour">
+    <div class="head prose">
+      <p class="eyebrow">Module tour</p>
+      <h2 id="tour">Every module and what it is for</h2>
+      <p>Shown as an administrator, who sees everything. Each person’s role decides which modules and actions they get.</p>
+    </div>
+    <div class="grid2">
+      <figure class="shot ">
+        <button class="zoom" type="button" data-full="img/d-home.webp" aria-label="Enlarge: Home"><img src="img/d-home.webp" alt="Home" width="2880" height="1800" loading="lazy"></button>
+        <figcaption><strong>Home</strong><span>The day at a glance: a verse of the day, a getting-started checklist that tracks each new staff member’s first steps, and the operations overview.</span></figcaption>
+      </figure>
+      <figure class="shot ">
+        <button class="zoom" type="button" data-full="img/d-welcome.webp" aria-label="Enlarge: First sign-in"><img src="img/d-welcome.webp" alt="First sign-in" width="2880" height="1800" loading="lazy"></button>
+        <figcaption><strong>First sign-in</strong><span>One question on the first visit (what will you mostly use the portal for?) puts the matching step first in the checklist.</span></figcaption>
+      </figure>
+      <figure class="shot ">
+        <button class="zoom" type="button" data-full="img/d-live-map.webp" aria-label="Enlarge: Live Map"><img src="img/d-live-map.webp" alt="Live Map" width="2880" height="1800" loading="lazy"></button>
+        <figcaption><strong>Live Map</strong><span>Warehouses, field hubs, response sites and evacuation centres on one map, with teammates sharing their live location and past activities sized by people served.</span></figcaption>
+      </figure>
+      <figure class="shot ">
+        <button class="zoom" type="button" data-full="img/d-inventory.webp" aria-label="Enlarge: Inventory · Stock"><img src="img/d-inventory.webp" alt="Inventory · Stock" width="2880" height="1800" loading="lazy"></button>
+        <figcaption><strong>Inventory · Stock</strong><span>Relief goods from the PHILRADS IMS by warehouse: what’s low, expired or expiring within 90 days, and what needs attention first.</span></figcaption>
+      </figure>
+      <figure class="shot ">
+        <button class="zoom" type="button" data-full="img/d-inventory-donations.webp" aria-label="Enlarge: Inventory · Donations"><img src="img/d-inventory-donations.webp" alt="Inventory · Donations" width="2880" height="1800" loading="lazy"></button>
+        <figcaption><strong>Inventory · Donations</strong><span>Each donation with how much has been given out and how many people it reached, so partners can be reported to.</span></figcaption>
+      </figure>
+      <figure class="shot ">
+        <button class="zoom" type="button" data-full="img/d-inventory-activity.webp" aria-label="Enlarge: Inventory · Activity log"><img src="img/d-inventory-activity.webp" alt="Inventory · Activity log" width="2880" height="1800" loading="lazy"></button>
+        <figcaption><strong>Inventory · Activity log</strong><span>Every receipt, release and transfer, filterable by type, with who recorded it.</span></figcaption>
+      </figure>
+      <figure class="shot ">
+        <button class="zoom" type="button" data-full="img/d-inventory-approvals.webp" aria-label="Enlarge: Inventory · Approvals"><img src="img/d-inventory-approvals.webp" alt="Inventory · Approvals" width="2880" height="1800" loading="lazy"></button>
+        <figcaption><strong>Inventory · Approvals</strong><span>Releases waiting in the IMS, reviewed and approved from the portal (administrators only).</span></figcaption>
+      </figure>
+      <figure class="shot ">
+        <button class="zoom" type="button" data-full="img/d-response.webp" aria-label="Enlarge: Response"><img src="img/d-response.webp" alt="Response" width="2880" height="1800" loading="lazy"></button>
+        <figcaption><strong>Response</strong><span>Relief operations from assessment to distribution: families and people served against the target, per barangay.</span></figcaption>
+      </figure>
+      <figure class="shot ">
+        <button class="zoom" type="button" data-full="img/d-statistics.webp" aria-label="Enlarge: Statistics"><img src="img/d-statistics.webp" alt="Statistics" width="2880" height="1800" loading="lazy"></button>
+        <figcaption><strong>Statistics</strong><span>Every PHILRADS project and activity since 2023: totals, a year-by-year chart by program, and what each program reached.</span></figcaption>
+      </figure>
+      <figure class="shot ">
+        <button class="zoom" type="button" data-full="img/d-projects.webp" aria-label="Enlarge: Projects"><img src="img/d-projects.webp" alt="Projects" width="2880" height="1800" loading="lazy"></button>
+        <figcaption><strong>Projects</strong><span>Programs and projects with milestones, deadlines, progress and the team on each.</span></figcaption>
+      </figure>
+      <figure class="shot ">
+        <button class="zoom" type="button" data-full="img/d-tasks.webp" aria-label="Enlarge: Tasks"><img src="img/d-tasks.webp" alt="Tasks" width="2880" height="1800" loading="lazy"></button>
+        <figcaption><strong>Tasks</strong><span>My Day planning, assigned and team tasks, and a points system (levels, streaks, a monthly team goal) that rewards finishing work.</span></figcaption>
+      </figure>
+      <figure class="shot ">
+        <button class="zoom" type="button" data-full="img/d-tasks-rewards.webp" aria-label="Enlarge: Tasks · Badges and rewards"><img src="img/d-tasks-rewards.webp" alt="Tasks · Badges and rewards" width="2880" height="1800" loading="lazy"></button>
+        <figcaption><strong>Tasks · Badges and rewards</strong><span>Badges for the work done, levels to reach, and kudos between colleagues.</span></figcaption>
+      </figure>
+      <figure class="shot ">
+        <button class="zoom" type="button" data-full="img/d-documentation.webp" aria-label="Enlarge: Documentation"><img src="img/d-documentation.webp" alt="Documentation" width="2880" height="1800" loading="lazy"></button>
+        <figcaption><strong>Documentation</strong><span>Photos, videos and reports from the field go straight into the right Google Drive folder, with a searchable record in the portal.</span></figcaption>
+      </figure>
+      <figure class="shot ">
+        <button class="zoom" type="button" data-full="img/d-forms.webp" aria-label="Enlarge: Forms"><img src="img/d-forms.webp" alt="Forms" width="2880" height="1800" loading="lazy"></button>
+        <figcaption><strong>Forms</strong><span>PHILRADS’ own forms (rapid needs assessment, distribution list, masterlist, consent) filled on screen and printed like the originals.</span></figcaption>
+      </figure>
+      <figure class="shot ">
+        <button class="zoom" type="button" data-full="img/d-resources.webp" aria-label="Enlarge: Resources"><img src="img/d-resources.webp" alt="Resources" width="2880" height="1800" loading="lazy"></button>
+        <figcaption><strong>Resources</strong><span>Policies, manuals, templates and brand files from Google Drive, pinned, grouped by category or by who added them.</span></figcaption>
+      </figure>
+      <figure class="shot ">
+        <button class="zoom" type="button" data-full="img/d-staff.webp" aria-label="Enlarge: Staff &amp; volunteers"><img src="img/d-staff.webp" alt="Staff &amp; volunteers" width="2880" height="1800" loading="lazy"></button>
+        <figcaption><strong>Staff &amp; volunteers</strong><span>Administrators invite people, choose each one’s role, switch accounts on or off, and swipe to archive with undo.</span></figcaption>
+      </figure>
+      <figure class="shot ">
+        <button class="zoom" type="button" data-full="img/d-logs.webp" aria-label="Enlarge: Logs"><img src="img/d-logs.webp" alt="Logs" width="2880" height="1800" loading="lazy"></button>
+        <figcaption><strong>Logs</strong><span>A record of everything that happens (tasks, stock, staff changes, sign-ins) with flags to look into. Nobody can change or delete it, administrators included.</span></figcaption>
+      </figure>
+      <figure class="shot ">
+        <button class="zoom" type="button" data-full="img/d-profile.webp" aria-label="Enlarge: Profile"><img src="img/d-profile.webp" alt="Profile" width="2880" height="1800" loading="lazy"></button>
+        <figcaption><strong>Profile</strong><span>Photo, colour, position and a short bio colleagues see, plus level and badges.</span></figcaption>
+      </figure>
+      <figure class="shot ">
+        <button class="zoom" type="button" data-full="img/d-sign-in.webp" aria-label="Enlarge: Sign in"><img src="img/d-sign-in.webp" alt="Sign in" width="2880" height="1800" loading="lazy"></button>
+        <figcaption><strong>Sign in</strong><span>Staff accounts only, created by the administrator; signs out after 10 minutes without activity.</span></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section aria-labelledby="phone">
+    <div class="head prose">
+      <p class="eyebrow">In the field</p>
+      <h2 id="phone">Built for the phone first</h2>
+      <p>Most field staff open the portal on a phone. Every page fits a 390 px screen without sideways scrolling, and it installs like an app that keeps working on a weak signal.</p>
+    </div>
+    <div class="phones">
+      <button class="zoom" type="button" data-full="img/p-home.webp" aria-label="Enlarge: home on a phone"><img src="img/p-home.webp" alt="home on a phone" width="780" height="1688" loading="lazy"></button>
+      <button class="zoom" type="button" data-full="img/p-live-map.webp" aria-label="Enlarge: live map on a phone"><img src="img/p-live-map.webp" alt="live map on a phone" width="780" height="1688" loading="lazy"></button>
+      <button class="zoom" type="button" data-full="img/p-inventory.webp" aria-label="Enlarge: inventory on a phone"><img src="img/p-inventory.webp" alt="inventory on a phone" width="780" height="1688" loading="lazy"></button>
+      <button class="zoom" type="button" data-full="img/p-statistics.webp" aria-label="Enlarge: statistics on a phone"><img src="img/p-statistics.webp" alt="statistics on a phone" width="780" height="1688" loading="lazy"></button>
+      <button class="zoom" type="button" data-full="img/p-tasks.webp" aria-label="Enlarge: tasks on a phone"><img src="img/p-tasks.webp" alt="tasks on a phone" width="780" height="1688" loading="lazy"></button>
+    </div>
+  </section>
+
+  <section aria-labelledby="hood">
+    <div class="head prose">
+      <p class="eyebrow">Under the hood</p>
+      <h2 id="hood">How it is built</h2>
+    </div>
+    <div class="hood">
+      <div><h3>Permissions in the database</h3><p>Row-level security calls one <code>has_permission()</code> check, so changing who can do what is a data change, not new code. Funding lives in its own table that only administrators and coordinators can read.</p></div>
+      <div><h3>All-or-nothing sync</h3><p>A single Postgres function applies the reviewed workbook changes in one transaction and refuses funding changes from anyone without access.</p></div>
+      <div><h3>Works offline</h3><p>A service worker caches the app so it opens without a signal, and field uploads wait on the device until the connection returns.</p></div>
+      <div><h3>Tested</h3><p>227 database checks cover each role’s access; a headless browser checks pages for sideways scrolling, console errors and the motion shown above.</p></div>
+    </div>
+  </section>
+
+  <footer>PHILRADS Staff Portal · screenshots taken from the production build with invented sample data · October 2026</footer>
+</div>
+
+<dialog id="viewer" aria-label="Enlarged screenshot">
+  <img alt="">
+  <button type="button" id="close">Close</button>
+</dialog>
+<script>
+  const viewer = document.getElementById('viewer');
+  const img = viewer.querySelector('img');
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('.zoom');
+    if (b) {
+      img.src = b.dataset.full;
+      img.alt = b.querySelector('img').alt;
+      viewer.showModal();
+    } else if (e.target === viewer || e.target.id === 'close') viewer.close();
+  });
+</script>

@@ -1,0 +1,82 @@
+[
+ {
+  "id": "a12",
+  "at": "2026-10-18T09:20:00+08:00",
+  "type": "Response",
+  "title": "Relief distribution logged",
+  "detail": "Family food packs distributed at evacuation center (sample)",
+  "actor": "Visayas field team"
+ },
+ {
+  "id": "a11",
+  "at": "2026-10-18T08:05:00+08:00",
+  "type": "Inventory",
+  "title": "Stock released from main warehouse",
+  "detail": "Hygiene kits issued to field hub A",
+  "actor": "Warehouse team"
+ },
+ {
+  "id": "a10",
+  "at": "2026-10-17T16:40:00+08:00",
+  "type": "Document",
+  "title": "Site assessment photos uploaded",
+  "detail": "18 photos added to the Response folder",
+  "actor": "Documentation team"
+ },
+ {
+  "id": "a09",
+  "at": "2026-10-17T14:10:00+08:00",
+  "type": "Task",
+  "title": "Completed: beneficiary list review",
+  "detail": "Marked done in Tasks",
+  "actor": "Programs office"
+ },
+ {
+  "id": "a08",
+  "at": "2026-10-17T10:30:00+08:00",
+  "type": "Project",
+  "title": "Livelihood project milestone updated",
+  "detail": "Training phase moved to 60% complete",
+  "actor": "Programs office"
+ },
+ {
+  "id": "a07",
+  "at": "2026-10-16T15:55:00+08:00",
+  "type": "Inventory",
+  "title": "Inventory received",
+  "detail": "Tarpaulins delivered to field hub A",
+  "actor": "Warehouse team"
+ },
+ {
+  "id": "a06",
+  "at": "2026-10-16T11:20:00+08:00",
+  "type": "Response",
+  "title": "Rapid needs assessment started",
+  "detail": "Team deployed to flood-affected barangays (sample)",
+  "actor": "Response team"
+ },
+ {
+  "id": "a05",
+  "at": "2026-10-15T17:05:00+08:00",
+  "type": "Document",
+  "title": "Monthly report draft uploaded",
+  "detail": "September program report, version 2",
+  "actor": "Communications"
+ },
+ {
+  "id": "a04",
+  "at": "2026-10-15T09:45:00+08:00",
+  "type": "Task",
+  "title": "Completed: warehouse count",
+  "detail": "Quarterly stock count closed",
+  "actor": "Warehouse team"
+ },
+ {
+  "id": "a03",
+  "at": "2026-10-14T13:15:00+08:00",
+  "type": "Project",
+  "title": "WASH project budget revised",
+  "detail": "Revision submitted for approval",
+  "actor": "Finance office"
+ }
+]

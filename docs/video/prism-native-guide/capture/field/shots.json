@@ -1,0 +1,301 @@
+[
+  {
+    "id": "inventory-1",
+    "at": 0,
+    "file": "capture/field/inventory-1-000.png",
+    "cue": "Search stock",
+    "target": [
+      16,
+      396,
+      380,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "inventory-1",
+    "at": 0.46,
+    "file": "capture/field/inventory-1-460.png",
+    "cue": "Filter by category",
+    "target": [
+      16,
+      452,
+      186,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "inventory-2",
+    "at": 0,
+    "file": "capture/field/inventory-2-000.png",
+    "cue": "Find the Low stock badge",
+    "target": [
+      32,
+      432.45,
+      91.16,
+      22.5
+    ],
+    "focus": null
+  },
+  {
+    "id": "inventory-2",
+    "at": 0.5,
+    "file": "capture/field/inventory-2-500.png",
+    "cue": "Open the stock card",
+    "target": [
+      21,
+      121,
+      318,
+      22.5
+    ],
+    "focus": null
+  },
+  {
+    "id": "inventory-3",
+    "at": 0,
+    "file": "capture/field/inventory-3-000.png",
+    "cue": "Open Activity",
+    "target": [
+      270.66,
+      396,
+      121.34,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "inventory-3",
+    "at": 0.37,
+    "file": "capture/field/inventory-3-370.png",
+    "cue": "Browse stock movements",
+    "target": [
+      16,
+      368,
+      380,
+      104
+    ],
+    "focus": null
+  },
+  {
+    "id": "inventory-4",
+    "at": 0,
+    "file": "capture/field/inventory-4-000.png",
+    "cue": "Tap Export",
+    "target": [
+      265.91,
+      396,
+      66,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "inventory-4",
+    "at": 0.36,
+    "file": "capture/field/inventory-4-360.png",
+    "cue": "Choose CSV or printable report",
+    "target": [
+      16,
+      710,
+      380,
+      114
+    ],
+    "focus": null
+  },
+  {
+    "id": "response-1",
+    "at": 0,
+    "file": "capture/field/response-1-000.png",
+    "cue": "Open Response",
+    "target": [
+      16,
+      399.5,
+      133.33,
+      40
+    ],
+    "focus": null
+  },
+  {
+    "id": "response-2",
+    "at": 0,
+    "file": "capture/field/response-2-000.png",
+    "cue": "Enter event details",
+    "target": [
+      44,
+      156,
+      324,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "response-2",
+    "at": 0.6,
+    "file": "capture/field/response-2-600.png",
+    "cue": "Continue in PHILRADS IMS",
+    "target": [
+      44,
+      726,
+      324,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "response-3",
+    "at": 0,
+    "file": "capture/field/response-3-000.png",
+    "cue": "Find the response on Live Map",
+    "target": [
+      29,
+      637.5,
+      103.84,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "response-3",
+    "at": 0.42,
+    "file": "capture/field/response-3-420.png",
+    "cue": "Open a sample distribution site",
+    "target": [
+      21,
+      638.2,
+      370,
+      52
+    ],
+    "focus": null
+  },
+  {
+    "id": "response-3",
+    "at": 0.72,
+    "file": "capture/field/response-3-720.png",
+    "cue": "See the linked relief event",
+    "target": [
+      21,
+      96.2,
+      318,
+      22.5
+    ],
+    "focus": null
+  },
+  {
+    "id": "documentation-1",
+    "at": 0,
+    "file": "capture/field/documentation-1-000.png",
+    "cue": "Tap Upload",
+    "target": [
+      275.66,
+      764,
+      120.34,
+      56
+    ],
+    "focus": null
+  },
+  {
+    "id": "documentation-1",
+    "at": 0.42,
+    "file": "capture/field/documentation-1-420.png",
+    "cue": "Choose the file type",
+    "target": [
+      21,
+      423.7,
+      370,
+      148
+    ],
+    "focus": null
+  },
+  {
+    "id": "documentation-2",
+    "at": 0,
+    "file": "capture/field/documentation-2-000.png",
+    "cue": "Link the file to a project or response",
+    "target": [
+      21,
+      495.2,
+      370,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "documentation-2",
+    "at": 0.68,
+    "file": "capture/field/documentation-2-680.png",
+    "cue": "Upload the selected file",
+    "target": [
+      21,
+      775,
+      370,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "documentation-3",
+    "at": 0,
+    "file": "capture/field/documentation-3-000.png",
+    "cue": "PRISM records the upload",
+    "target": [
+      16,
+      249.5,
+      380,
+      67
+    ],
+    "focus": null
+  },
+  {
+    "id": "documentation-3",
+    "at": 0.52,
+    "file": "capture/field/documentation-3-520.png",
+    "cue": "Find the saved documentation",
+    "target": [
+      16,
+      385.5,
+      335.94,
+      16
+    ],
+    "focus": null
+  },
+  {
+    "id": "documentation-4",
+    "at": 0,
+    "file": "capture/field/documentation-4-000.png",
+    "cue": "Open Media",
+    "target": [
+      144,
+      401.5,
+      124,
+      36
+    ],
+    "focus": null
+  },
+  {
+    "id": "documentation-4",
+    "at": 0.4,
+    "file": "capture/field/documentation-4-400.png",
+    "cue": "Switch to Records",
+    "target": [
+      268,
+      401.5,
+      124,
+      36
+    ],
+    "focus": null
+  },
+  {
+    "id": "documentation-4",
+    "at": 0.72,
+    "file": "capture/field/documentation-4-720.png",
+    "cue": "Browse records by type",
+    "target": [
+      268,
+      401.5,
+      124,
+      36
+    ],
+    "focus": null
+  }
+]

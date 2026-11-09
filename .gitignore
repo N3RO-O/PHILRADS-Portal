@@ -13,3 +13,8 @@ supabase/.branches
 
 # Real records copied in for local previews only (they live in the database)
 *.local.json
+
+# Rendered videos (several over GitHub's 100 MB file limit) and render caches
+docs/video/*/exports/
+docs/video/*/.hyperframes/
+tsconfig.tsbuildinfo

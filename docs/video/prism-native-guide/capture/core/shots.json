@@ -1,0 +1,395 @@
+[
+  {
+    "id": "sign-in-1",
+    "at": 0,
+    "file": "capture/core/sign-in-1-000.png",
+    "cue": "Add to Home Screen",
+    "target": [
+      139.58,
+      475,
+      151.47,
+      18
+    ],
+    "focus": null
+  },
+  {
+    "id": "sign-in-2",
+    "at": 0,
+    "file": "capture/core/sign-in-2-000.png",
+    "cue": "Tap for music",
+    "target": [
+      264.38,
+      67.88,
+      122.63,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "sign-in-2",
+    "at": 0.52,
+    "file": "capture/core/sign-in-2-520.png",
+    "cue": "Tap the speaker to mute",
+    "target": [
+      343,
+      67.88,
+      44,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "sign-in-3",
+    "at": 0,
+    "file": "capture/core/sign-in-3-000.png",
+    "cue": "Enter your staff credentials",
+    "target": [
+      41,
+      456.38,
+      330,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "sign-in-3",
+    "at": 0.36,
+    "file": "capture/core/sign-in-3-360.png",
+    "cue": "Show password",
+    "target": [
+      327,
+      460.38,
+      40,
+      40
+    ],
+    "focus": null
+  },
+  {
+    "id": "sign-in-3",
+    "at": 0.69,
+    "file": "capture/core/sign-in-3-690.png",
+    "cue": "Sign in",
+    "target": [
+      41,
+      520.38,
+      330,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "sign-in-4",
+    "at": 0,
+    "file": "capture/core/sign-in-4-000.png",
+    "cue": "Check your password",
+    "target": [
+      41,
+      489.38,
+      330,
+      46
+    ],
+    "focus": null
+  },
+  {
+    "id": "sign-in-4",
+    "at": 0.52,
+    "file": "capture/core/sign-in-4-520.png",
+    "cue": "Email me a reset link",
+    "target": [
+      41,
+      549.25,
+      330,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "sign-in-5",
+    "at": 0,
+    "file": "capture/core/sign-in-5-000.png",
+    "cue": "Volunteer · Email code",
+    "target": [
+      41,
+      652.38,
+      161,
+      55.75
+    ],
+    "focus": null
+  },
+  {
+    "id": "sign-in-5",
+    "at": 0.51,
+    "file": "capture/core/sign-in-5-510.png",
+    "cue": "Email me a code",
+    "target": [
+      41,
+      559.25,
+      330,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "sign-in-6",
+    "at": 0,
+    "file": "capture/core/sign-in-6-000.png",
+    "cue": "Enter the 6-digit code",
+    "target": [
+      41,
+      546.25,
+      330,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "sign-in-6",
+    "at": 0.65,
+    "file": "capture/core/sign-in-6-650.png",
+    "cue": "Guest · Look around",
+    "target": [
+      210,
+      652.38,
+      161,
+      55.75
+    ],
+    "focus": null
+  },
+  {
+    "id": "sign-in-7",
+    "at": 0,
+    "file": "capture/core/sign-in-7-000.png",
+    "cue": "Quick unlock",
+    "target": [
+      319.44,
+      632,
+      71.56,
+      36
+    ],
+    "focus": null
+  },
+  {
+    "id": "sign-in-7",
+    "at": 0.54,
+    "file": "capture/core/sign-in-7-540.png",
+    "cue": "Choose a 6-digit PIN",
+    "target": [
+      109.47,
+      371,
+      193.05,
+      28
+    ],
+    "focus": null
+  },
+  {
+    "id": "staff-tasks-1",
+    "at": 0,
+    "file": "capture/core/staff-tasks-1-000.png",
+    "cue": "Mine · Given · Team",
+    "target": [
+      64.13,
+      597.5,
+      35.73,
+      20
+    ],
+    "focus": null
+  },
+  {
+    "id": "staff-tasks-1",
+    "at": 0.55,
+    "file": "capture/core/staff-tasks-1-550.png",
+    "cue": "Choose a task view",
+    "target": null,
+    "focus": null
+  },
+  {
+    "id": "staff-tasks-2",
+    "at": 0,
+    "file": "capture/core/staff-tasks-2-000.png",
+    "cue": "Open a task request",
+    "target": [
+      52,
+      410.5,
+      264,
+      19.25
+    ],
+    "focus": null
+  },
+  {
+    "id": "staff-tasks-2",
+    "at": 0.49,
+    "file": "capture/core/staff-tasks-2-490.png",
+    "cue": "Accept or Can’t take it",
+    "target": [
+      38,
+      244.7,
+      163,
+      40
+    ],
+    "focus": null
+  },
+  {
+    "id": "staff-tasks-3",
+    "at": 0,
+    "file": "capture/core/staff-tasks-3-000.png",
+    "cue": "Start",
+    "target": [
+      292,
+      406.5,
+      52,
+      26
+    ],
+    "focus": null
+  },
+  {
+    "id": "staff-tasks-3",
+    "at": 0.54,
+    "file": "capture/core/staff-tasks-3-540.png",
+    "cue": "Check off a step",
+    "target": [
+      29,
+      451.7,
+      32,
+      32
+    ],
+    "focus": null
+  },
+  {
+    "id": "staff-tasks-4",
+    "at": 0,
+    "file": "capture/core/staff-tasks-4-000.png",
+    "cue": "Finish",
+    "target": [
+      284.8,
+      406.5,
+      59.2,
+      26
+    ],
+    "focus": null
+  },
+  {
+    "id": "staff-tasks-4",
+    "at": 0.49,
+    "file": "capture/core/staff-tasks-4-490.png",
+    "cue": "Swipe a task row",
+    "target": [
+      52,
+      395.5,
+      200.8,
+      38.5
+    ],
+    "focus": null
+  },
+  {
+    "id": "staff-tasks-5",
+    "at": 0,
+    "file": "capture/core/staff-tasks-5-000.png",
+    "cue": "Add a note and photo",
+    "target": [
+      21,
+      445.5,
+      370,
+      66
+    ],
+    "focus": null
+  },
+  {
+    "id": "staff-tasks-5",
+    "at": 0.5,
+    "file": "capture/core/staff-tasks-5-500.png",
+    "cue": "Add photos",
+    "target": [
+      21,
+      655.5,
+      86.5,
+      86.5
+    ],
+    "focus": null
+  },
+  {
+    "id": "staff-tasks-6",
+    "at": 0,
+    "file": "capture/core/staff-tasks-6-000.png",
+    "cue": "Finish and send",
+    "target": [
+      284.8,
+      406.5,
+      59.2,
+      26
+    ],
+    "focus": null
+  },
+  {
+    "id": "staff-tasks-6",
+    "at": 0.65,
+    "file": "capture/core/staff-tasks-6-650.png",
+    "cue": "Photo proof attached",
+    "target": null,
+    "focus": null
+  },
+  {
+    "id": "staff-tasks-7",
+    "at": 0,
+    "file": "capture/core/staff-tasks-7-000.png",
+    "cue": "Review work you assigned",
+    "target": [
+      38,
+      426.2,
+      147.44,
+      44
+    ],
+    "focus": null
+  },
+  {
+    "id": "staff-tasks-7",
+    "at": 0.46,
+    "file": "capture/core/staff-tasks-7-460.png",
+    "cue": "Say what still needs doing",
+    "target": [
+      38,
+      352.2,
+      336,
+      66
+    ],
+    "focus": null
+  },
+  {
+    "id": "staff-tasks-8",
+    "at": 0,
+    "file": "capture/core/staff-tasks-8-000.png",
+    "cue": "New task",
+    "target": [
+      259.83,
+      764,
+      136.17,
+      56
+    ],
+    "focus": null
+  },
+  {
+    "id": "staff-tasks-8",
+    "at": 0.38,
+    "file": "capture/core/staff-tasks-8-380.png",
+    "cue": "Choose a person, due date, list and priority",
+    "target": [
+      21,
+      535.2,
+      181,
+      48
+    ],
+    "focus": null
+  },
+  {
+    "id": "staff-tasks-9",
+    "at": 0,
+    "file": "capture/core/staff-tasks-9-000.png",
+    "cue": "See your weekly progress",
+    "target": [
+      16,
+      497,
+      305.19,
+      20
+    ],
+    "focus": null
+  }
+]
