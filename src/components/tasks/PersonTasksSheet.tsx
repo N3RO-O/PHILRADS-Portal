@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BellRing, Check, CircleCheck, Clock, Hourglass, Loader2, Plus, TriangleAlert, X } from 'lucide-react';
+import { BellRing, Check, ChevronUp, CircleCheck, Eye, Hourglass, ListTodo, Loader2, Plus, TriangleAlert, X, Zap, type LucideIcon } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { useAsyncData } from '../../hooks/useAsyncData';
 import { formatShortDate } from '../../lib/format';
@@ -13,18 +13,29 @@ import { ViewPhoto } from '../ui/PhotoViewer';
 import { Sheet } from '../ui/Sheet';
 import { StatusDot } from '../ui/StatusDot';
 import { SuccessTick } from '../ui/SuccessTick';
+import { TaskTimeline, type Standing, type TimelineItem } from './TaskTimeline';
 
 const manilaToday = () => new Date(Date.now() + 8 * 3600_000).toISOString().slice(0, 10);
 
-const STANDING = {
-  done: { label: 'Done', cls: 'border-l-status-in', chip: 'text-status-in' },
-  in_progress: { label: 'In progress', cls: 'border-l-ink-soft', chip: 'text-ink' },
-  review: { label: 'For review', cls: 'border-l-line', chip: 'text-ink-soft' },
-  todo: { label: 'Not started', cls: 'border-l-line', chip: 'text-muted' },
-  overdue: { label: 'Overdue', cls: 'border-l-status-out', chip: 'text-status-out' },
-} as const;
-const standing = (t: BoardTask, today: string) =>
+const STANDING: Record<Standing, { label: string; chip: string; icon: LucideIcon }> = {
+  done: { label: 'Done', chip: 'text-status-in', icon: CircleCheck },
+  in_progress: { label: 'In progress', chip: 'text-uplift', icon: Zap },
+  review: { label: 'For review', chip: 'text-ink-soft', icon: Eye },
+  todo: { label: 'Not started', chip: 'text-muted', icon: ListTodo },
+  overdue: { label: 'Overdue', chip: 'text-status-out', icon: TriangleAlert },
+};
+const standing = (t: BoardTask, today: string): Standing =>
   t.status === 'done' ? 'done' : t.status === 'review' ? 'review' : t.status === 'in_progress' ? 'in_progress' : t.dueDate && t.dueDate < today ? 'overdue' : 'todo';
+
+/** Done tasks shown before "Show earlier" (older ones fold away so open work stays in view). */
+const RECENT_DONE = 3;
+/** Timeline order: done (oldest first), then everything still open by due date (no date last). */
+const byDate = (a: string | null, b: string | null) => (a ?? '9999').localeCompare(b ?? '9999');
+function timelineOrder(list: BoardTask[], today: string) {
+  return list
+    .map((t) => ({ t, s: standing(t, today) }))
+    .sort((a, b) => Number(b.s === 'done') - Number(a.s === 'done') || (a.s === 'done' ? byDate(a.t.completedAt ?? a.t.dueDate, b.t.completedAt ?? b.t.dueDate) : byDate(a.t.dueDate, b.t.dueDate)));
+}
 
 /** One person's tasks, with nudges (for whoever gave the task) and accept or decline (for yourself). */
 export function PersonTasks({ person, status, me, onClose, onChanged }: { person: BoardPerson; status: Status; me: string | null; onClose: () => void; onChanged: () => void }) {
@@ -39,7 +50,8 @@ export function PersonTasks({ person, status, me, onClose, onChanged }: { person
   const [error, setError] = useState<string | null>(null);
   const [declining, setDeclining] = useState<string | null>(null);
   const [reason, setReason] = useState('');
-  useEffect(() => setError(null), [person.id]);
+  const [showEarlier, setShowEarlier] = useState(false);
+  useEffect(() => (setError(null), setShowEarlier(false)), [person.id]);
 
   const act = async (id: string, kind: 'nudged' | 'accepted' | 'declined', run: () => Promise<void>) => {
     setBusy(id);
@@ -56,6 +68,95 @@ export function PersonTasks({ person, status, me, onClose, onChanged }: { person
   };
 
   const list = tasks.status === 'success' ? tasks.data : [];
+  const ordered = timelineOrder(list, today);
+  const doneCount = ordered.filter((o) => o.s === 'done').length;
+  const hidden = showEarlier ? 0 : Math.max(0, doneCount - RECENT_DONE);
+  const items: TimelineItem[] = ordered.slice(hidden).map(({ t, s: st }) => {
+    const s = STANDING[st];
+    const result = done[t.id];
+    const canNudge = !mine && t.status !== 'done' && (t.givenById === me || can('tasks.manage'));
+    const waitingForMe = mine && t.acceptance === 'pending' && !result;
+    const Icon = s.icon;
+    return {
+      id: t.id,
+      standing: st,
+      when: t.dueDate ? formatShortDate(t.dueDate) : 'No due date',
+      icon: <Icon className="h-3.5 w-3.5" />,
+      title: <p className={`text-sm font-semibold leading-snug ${t.status === 'done' ? 'text-muted line-through decoration-ink-mute/60' : 'text-ink'}`}>{t.title}</p>,
+      meta: (
+        <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
+          <span className={`font-semibold ${s.chip}`}>{s.label}</span>
+          {t.acceptance === 'pending' && !result && (
+            <span className="inline-flex items-center gap-1 whitespace-nowrap rounded border border-line px-1.5 py-0.5 font-semibold text-ink-soft">
+              <Hourglass className="h-3 w-3" aria-hidden /> {mine ? 'Needs your answer' : 'Not accepted yet'}
+            </span>
+          )}
+          {t.acceptance === 'declined' && <span className="rounded bg-status-out/15 px-1.5 py-0.5 font-semibold text-status-out">Declined</span>}
+          {t.givenBy && (
+            <span className="inline-flex items-center gap-1">
+              <PersonAvatar id={t.givenById} name={t.givenBy} size="xs" ring="ring-0" frame={false} />
+              from {t.givenById === me ? 'you' : t.givenBy}
+            </span>
+          )}
+        </p>
+      ),
+      actions: (canNudge || (mine && result && result !== 'nudged') || waitingForMe) && (
+        <div className="mt-2.5 flex flex-col gap-2">
+          {canNudge &&
+            (result === 'nudged' ? (
+              <span className="flex items-center gap-1.5 text-xs font-semibold text-status-in">
+                <SuccessTick className="h-5 w-5" /> Nudged
+              </span>
+            ) : (
+              <button
+                type="button"
+                className="press group/n flex w-max items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:bg-surface"
+                disabled={busy === t.id}
+                onClick={() => void act(t.id, 'nudged', () => staffBoardService.nudge(t.id))}
+                title={t.nudgedAt ? `Last nudged ${formatShortDate(t.nudgedAt.slice(0, 10))}` : 'Send a gentle reminder'}
+              >
+                {busy === t.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> : <BellRing className="h-3.5 w-3.5 group-hover/n:animate-[wiggle_0.5s_ease-in-out]" aria-hidden />}
+                Nudge
+              </button>
+            ))}
+          {mine && result && result !== 'nudged' && (
+            <span className={`flex items-center gap-1.5 text-xs font-semibold ${result === 'accepted' ? 'text-status-in' : 'text-status-out'}`}>
+              {result === 'accepted' ? <SuccessTick className="h-5 w-5" /> : <X className="h-4 w-4" aria-hidden />}
+              {result === 'accepted' ? 'Accepted' : 'Declined'}
+            </span>
+          )}
+          {waitingForMe &&
+            (declining === t.id ? (
+              <>
+                <input className="field py-2 text-sm" placeholder="Why can’t you take it? (short)" value={reason} maxLength={280} onChange={(e) => setReason(e.target.value)} autoFocus />
+                <div className="flex gap-2">
+                  <button type="button" className="btn-ghost min-h-9 flex-1 text-xs" onClick={() => setDeclining(null)}>
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    className="btn min-h-9 flex-1 bg-status-out/20 text-xs text-status-out"
+                    disabled={busy === t.id || reason.trim().length < 3}
+                    onClick={() => void act(t.id, 'declined', () => staffBoardService.respond(t.id, false, reason.trim())).then(() => setDeclining(null))}
+                  >
+                    Decline
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                <button type="button" className="btn-primary press min-h-9 grow basis-28 whitespace-nowrap px-3 text-xs" disabled={busy === t.id} onClick={() => void act(t.id, 'accepted', () => staffBoardService.respond(t.id, true))}>
+                  {busy === t.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> : <Check className="h-3.5 w-3.5" aria-hidden />} Accept
+                </button>
+                <button type="button" className="btn-ghost press min-h-9 grow basis-28 whitespace-nowrap px-3 text-xs" onClick={() => (setDeclining(t.id), setReason(''))}>
+                  <TriangleAlert className="h-3.5 w-3.5" aria-hidden /> Can’t take it
+                </button>
+              </div>
+            ))}
+        </div>
+      ),
+    };
+  });
   return (
     <Sheet
       open
@@ -125,94 +226,14 @@ export function PersonTasks({ person, status, me, onClose, onChanged }: { person
             {mine ? 'Nothing given to you right now.' : `Nothing given to ${person.name.split(' ')[0]} right now.`}
           </p>
         ) : (
-          <ul className="flex flex-col gap-2">
-            {list.map((t, i) => {
-              const s = STANDING[standing(t, today)];
-              const result = done[t.id];
-              const canNudge = !mine && t.status !== 'done' && (t.givenById === me || can('tasks.manage'));
-              const waitingForMe = mine && t.acceptance === 'pending' && !result;
-              return (
-                <li key={t.id} className={`animate-fade-up rounded-xl border-l-[3px] px-3 py-2.5 ${s.cls}`} style={{ animationDelay: `${i * 40}ms` }}>
-                  <div className="flex items-start gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p className={`text-sm font-medium leading-snug ${t.status === 'done' ? 'text-muted line-through' : 'text-ink'}`}>{t.title}</p>
-                      <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
-                        <span className={`rounded px-1.5 py-0.5 font-semibold ${s.chip}`}>{s.label}</span>
-                        {t.acceptance === 'pending' && !result && (
-                          <span className="inline-flex items-center gap-1 rounded border border-line px-1.5 py-0.5 font-semibold text-ink-soft">
-                            <Hourglass className="h-3 w-3" aria-hidden /> {mine ? 'Needs your answer' : 'Not accepted yet'}
-                          </span>
-                        )}
-                        {t.acceptance === 'declined' && <span className="rounded bg-status-out/15 px-1.5 py-0.5 font-semibold text-status-out">Declined</span>}
-                        {t.dueDate && (
-                          <span className="inline-flex items-center gap-1">
-                            <Clock className="h-3 w-3" aria-hidden /> {formatShortDate(t.dueDate)}
-                          </span>
-                        )}
-                        {t.givenBy && (
-                          <span className="inline-flex items-center gap-1">
-                            <PersonAvatar id={t.givenById} name={t.givenBy} size="xs" ring="ring-0" frame={false} />
-                            from {t.givenById === me ? 'you' : t.givenBy}
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                    {canNudge &&
-                      (result === 'nudged' ? (
-                        <span className="flex shrink-0 items-center gap-1.5 text-xs font-semibold text-status-in">
-                          <SuccessTick className="h-5 w-5" /> Nudged
-                        </span>
-                      ) : (
-                        <button
-                          type="button"
-                          className="press group/n flex shrink-0 items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:bg-surface-raised"
-                          disabled={busy === t.id}
-                          onClick={() => void act(t.id, 'nudged', () => staffBoardService.nudge(t.id))}
-                          title={t.nudgedAt ? `Last nudged ${formatShortDate(t.nudgedAt.slice(0, 10))}` : 'Send a gentle reminder'}
-                        >
-                          {busy === t.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> : <BellRing className="h-3.5 w-3.5 group-hover/n:animate-[wiggle_0.5s_ease-in-out]" aria-hidden />}
-                          Nudge
-                        </button>
-                      ))}
-                    {mine && result && result !== 'nudged' && (
-                      <span className={`flex shrink-0 items-center gap-1.5 text-xs font-semibold ${result === 'accepted' ? 'text-status-in' : 'text-status-out'}`}>
-                        {result === 'accepted' ? <SuccessTick className="h-5 w-5" /> : <X className="h-4 w-4" aria-hidden />}
-                        {result === 'accepted' ? 'Accepted' : 'Declined'}
-                      </span>
-                    )}
-                  </div>
-                  {waitingForMe &&
-                    (declining === t.id ? (
-                      <div className="mt-2.5 flex flex-col gap-2">
-                        <input className="field py-2 text-sm" placeholder="Why can’t you take it? (short)" value={reason} maxLength={280} onChange={(e) => setReason(e.target.value)} autoFocus />
-                        <div className="flex gap-2">
-                          <button type="button" className="btn-ghost min-h-9 flex-1 text-xs" onClick={() => setDeclining(null)}>
-                            Back
-                          </button>
-                          <button
-                            type="button"
-                            className="btn min-h-9 flex-1 bg-status-out/20 text-xs text-status-out"
-                            disabled={busy === t.id || reason.trim().length < 3}
-                            onClick={() => void act(t.id, 'declined', () => staffBoardService.respond(t.id, false, reason.trim())).then(() => setDeclining(null))}
-                          >
-                            Decline
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="mt-2.5 flex gap-2">
-                        <button type="button" className="btn-primary press min-h-9 flex-1 text-xs" disabled={busy === t.id} onClick={() => void act(t.id, 'accepted', () => staffBoardService.respond(t.id, true))}>
-                          {busy === t.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> : <Check className="h-3.5 w-3.5" aria-hidden />} Accept
-                        </button>
-                        <button type="button" className="btn-ghost press min-h-9 flex-1 text-xs" onClick={() => (setDeclining(t.id), setReason(''))}>
-                          <TriangleAlert className="h-3.5 w-3.5" aria-hidden /> Can’t take it
-                        </button>
-                      </div>
-                    ))}
-                </li>
-              );
-            })}
-          </ul>
+          <div className="flex flex-col gap-3">
+            {hidden > 0 && (
+              <button type="button" className="press mx-auto flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-ink-soft transition-colors hover:bg-surface-raised" onClick={() => setShowEarlier(true)}>
+                <ChevronUp className="h-3.5 w-3.5" aria-hidden /> {hidden} earlier done
+              </button>
+            )}
+            <TaskTimeline items={items} label={mine ? 'Your tasks' : `${person.name}’s tasks`} />
+          </div>
         )}
       </div>
     </Sheet>

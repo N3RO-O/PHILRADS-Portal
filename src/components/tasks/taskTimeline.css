@@ -1,0 +1,348 @@
+/*
+ * Task timeline (TaskTimeline.tsx): rail, nodes and cards for one person's tasks.
+ * Brand accents: Burgundy for what is done, Uplift for what is under way, status red for late.
+ * Colours come from the theme variables in index.css, so dark and light both work.
+ */
+.tl-wrap {
+  container-type: inline-size;
+}
+.tl {
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --node: 28px;
+  --rail-x: calc(var(--node) / 2);
+  --maroon: 140 20 20;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Rail and its fill: drawn top-down on open. */
+.tl-rail,
+.tl-fill {
+  position: absolute;
+  left: calc(var(--rail-x) - 1px);
+  width: 2px;
+  border-radius: 2px;
+  transform-origin: top;
+  pointer-events: none;
+}
+.tl-rail {
+  background: rgb(var(--line));
+  animation: tl-draw 640ms var(--ease) backwards;
+}
+.tl-fill {
+  background: linear-gradient(to bottom, rgb(var(--maroon)), rgb(var(--uplift)));
+  box-shadow: 0 0 8px rgb(var(--uplift) / 0.35);
+  animation: tl-draw 1100ms 180ms var(--ease) backwards;
+}
+
+/* One row: node then card (single column, rail on the left). */
+.tl-item {
+  display: grid;
+  grid-template-columns: var(--node) minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: start;
+}
+.tl-item > .tl-node {
+  grid-column: 1;
+  grid-row: 1;
+}
+.tl-item > .tl-card {
+  grid-column: 2;
+  grid-row: 1;
+}
+.tl-when-side {
+  display: none !important;
+}
+
+/* Nodes */
+.tl-node {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: var(--node);
+  height: var(--node);
+  margin-top: 10px;
+  border-radius: 999px;
+  border: 2px solid rgb(var(--ink-mute) / 0.55);
+  background: rgb(var(--surface-raised));
+  color: #f1f1f1;
+  animation: tl-pop 460ms var(--ease) backwards;
+  animation-delay: var(--d, 0ms);
+}
+.tl-node[data-s='done'] {
+  /* The green DoneCheck fills the node and runs its own pop, tick and ring, staged with the card. */
+  border: 0;
+  background: transparent;
+  animation: none;
+  --dc-delay: var(--d, 0ms);
+}
+.tl-node[data-s='in_progress'],
+.tl-node[data-s='review'] {
+  border-color: rgb(var(--uplift));
+  box-shadow:
+    0 0 0 4px rgb(var(--uplift) / 0.16),
+    0 0 14px rgb(var(--uplift) / 0.4);
+}
+.tl-node[data-s='in_progress']::before,
+.tl-node[data-s='review']::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgb(var(--uplift));
+}
+.tl-node[data-s='review']::before {
+  background: rgb(var(--uplift) / 0.55);
+}
+/* Under way: a soft ring breathes out of the node. */
+.tl-node[data-s='in_progress']::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  border: 2px solid rgb(var(--uplift) / 0.7);
+  animation: tl-pulse 2.2s var(--ease) infinite;
+  animation-delay: calc(var(--d, 0ms) + 500ms);
+}
+.tl-node[data-s='overdue'] {
+  border-color: transparent;
+  background: rgb(var(--status-out));
+  color: rgb(var(--surface));
+  box-shadow: 0 0 0 4px rgb(var(--status-out) / 0.18);
+}
+.tl-bang {
+  font-family: 'Archivo Black', 'Arial Black', system-ui, sans-serif;
+  font-size: 0.8125rem;
+  line-height: 1;
+}
+
+/* Cards */
+.tl-card {
+  min-width: 0;
+  padding: 10px 12px 11px;
+  border-radius: 14px;
+  border: 1px solid rgb(var(--ink) / 0.1);
+  background: rgb(var(--ink) / 0.04);
+  transition:
+    border-color 200ms var(--ease),
+    transform 200ms var(--ease);
+  animation: tl-rise 560ms var(--ease) backwards;
+  animation-delay: var(--d, 0ms);
+}
+@media (hover: hover) {
+  .tl-card:hover {
+    border-color: rgb(var(--uplift) / 0.45);
+    transform: translateY(-1px);
+  }
+}
+.tl-item[data-s='in_progress'] .tl-card {
+  border-color: rgb(var(--uplift) / 0.45);
+}
+.tl-item[data-s='overdue'] .tl-card {
+  border-color: rgb(var(--status-out) / 0.45);
+}
+.tl-item[data-s='done'] .tl-card {
+  border-color: rgb(var(--ink) / 0.06);
+  background: rgb(var(--ink) / 0.02);
+}
+[data-theme='light'] .tl-card {
+  background: rgb(var(--surface-raised));
+  box-shadow:
+    0 1px 2px rgb(var(--shadow) / 0.06),
+    0 6px 16px -10px rgb(var(--shadow) / 0.18);
+}
+[data-theme='light'] .tl-item[data-s='done'] .tl-card {
+  background: rgb(var(--ink) / 0.03);
+  box-shadow: none;
+}
+
+/* Icon chip */
+.tl-chip {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: rgb(var(--ink-mute) / 0.14);
+  color: rgb(var(--ink-soft));
+}
+.tl-item[data-s='done'] .tl-chip {
+  background: rgb(var(--status-in) / 0.14);
+  color: rgb(var(--status-in));
+}
+.tl-item[data-s='in_progress'] .tl-chip,
+.tl-item[data-s='review'] .tl-chip {
+  background: rgb(var(--uplift) / 0.16);
+  color: rgb(var(--uplift));
+}
+.tl-item[data-s='overdue'] .tl-chip {
+  background: rgb(var(--status-out) / 0.16);
+  color: rgb(var(--status-out));
+}
+
+/* Date pill */
+.tl-when {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: max-content;
+  margin-bottom: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+  background: rgb(var(--ink-mute) / 0.14);
+  color: rgb(var(--ink-soft));
+}
+.tl-item[data-s='in_progress'] .tl-when,
+.tl-item[data-s='review'] .tl-when {
+  background: rgb(var(--uplift) / 0.16);
+  color: rgb(var(--uplift));
+}
+.tl-item[data-s='overdue'] .tl-when {
+  background: rgb(var(--status-out) / 0.15);
+  color: rgb(var(--status-out));
+}
+.tl-item[data-s='done'] .tl-when {
+  background: rgb(var(--ink-mute) / 0.12);
+  color: rgb(var(--ink-mute));
+}
+
+/* Wide panel: cards alternate sides of a centred rail; the date sits across from the card. */
+@container (min-width: 440px) {
+  .tl {
+    --rail-x: 50%;
+    gap: 6px;
+  }
+  .tl-item {
+    grid-template-columns: minmax(0, 1fr) var(--node) minmax(0, 1fr);
+    column-gap: 14px;
+  }
+  .tl-item > .tl-node {
+    grid-column: 2;
+  }
+  .tl-item[data-side='l'] > .tl-card {
+    grid-column: 1;
+  }
+  .tl-item[data-side='r'] > .tl-card {
+    grid-column: 3;
+  }
+  .tl-when-in {
+    display: none;
+  }
+  .tl-when-side {
+    display: inline-flex !important;
+    grid-row: 1;
+    margin-top: 13px;
+    animation: tl-fade 480ms var(--ease) backwards;
+    animation-delay: calc(var(--d, 0ms) + 120ms);
+  }
+  .tl-item[data-side='l'] > .tl-when-side {
+    grid-column: 3;
+    justify-self: start;
+  }
+  .tl-item[data-side='r'] > .tl-when-side {
+    grid-column: 1;
+    justify-self: end;
+  }
+  .tl-item[data-side='l'] > .tl-card {
+    animation-name: tl-rise-l;
+  }
+  .tl-item[data-side='r'] > .tl-card {
+    animation-name: tl-rise-r;
+  }
+}
+
+@keyframes tl-draw {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+@keyframes tl-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes tl-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes tl-rise-l {
+  from {
+    opacity: 0;
+    transform: translate(10px, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+}
+@keyframes tl-rise-r {
+  from {
+    opacity: 0;
+    transform: translate(-10px, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+}
+@keyframes tl-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes tl-pulse {
+  0% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(1.9);
+  }
+}
+
+/* Reduced motion: no drawing, rising or pulsing; everything is simply there. */
+@media (prefers-reduced-motion: reduce) {
+  .tl-rail,
+  .tl-fill,
+  .tl-node,
+  .tl-card,
+  .tl-when-side {
+    animation: none !important;
+  }
+  .tl-node[data-s='in_progress']::after {
+    display: none;
+  }
+  .tl-card:hover {
+    transform: none;
+  }
+}

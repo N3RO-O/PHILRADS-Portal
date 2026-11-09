@@ -3,6 +3,7 @@ import { Camera, Check, CheckCircle2, Lock, Loader2, Plus, RotateCcw, Sparkles, 
 import { addDays, LIST_META, RECURRENCE_LABEL, weekday } from '../../lib/tasks';
 import { XP_RULES } from '../../lib/taskProgress';
 import { TASK_LISTS, type Assignee, type Recurrence, type Task, type TaskDraft, type TaskList } from '../../services/tasks/types';
+import { DoneCheck } from '../ui/DoneCheck';
 import { Sheet } from '../ui/Sheet';
 import { Switch } from '../ui/Switch';
 import { Reorderable } from '../ui/Reorderable';
@@ -396,9 +397,7 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, canGive =
                     disabled={locked}
                     onClick={() => set('subtasks', d.subtasks.map((x) => (x.id === s.id ? { ...x, done: !x.done } : x)))}
                   >
-                    <span className={`grid h-5 w-5 place-items-center rounded-md border-2 ${s.done ? 'border-burgundy-400 bg-burgundy-500 text-cloud' : 'border-ink-mute'}`}>
-                      {s.done && <Check className="h-3 w-3" strokeWidth={3} aria-hidden />}
-                    </span>
+                    {s.done ? <DoneCheck shape="square" className="h-5 w-5" /> : <span className="grid h-5 w-5 place-items-center rounded-md border-2 border-ink-mute" />}
                   </button>
                   <span className={`min-w-0 flex-1 text-sm ${s.done ? 'text-muted line-through' : ''}`}>{s.title}</span>
                   {!fixed && (
