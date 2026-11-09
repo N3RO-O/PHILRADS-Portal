@@ -5,7 +5,7 @@ import { useAsyncData } from '../../hooks/useAsyncData';
 import { STATUS_META, usePresence, type Status } from '../../lib/presence';
 import { timeAgo } from '../../lib/geo';
 import { staffBoardService } from '../../services';
-import type { BoardPerson } from '../../services/tasks/staffBoard';
+import { TASK_ANSWERED, type BoardPerson } from '../../services/tasks/staffBoard';
 import { PersonTasks } from '../tasks/PersonTasksSheet';
 import { PersonAvatar } from '../ui/PersonAvatar';
 import { Skeleton } from '../ui/Card';
@@ -57,16 +57,19 @@ export function ActivePanel({ onClose, variant }: { onClose: () => void; variant
   const [q, setQ] = useState('');
   const [openId, setOpenId] = useState<string | null>(null);
 
-  // Counts stay fresh: every minute, and when coming back to the portal.
+  // Counts stay fresh: every minute, when coming back to the portal, and right after you accept or
+  // decline a task anywhere (so "to accept" goes away at once).
   useEffect(() => {
     const again = () => document.visibilityState === 'visible' && board.reload();
     const t = setInterval(again, 60_000);
     document.addEventListener('visibilitychange', again);
+    window.addEventListener(TASK_ANSWERED, board.refresh);
     return () => {
       clearInterval(t);
       document.removeEventListener('visibilitychange', again);
+      window.removeEventListener(TASK_ANSWERED, board.refresh);
     };
-  }, [board.reload]);
+  }, [board.reload, board.refresh]);
 
   const people = useMemo(() => {
     const list = board.status === 'success' ? board.data : [];

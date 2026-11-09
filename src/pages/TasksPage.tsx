@@ -24,6 +24,7 @@ import { BUCKET_LABEL, BUCKETS, bucketOf, compareTasks, daysBetween, LIST_META, 
 import { computeProgress, LEVELS, XP_RULES, type Level } from '../lib/taskProgress';
 import { useLeaving } from '../components/ui/LeavingRow';
 import { tasksService, staffBoardService } from '../services';
+import { TASK_ANSWERED, type TaskAnswered } from '../services/tasks/staffBoard';
 import { FinishSheet } from '../components/tasks/FinishSheet';
 import type { OutputDraft } from '../services/tasks/staffBoard';
 import { TASK_LISTS, TaskRuleError, type Assignee, type Kudos, type Task, type TaskDraft, type TaskList, type TeamProgress, type WeekBonus, type XpAward } from '../services/tasks/types';
@@ -383,12 +384,23 @@ export function TasksPage() {
       await staffBoardService.respond(t.id, accept, reason);
       setTasks((ts) => ts && ts.map((x) => (x.id === t.id ? { ...x, acceptance: accept ? 'accepted' : 'declined', declinedReason: accept ? null : (reason ?? null) } : x)));
       setToast({ text: accept ? `Accepted “${t.title}”. ${t.createdByName ?? 'They'}’ll see it in their bell.` : `Declined “${t.title}”. ${t.createdByName ?? 'They'}’ll see your reason.`, tone: 'ok' });
-      void load();
       return null;
     } catch (e) {
       return errorText(e);
     }
   };
+
+  // Accepted or declined anywhere (here, Home, your Active panel): update this list and load it again,
+  // so it doesn't keep asking about a task you already answered.
+  useEffect(() => {
+    const on = (e: Event) => {
+      const { taskId, accept } = (e as CustomEvent<TaskAnswered>).detail;
+      setTasks((ts) => ts && ts.map((x) => (x.id === taskId ? { ...x, acceptance: accept ? 'accepted' : 'declined' } : x)));
+      void load();
+    };
+    window.addEventListener(TASK_ANSWERED, on);
+    return () => window.removeEventListener(TASK_ANSWERED, on);
+  }, [load]);
 
   const sendBack = async (t: Task, reason: string) => {
     try {
@@ -402,15 +414,17 @@ export function TasksPage() {
   };
 
   // A bell note links to one task (?task=…): open it once the tasks are loaded.
-  // The list may be older than the note (a task given while this page was open): fetch it again once.
+  // The list may be older than the note (a task given, or answered on another device, while this
+  // page was open): fetch it again once before opening, so the task shows how it stands now.
   const linkedTask = params.get('task');
   const refetchedFor = useRef<string | null>(null);
   useEffect(() => {
     if (!linkedTask || !tasks) return;
     const t = tasks.find((x) => x.id === linkedTask);
-    if (!t && refetchedFor.current !== linkedTask) {
+    if (refetchedFor.current !== linkedTask) {
       refetchedFor.current = linkedTask;
-      void load();
+      // Run this again afterwards even if the fetch failed (the list then stays as it was).
+      void load().finally(() => setTasks((ts) => ts && [...ts]));
       return;
     }
     if (t) setSheet({ task: t, initial: null });

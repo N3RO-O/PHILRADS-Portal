@@ -5,6 +5,7 @@ import { useAsyncData } from '../../hooks/useAsyncData';
 import { todayKey } from '../../lib/inventory';
 import { bucketOf, compareTasks, dueLabel, LIST_META } from '../../lib/tasks';
 import { dashboardService, tasksService } from '../../services';
+import { TASK_ANSWERED } from '../../services/tasks/staffBoard';
 import type { Task } from '../../services/tasks/types';
 import { LIST_STYLE } from '../tasks/taskMeta';
 import { Card, LoadError, Skeleton } from '../ui/Card';
@@ -23,12 +24,17 @@ export function TaskBox({ search }: { search: string }) {
     const [me, tasks] = await Promise.all([tasksService.currentUserId(), tasksService.list()]);
     return { me, tasks };
   });
-  const { reload } = data;
+  const { reload, refresh } = data;
   useEffect(() => {
     const on = () => reload();
     window.addEventListener('philrads:notification', on);
-    return () => window.removeEventListener('philrads:notification', on);
-  }, [reload]);
+    // A task answered anywhere leaves "Needs your answer" (quietly, without a loading flash).
+    window.addEventListener(TASK_ANSWERED, refresh);
+    return () => {
+      window.removeEventListener('philrads:notification', on);
+      window.removeEventListener(TASK_ANSWERED, refresh);
+    };
+  }, [reload, refresh]);
 
   const today = todayKey();
   let offers: Task[] = [];

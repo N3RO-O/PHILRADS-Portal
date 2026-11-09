@@ -63,6 +63,19 @@ export interface StaffBoardService {
   outputsOf(taskId: string): Promise<TaskOutput[]>;
 }
 
+/**
+ * Window event sent after you accept or decline a task, wherever you did it (Tasks, Home, your
+ * Active panel). Views that keep their own copy of your tasks listen for it and load again, so none
+ * of them keeps asking you to accept a task you already answered.
+ */
+export const TASK_ANSWERED = 'philrads:task-answered';
+export interface TaskAnswered {
+  taskId: string;
+  accept: boolean;
+}
+const announceAnswer = (taskId: string, accept: boolean) =>
+  window.dispatchEvent(new CustomEvent<TaskAnswered>(TASK_ANSWERED, { detail: { taskId, accept } }));
+
 const friendly = (message: string) => {
   // The database's own sentences are written for people; anything else is a connection problem.
   if (/^[A-Z][^]*\.$/.test(message) && !/violates|permission denied|function|relation/.test(message)) return message;
@@ -111,6 +124,7 @@ export function createSupabaseStaffBoard(client: SupabaseClient): StaffBoardServ
     async respond(taskId, accept, reason) {
       const { error } = await client.rpc('accept_task', { p_task: taskId, p_accept: accept, p_reason: reason ?? null });
       if (error) fail(error);
+      announceAnswer(taskId, accept);
       flushPush();
     },
     async nudge(taskId, message) {
@@ -164,9 +178,12 @@ const sampleTasks = (personId: string): BoardTask[] => {
     { id: `${personId}-4`, title: 'Encode the beneficiary list (Batch 2)', status: 'done', priority: 'low', dueDate: day(-2), acceptance: 'accepted', givenBy: demoProfile.displayName, givenById: demoProfile.id, completedAt: new Date(Date.now() - 86_400_000).toISOString(), nudgedAt: null },
   ];
   const n = SAMPLE_BOARD.find((p) => p.id === personId);
-  return n && n.open + n.inProgress === 0 ? base.slice(3) : base;
+  const answered = base.map((t) => (sampleAnswers.has(t.id) ? { ...t, acceptance: sampleAnswers.get(t.id)! } : t));
+  return n && n.open + n.inProgress === 0 ? answered.slice(3) : answered;
 };
 const nudged = new Map<string, number>();
+/** Sample mode: tasks you accepted or declined, so they stay answered. */
+const sampleAnswers = new Map<string, BoardTask['acceptance']>();
 const sampleOutputs = new Map<string, TaskOutput[]>();
 /** Sample mode: has a photo been sent with this task? */
 export const sampleHasPhoto = (taskId: string) => (sampleOutputs.get(taskId) ?? []).some((o) => o.photos.length > 0);
@@ -175,9 +192,11 @@ const later = <T,>(v: T) => new Promise<T>((r) => setTimeout(() => r(v), 250));
 export const mockStaffBoard: StaffBoardService = {
   board: () => later(structuredClone(SAMPLE_BOARD)),
   tasksOf: (id) => later(sampleTasks(id)),
-  async respond(_id, accept, reason) {
+  async respond(id, accept, reason) {
     if (!accept && !reason?.trim()) throw new TaskRuleError('Say in a few words why you can’t take it.');
     await later(null);
+    sampleAnswers.set(id, accept ? 'accepted' : 'declined');
+    announceAnswer(id, accept);
   },
   async submitOutput(id, o) {
     sampleOutputs.set(id, [{ id: `out-${Date.now()}`, authorName: demoProfile.displayName, note: o.note.trim() || null, links: o.links, photos: o.photos, createdAt: new Date().toISOString() }, ...(sampleOutputs.get(id) ?? [])]);

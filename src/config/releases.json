@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-11-09.2",
+    "version": "1.9.9",
+    "date": "2026-11-09",
+    "title": "An accepted task stays accepted everywhere",
+    "items": [
+      {
+        "icon": "list-checks",
+        "title": "No more asking twice",
+        "body": "When you accept or decline a task, from Tasks, Home, your Active panel or a bell note, every other place updates at once, so none of them keeps asking you to accept it. Opening a task from the bell always shows how it stands now, even if you answered it on another device."
+      }
+    ]
+  },
+  {
     "id": "2026-11-09.1",
     "version": "1.9.8",
     "date": "2026-11-09",
