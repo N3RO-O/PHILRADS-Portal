@@ -33,7 +33,7 @@
   width: 100%;
   height: 100%;
   max-width: none;
-  filter: brightness(0.8) saturate(0.92) contrast(1.06);
+  filter: brightness(0.92) contrast(1.05);
 }
 @keyframes sib-drift {
   0% {
@@ -121,106 +121,85 @@
 }
 
 /*
- * Hovering grain: two layers of film grain. Each flickers (transform, in steps) and drifts slowly
- * on its own path (translate), so the grain seems to float over the picture.
+ * Super-fine grain that glides smoothly (no flicker), and thin blades of light that slice through it:
+ * inside each slice the grain is brighter and shifted a few pixels, as if cut.
  */
-.sib-grain {
+.sib-grain,
+.sib-slice {
   position: absolute;
-  inset: -25%;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 0.85  0 0 0 0 0.75  0 0 0 1.1 -0.2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-  opacity: 0.2;
+  inset: -10%;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='96' height='96'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='2.4' numOctaves='1' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 0.9  0 0 0 0 0.82  0 0 0 1.4 -0.35'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  background-size: 96px 96px;
+}
+.sib-grain {
+  opacity: 0.16;
   mix-blend-mode: overlay;
-  animation:
-    sib-flicker 0.7s steps(6) infinite,
-    sib-hover 22s ease-in-out infinite alternate;
+  animation: sib-glide 48s linear infinite;
 }
-.sib-grain-fine {
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.5' numOctaves='1' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-  opacity: 0.12;
-  mix-blend-mode: soft-light;
-  animation:
-    sib-flicker 0.45s steps(4) infinite reverse,
-    sib-hover 30s ease-in-out -11s infinite alternate-reverse;
+@keyframes sib-glide {
+  to {
+    background-position: 96px 192px;
+  }
 }
-@keyframes sib-flicker {
-  0% {
-    transform: translate(0, 0);
-  }
-  20% {
-    transform: translate(-2%, 1.5%);
-  }
+.sib-slice {
+  opacity: 0.55;
+  mix-blend-mode: screen;
+  background-position: 7px 0;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+/* A diagonal blade, every 9 seconds. */
+.sib-slice-a {
+  -webkit-mask-image: linear-gradient(118deg, transparent 49.2%, #000 49.7%, #000 50.3%, transparent 50.8%);
+  mask-image: linear-gradient(118deg, transparent 49.2%, #000 49.7%, #000 50.3%, transparent 50.8%);
+  -webkit-mask-size: 300% 300%;
+  mask-size: 300% 300%;
+  animation: sib-slice-a 9s cubic-bezier(0.7, 0, 0.3, 1) infinite;
+}
+@keyframes sib-slice-a {
+  0%,
   40% {
-    transform: translate(1.5%, -2%);
-  }
-  60% {
-    transform: translate(-1%, -1%);
-  }
-  80% {
-    transform: translate(2%, 2%);
+    -webkit-mask-position: 0% 0%;
+    mask-position: 0% 0%;
   }
   100% {
-    transform: translate(0, 0);
+    -webkit-mask-position: 100% 100%;
+    mask-position: 100% 100%;
   }
 }
-@keyframes sib-hover {
+/* A slow, thin horizontal slice scanning down. */
+.sib-slice-b {
+  opacity: 0.4;
+  background-position: -5px 0;
+  -webkit-mask-image: linear-gradient(180deg, transparent 49.6%, #000 49.85%, #000 50.15%, transparent 50.4%);
+  mask-image: linear-gradient(180deg, transparent 49.6%, #000 49.85%, #000 50.15%, transparent 50.4%);
+  -webkit-mask-size: 100% 300%;
+  mask-size: 100% 300%;
+  animation: sib-slice-b 14s linear infinite;
+}
+@keyframes sib-slice-b {
   from {
-    translate: -3% 2%;
+    -webkit-mask-position: 0 0%;
+    mask-position: 0 0%;
   }
   to {
-    translate: 3% -3%;
+    -webkit-mask-position: 0 100%;
+    mask-position: 0 100%;
   }
 }
-
-/* Warm specks of dust that hover, sway and float up through the picture. */
-.sib-specks > span {
+/* The edge of the diagonal blade: a hairline of light riding with it. */
+.sib-blade {
   position: absolute;
-  border-radius: 50%;
-  background: rgba(255, 214, 170, 0.95);
-  box-shadow: 0 0 8px 1px rgba(255, 160, 90, 0.7);
+  inset: -10%;
+  background: rgba(255, 228, 205, 0.5);
   mix-blend-mode: screen;
-  opacity: 0;
-  animation: sib-float var(--dur, 20s) linear var(--delay, 0s) infinite;
-}
-@keyframes sib-float {
-  0% {
-    opacity: 0;
-    transform: translate(0, 0) scale(0.6);
-  }
-  12% {
-    opacity: 0.85;
-  }
-  50% {
-    transform: translate(calc(var(--drift, 0px) * 0.6), -32vh) scale(1);
-  }
-  85% {
-    opacity: 0.55;
-  }
-  100% {
-    opacity: 0;
-    transform: translate(var(--drift, 0px), -64vh) scale(0.7);
-  }
-}
-
-/* On a computer, a soft light follows the mouse around the collage. */
-.sib-mouse {
-  position: absolute;
-  left: calc(50% + var(--px) * 50%);
-  top: calc(50% + var(--py) * 50%);
-  width: 46vmax;
-  height: 46vmax;
-  margin: -23vmax 0 0 -23vmax;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 190, 130, 0.22) 0%, rgba(255, 170, 110, 0.06) 45%, rgba(255, 170, 110, 0) 70%);
-  mix-blend-mode: screen;
-  opacity: 0;
-  transition:
-    left 1.2s cubic-bezier(0.22, 1, 0.36, 1),
-    top 1.2s cubic-bezier(0.22, 1, 0.36, 1);
-}
-@media (pointer: fine) {
-  .sib-mouse {
-    opacity: 1;
-  }
+  -webkit-mask-image: linear-gradient(118deg, transparent 49.92%, #000 50%, transparent 50.08%);
+  mask-image: linear-gradient(118deg, transparent 49.92%, #000 50%, transparent 50.08%);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 300% 300%;
+  mask-size: 300% 300%;
+  filter: blur(0.4px);
 }
 
 /* Dark edges and a quiet middle, so the eye lands on the card. */
@@ -239,12 +218,13 @@
   .sib-glow,
   .sib-sweep,
   .sib-grain,
-  .sib-specks > span {
+  .sib-slice,
+  .sib-blade {
     animation: none !important;
   }
   .sib-sweep,
-  .sib-specks,
-  .sib-mouse {
+  .sib-slice,
+  .sib-blade {
     display: none;
   }
 }

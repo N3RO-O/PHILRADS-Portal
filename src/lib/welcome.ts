@@ -1,10 +1,9 @@
 /**
  * The welcome after signing in (src/components/onboarding/Welcomer.tsx).
- * Signing in with a password queues it for this tab; it shows once, on the next page drawn.
- * "Don't show this again" turns it off on this device.
+ * Every sign-in (password or email code) queues it for this tab; it shows once, on the next page
+ * drawn. It always shows: the old "Don't show this again" choice is no longer offered or honoured.
  */
 const PENDING = 'prism.welcome.pending';
-const OFF = 'prism.welcome.off';
 
 export const welcome = {
   queue() {
@@ -16,7 +15,7 @@ export const welcome = {
   },
   pending(): boolean {
     try {
-      return sessionStorage.getItem(PENDING) === '1' && localStorage.getItem(OFF) !== '1';
+      return sessionStorage.getItem(PENDING) === '1';
     } catch {
       return false;
     }
@@ -26,13 +25,6 @@ export const welcome = {
       sessionStorage.removeItem(PENDING);
     } catch {
       /* nothing to clear */
-    }
-  },
-  turnOff() {
-    try {
-      localStorage.setItem(OFF, '1');
-    } catch {
-      /* this visit only */
     }
   },
 };

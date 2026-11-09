@@ -24,8 +24,14 @@ export function PrismHero({ className = '', children }: { className?: string; ch
       <span className="pg-fx pg-follow" aria-hidden />
       <span className="pg-fx pg-sheen" aria-hidden />
       <span className="pg-mark animate-fade-up">
+        {/* The mark's own story, told across the header: white light shoots in from the left, hits
+            the prism and leaves as a red-amber-gold spectrum, inside a slowly turning ring of light. */}
+        <span className="pg-rays" aria-hidden />
         <span className="pg-halo" aria-hidden />
-        <PrismMark className="relative h-20 w-20" tone="brand" />
+        <span className="pg-ring" aria-hidden />
+        <span className="pg-beam-in" aria-hidden />
+        <span className="pg-beam-out" aria-hidden />
+        <PrismMark className="relative h-24 w-24" tone="brand" />
       </span>
       <div className="animate-fade-up [animation-delay:120ms]">
         <p className="font-display text-3xl tracking-[0.08em]">

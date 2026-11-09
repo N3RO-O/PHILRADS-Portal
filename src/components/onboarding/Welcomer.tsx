@@ -95,9 +95,6 @@ export function Welcomer() {
           <button type="button" className="btn-primary min-h-11 w-full gap-2" onClick={close} autoFocus>
             Let’s go <ArrowRight className="h-4 w-4" aria-hidden />
           </button>
-          <button type="button" className="mx-auto min-h-9 px-2 text-xs font-medium text-muted hover:text-ink" onClick={() => (welcome.turnOff(), close())}>
-            Don’t show this again
-          </button>
         </div>
       </div>
     </dialog>

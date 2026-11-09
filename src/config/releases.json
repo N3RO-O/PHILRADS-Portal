@@ -1,5 +1,28 @@
 [
   {
+    "id": "2026-11-09.6",
+    "version": "1.10.3",
+    "date": "2026-11-09",
+    "title": "A brighter sign-in and a welcome every time",
+    "items": [
+      {
+        "icon": "sparkles",
+        "title": "The PRISM logo comes alive",
+        "body": "On the sign-in screen a beam of white light shoots into the prism and leaves as a red, amber and gold spectrum, inside a slowly turning ring of light."
+      },
+      {
+        "icon": "palette",
+        "title": "A cleaner background",
+        "body": "The relief-work collage now has very fine grain that glides smoothly, with thin blades of light slicing through it."
+      },
+      {
+        "icon": "sun",
+        "title": "Welcome, every time",
+        "body": "The welcome now greets you after every sign-in."
+      }
+    ]
+  },
+  {
     "id": "2026-11-09.5",
     "version": "1.10.2",
     "date": "2026-11-09",

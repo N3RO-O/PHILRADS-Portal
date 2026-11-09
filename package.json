@@ -1,7 +1,7 @@
 {
   "name": "philrads-staff-portal",
   "private": true,
-  "version": "1.10.2",
+  "version": "1.10.3",
   "type": "module",
   "description": "PHILRADS Staff Portal: internal staff operations PWA for Philippine Relief and Development Services, Inc.",
   "scripts": {
