@@ -1,24 +1,15 @@
-import { useEffect, useRef, type CSSProperties } from 'react';
+import { useEffect, useRef } from 'react';
 import './signInBackground.css';
 
 /**
- * The collage's grid: six columns, five rows. public/brand/sign-in-final-*.webp is "1.png" from the
- * PHILRADS calling-card folder, gently brightened with its grain kept.
- */
-const COLS = 6;
-const ROWS = 5;
-
-// A fixed shuffle, so the photos light up in a scattered order (the same on every visit).
-const ORDER = [17, 3, 25, 9, 28, 14, 0, 21, 6, 12, 27, 2, 19, 8, 23, 15, 5, 29, 11, 1, 24, 18, 7, 26, 13, 4, 20, 10, 22, 16];
-const CELL_CYCLE = 30; // seconds for every photo to have had its moment
-
-/**
- * Behind the sign-in card: the grainy PHILRADS relief-work collage, brought to life with CSS
- * (signInBackground.css), light enough for phones:
+ * Behind the sign-in card: the PHILRADS relief-work collage in deep red
+ * (public/brand/sign-in-red-*.webp), brought to life with a few effects that stay smooth on phones
+ * (signInBackground.css). Every moving layer only changes transform or opacity, so the graphics
+ * chip moves ready-made pictures and nothing is redrawn while it plays:
  * - the picture drifts and breathes slowly, and on a computer it leans a little toward the mouse;
- * - one photo at a time softly lights up, in a scattered order;
- * - very fine grain drifts smoothly over it, and thin blades of light slice through the grain;
- * - a burgundy-to-amber glow, a passing band of light and a vignette keep the card easy to read.
+ * - a warm glow breathes and, now and then, a soft band of light passes;
+ * - super-fine grain, like sand, glides over it all;
+ * - a vignette keeps the card easy to read.
  * People who ask for less motion get the same picture, standing still.
  */
 export function SignInBackground() {
@@ -48,27 +39,19 @@ export function SignInBackground() {
       <div className="sib-lean">
         <div className="sib-stage">
           <img
-            src="/brand/sign-in-final-1440.webp"
-            srcSet="/brand/sign-in-final-1440.webp 1440w, /brand/sign-in-final-2400.webp 2400w"
-            // Phones get the lighter file: it's grainy on purpose, so the extra detail wouldn't show.
-            sizes="(max-width: 767px) 480px, max(114vw, 203vh)"
+            src="/brand/sign-in-red-1280.webp"
+            srcSet="/brand/sign-in-red-1280.webp 1280w, /brand/sign-in-red-1920.webp 1920w"
+            // Phones get the lighter file: under the grain the extra detail wouldn't show.
+            sizes="(max-width: 767px) 640px, max(114vw, 203vh)"
             alt=""
             className="sib-photo"
             decoding="async"
           />
-          <div className="sib-cells">
-            {Array.from({ length: COLS * ROWS }, (_, i) => (
-              <span key={i} style={{ '--d': `${-((ORDER.indexOf(i) / (COLS * ROWS)) * CELL_CYCLE).toFixed(2)}s` } as CSSProperties} />
-            ))}
-          </div>
         </div>
       </div>
       <div className="sib-glow" />
       <div className="sib-sweep" />
       <div className="sib-grain" />
-      <div className="sib-slice sib-slice-a" />
-      <div className="sib-slice sib-slice-b" />
-      <div className="sib-blade sib-slice-a" />
       <div className="sib-vignette" />
     </div>
   );

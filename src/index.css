@@ -1550,6 +1550,17 @@
     inset 0 -1px 0 rgba(0, 0, 0, 0.28),
     inset 0 0 0 1px rgba(255, 255, 255, 0.07);
 }
+/*
+ * Phones: a live blur over the moving background is redrawn every frame and makes the sign-in
+ * screen stutter, so touch screens get the same glass a little more solid, without the blur.
+ */
+@media (pointer: coarse) {
+  .prism-glass {
+    background: linear-gradient(160deg, rgba(178, 42, 42, 0.86) 0%, rgba(128, 18, 20, 0.9) 48%, rgba(80, 8, 11, 0.94) 100%);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
 /* Glass catches the light at its top edge. */
 .prism-glass::before {
   content: '';
