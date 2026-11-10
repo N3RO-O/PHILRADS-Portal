@@ -7,7 +7,16 @@ import { PrismMark } from '../ui/PrismMark';
  * wordmark and a glow that follows your finger or pointer. Styles: .prism-glass in index.css.
  * Everything holds still for people who ask for less motion.
  */
-export function PrismHero({ className = '', children }: { className?: string; children?: ReactNode }) {
+export function PrismHero({
+  className = '',
+  markOnly = false,
+  children,
+}: {
+  className?: string;
+  /** Just the triangle with its P (and all its light), without the PRISM / by PHILRADS words: the sign-in page. */
+  markOnly?: boolean;
+  children?: ReactNode;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const follow = (e: PointerEvent<HTMLDivElement>) => {
     const el = ref.current;
@@ -31,22 +40,27 @@ export function PrismHero({ className = '', children }: { className?: string; ch
         <span className="pg-ring" aria-hidden />
         <span className="pg-beam-in" aria-hidden />
         <span className="pg-beam-out" aria-hidden />
-        <PrismMark className="relative h-24 w-24" tone="brand" />
+        <PrismMark className={`relative ${markOnly ? 'h-28 w-28' : 'h-24 w-24'}`} tone="brand" />
       </span>
-      <div className="animate-fade-up [animation-delay:120ms]">
-        <p className="font-display text-3xl tracking-[0.08em]">
-          <span className="sr-only">PRISM</span>
-          <span aria-hidden className="pg-word">
-            <span className="pg-p">P</span>
-            {['R', 'I', 'S', 'M'].map((c, i) => (
-              <span key={c} className="pg-letter" style={{ animationDelay: `${0.75 + i * 0.08}s` }}>
-                {c}
-              </span>
-            ))}
-          </span>
-        </p>
-        <p className="mt-1 text-[0.6875rem] font-semibold uppercase tracking-[0.22em] text-cloud/80">by PHILRADS</p>
-      </div>
+      {markOnly ? (
+        // The words still reach screen readers.
+        <p className="sr-only">PRISM by PHILRADS</p>
+      ) : (
+        <div className="animate-fade-up [animation-delay:120ms]">
+          <p className="font-display text-3xl tracking-[0.08em]">
+            <span className="sr-only">PRISM</span>
+            <span aria-hidden className="pg-word">
+              <span className="pg-p">P</span>
+              {['R', 'I', 'S', 'M'].map((c, i) => (
+                <span key={c} className="pg-letter" style={{ animationDelay: `${0.75 + i * 0.08}s` }}>
+                  {c}
+                </span>
+              ))}
+            </span>
+          </p>
+          <p className="mt-1 text-[0.6875rem] font-semibold uppercase tracking-[0.22em] text-cloud/80">by PHILRADS</p>
+        </div>
+      )}
       {children}
     </div>
   );

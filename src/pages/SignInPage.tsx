@@ -216,7 +216,7 @@ export function SignInPage() {
     <main className="relative isolate grid min-h-dvh place-items-center overflow-hidden p-4">
       <SignInBackground />
       <div ref={card} className="floating relative w-full max-w-sm animate-fade-up overflow-hidden rounded-2xl bg-transparent">
-        <PrismHero className="rounded-t-2xl" />
+        <PrismHero className="rounded-t-2xl" markOnly />
         <button
           type="button"
           data-launch-toggle

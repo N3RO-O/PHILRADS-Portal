@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-11-10.1",
+    "version": "1.10.4",
+    "date": "2026-11-10",
+    "title": "A smoother sign-in",
+    "items": [
+      {
+        "icon": "palette",
+        "title": "A calmer, smoother background",
+        "body": "The red relief-work collage now drifts slowly under very fine sand grain, with a warm glow and a soft band of light now and then. It loads faster and stays smooth on phones."
+      },
+      {
+        "icon": "sparkles",
+        "title": "Just the prism",
+        "body": "The sign-in screen shows only the PRISM triangle with its P, a little bigger, still with its beam of light, spectrum and turning ring."
+      }
+    ]
+  },
+  {
     "id": "2026-11-09.6",
     "version": "1.10.3",
     "date": "2026-11-09",
