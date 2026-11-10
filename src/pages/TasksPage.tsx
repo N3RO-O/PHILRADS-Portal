@@ -215,7 +215,7 @@ export function TasksPage() {
     .sort((a, b) => Number(isOffer(b)) - Number(isOffer(a)) || compareTasks(a, b));
 
   const awardOf = useMemo(() => new Map(awards.map((a) => [a.taskId, a])), [awards]);
-  const progress = useMemo(() => computeProgress({ awards, kudos, weekBonuses, tasks: all, userId: me, today }), [awards, kudos, weekBonuses, all, me, today]);
+  const progress = useMemo(() => computeProgress({ awards, kudos, weekBonuses, tasks: all, userId: me, today, bonusXp: onboarding.bonusXp }), [awards, kudos, weekBonuses, all, me, today, onboarding.bonusXp]);
 
   // ── Actions ──
   const [toast, setToast] = useState<{ text: ReactNode; tone: 'ok' | 'warn'; undo?: () => void } | null>(null);
@@ -266,7 +266,7 @@ export function TasksPage() {
           1800,
         ),
       );
-      const after = computeProgress({ awards: nextAwards, kudos, weekBonuses, tasks: nextTasks, userId: me, today });
+      const after = computeProgress({ awards: nextAwards, kudos, weekBonuses, tasks: nextTasks, userId: me, today, bonusXp: onboarding.bonusXp });
       const fullWeek = after.week.workDone === 5 && before.week.workDone < 5;
       if (after.level.level > before.level.level) setLevelUp(LEVELS.find((l) => l.level === after.level.level) ?? null);
       const newBadges = after.badges.filter((b) => b.earned && !before.badges.find((x) => x.badge.id === b.badge.id)?.earned);

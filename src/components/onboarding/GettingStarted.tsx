@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Check, ChevronUp, PartyPopper, Rocket, Sparkles, X } from 'lucide-react';
 import { promptInstall } from '../../lib/installPrompt';
 import { FOCUS_STEP } from '../../lib/onboarding';
+import { XP_RULES } from '../../lib/taskProgress';
 import { enablePush } from '../../lib/push';
 import { QuickUnlockSheet } from '../auth/QuickUnlock';
 import { InstallDialog, useInstallAvailability } from '../pwa/InstallDialog';
@@ -133,25 +134,41 @@ function StepList({ onRun, nextRef, stacked }: { onRun: (s: Step) => void; nextR
 /** One coach mark, shown once. Points at `target` (above it on phones, below it on larger screens). */
 function CoachMark({ target, text, below, onDone }: { target: RefObject<HTMLElement>; text: string; below?: boolean; onDone: () => void }) {
   const [box, setBox] = useState<DOMRect | null>(null);
+  // The page column the tip must stay inside, so a docked side panel (Active) never covers it.
+  const [area, setArea] = useState<{ left: number; right: number } | null>(null);
   useEffect(() => {
-    const measure = () => target.current && setBox(target.current.getBoundingClientRect());
+    const measure = () => {
+      const el = target.current;
+      if (!el) return;
+      setBox(el.getBoundingClientRect());
+      const main = el.closest('main')?.getBoundingClientRect();
+      setArea(main ? { left: main.left, right: main.right } : null);
+    };
     measure();
     const t = setTimeout(measure, 400); // after entrance animations
     window.addEventListener('resize', measure);
     window.addEventListener('scroll', measure, { passive: true });
+    // The page column changes width when the Active panel docks or closes.
+    const column = target.current?.closest('main');
+    const resized = column && typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
+    if (column) resized?.observe(column);
     const el = target.current;
     el?.addEventListener('click', onDone, { once: true });
     return () => {
       clearTimeout(t);
       window.removeEventListener('resize', measure);
       window.removeEventListener('scroll', measure);
+      resized?.disconnect();
       el?.removeEventListener('click', onDone);
     };
   }, [target, onDone]);
   // Hidden while its button is scrolled out of view (or under the top bar), so it never floats over other content.
   if (!box || box.width === 0 || box.top < 72 || box.bottom > window.innerHeight) return null;
-  const left = Math.min(Math.max(16, box.left + box.width / 2 - 140), window.innerWidth - 296);
-  const arrowLeft = box.left + box.width / 2 - left - 8;
+  const minLeft = Math.max(16, (area?.left ?? 0) + 16);
+  const maxLeft = Math.min(window.innerWidth, area?.right ?? window.innerWidth) - 296;
+  const left = Math.max(minLeft, Math.min(box.left + box.width / 2 - 140, maxLeft));
+  // The arrow stays on the tip's edge even if the button sits further right than the tip can go.
+  const arrowLeft = Math.min(Math.max(box.left + box.width / 2 - left - 8, 16), 280 - 32);
   return (
     <div
       role="dialog"
@@ -191,7 +208,9 @@ export function GettingStartedCard({ onPersonalise }: { onPersonalise?: () => vo
               {o.allDone ? 'You’re all set' : 'Get started'}
             </h2>
             <p className="card-note">
-              {o.allDone ? 'Everything’s ready. You can close this.' : 'A few quick steps to make the portal yours.'}
+              {o.allDone
+                ? `Everything’s ready.${o.bonusXp > 0 ? ` +${o.bonusXp} XP added to your progress.` : ''} You can close this.`
+                : `A few quick steps to make the portal yours. Finish them all for +${XP_RULES.onboarding} XP.`}
               {onPersonalise && !o.allDone && (
                 <>
                   {' '}
@@ -224,7 +243,14 @@ export function GettingStartedBar() {
   const { run, dialog, note } = useStepAction();
   const [open, setOpen] = useState(false);
   const barRef = useRef<HTMLButtonElement>(null);
-  if (!o.showChecklist || o.steps.length === 0) return null;
+  const shown = o.showChecklist && o.steps.length > 0;
+  // While the bar floats at the bottom, the page footer gets room under it (index.css: data-bottom-bar).
+  useEffect(() => {
+    if (!shown) return;
+    document.documentElement.setAttribute('data-bottom-bar', '');
+    return () => document.documentElement.removeAttribute('data-bottom-bar');
+  }, [shown]);
+  if (!shown) return null;
   const coach = !o.state.coachSeen && Boolean(o.state.question) && !o.allDone && !open;
   const pct = (o.doneCount / o.steps.length) * 100;
   return (
@@ -243,7 +269,7 @@ export function GettingStartedBar() {
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-[0.6875rem] font-semibold uppercase tracking-wider text-muted">{o.allDone ? 'All set' : 'Next step'}</span>
-            <span className="block truncate text-sm font-semibold text-ink">{o.allDone ? 'You’re ready to go' : o.next?.label}</span>
+            <span className="block truncate text-sm font-semibold text-ink">{o.allDone ? (o.bonusXp > 0 ? `You’re ready to go · +${o.bonusXp} XP` : 'You’re ready to go') : o.next?.label}</span>
           </span>
           <ChevronUp className="h-5 w-5 shrink-0 text-muted" aria-hidden />
         </button>
@@ -280,7 +306,11 @@ export function GettingStartedBar() {
             run(s);
           }}
         />
-        {!o.allDone && <p className="mt-3 px-2 text-xs text-muted">Skipping keeps your progress. Bring this back any time from your account menu.</p>}
+        {!o.allDone && (
+          <p className="mt-3 px-2 text-xs text-muted">
+            Finish them all for <strong className="font-semibold text-uplift">+{XP_RULES.onboarding} XP</strong>. Skipping keeps your progress. Bring this back any time from your account menu.
+          </p>
+        )}
       </Sheet>
       {dialog}
     </div>

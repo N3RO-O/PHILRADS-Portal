@@ -1,5 +1,33 @@
 [
   {
+    "id": "2026-11-10.2",
+    "version": "1.10.5",
+    "date": "2026-11-10",
+    "title": "More XP and a smoother start",
+    "items": [
+      {
+        "icon": "sparkles",
+        "title": "+50 XP for finishing Get started",
+        "body": "Finish every step of Get started and 50 XP goes to your progress, once. A full working week, a task finished every day Monday to Friday, now earns 50 XP instead of 25."
+      },
+      {
+        "icon": "list-checks",
+        "title": "Your week on Home",
+        "body": "The My tasks card on Home shows this week's circles, Monday to Sunday, with a check on each day you finished a task."
+      },
+      {
+        "icon": "users",
+        "title": "Change your status from your picture",
+        "body": "In the account menu, tap your picture with its status dot to pick Online, Idle, Do Not Disturb or Invisible."
+      },
+      {
+        "icon": "key-round",
+        "title": "A calmer first sign-in",
+        "body": "The first-time question now waits until the welcome closes, the tip on a computer stays clear of the Active panel, and on phones the Next step bar no longer covers the bottom of the page."
+      }
+    ]
+  },
+  {
     "id": "2026-11-10.1",
     "version": "1.10.4",
     "date": "2026-11-10",

@@ -7,7 +7,9 @@ import { bucketOf, compareTasks, dueLabel, LIST_META } from '../../lib/tasks';
 import { dashboardService, tasksService } from '../../services';
 import { TASK_ANSWERED } from '../../services/tasks/staffBoard';
 import type { Task } from '../../services/tasks/types';
+import { weekCircles, type Progress } from '../../lib/taskProgress';
 import { LIST_STYLE } from '../tasks/taskMeta';
+import { WeekDots } from '../tasks/Progress';
 import { Card, LoadError, Skeleton } from '../ui/Card';
 import { matchesSearch } from './labels';
 
@@ -21,8 +23,13 @@ const SHOWN = 4;
  */
 export function TaskBox({ search }: { search: string }) {
   const data = useAsyncData(async () => {
-    const [me, tasks] = await Promise.all([tasksService.currentUserId(), tasksService.list()]);
-    return { me, tasks };
+    const [me, tasks, progress] = await Promise.all([
+      tasksService.currentUserId(),
+      tasksService.list(),
+      // Only for the week circles: if it can't load, the card still shows the tasks.
+      tasksService.progress().catch(() => null),
+    ]);
+    return { me, tasks, progress };
   });
   const { reload, refresh } = data;
   useEffect(() => {
@@ -40,8 +47,10 @@ export function TaskBox({ search }: { search: string }) {
   let offers: Task[] = [];
   let onToday: Task[] = [];
   let next: Task[] = [];
+  let week: Progress['week'] | null = null;
   if (data.status === 'success') {
-    const { me, tasks } = data.data;
+    const { me, tasks, progress } = data.data;
+    if (progress) week = weekCircles(progress.awards, today, progress.weekBonuses);
     const open = tasks
       .filter((t) => (t.assigneeId ?? t.createdById) === me && t.status !== 'done' && t.acceptance !== 'declined')
       .filter((t) => matchesSearch(search, t.title, t.location ?? '', LIST_META[t.list].label, t.createdByName ?? ''))
@@ -73,6 +82,11 @@ export function TaskBox({ search }: { search: string }) {
     >
       {data.status === 'loading' && <Skeleton className="h-48" />}
       {data.status === 'error' && <LoadError message={data.error.message} onRetry={reload} />}
+      {week && (
+        <div className="mb-5">
+          <WeekDots week={week} compact />
+        </div>
+      )}
       {data.status === 'success' && (
         <div className="grid gap-5 lg:grid-cols-3 lg:gap-6">
           <Column

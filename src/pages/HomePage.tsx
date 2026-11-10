@@ -15,6 +15,7 @@ import { VerseOfTheDay } from '../components/dashboard/VerseOfTheDay';
 import { WelcomeBar } from '../components/dashboard/WelcomeBar';
 import { useAsyncData } from '../hooks/useAsyncData';
 import { dashboardService } from '../services';
+import { useWelcomePending } from '../lib/welcome';
 
 /**
  * Grid by width:
@@ -45,6 +46,8 @@ export function HomePage() {
   const onboarding = useOnboarding();
   // The one first-run question, asked before anything else (and on request after a skip).
   const [askAgain, setAskAgain] = useState(false);
+  // Not on top of the welcome after signing in: the question waits until it closes.
+  const welcoming = useWelcomePending();
 
   useEffect(() => {
     if (!hash) return;
@@ -55,11 +58,11 @@ export function HomePage() {
   return (
     <>
     <WelcomeQuestion
-      open={onboarding.askQuestion || askAgain}
+      open={(onboarding.askQuestion && !welcoming) || askAgain}
       onAnswer={(focus) => (onboarding.answer(focus), setAskAgain(false))}
       onSkip={() => (onboarding.state.question ? undefined : onboarding.skipQuestion(), setAskAgain(false))}
     />
-    <div className={`grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-12 ${onboarding.showChecklist ? 'pb-20 sm:pb-0' : ''}`}>
+    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-12">
       <Cell className="order-first md:col-span-2 xl:col-span-12" step={0}>
         <WelcomeBar />
       </Cell>

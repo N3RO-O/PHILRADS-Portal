@@ -8,7 +8,14 @@ export interface OnboardingService {
   load(userId: string): Promise<OnboardingState>;
   /** Saves on this device at once, then to the account (retried on the next load if offline). */
   update(userId: string, patch: OnboardingPatch): Promise<OnboardingState>;
+  /** XP this person has from finishing Get started (0 until claimed). */
+  bonus(userId: string): Promise<number>;
+  /** Pays the Get started XP (once; the account checks the steps). Returns the points held from it. */
+  claimXp(userId: string): Promise<number>;
 }
+
+const ONBOARDING_XP = 50;
+const xpKey = (userId: string) => `philrads.onboarding.xp.v1.${userId}`;
 
 const key = (userId: string) => `philrads.onboarding.v1.${userId}`;
 const readLocal = (userId: string): OnboardingState => {
@@ -41,6 +48,21 @@ export const mockOnboardingService: OnboardingService = {
     const next = mergeOnboarding(readLocal(userId), patch);
     writeLocal(userId, next);
     return next;
+  },
+  async bonus(userId) {
+    try {
+      return Number(localStorage.getItem(xpKey(userId))) || 0;
+    } catch {
+      return 0;
+    }
+  },
+  async claimXp(userId) {
+    try {
+      localStorage.setItem(xpKey(userId), String(ONBOARDING_XP));
+    } catch {
+      /* storage unavailable: counted for this visit only */
+    }
+    return ONBOARDING_XP;
   },
 };
 
@@ -77,6 +99,15 @@ export function createSupabaseOnboardingService(client: SupabaseClient): Onboard
       } catch {
         return next; // saved on this device; sent with the next load
       }
+    },
+    async bonus(userId) {
+      const { data, error } = await client.from('onboarding_bonuses').select('points').eq('user_id', userId).maybeSingle();
+      return error || !data ? 0 : Number(data.points) || 0;
+    },
+    async claimXp() {
+      // Offline, or a step not saved to the account yet: 0, and it's tried again on the next load.
+      const { data, error } = await client.rpc('claim_onboarding_xp');
+      return error ? 0 : Number(data) || 0;
     },
   };
 }

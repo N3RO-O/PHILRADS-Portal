@@ -39,6 +39,7 @@ export function ProfileMenu() {
   const [picking, setPicking] = useState(false);
 
   if (!profile) return null;
+  const statusLabel = presence.choice === 'invisible' ? 'Invisible' : STATUS_META[presence.choice].label;
 
   const onInstall = async () => {
     setOpen(false);
@@ -67,21 +68,29 @@ export function ProfileMenu() {
       {open && (
         <div id={panelId} className="popover absolute right-0 top-12 z-50 w-72 origin-top-right animate-pop-in p-3">
           <div className="flex items-center gap-3 border-b border-line px-2 pb-3">
-            <span className="relative">
+            {/* Tap your picture (with its status dot) to change your status. */}
+            <button
+              type="button"
+              onClick={() => setPicking((p) => !p)}
+              aria-expanded={picking}
+              aria-label={`Your status: ${statusLabel}. Change status`}
+              title="Change status"
+              className="group relative shrink-0 rounded-full"
+            >
               <Avatar initials={profile.initials} src={profile.avatar} color={profile.avatarColor} />
-              <StatusDot status={presence.mine} size={16} ring="rgb(var(--surface-raised))" className="absolute -bottom-1 -right-1" />
-            </span>
+              <StatusDot
+                status={presence.mine}
+                size={16}
+                ring="rgb(var(--surface-raised))"
+                className={`absolute -bottom-1 -right-1 transition-transform duration-200 group-hover:scale-125 ${picking ? 'scale-125' : ''}`}
+              />
+            </button>
             <div className="min-w-0">
               <p className="truncate font-semibold">{profile.displayName}</p>
               <p className="truncate text-xs text-muted">{[profile.jobTitle || profile.roleName, profile.office].filter(Boolean).join(' · ')}</p>
             </div>
           </div>
           <div className="flex flex-col gap-0.5 py-2">
-            <button type="button" className={itemClass} onClick={() => setPicking((p) => !p)} aria-expanded={picking}>
-              <StatusDot status={presence.choice === 'invisible' ? 'offline' : presence.choice} size={16} ring="rgb(var(--surface-raised))" />
-              <span className="flex-1">{presence.choice === 'invisible' ? 'Invisible' : STATUS_META[presence.choice].label}</span>
-              <span className="text-xs text-muted">{picking ? 'Close' : 'Change'}</span>
-            </button>
             {picking && (
               <div className="mb-1 flex animate-pop-in flex-col rounded-xl bg-ink/[0.03] p-1" role="radiogroup" aria-label="Your status">
                 {CHOICES.map((c) => (

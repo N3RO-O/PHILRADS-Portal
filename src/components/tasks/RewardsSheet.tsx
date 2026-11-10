@@ -133,6 +133,7 @@ export function RewardsSheet({ tab, progress, kudos, onTab, onClose, onPrintCert
               <li>+{XP_RULES.photo} XP for a photo sent with a task that didn’t need one.</li>
               <li>+{XP_RULES.fullWeek} XP for finishing at least one task every working day, Monday to Friday.</li>
               <li>Kudos from a coordinator: +{XP_RULES.kudos} XP.</li>
+              <li>+{XP_RULES.onboarding} XP once, for finishing every step of Get started.</li>
               <li>Re-opening a finished task takes its XP back.</li>
             </ul>
           </div>

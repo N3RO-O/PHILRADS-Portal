@@ -155,7 +155,7 @@ export function AppLayout() {
             </div>
           </PullToRefresh>
         </main>
-        <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-line/50 px-4 py-4 text-xs text-muted sm:px-6">
+        <footer className="app-footer flex flex-wrap items-center justify-between gap-2 border-t border-line/50 px-4 py-4 text-xs text-muted sm:px-6">
           <span>
             Philippine Relief and Development Services, Inc. · PRISM v{__APP_VERSION__}{' '}
             <span className="text-muted/70">({__APP_BUILD__})</span>

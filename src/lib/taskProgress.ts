@@ -22,7 +22,9 @@ export const XP_RULES = {
   /** A photo sent with a task that didn't need one. */
   photo: 5,
   /** A task finished on every working day (Monday to Friday) of a week. */
-  fullWeek: 25,
+  fullWeek: 50,
+  /** Finishing the Get started checklist, once. */
+  onboarding: 50,
 } as const;
 
 /** Score a finished task (sample mode). `selfXpToday`: XP already earned today from self-set tasks. */
@@ -188,7 +190,7 @@ function streaks(days: Set<string>, today: string) {
   return { current, best };
 }
 
-export function computeProgress(input: { awards: XpAward[]; kudos: Kudos[]; weekBonuses?: WeekBonus[]; tasks: Task[]; userId: string | null; today?: string }) {
+export function computeProgress(input: { awards: XpAward[]; kudos: Kudos[]; weekBonuses?: WeekBonus[]; tasks: Task[]; userId: string | null; today?: string; /** XP from outside tasks (Get started). */ bonusXp?: number }) {
   const today = input.today ?? todayKey();
   const { kudos } = input;
   // Tasks added already finished don't count toward badges or streaks.
@@ -214,7 +216,7 @@ export function computeProgress(input: { awards: XpAward[]; kudos: Kudos[]; week
   };
 
   const weekBonuses = input.weekBonuses ?? [];
-  const xp = awards.reduce((s, a) => s + a.points, 0) + kudos.reduce((s, k) => s + k.points, 0) + weekBonuses.reduce((s, w) => s + w.points, 0);
+  const xp = awards.reduce((s, a) => s + a.points, 0) + kudos.reduce((s, k) => s + k.points, 0) + weekBonuses.reduce((s, w) => s + w.points, 0) + (input.bonusXp ?? 0);
   const todays = awards.filter((a) => a.day === today);
   return {
     xp,

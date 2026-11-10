@@ -56,6 +56,12 @@
     /* The portal has its own pull to refresh (PullToRefresh.tsx); stop the browser's firing too. */
     overscroll-behavior-y: contain;
   }
+  /* Phones: while the Get started bar floats at the bottom of Home, the footer clears it. */
+  @media (max-width: 639px) {
+    html[data-bottom-bar] .app-footer {
+      padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+    }
+  }
   html[data-theme='light'] {
     color-scheme: light;
   }

@@ -16,6 +16,8 @@ interface OnboardingContextValue {
   /** The first step not done yet. */
   next: Step | null;
   allDone: boolean;
+  /** XP earned for finishing Get started (0 until every step is done). */
+  bonusXp: number;
   /** Ask the one question (first visit, not answered or skipped yet). */
   askQuestion: boolean;
   /** Show the checklist (not hidden with "Skip for now", not finished and closed). */
@@ -40,16 +42,21 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const stateRef = useRef(state);
   stateRef.current = state;
+  const [bonusXp, setBonusXp] = useState(0);
+  // The last save to the account: the XP is claimed only after it lands (the account checks the steps).
+  const saving = useRef<Promise<unknown>>(Promise.resolve());
 
   useEffect(() => {
     if (!userId) return;
     let live = true;
     setReady(false);
+    setBonusXp(0);
     void onboardingService.load(userId).then((s) => {
       if (!live) return;
       setState(s);
       setReady(true);
     });
+    void onboardingService.bonus(userId).then((xp) => live && setBonusXp(xp), () => undefined);
     return () => {
       live = false;
     };
@@ -59,7 +66,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     (patch: OnboardingPatch) => {
       if (!userId) return;
       setState((s) => mergeOnboarding(s, patch));
-      void onboardingService.update(userId, patch).then((s) => setState((cur) => ({ ...s, steps: { ...cur.steps, ...s.steps } })));
+      const done = onboardingService.update(userId, patch).then((s) => setState((cur) => ({ ...s, steps: { ...cur.steps, ...s.steps } })));
+      saving.current = done.catch(() => undefined);
     },
     [userId],
   );
@@ -103,6 +111,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       doneCount,
       next: steps.find((s) => !s.done) ?? null,
       allDone,
+      bonusXp,
       askQuestion: ready && !state.question,
       showChecklist: ready && !state.hidden,
       complete,
@@ -112,7 +121,20 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       show: () => save({ hidden: false }),
       seeCoach: () => save({ coachSeen: true }),
     };
-  }, [ready, state, can, complete, save]);
+  }, [ready, state, can, complete, save, bonusXp]);
+
+  // Every step done: +50 XP, once (after the last step has reached the account).
+  const { allDone } = value;
+  useEffect(() => {
+    if (!ready || !allDone || bonusXp > 0 || !userId) return;
+    let live = true;
+    void saving.current
+      .then(() => onboardingService.claimXp(userId))
+      .then((xp) => live && xp > 0 && setBonusXp(xp), () => undefined);
+    return () => {
+      live = false;
+    };
+  }, [ready, allDone, bonusXp, userId]);
 
   return <OnboardingContext.Provider value={value}>{children}</OnboardingContext.Provider>;
 }
@@ -127,6 +149,7 @@ export function useOnboarding(): OnboardingContextValue {
       doneCount: 0,
       next: null,
       allDone: false,
+      bonusXp: 0,
       askQuestion: false,
       showChecklist: false,
       complete: noop,

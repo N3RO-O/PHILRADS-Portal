@@ -121,34 +121,7 @@ export function WeekCircles({ week }: { week: Progress['week'] }) {
           <strong className="font-semibold text-ink-soft">{week.workDone}</strong> of 5 working days
         </p>
       </div>
-      <ol className="grid grid-cols-7 gap-1.5" aria-label="Days this week with a finished task">
-        {week.days.map((d, i) => {
-          const missed = !d.done && !d.future && !d.today && !d.weekend;
-          return (
-            <li key={d.day} className={`flex flex-col items-center gap-1 ${d.weekend ? 'opacity-60' : ''}`}>
-              <span
-                className={`relative grid aspect-square w-full max-w-10 place-items-center rounded-full text-xs font-bold transition-all duration-500 ${
-                  d.done
-                    ? 'premium animate-pop-in text-onaccent'
-                    : d.today
-                      ? 'border-2 border-dashed border-uplift text-uplift'
-                      : missed
-                        ? 'border-2 border-line bg-surface-sunken text-ink-mute'
-                        : 'border-2 border-line text-ink-mute'
-                }`}
-              >
-                {d.done ? <Check className="h-4 w-4" strokeWidth={3} aria-hidden /> : DAY_LETTER[i]}
-                <span className="sr-only">
-                  {DAY_NAME[i]}: {d.done ? 'task finished' : d.future ? 'still to come' : d.today ? 'today, nothing finished yet' : 'nothing finished'}
-                </span>
-              </span>
-              <span className={`text-[0.625rem] leading-none ${d.today ? 'font-bold text-uplift' : 'invisible'}`} aria-hidden>
-                Today
-              </span>
-            </li>
-          );
-        })}
-      </ol>
+      <WeekDots week={week} />
       <p className="text-xs text-muted">
         {week.bonus ? (
           <>
@@ -162,6 +135,45 @@ export function WeekCircles({ week }: { week: Progress['week'] }) {
         )}
       </p>
     </div>
+  );
+}
+
+/**
+ * Just the seven circles, Monday to Sunday. `compact` is the small row on Home's My tasks card:
+ * fixed-size circles in a line, without the "Today" word under them (the dashed ring says it).
+ */
+export function WeekDots({ week, compact = false }: { week: Progress['week']; compact?: boolean }) {
+  return (
+    <ol className={compact ? 'flex items-center gap-1.5' : 'grid grid-cols-7 gap-1.5'} aria-label="Days this week with a finished task">
+      {week.days.map((d, i) => {
+        const missed = !d.done && !d.future && !d.today && !d.weekend;
+        return (
+          <li key={d.day} className={`flex flex-col items-center gap-1 ${d.weekend ? 'opacity-60' : ''}`}>
+            <span
+              className={`relative grid aspect-square place-items-center rounded-full text-xs font-bold transition-all duration-500 ${compact ? 'w-8 sm:w-9' : 'w-full max-w-10'} ${
+                d.done
+                  ? 'premium animate-pop-in text-onaccent'
+                  : d.today
+                    ? 'border-2 border-dashed border-uplift text-uplift'
+                    : missed
+                      ? 'border-2 border-line bg-surface-sunken text-ink-mute'
+                      : 'border-2 border-line text-ink-mute'
+              }`}
+            >
+              {d.done ? <Check className="h-4 w-4" strokeWidth={3} aria-hidden /> : DAY_LETTER[i]}
+              <span className="sr-only">
+                {DAY_NAME[i]}: {d.done ? 'task finished' : d.future ? 'still to come' : d.today ? 'today, nothing finished yet' : 'nothing finished'}
+              </span>
+            </span>
+            {!compact && (
+              <span className={`text-[0.625rem] leading-none ${d.today ? 'font-bold text-uplift' : 'invisible'}`} aria-hidden>
+                Today
+              </span>
+            )}
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 
