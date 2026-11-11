@@ -65,7 +65,8 @@ export function Page({
       style={{
         width: `${w}mm`,
         minHeight: `${h}mm`,
-        padding: pad.map((p) => `${p}mm`).join(' '),
+        // Side margins can be nudged from the Forms toolbar (--ff-mx), never below 4 mm.
+        padding: pad.map((p, i) => (i % 2 ? `max(4mm, calc(${p}mm + var(--ff-mx, 0mm)))` : `${p}mm`)).join(' '),
         fontFamily: font,
         fontSize: size,
         backgroundImage: bg ? `url(${bg})` : undefined,

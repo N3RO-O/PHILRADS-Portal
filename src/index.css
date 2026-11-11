@@ -857,6 +857,12 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
   line-height: 1;
 }
+/* Phones: room under the page for the Forms bottom bar (FormToolbar). */
+@media (max-width: 767.98px) {
+  body.has-form-bar {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  }
+}
 /* Text size for what's typed on a form (Forms toolbar): printed the same way. */
 .form-page .ff,
 .form-page .ff-print,

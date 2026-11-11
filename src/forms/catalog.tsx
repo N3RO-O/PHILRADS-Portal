@@ -22,6 +22,8 @@ export interface FormDef {
   rows?: { initial: number; label: string };
   /** Filled with the signed-in person's name when empty. */
   preparedBy?: string;
+  /** Drawn to fill the paper exactly: the side margins can't be changed (wider ones spill onto a new page). */
+  fixedMargins?: boolean;
   render: (rows: number) => ReactNode;
 }
 
@@ -45,6 +47,7 @@ export const FORMS: FormDef[] = [
     summary: 'Multi-sector assessment: shelter, food, water, health, protection and more.',
     paper: 'A4 · 4 pages',
     source: 'RNA- Rapid Needs Assessment.pdf',
+    fixedMargins: true,
     render: () => <RapidNeedsAssessment />,
   },
   {
