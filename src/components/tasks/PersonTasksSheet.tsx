@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BellRing, Check, ChevronUp, CircleCheck, Eye, Hourglass, ListTodo, Loader2, Plus, TriangleAlert, X, Zap, type LucideIcon } from 'lucide-react';
+import { BellRing, Check, ChevronUp, CircleCheck, Eye, Hourglass, ListTodo, Loader2, Play, Plus, Timer, TriangleAlert, X, Zap, type LucideIcon } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { useAsyncData } from '../../hooks/useAsyncData';
-import { formatShortDate } from '../../lib/format';
+import { formatDateTime, formatDuration, formatShortDate } from '../../lib/format';
 import { STATUS_META, type Status } from '../../lib/presence';
 import { staffBoardService } from '../../services';
 import type { BoardPerson, BoardTask } from '../../services/tasks/staffBoard';
@@ -26,6 +26,52 @@ const STANDING: Record<Standing, { label: string; chip: string; icon: LucideIcon
 };
 const standing = (t: BoardTask, today: string): Standing =>
   t.status === 'done' ? 'done' : t.status === 'review' ? 'review' : t.status === 'in_progress' ? 'in_progress' : t.dueDate && t.dueDate < today ? 'overdue' : 'todo';
+
+/**
+ * Started → finished, and how long it took. A task ticked off without being started counts from when
+ * it was given. Open tasks under way show how long so far.
+ */
+function Timing({ t }: { t: BoardTask }) {
+  const begun = t.startedAt ?? null;
+  const from = begun ?? t.createdAt ?? null;
+  const fromLabel = begun ? 'Started' : t.givenBy ? 'Given' : 'Added';
+  const step = (icon: JSX.Element, label: string, iso: string) => (
+    <div className="min-w-0">
+      <dt className="flex items-center gap-1 text-[0.625rem] font-semibold uppercase tracking-wider text-muted">
+        {icon} {label}
+      </dt>
+      <dd>
+        <time dateTime={iso} className="whitespace-nowrap tabular-nums text-ink-soft">
+          {formatDateTime(iso)}
+        </time>
+      </dd>
+    </div>
+  );
+  if (t.status === 'done' && t.completedAt) {
+    return (
+      <div className="tl-timing">
+        <dl className="flex flex-wrap gap-x-4 gap-y-1.5">
+          {from && step(<Play className="h-2.5 w-2.5" aria-hidden />, fromLabel, from)}
+          {step(<Check className="h-2.5 w-2.5 text-status-in" strokeWidth={3} aria-hidden />, 'Finished', t.completedAt)}
+        </dl>
+        {from && (
+          <p className="mt-2 inline-flex flex-wrap items-center gap-x-1 rounded-xl bg-status-in/10 px-2 py-0.5 font-semibold text-status-in" title={begun ? undefined : `Never marked as started: counted from when it was ${t.givenBy ? 'given' : 'added'}.`}>
+            <Timer className="h-3 w-3" aria-hidden /> Took {formatDuration(from, t.completedAt)}
+          </p>
+        )}
+      </div>
+    );
+  }
+  if ((t.status === 'in_progress' || t.status === 'review') && begun) {
+    return (
+      <div className="tl-timing">
+        <dl>{step(<Play className="h-2.5 w-2.5" aria-hidden />, 'Started', begun)}</dl>
+        <p className="mt-1 text-muted">{formatDuration(begun, new Date().toISOString())} so far</p>
+      </div>
+    );
+  }
+  return null;
+}
 
 /** Done tasks shown before "Show earlier" (older ones fold away so open work stays in view). */
 const RECENT_DONE = 3;
@@ -100,6 +146,7 @@ export function PersonTasks({ person, status, me, onClose, onChanged }: { person
           )}
         </p>
       ),
+      timing: <Timing t={t} />,
       actions: (canNudge || (mine && result && result !== 'nudged') || waitingForMe) && (
         <div className="mt-2.5 flex flex-col gap-2">
           {canNudge &&

@@ -122,6 +122,15 @@
   line-height: 1;
 }
 
+/* Started → finished, and how long it took, at the foot of a card. */
+.tl-timing {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed rgb(var(--ink) / 0.12);
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
 /* Cards */
 .tl-card {
   min-width: 0;

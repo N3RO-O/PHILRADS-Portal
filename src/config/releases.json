@@ -1,5 +1,28 @@
 [
   {
+    "id": "2026-11-11.1",
+    "version": "1.10.6",
+    "date": "2026-11-11",
+    "title": "Several tasks at once, and what got finished",
+    "items": [
+      {
+        "icon": "list-checks",
+        "title": "Choose several tasks at once",
+        "body": "On a phone, press and hold a task; on a computer, tap Select, or Shift-click to pick every task between two. Then mark them done, plan them for today or remove them together. Tasks someone else gave you stay theirs to change: those are skipped, and you're told how many."
+      },
+      {
+        "icon": "calendar-check",
+        "title": "Finished tasks on the Home calendar",
+        "body": "A green dot marks each day a task was finished. Tap the day to see who finished what. Amber is due and red is overdue, always in that order, with a key under the month."
+      },
+      {
+        "icon": "calendar",
+        "title": "Started, finished and how long it took",
+        "body": "A person's task timeline now shows when each task was started and finished, and how long it took between them. A task under way shows how long so far."
+      }
+    ]
+  },
+  {
     "id": "2026-11-10.2",
     "version": "1.10.5",
     "date": "2026-11-10",

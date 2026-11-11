@@ -15,6 +15,17 @@ export const formatShortDate = (isoDate: string) =>
 export const formatTime = (iso: string) =>
   new Intl.DateTimeFormat('en-PH', { hour: 'numeric', minute: '2-digit', timeZone: TZ }).format(new Date(iso));
 
+/** How long between two instants, in words people use: "25 min", "3 h 10 min", "2 days 4 h". */
+export function formatDuration(fromIso: string, toIso: string) {
+  const mins = Math.max(0, Math.round((Date.parse(toIso) - Date.parse(fromIso)) / 60_000));
+  if (mins < 1) return 'under a minute';
+  if (mins < 60) return `${mins} min`;
+  const h = Math.floor(mins / 60);
+  if (h < 24) return mins % 60 ? `${h} h ${mins % 60} min` : `${h} h`;
+  const d = Math.floor(h / 24);
+  return `${d} day${d === 1 ? '' : 's'}${h % 24 ? ` ${h % 24} h` : ''}`;
+}
+
 export const formatDayHeading = (iso: string) =>
   new Intl.DateTimeFormat('en-PH', { weekday: 'long', month: 'short', day: 'numeric', timeZone: TZ }).format(new Date(iso));
 
