@@ -8,6 +8,7 @@ import { useAuth } from '../components/auth/AuthProvider';
 import { DeadlineCalendar } from '../components/dashboard/DeadlineCalendar';
 import { ProjectsTable } from '../components/dashboard/ProjectsTable';
 import { RecentActivity } from '../components/dashboard/RecentActivity';
+import { Scorecard } from '../components/dashboard/Scorecard';
 import { StockLevelsChart } from '../components/dashboard/StockLevelsChart';
 import { TaskBox } from '../components/dashboard/TaskBox';
 import { VerseOfTheDay } from '../components/dashboard/VerseOfTheDay';
@@ -71,6 +72,11 @@ export function HomePage() {
       {onboarding.showChecklist && (
         <Cell className="order-first hidden sm:block md:col-span-2 xl:col-span-12" step={0}>
           <GettingStartedCard onPersonalise={onboarding.state.question === 'skipped' ? () => setAskAgain(true) : undefined} />
+        </Cell>
+      )}
+      {staffView && (
+        <Cell className="order-2 md:col-span-2 xl:col-span-12" step={1}>
+          <Scorecard />
         </Cell>
       )}
       <Cell className="order-2 md:col-span-2 xl:col-span-12" step={1}>

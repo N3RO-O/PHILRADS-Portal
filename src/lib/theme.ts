@@ -25,7 +25,7 @@ function apply() {
   const root = document.documentElement;
   if (isLight) root.dataset.theme = 'light';
   else delete root.dataset.theme;
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', isLight ? '#e6e6ea' : '#1c1d21');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', isLight ? '#f0f2f5' : '#1c1d21');
 }
 
 export function setTheme(next: ThemeChoice) {

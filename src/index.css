@@ -26,29 +26,30 @@
     --shadow-strength: 0.75;
   }
   /*
-   * Light: soft greys rather than glaring white, so it is easy on the eyes. Panels sit a step lighter
-   * than the page, with a soft shadow instead of strong borders. Text, accent and status colours are
-   * deepened to stay readable (all at least 4.5:1 on the page).
+   * Light (2026-11-11, "white cards on cool grey", the pattern Facebook, LinkedIn and Gmail share):
+   * a cool light-grey page, pure white panels with a soft shadow, near-black text and one mid grey
+   * for secondary text. Burgundy is kept for buttons and selected chips (as a soft rose tint), and
+   * accent and status colours are deepened so each reads at 4.5:1 or better on the page and on white.
    */
   :root[data-theme='light'] {
-    --page: 230 230 234;
-    --surface: 243 243 246;
-    --surface-sunken: 221 222 227;
-    --surface-raised: 248 248 250;
-    --line: 207 208 214;
-    --ink: 35 36 42;
-    --ink-soft: 66 68 77;
-    --ink-mute: 94 96 106;
-    --uplift: 158 79 4;
-    --uplift-soft: 176 92 10;
+    --page: 240 242 245;
+    --surface: 255 255 255;
+    --surface-sunken: 228 230 235;
+    --surface-raised: 255 255 255;
+    --line: 218 221 225;
+    --ink: 28 30 33;
+    --ink-soft: 75 79 86;
+    --ink-mute: 101 103 107;
+    --uplift: 154 74 0;
+    --uplift-soft: 168 84 4;
     --prism-1: 140 20 20;
     --prism-2: 217 122 12;
     --prism-3: 229 169 46;
-    --status-in: 18 108 50;
+    --status-in: 24 112 58;
     --status-low: 152 70 6;
-    --status-out: 184 30 30;
-    --shadow: 40 42 54;
-    --shadow-strength: 0.2;
+    --status-out: 192 38 45;
+    --shadow: 28 30 33;
+    --shadow-strength: 0.18;
   }
   html {
     color-scheme: dark;
@@ -1448,10 +1449,100 @@
 [data-theme='light'] .field {
   box-shadow: inset 0 1px 2px rgb(var(--shadow) / 0.06);
 }
+/* Light theme: a selected chip is a soft rose tint with burgundy text instead of a solid fill. */
+[data-theme='light'] .chip[aria-pressed='true'] {
+  border-color: #ebc9c4;
+  background-color: #f7e4e1;
+  color: #7a0b0b;
+}
 /* Light theme: a solid Uplift fill keeps the bright brand orange (dark text on it); only Uplift text is deepened. */
 [data-theme='light'] .bg-uplift {
   background-color: #ec952a;
 }
+
+/*
+ * Badges (src/components/tasks/Medal.tsx): medals in four rarities. The one place the portal allows
+ * metal gradients, a glow and a looping shine (docs/design-system.md, Badges), because they are
+ * rewards and should feel like it. Locked badges are flat, with a progress ring in Uplift.
+ */
+.medal {
+  --medal-size: 2.75rem;
+  position: relative;
+  display: inline-grid;
+  flex-shrink: 0;
+  width: var(--medal-size);
+  height: var(--medal-size);
+  overflow: hidden;
+  border-radius: 9999px;
+  isolation: isolate;
+  background: conic-gradient(from 210deg, var(--m1), var(--m2), var(--m1), var(--m2), var(--m1));
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.4), 0 0 12px -3px var(--mg);
+}
+.medal-sm { --medal-size: 1.75rem; }
+.medal-md { --medal-size: 2.75rem; }
+.medal-lg { --medal-size: 3.5rem; }
+.medal-xl { --medal-size: 5.5rem; }
+.medal-common { --m1: #d4d8de; --m2: #6b7280; --mg: #9ca3af; }
+.medal-rare { --m1: #a5cdfd; --m2: #1d4ed8; --mg: #60a5fa; }
+.medal-epic { --m1: #ecdcff; --m2: #7e22ce; --mg: #c084fc; }
+.medal-legendary { --m1: #fde68a; --m2: #b45309; --mg: #fbbf24; }
+.medal-face {
+  position: absolute;
+  inset: 12%;
+  display: grid;
+  place-items: center;
+  border-radius: 9999px;
+  color: var(--m1);
+  background: radial-gradient(circle at 35% 30%, #3a3b42, #17181b 75%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.13), inset 0 -3px 6px rgb(0 0 0 / 0.5);
+}
+.medal-face svg {
+  width: 46%;
+  height: 46%;
+  filter: drop-shadow(0 0 3px var(--mg));
+}
+.medal-locked {
+  background: conic-gradient(rgb(var(--uplift)) var(--medal-progress, 0%), rgb(var(--ink) / 0.12) 0);
+  box-shadow: none;
+}
+.medal-locked .medal-face {
+  inset: 9%;
+  color: rgb(var(--ink-mute));
+  background: rgb(var(--surface-sunken));
+  box-shadow: none;
+}
+.medal-locked .medal-face svg {
+  width: 38%;
+  height: 38%;
+  filter: none;
+}
+.medal-shine::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: 9999px;
+  background: linear-gradient(115deg, transparent 35%, rgb(255 255 255 / 0.55) 50%, transparent 65%);
+  transform: translateX(-120%);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .medal-shine::after { animation: medal-shine 3.4s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
+  .medal-legendary.medal-shine::after { animation-duration: 2.6s; }
+}
+@keyframes medal-shine {
+  0%, 55% { transform: translateX(-120%); }
+  85%, 100% { transform: translateX(120%); }
+}
+/* The rarity word under a medal, in its tier's colour (deepened on light for contrast). */
+.rarity-common { color: #9ca3af; }
+.rarity-rare { color: #60a5fa; }
+.rarity-epic { color: #c084fc; }
+.rarity-legendary { color: #fbbf24; }
+[data-theme='light'] .rarity-common { color: #5b6270; }
+[data-theme='light'] .rarity-rare { color: #1d4ed8; }
+[data-theme='light'] .rarity-epic { color: #7e22ce; }
+[data-theme='light'] .rarity-legendary { color: #92400e; }
 
 /* Welcome after signing in (src/components/onboarding/Welcomer.tsx): an old home video look. */
 .welcome-scan {

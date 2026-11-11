@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { CalendarDays, ChevronDown, FileSpreadsheet, Home, MapPin, Search, UsersRound, Wallet, X } from 'lucide-react';
+import { useMemo, useState, type ReactNode } from 'react';
+import { ArrowDownRight, ArrowUpRight, CalendarDays, ChevronDown, FileSpreadsheet, Home, MapPin, Search, UsersRound, Wallet, X } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
 import { RecordDetails } from '../components/statistics/RecordDetails';
 import { SyncSheet } from '../components/statistics/SyncSheet';
@@ -11,6 +11,8 @@ import { formatNumber } from '../lib/format';
 import { activitiesService } from '../services';
 import { byNewest, PROGRAMS, programMeta, servedText, siteKey, withoutFunding, type ProgramActivity, type ProgramKey } from '../services/activities/types';
 import { RollingNumber } from '../components/ui/RollingNumber';
+import { todayKey } from '../lib/inventory';
+import { previousPeriod, totals } from '../lib/kpi';
 
 const compact = (n: number) => new Intl.NumberFormat('en-PH', { notation: 'compact', maximumFractionDigits: 1 }).format(n);
 /** The program most of these activities belong to. */
@@ -43,14 +45,9 @@ export function StatisticsPage() {
   const years = useMemo(() => [...new Set(all.map((a) => a.year))].sort((a, b) => b - a), [all]);
 
   const needle = search.trim().toLowerCase();
+  const matches = (a: ProgramActivity) => !needle || [a.activity, a.site, a.response, canFunding ? a.donors : null, a.partner, a.contactPerson, a.dateLabel].some((s) => s?.toLowerCase().includes(needle));
   const shown = useMemo(
-    () =>
-      all.filter(
-        (a) =>
-          (year === 'all' || a.year === year) &&
-          (program === 'all' || a.program === program) &&
-          (!needle || [a.activity, a.site, a.response, canFunding ? a.donors : null, a.partner, a.contactPerson, a.dateLabel].some((s) => s?.toLowerCase().includes(needle))),
-      ),
+    () => all.filter((a) => (year === 'all' || a.year === year) && (program === 'all' || a.program === program) && matches(a)),
     [all, year, program, needle, canFunding],
   );
 
@@ -71,6 +68,13 @@ export function StatisticsPage() {
   const men = sum(sexed, (a) => a.male);
   const women = sum(sexed, (a) => a.female);
   const filtered = year !== 'all' || program !== 'all' || needle;
+  // With one year picked, each figure also shows its change from the year before (the same stretch of it, for this year).
+  const today = todayKey();
+  const before =
+    year !== 'all' && all.some((a) => a.year === year - 1)
+      ? totals(previousPeriod(all.filter((a) => (program === 'all' || a.program === program) && matches(a)), year, today))
+      : null;
+  const vs = year === Number(today.slice(0, 4)) ? `vs this time in ${Number(year) - 1}` : `vs ${Number(year) - 1}`;
 
   return (
     <div className="flex flex-col gap-5">
@@ -102,36 +106,42 @@ export function StatisticsPage() {
             )}
           </div>
         </div>
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Year">
-          {(['all', ...years] as const).map((y) => (
-            <button key={y} type="button" className="chip" aria-pressed={year === y} onClick={() => setYear(y)}>
-              {y === 'all' ? 'All years' : y}
-            </button>
-          ))}
-        </div>
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Program">
-          <button type="button" className="chip" aria-pressed={program === 'all'} onClick={() => setProgram('all')}>
-            All programs
-          </button>
-          {PROGRAMS.filter((p) => all.some((a) => a.program === p.key)).map((p) => (
-            <button key={p.key} type="button" className="chip gap-1.5" aria-pressed={program === p.key} onClick={() => setProgram(p.key)}>
-              <span className="h-2 w-2 rounded-full" style={{ background: p.color }} aria-hidden />
-              {p.short}
-            </button>
-          ))}
+        {/* Two dropdowns instead of rows of chips: side by side, stacked on the narrowest phones. */}
+        <div className="grid grid-cols-1 gap-2 min-[400px]:grid-cols-2 sm:max-w-xl">
+          <Picker label="Year" value={String(year)} onChange={(v) => setYear(v === 'all' ? 'all' : Number(v))}>
+            <option value="all">All years</option>
+            {years.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </Picker>
+          <Picker label="Program" value={program} onChange={(v) => setProgram(v as ProgramKey | 'all')}>
+            <option value="all">All programs</option>
+            {PROGRAMS.filter((p) => all.some((a) => a.program === p.key)).map((p) => (
+              <option key={p.key} value={p.key}>
+                {p.label}
+              </option>
+            ))}
+          </Picker>
         </div>
       </section>
 
+      {/* The totals in one plain sentence. */}
+      <p className="animate-fade-up text-base leading-relaxed text-ink-soft [animation-delay:40ms]" aria-live="polite">
+        {summary({ year, firstYear: years[years.length - 1] ?? 2023, program, needle: search.trim(), activities: done.length, people: sum(done, (a) => a.individualsServed), households: sum(done, (a) => a.householdsServed), places })}
+      </p>
+
       {/* Totals */}
       <section className={`grid animate-fade-up grid-cols-2 gap-x-6 gap-y-5 [animation-delay:60ms] ${canFunding ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`} aria-label="Totals">
-        <Kpi icon={CalendarDays} label="Activities" value={formatNumber(done.length)} note={shown.length > done.length ? `+${shown.length - done.length} scheduled` : 'completed or ongoing'} />
-        <Kpi icon={Home} label="Households served" value={formatNumber(sum(done, (a) => a.householdsServed))} note="where recorded" />
-        <Kpi icon={UsersRound} label="People served" value={formatNumber(sum(done, (a) => a.individualsServed))} note="individuals, where recorded" />
-        <Kpi icon={MapPin} label="Places reached" value={formatNumber(places)} note="barangays, towns and provinces" />
+        <Kpi icon={UsersRound} label="people helped" value={formatNumber(sum(done, (a) => a.individualsServed))} note="where recorded" change={before && { by: sum(done, (a) => a.individualsServed) - before.people, vs }} />
+        <Kpi icon={Home} label="households reached" value={formatNumber(sum(done, (a) => a.householdsServed))} note="where recorded" change={before && { by: sum(done, (a) => a.householdsServed) - before.households, vs }} />
+        <Kpi icon={CalendarDays} label="activities done" value={formatNumber(done.length)} note={shown.length > done.length ? `+${shown.length - done.length} scheduled` : 'completed or ongoing'} change={before && { by: done.length - before.activities, vs }} />
+        <Kpi icon={MapPin} label="places visited" value={formatNumber(places)} note="barangays, towns and provinces" change={before && { by: places - before.places, vs }} />
         {canFunding && (
           <Kpi
             icon={Wallet}
-            label="Funding recorded"
+            label="funding recorded"
             value={funded.length ? `₱${compact(sum(funded, (a) => a.funding))}` : '—'}
             note={funded.length ? `for ${funded.length} of ${done.length} activities` : 'none recorded'}
             className="col-span-2 lg:col-span-1"
@@ -253,18 +263,51 @@ export function StatisticsPage() {
   );
 }
 
-/** A key figure: no box, just the number, what it counts and a note, under a thin rule. */
-function Kpi({ icon: Icon, label, value, note, className = '' }: { icon: typeof Home; label: string; value: string; note: string; className?: string }) {
+/** A key figure in plain words: an icon, the number, what it counts and a note. */
+function Kpi({ icon: Icon, label, value, note, change, className = '' }: { icon: typeof Home; label: string; value: string; note: string; change?: { by: number; vs: string } | null; className?: string }) {
   return (
-    <div className={`flex flex-col gap-1 border-t border-line pt-4 ${className}`}>
-      <p className="flex items-center gap-2 text-sm font-medium text-ink-soft">
-        <Icon className="h-4 w-4 shrink-0" aria-hidden />
-        {label}
-      </p>
-      <p className="font-display text-2xl tabular-nums tracking-wide sm:text-3xl">{/\d/.test(value) ? <RollingNumber value={value} /> : value}</p>
-      <p className="text-xs text-muted">{note}</p>
+    <div className={`flex items-start gap-3 border-t border-line pt-4 ${className}`}>
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-surface-sunken text-ink-soft" aria-hidden>
+        <Icon className="h-5 w-5" />
+      </span>
+      <div className="flex min-w-0 flex-col">
+        <p className="font-display text-2xl tabular-nums leading-tight tracking-wide sm:text-3xl">{/\d/.test(value) ? <RollingNumber value={value} /> : value}</p>
+        <p className="text-sm font-medium text-ink-soft">{label}</p>
+        <p className="text-xs text-muted">{note}</p>
+        {change && (
+          <p className={`mt-0.5 text-xs font-semibold tabular-nums ${change.by > 0 ? 'text-status-in' : change.by < 0 ? 'text-status-out' : 'text-muted'}`}>
+            {change.by > 0 ? <ArrowUpRight className="-mt-0.5 mr-0.5 inline h-3.5 w-3.5" aria-hidden /> : change.by < 0 ? <ArrowDownRight className="-mt-0.5 mr-0.5 inline h-3.5 w-3.5" aria-hidden /> : null}
+            {change.by > 0 ? '+' : change.by < 0 ? '−' : ''}
+            {change.by === 0 ? 'No change' : formatNumber(Math.abs(change.by))} <span className="font-medium text-muted">{change.vs}</span>
+          </p>
+        )}
+      </div>
     </div>
   );
+}
+
+/** A labelled dropdown: the label sits small above the value, inside the field. */
+function Picker({ label, value, onChange, children }: { label: string; value: string; onChange: (v: string) => void; children: ReactNode }) {
+  return (
+    <label className="relative block">
+      <span className="pointer-events-none absolute left-4 top-2 text-[0.625rem] font-semibold uppercase tracking-wider text-muted">{label}</span>
+      <select className="field appearance-none pb-2 pr-10 pt-6 font-semibold" value={value} onChange={(e) => onChange(e.target.value)}>
+        {children}
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
+    </label>
+  );
+}
+
+/** "In 2026, PHILRADS ran 142 activities and served 18,400 people in 63 places." */
+function summary({ year, firstYear, program, needle, activities, people, households, places }: { year: number | 'all'; firstYear: number; program: ProgramKey | 'all'; needle: string; activities: number; people: number; households: number; places: number }) {
+  const when = year === 'all' ? `Since ${firstYear}` : `In ${year}`;
+  const who = program === 'all' ? 'PHILRADS' : programMeta(program).label;
+  const match = needle ? ` matching “${needle}”` : '';
+  if (!activities) return `${when}, there are no activities${match} for ${program === 'all' ? 'PHILRADS' : who} yet.`;
+  const served = people ? ` and served ${formatNumber(people)} ${people === 1 ? 'person' : 'people'}` : households ? ` and reached ${formatNumber(households)} ${households === 1 ? 'household' : 'households'}` : '';
+  const where = places ? ` in ${formatNumber(places)} ${places === 1 ? 'place' : 'places'}` : '';
+  return `${when}, ${who} ran ${formatNumber(activities)} ${activities === 1 ? 'activity' : 'activities'}${match}${served}${where}.`;
 }
 
 /** Activities per year, stacked by program; a year can be picked to filter everything. */
