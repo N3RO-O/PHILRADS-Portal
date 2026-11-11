@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
+import { forwardRef, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import { Fab } from '../components/ui/Fab';
-import { ViewSwitch } from '../components/ui/ViewSwitch';
-import { AlertTriangle, CheckCircle2, CheckSquare, CloudUpload, HardDrive, Image as ImageIcon, Link2, Loader2, RotateCw, Search, Trash2, Upload, X } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, CheckSquare, CloudUpload, FolderCog, HardDrive, Image as ImageIcon, Link2, Loader2, RotateCw, Search, Trash2, Upload, X } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../components/auth/AuthProvider';
-import { DetailsHeader, DocItem, DocSidePane, useDocViewPrefs, VIEW_LIST, ViewMenu } from '../components/documentation/DocViews';
+import { DetailsHeader, DocItem, DocSidePane, useDocViewPrefs, VIEW_LIST, ViewMenu, type MenuAction } from '../components/documentation/DocViews';
+import { ActiveFilters, FilterGroup, FilterSheet, FiltersButton, type ActiveFilter } from '../components/ui/Filters';
 import { DocViewer } from '../components/documentation/DocViewer';
 import { UploadSheet, type TagOption } from '../components/documentation/UploadSheet';
 import { EmptyState, LoadError, Skeleton } from '../components/ui/Card';
@@ -45,6 +45,10 @@ export function DocumentationPage() {
   const [projectFilter, setProjectFilter] = useState(() => params.get('project') ?? '');
   const [uploadProject] = useState<string | null>(() => params.get('project'));
   const [queue, setQueue] = useState<QueuedUpload[]>(() => uploadQueue.items());
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  // Administrators change the Drive folder from the ⋯ menu; the form opens on the Drive card.
+  const [changingFolder, setChangingFolder] = useState(false);
+  const driveCard = useRef<HTMLElement>(null);
 
   // Relief events from the IMS and Live Map places, for tagging uploads.
   const { snapshot } = useInventoryState(inventoryStore);
@@ -92,6 +96,8 @@ export function DocumentationPage() {
       const next = new Set(s);
       if (next.has(id)) next.delete(id);
       else next.add(id);
+      // Unselecting the last one ends selecting, as in a phone's photo gallery.
+      if (!next.size) setSelecting(false);
       return next;
     });
   const stopSelecting = useCallback(() => {
@@ -101,6 +107,12 @@ export function DocumentationPage() {
   }, []);
   // Where a Shift-click range starts (the last file clicked on its own), like File Explorer.
   const [anchor, setAnchor] = useState<string | null>(null);
+  /** Press and hold a file (touch): start selecting with it. */
+  const holdToSelect = (id: string) => {
+    setSelecting(true);
+    setSelected((s) => new Set([...s, id]));
+    setAnchor(id);
+  };
 
   // Layout (View menu) and the side pane, remembered on this device.
   const [prefs, setPrefs] = useDocViewPrefs();
@@ -217,6 +229,19 @@ export function DocumentationPage() {
   const opened = all.find((d) => d.id === openId) ?? null;
   const focused = all.find((d) => d.id === focusId) ?? null;
 
+  const activeFilters: ActiveFilter[] = [
+    ...(category !== 'all' ? [{ key: 'cat', label: category, onClear: () => setCategory('all') }] : []),
+    ...(person ? [{ key: 'by', label: `By ${person}`, onClear: () => setPerson('') }] : []),
+    ...(projectFilter ? [{ key: 'project', label: projects.find((p) => p.id === projectFilter)?.name ?? 'Project', onClear: () => setProjectFilter('') }] : []),
+    ...(eventFilter ? [{ key: 'event', label: docEvents.find(([id]) => id === eventFilter)?.[1] ?? 'Response', onClear: () => setEventFilter('') }] : []),
+  ];
+  const clearFilters = () => {
+    setCategory('all');
+    setPerson('');
+    setProjectFilter('');
+    setEventFilter('');
+  };
+
   /** Click: open (or show in the pane). Shift-click: select a range. Ctrl/⌘-click: add or remove one. */
   const onItemClick = (d: DocFile, e: MouseEvent) => {
     const many = canManage && (e.shiftKey || e.ctrlKey || e.metaKey);
@@ -261,6 +286,24 @@ export function DocumentationPage() {
   const today = manilaDayKey(new Date().toISOString());
   const ready = Boolean(status?.connected) && !status?.lastError;
 
+  const menuActions: MenuAction[] = [
+    ...(canManage && all.length > 0
+      ? [{ label: selecting ? 'Stop selecting' : 'Select files', icon: CheckSquare, onClick: () => (selecting ? stopSelecting() : setSelecting(true)) }]
+      : []),
+    ...(isAdmin && status?.connected && !status.lastError
+      ? [
+          {
+            label: 'Change Drive folder',
+            icon: FolderCog,
+            onClick: () => {
+              setChangingFolder(true);
+              driveCard.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            },
+          },
+        ]
+      : []),
+  ];
+
   const connect = async (folder: string) => {
     try {
       window.location.href = await documentationService.connectUrl(folder);
@@ -271,7 +314,7 @@ export function DocumentationPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <DriveCard status={status} isAdmin={isAdmin} sample={documentationService.source === 'mock'} onConnect={(f) => void connect(f)} />
+      <DriveCard ref={driveCard} status={status} isAdmin={isAdmin} sample={documentationService.source === 'mock'} onConnect={(f) => void connect(f)} changing={changingFolder} onChanging={setChangingFolder} />
 
       {queue.length > 0 && <UploadQueuePanel items={queue} />}
 
@@ -281,86 +324,29 @@ export function DocumentationPage() {
             <ImageIcon className="h-4 w-4" aria-hidden /> Field documentation
             {docs && <span className="text-sm font-normal text-muted">{formatNumber(all.length)}</span>}
           </h2>
-          <div className="flex flex-wrap gap-2">
-            <ViewMenu view={prefs.view} pane={prefs.pane} onChange={setPrefs} showPanes={wide} />
-            {canManage && all.length > 0 && (
-              <button type="button" className="btn-ghost min-h-11 px-4" aria-pressed={selecting} onClick={() => (selecting ? stopSelecting() : setSelecting(true))}>
-                {selecting ? <X className="h-4 w-4" aria-hidden /> : <CheckSquare className="h-4 w-4" aria-hidden />} {selecting ? 'Done selecting' : 'Select'}
-              </button>
-            )}
-            {canUpload && !selecting && (
-              <button type="button" className={`${ready ? 'btn-primary' : 'btn-ghost'} hidden min-h-11 px-4 md:inline-flex`} onClick={() => setUploadOpen(true)} disabled={!ready || !online} title={!ready ? 'Google Drive isn’t connected yet' : undefined}>
-                <Upload className="h-4 w-4" aria-hidden /> Upload files
-              </button>
-            )}
-            {canUpload && !selecting && (
-              <Fab onClick={() => setUploadOpen(true)} disabled={!ready || !online} title={!ready ? 'Google Drive isn’t connected yet' : undefined} icon={<Upload className="h-6 w-6" aria-hidden />}>
-                Upload
-              </Fab>
-            )}
-          </div>
+          {canUpload && !selecting && (
+            <button type="button" className={`${ready ? 'btn-primary' : 'btn-ghost'} hidden min-h-11 px-4 md:inline-flex`} onClick={() => setUploadOpen(true)} disabled={!ready || !online} title={!ready ? 'Google Drive isn’t connected yet' : undefined}>
+              <Upload className="h-4 w-4" aria-hidden /> Upload files
+            </button>
+          )}
+          {canUpload && !selecting && (
+            <Fab onClick={() => setUploadOpen(true)} disabled={!ready || !online} title={!ready ? 'Google Drive isn’t connected yet' : undefined} icon={<Upload className="h-6 w-6" aria-hidden />}>
+              Upload
+            </Fab>
+          )}
         </div>
 
-        <div className="md:hidden">
-          {(() => {
-            const n = (c: DocumentCategory) => all.filter((d) => d.category === c).length;
-            const opts = (cs: readonly DocumentCategory[]) => cs.filter((c) => n(c) > 0).map((c) => ({ key: c as DocumentCategory | 'all', label: c, count: n(c) }));
-            const media = opts(['Photos', 'Videos']);
-            const records = opts(DOCUMENT_CATEGORIES.filter((c) => c !== 'Photos' && c !== 'Videos'));
-            return (
-              <ViewSwitch
-                label="Show"
-                value={category}
-                onChange={setCategory}
-                groups={[
-                  { key: 'all', label: 'All', count: all.length, options: [{ key: 'all', label: 'All' }] },
-                  { key: 'media', label: 'Media', count: media.reduce((t, o) => t + o.count, 0), options: media },
-                  { key: 'records', label: 'Records', count: records.reduce((t, o) => t + o.count, 0), options: records },
-                ]}
-              />
-            );
-          })()}
-        </div>
-        <div className="hidden flex-wrap gap-2 md:flex" role="radiogroup" aria-label="Show">
-          {(['all', ...DOCUMENT_CATEGORIES] as const).map((c) => {
-            const n = c === 'all' ? all.length : all.filter((d) => d.category === c).length;
-            if (c !== 'all' && n === 0) return null;
-            return (
-              <button key={c} type="button" role="radio" aria-checked={category === c} aria-pressed={category === c} className="chip" onClick={() => setCategory(c)}>
-                {c === 'all' ? 'Everything' : c} <span className="ml-1.5 opacity-60">{n}</span>
-              </button>
-            );
-          })}
-        </div>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_11rem_12rem_12rem]">
-          <label className="relative block">
+        {/* Search, one Filters button and the ⋯ menu: one row, so the files come first. */}
+        <div className="flex items-center gap-2">
+          <label className="relative block min-w-0 flex-1">
             <span className="sr-only">Search documentation</span>
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
-            <input type="search" className="field pl-10" placeholder="Search titles, notes, people…" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <input type="search" className="field pl-10" placeholder="Search titles, notes, people…" value={search} onChange={(e) => setSearch(e.target.value)} enterKeyHint="search" />
           </label>
-          <select className="field" aria-label="Uploaded by" value={person} onChange={(e) => setPerson(e.target.value)}>
-            <option value="">Everyone</option>
-            {people.map((p) => (
-              <option key={p}>{p}</option>
-            ))}
-          </select>
-          <select className="field" aria-label="Project" value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)}>
-            <option value="">All projects</option>
-            {projects.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-          <select className="field" aria-label="Response" value={eventFilter} onChange={(e) => setEventFilter(e.target.value)}>
-            <option value="">All responses</option>
-            {docEvents.map(([id, name]) => (
-              <option key={id} value={id}>
-                {name}
-              </option>
-            ))}
-          </select>
+          <FiltersButton count={activeFilters.length} onClick={() => setFiltersOpen(true)} />
+          <ViewMenu view={prefs.view} pane={prefs.pane} onChange={setPrefs} showPanes={wide} actions={menuActions} />
         </div>
+        <ActiveFilters filters={activeFilters} onClearAll={clearFilters} />
 
         {loadError ? (
           <LoadError message={loadError} onRetry={() => void load()} />
@@ -409,6 +395,7 @@ export function DocumentationPage() {
                           focused={paneOn && focusId === d.id}
                           onClick={(e) => onItemClick(d, e)}
                           onDoubleClick={() => !selecting && setOpenId(d.id)}
+                          onLongPress={canManage ? () => holdToSelect(d.id) : undefined}
                           compact={paneOn}
                         />
                       </LeavingRow>
@@ -432,19 +419,78 @@ export function DocumentationPage() {
 
       {selecting && (
         <div className="sticky bottom-4 z-30 mx-auto flex w-full max-w-xl flex-wrap items-center gap-2 rounded-2xl border border-line bg-surface-raised p-3 shadow-2xl shadow-black/50">
-          <span className="min-w-0 flex-1 text-sm font-semibold">{selected.size ? `${selected.size} selected` : wide ? 'Click files to select them (Shift-click for a range)' : 'Tap files to select them'}</span>
+          <button type="button" className="icon-btn h-10 w-10" onClick={stopSelecting} aria-label="Stop selecting">
+            <X className="h-5 w-5" aria-hidden />
+          </button>
+          <span className="min-w-0 flex-1 text-sm font-semibold" aria-live="polite">{selected.size ? `${selected.size} selected` : wide ? 'Click files to select them (Shift-click for a range)' : 'Tap files to select them'}</span>
           <button
             type="button"
             className="btn-ghost min-h-10 px-3 text-xs"
             onClick={() => setSelected((s) => (shown.every((d) => s.has(d.id)) ? new Set() : new Set(shown.map((d) => d.id))))}
           >
-            {shown.length && shown.every((d) => selected.has(d.id)) ? 'Select none' : `Select all ${shown.length}`}
+            {shown.length && shown.every((d) => selected.has(d.id)) ? (
+              <>
+                <span className="sm:hidden">None</span>
+                <span className="hidden sm:inline">Select none</span>
+              </>
+            ) : (
+              <>
+                <span className="sm:hidden">All</span>
+                <span className="hidden sm:inline">Select all {shown.length}</span>
+              </>
+            )}
           </button>
           <button type="button" className="btn-primary min-h-10 bg-status-out px-4 text-xs text-white" onClick={() => void deleteSelected()} disabled={!selected.size || deleting} aria-busy={deleting || undefined}>
-            {deleting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Trash2 className="h-4 w-4" aria-hidden />} Delete selected
+            {deleting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Trash2 className="h-4 w-4" aria-hidden />} <span>
+              Delete<span className="hidden sm:inline"> selected</span>
+            </span>
           </button>
         </div>
       )}
+
+      <FilterSheet open={filtersOpen} onClose={() => setFiltersOpen(false)} count={activeFilters.length} shown={shown.length} noun={['file', 'files']} onClearAll={clearFilters}>
+        <FilterGroup label="Show">
+          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Show">
+            {(['all', ...DOCUMENT_CATEGORIES] as const).map((c) => {
+              const n = c === 'all' ? all.length : all.filter((d) => d.category === c).length;
+              if (c !== 'all' && n === 0 && category !== c) return null;
+              return (
+                <button key={c} type="button" role="radio" aria-checked={category === c} aria-pressed={category === c} className="chip" onClick={() => setCategory(c)}>
+                  {c === 'all' ? 'Everything' : c} <span className="ml-1.5 opacity-60">{n}</span>
+                </button>
+              );
+            })}
+          </div>
+        </FilterGroup>
+        <FilterGroup label="Uploaded by" htmlFor="doc-person">
+          <select id="doc-person" className="field" value={person} onChange={(e) => setPerson(e.target.value)}>
+            <option value="">Everyone</option>
+            {people.map((p) => (
+              <option key={p}>{p}</option>
+            ))}
+          </select>
+        </FilterGroup>
+        <FilterGroup label="Project" htmlFor="doc-project">
+          <select id="doc-project" className="field" value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)}>
+            <option value="">All projects</option>
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </FilterGroup>
+        <FilterGroup label="Response" htmlFor="doc-event">
+          <select id="doc-event" className="field" value={eventFilter} onChange={(e) => setEventFilter(e.target.value)}>
+            <option value="">All responses</option>
+            {docEvents.map(([id, name]) => (
+              <option key={id} value={id}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </FilterGroup>
+      </FilterSheet>
 
       <UploadSheet
         open={uploadOpen}
@@ -512,16 +558,23 @@ export function DocumentationPage() {
 }
 
 /** Where uploads go, and (administrators) connecting Google Drive. */
-function DriveCard({ status, isAdmin, sample, onConnect }: { status: DriveStatus | null; isAdmin: boolean; sample: boolean; onConnect: (folder: string) => void }) {
-  const [changing, setChanging] = useState(false);
+const DriveCard = forwardRef<
+  HTMLElement,
+  { status: DriveStatus | null; isAdmin: boolean; sample: boolean; onConnect: (folder: string) => void; changing: boolean; onChanging: (on: boolean) => void }
+>(function DriveCard({ status, isAdmin, sample, onConnect, changing, onChanging: setChanging }, ref) {
   const [folder, setFolder] = useState(DEFAULT_DRIVE_FOLDER);
   const [busy, setBusy] = useState(false);
+  // Opened from the ⋯ menu: put the cursor in the folder link.
+  const folderInput = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (changing) folderInput.current?.focus({ preventScroll: true });
+  }, [changing]);
   if (!status) return <Skeleton className="h-16 rounded-2xl" />;
   const broken = Boolean(status.connected && status.lastError);
   const showForm = isAdmin && (!status.connected || broken || changing);
 
   return (
-    <section className={`card flex flex-col gap-3`} aria-label="Google Drive">
+    <section ref={ref} className="card flex scroll-mt-40 flex-col gap-3 md:scroll-mt-24" aria-label="Google Drive">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <p className="flex min-w-0 items-start gap-3 text-sm">
           <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${status.connected && !broken ? 'bg-status-in/15 text-status-in' : 'text-ink-soft'}`}>
@@ -549,11 +602,6 @@ function DriveCard({ status, isAdmin, sample, onConnect }: { status: DriveStatus
             )}
           </span>
         </p>
-        {isAdmin && status.connected && !broken && !changing && (
-          <button type="button" className="btn-ghost min-h-9 px-3 text-xs" onClick={() => setChanging(true)}>
-            Change folder
-          </button>
-        )}
       </div>
 
       {showForm && (
@@ -573,7 +621,7 @@ function DriveCard({ status, isAdmin, sample, onConnect }: { status: DriveStatus
           <label className="relative block">
             <span className="sr-only">Google Drive folder link</span>
             <Link2 className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
-            <input className="field pl-10 text-xs" value={folder} onChange={(e) => setFolder(e.target.value)} placeholder="https://drive.google.com/drive/folders/…" />
+            <input ref={folderInput} className="field pl-10 text-xs" value={folder} onChange={(e) => setFolder(e.target.value)} placeholder="https://drive.google.com/drive/folders/…" />
           </label>
           <div className="flex flex-wrap gap-2">
             <button type="submit" className="btn-primary min-h-11 px-4" disabled={busy || !folder.trim()} aria-busy={busy || undefined}>
@@ -589,7 +637,7 @@ function DriveCard({ status, isAdmin, sample, onConnect }: { status: DriveStatus
       )}
     </section>
   );
-}
+});
 
 /** Uploads in progress (and just finished or failed), with cancel and retry. */
 function UploadQueuePanel({ items }: { items: QueuedUpload[] }) {

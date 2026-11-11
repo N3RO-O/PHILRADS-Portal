@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import { Fab } from '../components/ui/Fab';
-import { ViewSwitch } from '../components/ui/ViewSwitch';
 import { useSearchParams } from 'react-router-dom';
 import { CheckSquare, FolderOpen, Library, Loader2, Plus, Search, Trash2, User, X } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
-import { useDocViewPrefs, ViewMenu, type DocView } from '../components/documentation/DocViews';
+import { useDocViewPrefs, ViewMenu, type DocView, type MenuAction } from '../components/documentation/DocViews';
+import { ActiveFilters, FilterGroup, FilterSheet, FiltersButton, type ActiveFilter } from '../components/ui/Filters';
 import { ResourceCard } from '../components/resources/ResourceCard';
 import { CARD_LIST, RESOURCE_LIST, ResourceDetailsHeader, ResourceItem, ResourceSidePane } from '../components/resources/ResourceViews';
 import { ResourcePreview } from '../components/resources/ResourcePreview';
@@ -39,6 +39,7 @@ export function ResourcesPage() {
   const [search, setSearch] = useState(q);
   const [sheet, setSheet] = useState<{ resource: Resource | null } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   // The open preview lives in the URL (?view=<id>) as its own history entry: a phone's Back button closes it.
   const viewId = params.get('view');
   /** Opened from a card (so Back returns to the list), not from a shared ?view= link. */
@@ -128,6 +129,12 @@ export function ResourcesPage() {
     setSelected(new Set());
     setAnchor(null);
   }, []);
+  /** Press and hold a resource (touch): start selecting with it. */
+  const holdToSelect = (id: string) => {
+    setSelecting(true);
+    setSelected((s) => new Set([...s, id]));
+    setAnchor(id);
+  };
   const openResource = (r: Resource) => {
     const link = parseResourceLink(r.url);
     if (link?.previewUrl) openPreview(r);
@@ -149,6 +156,8 @@ export function ResourcesPage() {
           const next = new Set(s);
           if (next.has(r.id)) next.delete(r.id);
           else next.add(r.id);
+          // Unselecting the last one ends selecting, as in a phone's photo gallery.
+          if (!next.size) setSelecting(false);
           return next;
         });
         setAnchor(r.id);
@@ -207,6 +216,7 @@ export function ResourcesPage() {
           selecting={selecting}
           selected={selected.has(r.id)}
           onSelect={(e) => onItemClick(r, e)}
+          onLongPress={canManage ? () => holdToSelect(r.id) : undefined}
         />
       </LeavingRow>
     ) : (
@@ -220,6 +230,7 @@ export function ResourcesPage() {
           compact={paneOn}
           onClick={(e) => onItemClick(r, e)}
           onDoubleClick={() => !selecting && openResource(r)}
+          onLongPress={canManage ? () => holdToSelect(r.id) : undefined}
         />
       </LeavingRow>
     );
@@ -234,6 +245,13 @@ export function ResourcesPage() {
 
   const filtersOn = Boolean(q || cat || person);
   const reload = () => list.reload();
+  const activeFilters: ActiveFilter[] = [
+    ...(cat ? [{ key: 'cat', label: cat, onClear: () => setParam({ cat: null }) }] : []),
+    ...(person ? [{ key: 'by', label: `Added by ${person}`, onClear: () => setParam({ by: null }) }] : []),
+  ];
+  const clearFilters = () => setParam({ cat: null, by: null });
+  const menuActions: MenuAction[] =
+    canManage && all.length > 0 ? [{ label: selecting ? 'Stop selecting' : 'Select resources', icon: CheckSquare, onClick: () => (selecting ? stopSelecting() : setSelecting(true)) }] : [];
 
   return (
     <div className="flex flex-col gap-4 pb-24 md:pb-0">
@@ -249,98 +267,37 @@ export function ResourcesPage() {
               <p className="mt-1 text-xs font-semibold text-ink-soft">You’re offline: showing the list saved on this device. Opening files and adding resources need a connection.</p>
             )}
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <ViewMenu view={prefs.view} pane={prefs.pane} onChange={setPrefs} showPanes={wide} />
-            {canManage && all.length > 0 && (
-              <button type="button" className="btn-ghost min-h-11 px-4" aria-pressed={selecting} onClick={() => (selecting ? stopSelecting() : setSelecting(true))}>
-                {selecting ? <X className="h-4 w-4" aria-hidden /> : <CheckSquare className="h-4 w-4" aria-hidden />} {selecting ? 'Done selecting' : 'Select'}
-              </button>
-            )}
-            {canManage && !selecting && (
-              <button type="button" className="btn-primary hidden md:inline-flex" onClick={() => setSheet({ resource: null })}>
-                <Plus className="h-4 w-4" aria-hidden /> Add resource
-              </button>
-            )}
-          </div>
+          {canManage && !selecting && (
+            <button type="button" className="btn-primary hidden md:inline-flex" onClick={() => setSheet({ resource: null })}>
+              <Plus className="h-4 w-4" aria-hidden /> Add resource
+            </button>
+          )}
         </div>
 
-        {/* Only the search box stays at the top while scrolling (from tablets up; phones have the top bar's
-            search). The filters below scroll away with the page, so they never cover the list. */}
-        <div className="relative bg-page py-2 md:sticky md:top-16 md:z-20">
-          <label htmlFor="res-search" className="sr-only">
-            Search resources
-          </label>
-          <Search className="pointer-events-none absolute left-[1.875rem] top-1/2 h-4 w-4 -translate-y-1/2 text-muted sm:left-[2.125rem]" aria-hidden />
-          <input
-            id="res-search"
-            type="search"
-            className="field pl-10"
-            placeholder="Search title, description or who added it"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            enterKeyHint="search"
-          />
-        </div>
-        <div className="-mt-2 flex flex-col gap-2 border-b border-line pb-3">
-          <div id="res-cat" className="md:hidden">
-            <ViewSwitch
-              label="Category"
-              value={cat || 'all'}
-              onChange={(c) => setParam({ cat: c === 'all' ? null : c })}
-              groups={[{ key: 'cat', label: 'Category', options: [{ key: 'all', label: 'All' }, ...RESOURCE_CATEGORIES.map((c) => ({ key: c as string, label: c }))] }]}
+        {/* Search, one Filters button and the ⋯ menu in one row (it stays at the top while scrolling from
+            tablets up; phones have the top bar's search), so the files come first. */}
+        <div className="flex items-center gap-2 bg-page py-2 md:sticky md:top-16 md:z-20">
+          <label className="relative block min-w-0 flex-1">
+            <span className="sr-only">Search resources</span>
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
+            <input
+              id="res-search"
+              type="search"
+              className="field pl-10"
+              placeholder="Search title, description or who added it"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              enterKeyHint="search"
             />
-          </div>
-          <div className="hidden flex-wrap items-center gap-2 md:flex" role="group" aria-label="Category">
-            <button type="button" className="chip" aria-pressed={!cat} onClick={() => setParam({ cat: null })}>
-              All
-            </button>
-            {RESOURCE_CATEGORIES.map((c) => (
-              <button key={c} type="button" className="chip" aria-pressed={cat === c} onClick={() => setParam({ cat: cat === c ? null : c })}>
-                {c}
-              </button>
-            ))}
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <label htmlFor="res-person" className="sr-only">
-              Added by
-            </label>
-            <select id="res-person" className={`chip bg-transparent pr-7 ${person ? 'border-uplift text-uplift' : ''}`} value={person} onChange={(e) => setParam({ by: e.target.value || null })}>
-              <option value="">Added by anyone</option>
-              {people.map((p) => (
-                <option key={p}>{p}</option>
-              ))}
-            </select>
-            <div role="group" aria-label="Group by" className="relative flex gap-1 rounded-lg bg-surface-sunken p-0.5">
-              <SlidingPill className="rounded-md bg-surface-raised shadow-sm shadow-black/30 ring-1 ring-inset ring-ink/[0.06]" />
-              {(
-                [
-                  ['category', 'By category', FolderOpen],
-                  ['person', 'By person', User],
-                ] as const
-              ).map(([g, label, Icon]) => (
-                <button
-                  key={g}
-                  type="button"
-                  aria-pressed={groupBy === g}
-                  onClick={() => setParam({ group: g === 'category' ? null : g })}
-                  className="tap inline-flex min-h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-semibold text-ink-soft relative z-10 transition-colors duration-500 aria-pressed:text-ink"
-                >
-                  <Icon className="h-3.5 w-3.5" aria-hidden /> {label}
-                </button>
-              ))}
-            </div>
-            {filtersOn && (
-              <button type="button" className="chip gap-1" onClick={() => (setSearch(''), setParam({ q: null, cat: null, by: null }))}>
-                <X className="h-3.5 w-3.5" aria-hidden /> Clear filters
-              </button>
-            )}
-            {list.status === 'success' && (
-              <span className="ml-auto text-xs text-muted" aria-live="polite">
-                {formatNumber(filtered.length)} of {formatNumber(all.length)}
-              </span>
-            )}
-          </div>
+          </label>
+          <FiltersButton count={activeFilters.length} onClick={() => setFiltersOpen(true)} />
+          <ViewMenu view={prefs.view} pane={prefs.pane} onChange={setPrefs} showPanes={wide} actions={menuActions} />
         </div>
+        <ActiveFilters
+          filters={activeFilters}
+          onClearAll={clearFilters}
+          trailing={list.status === 'success' && filtersOn ? <span aria-live="polite">{formatNumber(filtered.length)} of {formatNumber(all.length)}</span> : undefined}
+        />
 
         {list.status === 'loading' && (
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-busy="true">
@@ -404,25 +361,84 @@ export function ResourcesPage() {
 
       {selecting && (
         <div className="sticky bottom-4 z-30 mx-auto flex w-full max-w-xl flex-wrap items-center gap-2 rounded-2xl border border-line bg-surface-raised p-3 shadow-2xl shadow-black/50">
-          <span className="min-w-0 flex-1 text-sm font-semibold">{selected.size ? `${selected.size} selected` : wide ? 'Click resources to select them (Shift-click for a range)' : 'Tap resources to select them'}</span>
+          <button type="button" className="icon-btn h-10 w-10" onClick={stopSelecting} aria-label="Stop selecting">
+            <X className="h-5 w-5" aria-hidden />
+          </button>
+          <span className="min-w-0 flex-1 text-sm font-semibold" aria-live="polite">{selected.size ? `${selected.size} selected` : wide ? 'Click resources to select them (Shift-click for a range)' : 'Tap resources to select them'}</span>
           <button
             type="button"
             className="btn-ghost min-h-10 px-3 text-xs"
             onClick={() => setSelected((s) => (ordered.every((r) => s.has(r.id)) ? new Set() : new Set(ordered.map((r) => r.id))))}
           >
-            {ordered.length && ordered.every((r) => selected.has(r.id)) ? 'Select none' : `Select all ${ordered.length}`}
+            {ordered.length && ordered.every((r) => selected.has(r.id)) ? (
+              <>
+                <span className="sm:hidden">None</span>
+                <span className="hidden sm:inline">Select none</span>
+              </>
+            ) : (
+              <>
+                <span className="sm:hidden">All</span>
+                <span className="hidden sm:inline">Select all {ordered.length}</span>
+              </>
+            )}
           </button>
           <button type="button" className="btn-primary min-h-10 bg-status-out px-4 text-xs text-white" onClick={() => void removeSelected()} disabled={!selected.size || removing} aria-busy={removing || undefined}>
-            {removing ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Trash2 className="h-4 w-4" aria-hidden />} Remove selected
+            {removing ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Trash2 className="h-4 w-4" aria-hidden />} <span>
+              Remove<span className="hidden sm:inline"> selected</span>
+            </span>
           </button>
         </div>
       )}
 
-      {canManage && (
+      {canManage && !selecting && (
         <Fab onClick={() => setSheet({ resource: null })} icon={<Plus className="h-6 w-6" aria-hidden />}>
           Add resource
         </Fab>
       )}
+
+      <FilterSheet open={filtersOpen} onClose={() => setFiltersOpen(false)} count={activeFilters.length} shown={filtered.length} noun={['resource', 'resources']} onClearAll={clearFilters}>
+        <FilterGroup label="Category">
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Category">
+            <button type="button" className="chip" aria-pressed={!cat} onClick={() => setParam({ cat: null })}>
+              All
+            </button>
+            {RESOURCE_CATEGORIES.map((c) => (
+              <button key={c} type="button" className="chip" aria-pressed={cat === c} onClick={() => setParam({ cat: cat === c ? null : c })}>
+                {c}
+              </button>
+            ))}
+          </div>
+        </FilterGroup>
+        <FilterGroup label="Added by" htmlFor="res-person">
+          <select id="res-person" className="field" value={person} onChange={(e) => setParam({ by: e.target.value || null })}>
+            <option value="">Anyone</option>
+            {people.map((p) => (
+              <option key={p}>{p}</option>
+            ))}
+          </select>
+        </FilterGroup>
+        <FilterGroup label="Group by">
+          <div role="group" aria-label="Group by" className="relative flex gap-1 self-start rounded-xl bg-surface-sunken p-1">
+            <SlidingPill className="rounded-lg bg-surface-raised shadow-sm shadow-black/30 ring-1 ring-inset ring-ink/[0.06]" />
+            {(
+              [
+                ['category', 'By category', FolderOpen],
+                ['person', 'By person', User],
+              ] as const
+            ).map(([g, label, Icon]) => (
+              <button
+                key={g}
+                type="button"
+                aria-pressed={groupBy === g}
+                onClick={() => setParam({ group: g === 'category' ? null : g })}
+                className="tap relative z-10 inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold text-ink-soft transition-colors duration-500 aria-pressed:text-ink"
+              >
+                <Icon className="h-4 w-4" aria-hidden /> {label}
+              </button>
+            ))}
+          </div>
+        </FilterGroup>
+      </FilterSheet>
 
       <ResourcePreview
         resource={(viewId && all.find((r) => r.id === viewId)) || null}
