@@ -1,5 +1,33 @@
 [
   {
+    "id": "2026-11-11.1",
+    "version": "1.10.6",
+    "date": "2026-11-11",
+    "title": "Steadier screens on your phone",
+    "items": [
+      {
+        "icon": "key-round",
+        "title": "Sign-in that stays put",
+        "body": "A mistake now shows in the field's own label, and a wrong password shows at the top of the screen, so the boxes and the Sign in button never jump. With quick unlock, your fingerprint comes first; the PIN shows when you ask for it or the fingerprint doesn't work."
+      },
+      {
+        "icon": "users",
+        "title": "A cleaner profile",
+        "body": "Your status is the dot on your picture, like the rest of the portal. Saving shows a clear confirmation. Your position is set by an administrator, on the Staff page; until then your profile shows your role."
+      },
+      {
+        "icon": "sparkles",
+        "title": "Less clutter",
+        "body": "The Online label is gone (the green dot says it), today's date shows only on Home, and Home no longer has the overview row. The status picker in the account menu opens as a small card, so nothing under it moves."
+      },
+      {
+        "icon": "list-checks",
+        "title": "A steady page behind the menu",
+        "body": "On phones, the page behind the navigation menu no longer scrolls while the menu is open."
+      }
+    ]
+  },
+  {
     "id": "2026-11-10.2",
     "version": "1.10.5",
     "date": "2026-11-10",

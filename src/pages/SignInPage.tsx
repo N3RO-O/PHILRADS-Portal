@@ -52,8 +52,6 @@ export function SignInPage() {
   const [attempt, setAttempt] = useState(0);
   // Bumped on each submit with something missing: the fields show their messages then, not while typing.
   const [reveal, setReveal] = useState(0);
-  // The list of what to fix, at the top of the form, after a submit that had problems.
-  const [summary, setSummary] = useState(false);
 
   /** Before sending: anything missing or mistyped is shown on its field, and the first one gets focus. */
   const checkFields = (ids: string[], values: Record<string, string>) => {
@@ -86,7 +84,6 @@ export function SignInPage() {
     setCodeSentTo(null);
     setCode('');
     setCodeState('idle');
-    setSummary(false);
     setReveal(0);
   };
 
@@ -186,11 +183,7 @@ export function SignInPage() {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!checkFields(['sign-in-email', 'sign-in-password'], { 'sign-in-email': email, 'sign-in-password': password })) {
-      setSummary(true);
-      return;
-    }
-    setSummary(false);
+    if (!checkFields(['sign-in-email', 'sign-in-password'], { 'sign-in-email': email, 'sign-in-password': password })) return;
     const parsed = schema.safeParse({ email, password });
     if (!parsed.success) return;
     if (!online) {
@@ -234,16 +227,7 @@ export function SignInPage() {
         <div className="bg-surface-raised">
         {mode === 'sign-in' ? (
           <form onSubmit={submit} noValidate className="flex flex-col gap-4 p-6">
-            <div>
-              <h1 className="text-lg font-bold">Sign in</h1>
-              <ErrorSummary
-                open={summary}
-                items={FIELDS.flatMap((f) => {
-                  const problem = f.problem(f.id === 'sign-in-email' ? email : password);
-                  return problem ? [{ id: f.id, label: f.label, problem }] : [];
-                })}
-              />
-            </div>
+            <h1 className="text-lg font-bold">Sign in</h1>
             {idleOut && !error && (
               <p role="status" className="rounded-xl border border-line bg-surface-sunken px-4 py-3 text-sm text-ink-soft">
                 You were signed out after 5 minutes without activity. Sign in again to continue.
@@ -369,60 +353,24 @@ function EmailField({ value, onChange, reveal, autoFocus }: { value: string; onC
 }
 
 /**
- * After a submit with something missing: what to fix, each a link to its field. It updates as you
- * fix things and folds away (smoothly, no jump) once nothing is left.
- */
-function ErrorSummary({ open, items }: { open: boolean; items: { id: string; label: string; problem: string }[] }) {
-  const show = open && items.length > 0;
-  return (
-    <div className="grid transition-[grid-template-rows] duration-300 ease-out" style={{ gridTemplateRows: show ? '1fr' : '0fr' }}>
-      <div className="min-h-0 overflow-hidden">
-        <div role="alert" className={`mt-3 rounded-xl border border-status-out/40 bg-status-out/10 px-4 py-3 text-sm ${show ? '' : 'invisible'}`}>
-          {show && (
-            <>
-              <p className="flex items-center gap-2 font-semibold text-status-out">
-                <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
-                {items.length === 1 ? 'One thing to fix before you sign in' : `${items.length} things to fix before you sign in`}
-              </p>
-              <ul className="mt-1.5 flex flex-col gap-1 pl-6">
-                {items.map((it) => (
-                  <li key={it.id}>
-                    <a
-                      href={`#${it.id}`}
-                      className="text-ink underline decoration-status-out/50 underline-offset-4 hover:decoration-status-out"
-                      onClick={(e) => (e.preventDefault(), document.getElementById(it.id)?.focus())}
-                    >
-                      {it.label}: {it.problem}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/**
- * What the server said (wrong password, offline...). It opens smoothly instead of shoving the
- * button down, and the next keystroke folds it away again.
+ * What the server said (wrong password, offline...): a note that floats at the top of the screen,
+ * so the fields and the button never move. The next keystroke clears it.
  */
 function ServerMessage({ error, attempt }: { error: string | null; attempt: number }) {
   const last = useRef(error);
   if (error) last.current = error;
   return (
-    <div className="-mt-4 grid transition-[grid-template-rows] duration-300 ease-out" style={{ gridTemplateRows: error ? '1fr' : '0fr' }}>
-      <div className="min-h-0 overflow-hidden">
-        <p
-          key={attempt}
-          role={error ? 'alert' : undefined}
-          className={`mt-4 rounded-xl border border-rose/40 bg-rose/10 px-4 py-3 text-sm text-rose ${error ? 'animate-fade-in [animation-delay:380ms]' : 'opacity-0 transition-opacity duration-200'}`}
-        >
-          {last.current}
-        </p>
-      </div>
+    <div className="pointer-events-none fixed inset-x-4 top-[calc(env(safe-area-inset-top)+1rem)] z-50 mx-auto max-w-sm">
+      <p
+        key={attempt}
+        role={error ? 'alert' : undefined}
+        className={`flex items-start gap-2 rounded-xl border border-rose/50 bg-surface-raised px-4 py-3 text-sm text-ink shadow-2xl shadow-black/60 ${
+          error ? 'animate-pop-in' : 'invisible opacity-0 transition-opacity duration-200'
+        }`}
+      >
+        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose" aria-hidden />
+        {last.current}
+      </p>
     </div>
   );
 }

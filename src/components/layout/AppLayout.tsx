@@ -14,7 +14,7 @@ import { AUTO_SIGN_OUT } from '../../lib/idle';
 import { OnboardingProvider } from '../onboarding/OnboardingProvider';
 import { UpdatePrompt } from '../pwa/UpdatePrompt';
 import { MobileDrawer } from './MobileDrawer';
-import { OfflineNotice, OnlinePill } from './OnlineStatus';
+import { OfflineNotice } from './OnlineStatus';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { ActivePanel } from './ActivePanel';
@@ -132,20 +132,21 @@ export function AppLayout() {
         <main id="main" className="mx-auto w-full max-w-[100rem] flex-1 px-4 pb-10 sm:px-6" style={{ viewTransitionName: 'page' }}>
           <div className="flex flex-wrap items-end justify-between gap-3 pb-6 pt-3">
             <div className="min-w-0">
-              {current && (
+              {/* Your profile is just you: no section label above its title. */}
+              {current && !location.pathname.startsWith('/profile') && (
                 <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-muted">
                   PHILRADS <span aria-hidden className="mx-1 text-ink-mute/50">/</span> <span className="text-ink-soft">{current.group}</span>
                 </p>
               )}
               <h1 className="mt-1 text-2xl font-bold leading-tight tracking-tight text-ink sm:text-[1.75rem]">{title}</h1>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <OnlinePill className="sm:hidden" />
+            {/* Today's date on Home only; the green dot on your picture says you're online. */}
+            {location.pathname === '/' && (
               <span className="pill border border-line/70 bg-surface text-ink-soft">
                 <CalendarDays className="h-3.5 w-3.5" aria-hidden />
                 <time dateTime={new Date().toISOString().slice(0, 10)}>{formatLongDate()}</time>
               </span>
-            </div>
+            )}
           </div>
           <OfflineNotice />
           {/* Keyed by page so each page change fades in smoothly. */}

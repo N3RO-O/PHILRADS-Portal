@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Fab } from '../components/ui/Fab';
-import { Archive, ArchiveRestore, Loader2, MailPlus, RotateCw, Search, UsersRound, X } from 'lucide-react';
+import { Archive, ArchiveRestore, Briefcase, Loader2, MailPlus, Pencil, RotateCw, Search, UsersRound, X } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../components/auth/AuthProvider';
 import { useOnboarding } from '../components/onboarding/OnboardingProvider';
@@ -18,6 +18,7 @@ import { PersonAvatar } from '../components/ui/PersonAvatar';
 import { Switch } from '../components/ui/Switch';
 import { TopLayer } from '../components/ui/TopLayer';
 import { DoneCheck } from '../components/ui/DoneCheck';
+import { Dialog } from '../components/ui/Dialog';
 
 type Filter = 'all' | 'active' | 'volunteers' | 'pending' | 'off' | 'archived';
 const FILTERS: [Filter, string][] = [
@@ -139,6 +140,12 @@ export function StaffPage() {
     } finally {
       setBusyId(null);
     }
+  };
+  // Whose position is being set (administrators set everyone's, their own included).
+  const [positionFor, setPositionFor] = useState<StaffMember | null>(null);
+  const savePosition = async (m: StaffMember, position: string) => {
+    const ok = await run(m, () => staffService.setPosition(m.id, position), position.trim() ? `${m.name}’s position is now ${position.trim()}.` : `${m.name}’s position is back to ${roleLabel(m.roleKey)}.`);
+    if (ok) setPositionFor(null);
   };
   const changeRole = (m: StaffMember, roleKey: StaffRoleKey) =>
     void run(m, () => staffService.setRole(m.id, roleKey), `${m.name} is now ${roleLabel(roleKey) === 'Administrator' ? 'an' : 'a'} ${roleLabel(roleKey)}.`);
@@ -279,6 +286,19 @@ export function StaffPage() {
                             {m.archivedAt && <span className="badge border-line text-muted">{roleLabel(m.roleKey)}</span>}
                           </p>
                           <p className="truncate text-xs text-ink-soft">{m.email}</p>
+                          {!m.archivedAt && (
+                            <button
+                              type="button"
+                              className="mt-0.5 inline-flex max-w-full items-center gap-1.5 rounded-md text-xs text-ink-soft hover:text-ink disabled:opacity-50"
+                              onClick={() => setPositionFor(m)}
+                              disabled={busy || !online}
+                              aria-label={`Position for ${m.name}: ${m.position || roleLabel(m.roleKey)}. Change it`}
+                            >
+                              <Briefcase className="h-3.5 w-3.5 shrink-0 text-muted" aria-hidden />
+                              <span className="truncate">{m.position || roleLabel(m.roleKey)}</span>
+                              <Pencil className="h-3 w-3 shrink-0 text-muted" aria-hidden />
+                            </button>
+                          )}
                           <Status member={m} />
                         </div>
                       </div>
@@ -345,6 +365,8 @@ export function StaffPage() {
         )}
       </section>
 
+      <PositionDialog member={positionFor} busy={busyId === positionFor?.id} onClose={() => setPositionFor(null)} onSave={(m, v) => void savePosition(m, v)} />
+
       <Fab onClick={() => setInviteOpen(true)} disabled={!online} icon={<MailPlus className="h-6 w-6" aria-hidden />}>
         Invite
       </Fab>
@@ -402,4 +424,37 @@ function Status({ member: m }: { member: StaffMember }) {
     );
   if (!m.isActive) return <p className="mt-0.5 text-xs text-status-out">Switched off: can sign in but sees no data</p>;
   return <p className="mt-0.5 text-xs text-muted">{m.lastSignInAt ? `Last signed in ${formatShortInstant(m.lastSignInAt)}` : 'Hasn’t signed in yet'}</p>;
+}
+
+/** An administrator sets someone's position; left empty, the role they were invited with shows instead. */
+function PositionDialog({ member, busy, onClose, onSave }: { member: StaffMember | null; busy: boolean; onClose: () => void; onSave: (m: StaffMember, position: string) => void }) {
+  const [value, setValue] = useState('');
+  useEffect(() => setValue(member?.position ?? ''), [member]);
+  return (
+    <Dialog open={Boolean(member)} title={member ? `${member.name}’s position` : 'Position'} onClose={onClose}>
+      {member && (
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            onSave(member, value);
+          }}
+        >
+          <label className="flex flex-col gap-1.5 text-sm font-semibold">
+            Position
+            <input className="field font-normal" value={value} maxLength={100} onChange={(e) => setValue(e.target.value)} placeholder={roleLabel(member.roleKey)} data-autofocus />
+            <span className="text-xs font-normal text-muted">Shown on their profile. Leave it empty to show their role, {roleLabel(member.roleKey)}.</span>
+          </label>
+          <div className="flex gap-2">
+            <button type="button" className="btn-ghost flex-1" onClick={onClose}>
+              Cancel
+            </button>
+            <button type="submit" className="btn-primary flex-1" disabled={busy} aria-busy={busy || undefined}>
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null} Save
+            </button>
+          </div>
+        </form>
+      )}
+    </Dialog>
+  );
 }
