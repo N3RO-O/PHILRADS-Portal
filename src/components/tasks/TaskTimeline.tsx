@@ -16,6 +16,8 @@ export interface TimelineItem {
   title: ReactNode;
   /** Status, giver and other chips under the title. */
   meta: ReactNode;
+  /** Started, finished and how long it took. */
+  timing?: ReactNode;
   /** Actions (nudge, accept or decline) at the foot of the card. */
   actions?: ReactNode;
 }
@@ -82,6 +84,7 @@ export function TaskTimeline({ items, label }: { items: TimelineItem[]; label: s
                   <When className="tl-when-in" text={it.when} />
                   {it.title}
                   {it.meta}
+                  {it.timing}
                 </div>
               </div>
               {it.actions}

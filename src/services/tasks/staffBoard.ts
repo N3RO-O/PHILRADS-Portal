@@ -33,6 +33,10 @@ export interface BoardTask {
   givenById: string | null;
   completedAt: string | null;
   nudgedAt: string | null;
+  /** When it was given (or added). Missing before the task_started_at migration. */
+  createdAt?: string | null;
+  /** First time it went to in progress; null if it was ticked off without being started. */
+  startedAt?: string | null;
 }
 
 /** What someone handed in when they finished a task. */
@@ -119,6 +123,8 @@ export function createSupabaseStaffBoard(client: SupabaseClient): StaffBoardServ
         givenById: (r.given_by_id as string | null) ?? null,
         completedAt: (r.completed_at as string | null) ?? null,
         nudgedAt: (r.nudged_at as string | null) ?? null,
+        createdAt: (r.created_at as string | null | undefined) ?? null,
+        startedAt: (r.started_at as string | null | undefined) ?? null,
       }));
     },
     async respond(taskId, accept, reason) {
@@ -170,12 +176,14 @@ const SAMPLE_BOARD: BoardPerson[] = [
   { id: 'p-leo', name: 'Leo Mendoza', roleKey: 'volunteer', roleName: 'Volunteer', open: 1, inProgress: 1, overdue: 1, pending: 0, doneWeek: 1, givers: ['p-maria'] },
   { id: 'p-grace', name: 'Grace Lim', roleKey: 'staff', roleName: 'Field staff', open: 0, inProgress: 0, overdue: 0, pending: 0, doneWeek: 4, givers: [] },
 ];
+/** Sample mode: an instant some hours ago. */
+const ago = (hours: number) => new Date(Date.now() - hours * 3600_000).toISOString();
 const sampleTasks = (personId: string): BoardTask[] => {
   const base: BoardTask[] = [
-    { id: `${personId}-1`, title: 'Repack 200 hygiene kits for Glan', status: 'in_progress', priority: 'high', dueDate: day(1), acceptance: 'accepted', givenBy: 'Ana Reyes', givenById: 'p-ana', completedAt: null, nudgedAt: null },
-    { id: `${personId}-2`, title: 'Submit distribution photos to Documentation', status: 'todo', priority: 'medium', dueDate: day(-1), acceptance: 'accepted', givenBy: demoProfile.displayName, givenById: demoProfile.id, completedAt: null, nudgedAt: null },
-    { id: `${personId}-3`, title: 'Call the barangay captain about the venue', status: 'todo', priority: 'medium', dueDate: day(3), acceptance: 'pending', givenBy: 'Maria Santos', givenById: 'p-maria', completedAt: null, nudgedAt: null },
-    { id: `${personId}-4`, title: 'Encode the beneficiary list (Batch 2)', status: 'done', priority: 'low', dueDate: day(-2), acceptance: 'accepted', givenBy: demoProfile.displayName, givenById: demoProfile.id, completedAt: new Date(Date.now() - 86_400_000).toISOString(), nudgedAt: null },
+    { id: `${personId}-1`, title: 'Repack 200 hygiene kits for Glan', status: 'in_progress', priority: 'high', dueDate: day(1), acceptance: 'accepted', givenBy: 'Ana Reyes', givenById: 'p-ana', completedAt: null, nudgedAt: null, createdAt: ago(50), startedAt: ago(3.25) },
+    { id: `${personId}-2`, title: 'Submit distribution photos to Documentation', status: 'todo', priority: 'medium', dueDate: day(-1), acceptance: 'accepted', givenBy: demoProfile.displayName, givenById: demoProfile.id, completedAt: null, nudgedAt: null, createdAt: ago(76), startedAt: null },
+    { id: `${personId}-3`, title: 'Call the barangay captain about the venue', status: 'todo', priority: 'medium', dueDate: day(3), acceptance: 'pending', givenBy: 'Maria Santos', givenById: 'p-maria', completedAt: null, nudgedAt: null, createdAt: ago(5), startedAt: null },
+    { id: `${personId}-4`, title: 'Encode the beneficiary list (Batch 2)', status: 'done', priority: 'low', dueDate: day(-2), acceptance: 'accepted', givenBy: demoProfile.displayName, givenById: demoProfile.id, completedAt: ago(24), nudgedAt: null, createdAt: ago(96), startedAt: ago(55.5) },
   ];
   const n = SAMPLE_BOARD.find((p) => p.id === personId);
   const answered = base.map((t) => (sampleAnswers.has(t.id) ? { ...t, acceptance: sampleAnswers.get(t.id)! } : t));

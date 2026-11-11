@@ -22,22 +22,35 @@ interface Props {
   showList?: boolean;
   /** Changed on this device and not on the server yet (`waiting`), or refused by the server (`failed`). */
   syncOf?: (t: Task) => 'waiting' | 'failed' | null;
+  /** Choosing several tasks: a tap picks the row instead of opening it. */
+  selecting?: boolean;
+  /** The rows chosen so far. */
+  picked?: ReadonlySet<string>;
+  /** Pick or unpick this row. `range` (Shift-click) picks every row from the last one picked. */
+  onSelect?: (t: Task, how: { range: boolean }) => void;
 }
 
 const SWIPE = 84; // how far to drag before letting go does it
+const HOLD_MS = 450; // a finger held this long on a row starts choosing several
 
 /**
  * Swipe a row sideways with a finger: right to finish (or undo), left to plan it for today (or take
  * it off). The row follows the finger over a coloured strip that says what letting go will do;
  * short of the mark it springs back. Mouse and pen don't swipe (they have the buttons).
  */
-function useSwipe(right: (() => void) | null, left: (() => void) | null) {
+function useSwipe(right: (() => void) | null, left: (() => void) | null, hold: (() => void) | null) {
   const [dx, setDx] = useState(0);
   const [dragging, setDragging] = useState(false);
   const start = useRef<{ x: number; y: number; id: number; axis: 'x' | 'y' | null } | null>(null);
   const moved = useRef(false);
+  const holdTimer = useRef<number | null>(null);
+  const stopHold = () => {
+    if (holdTimer.current !== null) window.clearTimeout(holdTimer.current);
+    holdTimer.current = null;
+  };
   const clamp = (v: number) => Math.max(left ? -SWIPE * 1.6 : 0, Math.min(right ? SWIPE * 1.6 : 0, v));
   const end = () => {
+    stopHold();
     const s = start.current;
     start.current = null;
     setDragging(false);
@@ -49,9 +62,19 @@ function useSwipe(right: (() => void) | null, left: (() => void) | null) {
   };
   const handlers = {
     onPointerDown: (e: ReactPointerEvent) => {
-      if (e.pointerType !== 'touch' || (!right && !left)) return;
+      if (e.pointerType !== 'touch' || (!right && !left && !hold)) return;
       start.current = { x: e.clientX, y: e.clientY, id: e.pointerId, axis: null };
       moved.current = false;
+      stopHold();
+      if (hold)
+        holdTimer.current = window.setTimeout(() => {
+          holdTimer.current = null;
+          // Held still: choose this row. The lift that follows isn't a tap.
+          start.current = null;
+          moved.current = true;
+          navigator.vibrate?.(12);
+          hold();
+        }, HOLD_MS);
     },
     onPointerMove: (e: ReactPointerEvent) => {
       const s = start.current;
@@ -60,8 +83,9 @@ function useSwipe(right: (() => void) | null, left: (() => void) | null) {
       const y = e.clientY - s.y;
       if (!s.axis) {
         if (Math.abs(x) < 10 && Math.abs(y) < 10) return;
+        stopHold();
         s.axis = Math.abs(x) > Math.abs(y) * 1.2 ? 'x' : 'y';
-        if (s.axis === 'y') return;
+        if (s.axis === 'y' || (!right && !left)) return;
         try {
           (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
         } catch {
@@ -74,6 +98,10 @@ function useSwipe(right: (() => void) | null, left: (() => void) | null) {
     },
     onPointerUp: end,
     onPointerCancel: end,
+    // A long press would otherwise open the phone's own menu (copy, share…).
+    onContextMenu: (e: ReactMouseEvent) => {
+      if (hold && (start.current || moved.current)) e.preventDefault();
+    },
     // A swipe isn't a tap: don't open the task or tick it as the finger lifts.
     onClickCapture: (e: ReactMouseEvent) => {
       if (moved.current) {
@@ -87,7 +115,8 @@ function useSwipe(right: (() => void) | null, left: (() => void) | null) {
 }
 
 /** One task, Any.do style: a round checkbox in the list's colour, the title, and one line of details. */
-export function TaskRow({ task: t, today, me, onToggle, onOpen, onMyDay, onStart, flash, showList = true, syncOf, leavingIds }: Props) {
+export function TaskRow({ task: t, today, me, onToggle, onOpen, onMyDay, onStart, flash, showList = true, syncOf, leavingIds, selecting = false, picked, onSelect }: Props) {
+  const selected = picked?.has(t.id) ?? false;
   const leaving = leavingIds?.has(t.id) ?? false;
   const sync = syncOf?.(t) ?? null;
   const done = t.status === 'done';
@@ -101,11 +130,22 @@ export function TaskRow({ task: t, today, me, onToggle, onOpen, onMyDay, onStart
   // Waiting to be accepted: the person it's for answers first (the checkbox opens the task instead).
   const pending = t.acceptance === 'pending';
   const needsMe = pending && t.assigneeId === me && t.createdById !== me;
-  const swipe = useSwipe(needsMe || pending ? null : () => onToggle(t), onMyDay && !done ? () => onMyDay(t) : null);
+  const swipe = useSwipe(
+    selecting || needsMe || pending ? null : () => onToggle(t),
+    !selecting && onMyDay && !done ? () => onMyDay(t) : null,
+    onSelect && !selecting ? () => onSelect(t, { range: false }) : null,
+  );
+  // While choosing, a tap picks the row; on a computer Shift-click picks a run of rows and Ctrl/⌘-click one more.
+  const open = (e: ReactMouseEvent) => {
+    if (onSelect && (selecting || e.shiftKey || e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      onSelect(t, { range: e.shiftKey });
+    } else onOpen(t);
+  };
   const past = Math.abs(swipe.dx) >= SWIPE;
 
   return (
-    <li className={`leave-row ${leaving ? 'is-leaving' : ''}`} aria-hidden={leaving || undefined}>
+    <li className={`leave-row ${leaving ? 'is-leaving' : ''}`} aria-hidden={leaving || undefined} data-task-id={t.id}>
       <div className="leave-row-inner relative">
         {/* What letting go will do, under the row while it's dragged. */}
         {swipe.dx !== 0 && (
@@ -131,8 +171,22 @@ export function TaskRow({ task: t, today, me, onToggle, onOpen, onMyDay, onStart
         <div
           {...swipe.handlers}
           style={{ transform: swipe.dx ? `translateX(${swipe.dx}px)` : undefined, transition: swipe.dragging ? 'none' : 'transform 220ms cubic-bezier(0.32, 0.72, 0, 1)', touchAction: 'pan-y' }}
-          className={`group relative flex items-start gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-surface-raised/50 ${swipe.dx ? "bg-page" : ""}`}
+          className={`group relative flex select-none items-start gap-3 rounded-xl px-2 py-2.5 transition-colors sm:select-auto ${selected ? 'bg-burgundy-500/[0.14] ring-1 ring-inset ring-burgundy-500/40' : 'hover:bg-surface-raised/50'} ${swipe.dx ? 'bg-page' : ''}`}
         >
+          {selecting ? (
+            <button
+              type="button"
+              role="checkbox"
+              aria-checked={selected}
+              aria-label={selected ? `Unselect “${t.title}”` : `Select “${t.title}”`}
+              onClick={(e) => onSelect?.(t, { range: e.shiftKey })}
+              className="-m-2 grid h-10 w-10 shrink-0 place-items-center rounded-full"
+            >
+              <span className={`grid h-[1.375rem] w-[1.375rem] place-items-center rounded-md border-2 transition ${selected ? 'border-burgundy-500 bg-burgundy-500 text-cloud' : 'border-ink-mute/60'}`}>
+                {selected && <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden />}
+              </span>
+            </button>
+          ) : (
           <button
             type="button"
             role="checkbox"
@@ -147,8 +201,9 @@ export function TaskRow({ task: t, today, me, onToggle, onOpen, onMyDay, onStart
               <span className={`grid h-[1.375rem] w-[1.375rem] place-items-center rounded-full border-2 transition ${style.ring} group-hover:bg-ink/5`} />
             )}
           </button>
+          )}
 
-          <button type="button" className="min-w-0 flex-1 text-left" onClick={() => onOpen(t)}>
+          <button type="button" className="min-w-0 flex-1 text-left" onClick={open} onMouseDown={(e) => onSelect && e.shiftKey && e.preventDefault()} aria-pressed={selecting ? selected : undefined}>
             <span className={`block text-sm font-medium leading-snug ${done ? 'text-muted line-through decoration-ink-mute/60' : 'text-ink'}`}>{t.title}</span>
             <span className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-muted">
               {sync === 'waiting' && (
@@ -195,7 +250,7 @@ export function TaskRow({ task: t, today, me, onToggle, onOpen, onMyDay, onStart
             </span>
           </button>
 
-          <span className="flex shrink-0 items-center gap-1">
+          <span className={`flex shrink-0 items-center gap-1 ${selecting ? 'pointer-events-none opacity-40' : ''}`} aria-hidden={selecting || undefined}>
             {flash ? (
               <span className="animate-pop-in rounded-full border border-uplift/50 bg-uplift/15 px-2 py-0.5 text-xs font-bold tabular-nums text-uplift">+{flash} XP</span>
             ) : (

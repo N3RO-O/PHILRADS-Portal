@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Fab } from '../components/ui/Fab';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Building2, CalendarClock, CalendarDays, CheckCheck, ChevronDown, CloudOff, Inbox, Layers, Loader2, MapPin, Plus, RefreshCw, Send, Sun, SunMedium, UserRoundCheck, UsersRound, X } from 'lucide-react';
+import { Building2, CalendarClock, CalendarDays, Check, CheckCheck, ChevronDown, CloudOff, Inbox, Layers, ListChecks, Loader2, MapPin, Plus, RefreshCw, Send, Sun, SunMedium, Trash2, UserRoundCheck, UsersRound, X } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
 import { useOnboarding } from '../components/onboarding/OnboardingProvider';
 import { Certificate } from '../components/tasks/Certificate';
@@ -33,6 +33,9 @@ import { DoneCheck } from '../components/ui/DoneCheck';
 
 type View = 'myday' | 'upcoming' | 'calendar' | 'assigned' | 'delegated' | 'team' | 'done' | 'list';
 type Where = 'all' | 'field' | 'office';
+/** What can be done to several tasks at once, and why a chosen task was left out. */
+type Bulk = 'done' | 'today' | 'remove';
+type Skip = 'not yours' | 'theirs' | 'answer' | 'waiting' | 'photo' | 'failed';
 const VIEWS: View[] = ['myday', 'upcoming', 'calendar', 'assigned', 'delegated', 'team', 'done', 'list'];
 
 const VIEW_META: Record<Exclude<View, 'list'>, { label: string; icon: typeof Sun; note: string }> = {
@@ -367,6 +370,28 @@ export function TasksPage() {
     }
   };
 
+  /** A new task for several people: one copy each. Already-saved copies are found again on a retry (same ids). */
+  const saveManyFromSheet = async (drafts: TaskDraft[]) => {
+    const saved: Task[] = [];
+    let problem: string | null = null;
+    for (const d of drafts) {
+      try {
+        saved.push(await tasksService.save(d));
+      } catch (e) {
+        problem ??= errorText(e);
+      }
+    }
+    if (saved.length) {
+      setTasks((ts) => saved.reduce((list, t) => upsert(list, t), ts ?? []));
+      onboarding.complete('task');
+    }
+    if (problem) return `Saved for ${saved.length} of ${drafts.length}. ${problem} Save again to send the rest (no one gets it twice).`;
+    const others = drafts.filter((d) => d.assigneeId).length;
+    const self = drafts.length - others;
+    setToast({ text: `Gave “${drafts[0].title}” to ${others} ${others === 1 ? 'person' : 'people'}${self ? ' and you' : ''}. Each has their own copy.`, tone: 'ok' });
+    return null;
+  };
+
   const remove = async (t: Task) => {
     if (!window.confirm(`Remove “${t.title}”? It won’t show in your lists any more.`)) return;
     // The sheet closes first, so the row can be seen sliding away.
@@ -487,7 +512,174 @@ export function TasksPage() {
       return errorText(e);
     }
   };
-  const rowProps = { today, me, syncOf, leavingIds: leaving, onToggle: tick, onOpen: (t: Task) => setSheet({ task: t, initial: null }), onMyDay: (t: Task) => void toggleMyDay(t), onStart: (t: Task) => void setStatus(t, 'in_progress') };
+  // ── Choosing several tasks ──
+  // Long-press a row on a phone, Shift-click (a run) or Ctrl/⌘-click (one more) on a computer, or "Select".
+  const listRef = useRef<HTMLElement>(null);
+  const [selecting, setSelecting] = useState(false);
+  const [picked, setPicked] = useState<ReadonlySet<string>>(() => new Set());
+  const anchor = useRef<string | null>(null);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const stopSelecting = useCallback(() => {
+    setSelecting(false);
+    setPicked(new Set());
+    anchor.current = null;
+  }, []);
+  // Another view is another list: start again.
+  useEffect(() => stopSelecting(), [view, listKey, where, calDay, stopSelecting]);
+  useEffect(() => {
+    if (!selecting) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && stopSelecting();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [selecting, stopSelecting]);
+  /** The rows on screen, top to bottom, whatever grouping the view uses. */
+  const rowIds = () => [...new Set(Array.from(listRef.current?.querySelectorAll<HTMLElement>('[data-task-id]') ?? [], (el) => el.dataset.taskId ?? ''))].filter(Boolean);
+  const pick = (t: Task, { range }: { range: boolean }) => {
+    const ids = rowIds();
+    const from = anchor.current ? ids.indexOf(anchor.current) : -1;
+    const to = ids.indexOf(t.id);
+    setSelecting(true);
+    setPicked((prev) => {
+      const next = new Set(prev);
+      if (range && from >= 0 && to >= 0) for (let i = Math.min(from, to); i <= Math.max(from, to); i++) next.add(ids[i]);
+      else if (next.has(t.id)) next.delete(t.id);
+      else next.add(t.id);
+      return next;
+    });
+    anchor.current = t.id;
+  };
+  const pickAll = () => {
+    const ids = rowIds();
+    setPicked((prev) => (ids.every((id) => prev.has(id)) ? new Set() : new Set(ids)));
+  };
+  const pickedTasks = all.filter((t) => picked.has(t.id));
+  // What each person may do (the database checks the same): finishing and planning are for the person
+  // it's for or whoever gave it; removing is only for whoever gave it, or a stand-in once they've left.
+  const why = (t: Task, action: Bulk): Skip | null => {
+    if (action === 'remove') return t.createdById === me || (canManage && giverGone(t)) ? null : 'not yours';
+    if (!mayTouch(t)) return 'not yours';
+    if (t.acceptance === 'pending') return t.assigneeId === me && t.createdById !== me ? 'answer' : 'waiting';
+    if (action === 'done' && t.requiresPhoto) return 'photo';
+    if (action === 'today' && (t.assigneeId ?? t.createdById) !== me) return 'theirs';
+    return null;
+  };
+  /** The open tasks an action applies to (finished ones can't be planned or ticked again). */
+  const targets = (action: Bulk) => (action === 'remove' ? pickedTasks : pickedTasks.filter((t) => t.status !== 'done'));
+  const allowed = (action: Bulk) => targets(action).filter((t) => !why(t, action));
+  const skippedNote = (skipped: { t: Task; r: Skip }[], action: Bulk) => {
+    if (skipped.length === 0) return '';
+    const n = new Map<Skip, number>();
+    for (const s of skipped) n.set(s.r, (n.get(s.r) ?? 0) + 1);
+    const words = (r: Skip, c: number) => {
+      const it = c === 1 ? 'it' : 'them';
+      return {
+        'not yours': `given by someone else (only they can ${action === 'remove' ? 'remove' : 'change'} ${it})`,
+        theirs: `for someone else to plan`,
+        answer: `to accept first`,
+        waiting: `not accepted yet`,
+        photo: `${c === 1 ? 'needs' : 'need'} a photo (open ${c === 1 ? 'it' : 'each one'} to finish)`,
+        failed: `couldn’t be saved`,
+      }[r];
+    };
+    // One reason: "Skipped 2 given by someone else (…)". Several: "Skipped 3: 2 given by…, 1 needs a photo…".
+    if (n.size === 1) {
+      const [[r, c]] = [...n];
+      return ` Skipped ${c} ${words(r, c)}.`;
+    }
+    return ` Skipped ${skipped.length}: ${[...n].map(([r, c]) => `${c} ${words(r, c)}`).join(', ')}.`;
+  };
+  const plural = (n: number) => `${n} task${n === 1 ? '' : 's'}`;
+  const finishBulk = (text: ReactNode, warn: boolean) => {
+    setBulkBusy(false);
+    stopSelecting();
+    setToast({ text, tone: warn ? 'warn' : 'ok' });
+  };
+
+  const bulkDone = async () => {
+    const ok = allowed('done');
+    const skipped = targets('done').flatMap((t) => (why(t, 'done') ? [{ t, r: why(t, 'done')! }] : []));
+    if (ok.length === 0) return setToast({ text: `Nothing to mark done.${skippedNote(skipped, 'done')}`, tone: 'warn' });
+    const before = progress;
+    setBulkBusy(true);
+    const now = new Date().toISOString();
+    const ids = new Set(ok.map((t) => t.id));
+    setTasks((ts) => ts && ts.map((x) => (ids.has(x.id) ? { ...x, status: 'done', completedAt: now } : x)));
+    let nextTasks = all;
+    let nextAwards = awards;
+    let points = 0;
+    for (const t of ok) {
+      try {
+        const r = await tasksService.complete(t.id, true);
+        nextTasks = upsert(r.next ? upsert(nextTasks, r.next) : nextTasks, r.task);
+        nextAwards = [...nextAwards.filter((a) => a.taskId !== t.id), ...(r.award ? [r.award] : [])];
+        points += r.award?.points ?? 0;
+      } catch {
+        skipped.push({ t, r: 'failed' });
+        nextTasks = nextTasks.map((x) => (x.id === t.id ? t : x));
+      }
+    }
+    setTasks(nextTasks);
+    setAwards(nextAwards);
+    tasksService.progress().then((p) => setWeekBonuses(p.weekBonuses), () => undefined);
+    const after = computeProgress({ awards: nextAwards, kudos, weekBonuses, tasks: nextTasks, userId: me, today, bonusXp: onboarding.bonusXp });
+    if (after.level.level > before.level.level) setLevelUp(LEVELS.find((l) => l.level === after.level.level) ?? null);
+    const n = ok.length - skipped.filter((s) => s.r === 'failed').length;
+    finishBulk(
+      <>
+        Marked {plural(n)} done.{points > 0 && <strong className="text-uplift"> +{points} XP</strong>}
+        {skippedNote(skipped, 'done')}
+      </>,
+      skipped.length > 0,
+    );
+  };
+
+  const bulkToday = async () => {
+    const ok = allowed('today');
+    const skipped = targets('today').flatMap((t) => (why(t, 'today') ? [{ t, r: why(t, 'today')! }] : []));
+    // All of them already on today: take them off instead.
+    const off = ok.length > 0 && ok.every((t) => t.myDay === today);
+    const change = ok.filter((t) => (off ? t.myDay === today : t.myDay !== today));
+    if (change.length === 0) return setToast({ text: `Nothing to plan.${skippedNote(skipped, 'today')}`, tone: 'warn' });
+    setBulkBusy(true);
+    const myDay = off ? null : today;
+    const ids = new Set(change.map((t) => t.id));
+    setTasks((ts) => ts && ts.map((x) => (ids.has(x.id) ? { ...x, myDay } : x)));
+    for (const t of change) {
+      try {
+        const saved = await tasksService.patch(t.id, { myDay });
+        setTasks((ts) => ts && upsert(ts, saved));
+      } catch {
+        skipped.push({ t, r: 'failed' });
+        setTasks((ts) => ts && ts.map((x) => (x.id === t.id ? t : x)));
+      }
+    }
+    const n = change.length - skipped.filter((s) => s.r === 'failed').length;
+    finishBulk(`${off ? 'Took' : 'Planned'} ${plural(n)} ${off ? 'off today' : 'for today'}.${skippedNote(skipped, 'today')}`, skipped.length > 0);
+  };
+
+  const bulkRemove = async () => {
+    const ok = allowed('remove');
+    const skipped = targets('remove').flatMap((t) => (why(t, 'remove') ? [{ t, r: why(t, 'remove')! }] : []));
+    if (ok.length === 0) return setToast({ text: `Nothing you can remove.${skippedNote(skipped, 'remove')}`, tone: 'warn' });
+    if (!window.confirm(`Remove ${plural(ok.length)}? They won’t show in your lists any more.${skipped.length ? `\n\n${skipped.length} you can’t remove will stay.` : ''}`)) return;
+    setBulkBusy(true);
+    const failed = new Set<string>();
+    await leave(
+      ok.map((t) => t.id),
+      async () => {
+        for (const t of ok) await tasksService.remove(t.id).catch(() => failed.add(t.id));
+      },
+      () => setTasks((ts) => ts && ts.filter((x) => !(picked.has(x.id) && ok.some((t) => t.id === x.id) && !failed.has(x.id)))),
+    );
+    for (const t of ok) if (failed.has(t.id)) skipped.push({ t, r: 'failed' });
+    finishBulk(`Removed ${plural(ok.length - failed.size)}.${skippedNote(skipped, 'remove')}`, skipped.length > 0);
+  };
+  const doneCount = allowed('done').length;
+  const todayCount = allowed('today').length;
+  const removeCount = allowed('remove').length;
+  const allOnToday = todayCount > 0 && allowed('today').every((t) => t.myDay === today);
+
+  const rowProps = { today, me, syncOf, leavingIds: leaving, onToggle: tick, onOpen: (t: Task) => setSheet({ task: t, initial: null }), onMyDay: (t: Task) => void toggleMyDay(t), onStart: (t: Task) => void setStatus(t, 'in_progress'), selecting, picked, onSelect: pick };
 
   const myDayDone = all.filter((t) => isMine(t) && whereOk(t) && doneToday(t));
   const plannedToday = shown.length + myDayDone.length;
@@ -502,7 +694,7 @@ export function TasksPage() {
   return (
     <div
       ref={layoutRef}
-      className={`grid gap-4 pb-6 ${cols === 3 ? `${roomy ? 'grid-cols-[13.5rem_minmax(0,1fr)_20rem]' : 'grid-cols-[12.5rem_minmax(0,1fr)_18rem]'} items-start` : cols === 2 ? 'grid-cols-[13.5rem_minmax(0,1fr)]' : 'grid-cols-1'}`}
+      className={`grid gap-4 ${selecting ? 'pb-44' : 'pb-6'} ${cols === 3 ? `${roomy ? 'grid-cols-[13.5rem_minmax(0,1fr)_20rem]' : 'grid-cols-[12.5rem_minmax(0,1fr)_18rem]'} items-start` : cols === 2 ? 'grid-cols-[13.5rem_minmax(0,1fr)]' : 'grid-cols-1'}`}
     >
       {/* Views and lists: a side menu when there's room. */}
       <nav aria-label="Task views" className={`panel sticky top-20 flex-col gap-4 p-3 ${cols >= 2 ? 'flex' : 'hidden'}`}>
@@ -534,7 +726,7 @@ export function TasksPage() {
           <ProgressPanel initials={profile?.initials ?? '?'} progress={progress} onOpen={(tab) => setParam({ rewards: tab })} />
         </div>
 
-        <section className="card flex flex-col gap-4">
+        <section ref={listRef} className="card flex flex-col gap-4">
           <div className={`flex flex-col gap-3 ${cols >= 2 ? 'hidden' : ''}`}>
             <ViewSwitch
               label="Whose tasks"
@@ -584,15 +776,33 @@ export function TasksPage() {
               </h2>
               <p className="mt-0.5 text-sm text-muted">{note}</p>
             </div>
-            {view === 'myday' && plannedToday > 0 && (
-              <p className="shrink-0 text-right text-xs text-muted">
-                <span className="block text-lg font-bold tabular-nums text-ink">
-                  {myDayDone.length}/{plannedToday}
-                </span>
-                done today
-              </p>
-            )}
+            <div className="flex shrink-0 items-start gap-3">
+              {view === 'myday' && plannedToday > 0 && (
+                <p className="text-right text-xs text-muted">
+                  <span className="block text-lg font-bold tabular-nums text-ink">
+                    {myDayDone.length}/{plannedToday}
+                  </span>
+                  done today
+                </p>
+              )}
+              {view !== 'team' && tasks && shown.length > 0 && (
+                <button
+                  type="button"
+                  className={`btn-ghost min-h-9 px-3 text-xs ${selecting ? 'border-burgundy-500/60 text-ink' : ''}`}
+                  aria-pressed={selecting}
+                  onClick={() => (selecting ? stopSelecting() : setSelecting(true))}
+                  title="Choose several tasks. On a phone, press and hold a task; on a computer, Shift-click picks a run."
+                >
+                  <ListChecks className="h-4 w-4" aria-hidden /> {selecting ? 'Cancel' : 'Select'}
+                </button>
+              )}
+            </div>
           </header>
+          {selecting && (
+            <p className="-mt-2 text-xs text-muted">
+              Tap tasks to choose them.<span className="hidden sm:inline"> Shift-click picks every task between two; Ctrl-click adds one.</span> Esc to stop.
+            </p>
+          )}
 
           {(!online || savedAt || waiting > 0 || failed.length > 0) && (
             <div role="status" className={`flex flex-wrap items-start gap-x-3 gap-y-2 rounded-2xl border px-4 py-3 text-sm ${failed.length ? 'border-status-out/40 bg-surface-sunken' : 'border-line bg-surface-sunken'}`}>
@@ -732,9 +942,42 @@ export function TasksPage() {
         <TeamGoalCard team={team} canManage={canManage} people={people} me={me} onSetGoal={setGoal} onKudos={sendKudos} />
       </aside>
 
-      <Fab onClick={() => setSheet({ task: null, initial: null })} icon={<Plus className="h-6 w-6" aria-hidden />}>
-        New task
-      </Fab>
+      {!selecting && (
+        <Fab onClick={() => setSheet({ task: null, initial: null })} icon={<Plus className="h-6 w-6" aria-hidden />}>
+          New task
+        </Fab>
+      )}
+      {selecting && (
+        <TopLayer raiseKey={picked.size} className="fixed inset-x-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-30 flex justify-center md:left-auto md:right-6 md:w-[30rem]">
+          <div role="toolbar" aria-label="Chosen tasks" className="flex w-full animate-pop-in flex-col gap-2 rounded-2xl border border-line bg-surface-raised p-2.5 shadow-2xl shadow-black/50">
+            <div className="flex items-center gap-2 px-1">
+              <p className="min-w-0 flex-1 text-sm font-semibold" aria-live="polite">
+                {picked.size === 0 ? 'Choose tasks' : `${picked.size} chosen`}
+              </p>
+              <button type="button" className="link text-xs" onClick={pickAll}>
+                {picked.size > 0 && rowIds().every((id) => picked.has(id)) ? 'Clear' : 'Select all'}
+              </button>
+              <button type="button" className="-m-1 grid h-9 w-9 place-items-center rounded-full text-muted hover:text-ink" onClick={stopSelecting} aria-label="Stop choosing">
+                <X className="h-4 w-4" aria-hidden />
+              </button>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <BulkButton onClick={() => void bulkDone()} disabled={bulkBusy || doneCount === 0} busy={bulkBusy} count={doneCount} icon={<Check className="h-4 w-4" strokeWidth={3} aria-hidden />} className="text-status-in">
+                Done
+              </BulkButton>
+              <BulkButton onClick={() => void bulkToday()} disabled={bulkBusy || todayCount === 0} busy={bulkBusy} count={todayCount} icon={<Sun className="h-4 w-4" aria-hidden />} className="text-uplift">
+                {allOnToday ? 'Off today' : 'Today'}
+              </BulkButton>
+              <BulkButton onClick={() => void bulkRemove()} disabled={bulkBusy || removeCount === 0} busy={bulkBusy} count={removeCount} icon={<Trash2 className="h-4 w-4" aria-hidden />} className="text-status-out">
+                Remove
+              </BulkButton>
+            </div>
+            {picked.size > 0 && (doneCount < targets('done').length || removeCount < picked.size) && (
+              <p className="px-1 text-[0.6875rem] text-muted">The number on each button is how many it will change. Tasks you can’t change are left as they are.</p>
+            )}
+          </div>
+        </TopLayer>
+      )}
       <TaskSheet
         open={Boolean(sheet)}
         task={sheet?.task ?? null}
@@ -747,6 +990,7 @@ export function TasksPage() {
         onRespond={respond}
         onClose={() => setSheet(null)}
         onSave={saveFromSheet}
+        onSaveMany={saveManyFromSheet}
         onToggleDone={tick}
         onRemove={remove}
         onSendBack={sendBack}
@@ -809,6 +1053,18 @@ const manilaFriendly = (day: string, today: string) => {
 };
 
 type RowProps = Omit<Parameters<typeof TaskRow>[0], 'task' | 'flash' | 'showList'>;
+
+function BulkButton({ onClick, disabled, busy, count, icon, className, children }: { onClick: () => void; disabled: boolean; busy: boolean; count: number; icon: ReactNode; className: string; children: ReactNode }) {
+  return (
+    <button type="button" className={`btn-ghost press min-h-11 flex-col gap-0.5 px-1 py-1.5 text-xs font-semibold leading-none disabled:opacity-40 ${className}`} onClick={onClick} disabled={disabled} aria-busy={busy || undefined}>
+      <span className="flex items-center gap-1.5">
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : icon}
+        {children}
+      </span>
+      <span className="text-[0.625rem] font-normal tabular-nums text-muted">{count}</span>
+    </button>
+  );
+}
 
 function NavItem({ active, onClick, icon, label, count }: { active: boolean; onClick: () => void; icon: ReactNode; label: string; count?: number }) {
   return (
