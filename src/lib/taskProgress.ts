@@ -120,25 +120,32 @@ export interface Badge {
   /** lucide icon name, mapped in the component. */
   icon: 'footprints' | 'mapPin' | 'building' | 'heartHandshake' | 'search' | 'truck' | 'fileText' | 'graduationCap' | 'clock' | 'zap' | 'users' | 'flame' | 'sun' | 'award' | 'sparkles';
   target: number;
+  /** How hard it is to earn: sets the medal's colour and whether it shines (Medal.tsx). */
+  rarity: Rarity;
   value: (s: TaskStats) => number;
 }
 
+/** Common: a first step or five of something. Rare: ten of something, or a coordinator's kudos. Epic: streaks and speed. Legendary: a hundred tasks. */
+export type Rarity = 'common' | 'rare' | 'epic' | 'legendary';
+export const RARITY_LABEL: Record<Rarity, string> = { common: 'Common', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
+export const RARITY_RANK: Record<Rarity, number> = { common: 0, rare: 1, epic: 2, legendary: 3 };
+
 export const BADGES: Badge[] = [
-  { id: 'first-step', name: 'First step', description: 'Finish your first task', icon: 'footprints', target: 1, value: (s) => s.total },
-  { id: 'boots', name: 'Boots on the ground', description: 'Finish 10 field tasks', icon: 'mapPin', target: 10, value: (s) => s.field },
-  { id: 'backbone', name: 'Backbone of the office', description: 'Finish 10 office tasks', icon: 'building', target: 10, value: (s) => s.office },
-  { id: 'relief', name: 'First responder', description: 'Finish 10 emergency response tasks', icon: 'heartHandshake', target: 10, value: (s) => s.byList.emergency },
-  { id: 'assessor', name: 'Eyes on the ground', description: 'Finish 5 monitoring and coordination tasks', icon: 'search', target: 5, value: (s) => s.byList.monitoring },
-  { id: 'supply', name: 'Rebuilder', description: 'Finish 5 rehabilitation and recovery tasks', icon: 'building', target: 5, value: (s) => s.byList.rehabilitation },
-  { id: 'records', name: 'Change maker', description: 'Finish 5 sustainable livelihood or special project tasks', icon: 'sparkles', target: 5, value: (s) => s.byList.livelihood + s.byList.special },
-  { id: 'mentor', name: 'Mentor', description: 'Finish 5 training and capacity building tasks', icon: 'graduationCap', target: 5, value: (s) => s.byList.training },
-  { id: 'on-time', name: 'On the dot', description: 'Finish 10 tasks on or before their due date', icon: 'clock', target: 10, value: (s) => s.onTime },
-  { id: 'rapid', name: 'Rapid response', description: 'Finish 3 high-priority tasks within a day of adding them', icon: 'zap', target: 3, value: (s) => s.rapidHigh },
-  { id: 'team', name: 'Team player', description: 'Finish 5 tasks someone else gave you', icon: 'users', target: 5, value: (s) => s.fromOthers },
-  { id: 'planner', name: 'Day planner', description: 'Finish 10 tasks on the day you planned to do them', icon: 'sun', target: 10, value: (s) => s.planned },
-  { id: 'steady', name: 'Seven-day streak', description: 'Finish at least one task 7 days in a row', icon: 'flame', target: 7, value: (s) => s.bestStreak },
-  { id: 'thanked', name: 'Thanked', description: 'Receive kudos from a coordinator', icon: 'sparkles', target: 1, value: (s) => s.kudos },
-  { id: 'hundred', name: 'Hundred strong', description: 'Finish 100 tasks', icon: 'award', target: 100, value: (s) => s.total },
+  { id: 'first-step', name: 'First step', description: 'Finish your first task', icon: 'footprints', target: 1, rarity: 'common', value: (s) => s.total },
+  { id: 'boots', name: 'Boots on the ground', description: 'Finish 10 field tasks', icon: 'mapPin', target: 10, rarity: 'rare', value: (s) => s.field },
+  { id: 'backbone', name: 'Backbone of the office', description: 'Finish 10 office tasks', icon: 'building', target: 10, rarity: 'rare', value: (s) => s.office },
+  { id: 'relief', name: 'First responder', description: 'Finish 10 emergency response tasks', icon: 'heartHandshake', target: 10, rarity: 'rare', value: (s) => s.byList.emergency },
+  { id: 'assessor', name: 'Eyes on the ground', description: 'Finish 5 monitoring and coordination tasks', icon: 'search', target: 5, rarity: 'common', value: (s) => s.byList.monitoring },
+  { id: 'supply', name: 'Rebuilder', description: 'Finish 5 rehabilitation and recovery tasks', icon: 'building', target: 5, rarity: 'common', value: (s) => s.byList.rehabilitation },
+  { id: 'records', name: 'Change maker', description: 'Finish 5 sustainable livelihood or special project tasks', icon: 'sparkles', target: 5, rarity: 'common', value: (s) => s.byList.livelihood + s.byList.special },
+  { id: 'mentor', name: 'Mentor', description: 'Finish 5 training and capacity building tasks', icon: 'graduationCap', target: 5, rarity: 'common', value: (s) => s.byList.training },
+  { id: 'on-time', name: 'On the dot', description: 'Finish 10 tasks on or before their due date', icon: 'clock', target: 10, rarity: 'rare', value: (s) => s.onTime },
+  { id: 'rapid', name: 'Rapid response', description: 'Finish 3 high-priority tasks within a day of adding them', icon: 'zap', target: 3, rarity: 'epic', value: (s) => s.rapidHigh },
+  { id: 'team', name: 'Team player', description: 'Finish 5 tasks someone else gave you', icon: 'users', target: 5, rarity: 'common', value: (s) => s.fromOthers },
+  { id: 'planner', name: 'Day planner', description: 'Finish 10 tasks on the day you planned to do them', icon: 'sun', target: 10, rarity: 'rare', value: (s) => s.planned },
+  { id: 'steady', name: 'Seven-day streak', description: 'Finish at least one task 7 days in a row', icon: 'flame', target: 7, rarity: 'epic', value: (s) => s.bestStreak },
+  { id: 'thanked', name: 'Thanked', description: 'Receive kudos from a coordinator', icon: 'sparkles', target: 1, rarity: 'rare', value: (s) => s.kudos },
+  { id: 'hundred', name: 'Hundred strong', description: 'Finish 100 tasks', icon: 'award', target: 100, rarity: 'legendary', value: (s) => s.total },
 ];
 
 // ───────────────────────── The working week ─────────────────────────
@@ -229,6 +236,10 @@ export function computeProgress(input: { awards: XpAward[]; kudos: Kudos[]; week
     fullWeeks: weekBonuses.length,
   };
 }
+
+/** Earned badges, rarest first (ties keep the BADGES order): the ones shown beside a profile photo. */
+export const bestBadges = <T extends { badge: Badge; earned: boolean }>(list: T[]) =>
+  list.filter((b) => b.earned).sort((a, b) => RARITY_RANK[b.badge.rarity] - RARITY_RANK[a.badge.rarity]);
 
 /** Each badge with how far along someone is. */
 export const badgesFor = (stats: TaskStats) =>

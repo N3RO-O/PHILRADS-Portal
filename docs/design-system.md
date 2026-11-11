@@ -82,13 +82,50 @@ are semibold Cloud, notes are muted, figures are large and tabular.
   `tailwind.config.js` reads them, so every `bg-surface`, `text-ink`, `border-line` follows the theme.
 - People choose Dark, Light or Auto in Profile or the account menu (`src/lib/theme.ts`); `index.html`
   applies the choice before the page draws.
-- Light is soft, not glaring: the page is a light grey, panels a step lighter, with a small shadow
-  instead of a strong border. Text, accent text and status colours are deepened so each reads at
-  4.5:1 or better on the page.
+- Light (2026-11-11) is "white cards on cool grey", the pattern Facebook, LinkedIn and Gmail share:
+  the page is `#F0F2F5`, panels and tiles you press are white with a small shadow, text is near-black
+  `#1C1E21` and secondary text one mid grey `#65676B`. Accent text and status colours are deepened
+  so each reads at 4.5:1 or better on the page, on white and on sunken fields.
+- On light, a selected chip is a soft rose tint (`#F7E4E1`) with burgundy text instead of a solid
+  burgundy fill, so the brand shows without heavy blocks of colour.
 - A solid Uplift fill stays the bright brand orange with dark text (`text-onaccent`) in both themes.
 - Overlays use `bg-ink/[…]` (light on dark, dark on light), never `bg-white/[…]`.
 - SVG colours that follow the theme go in `style` (`style={{ stroke: 'rgb(var(--ink))' }}`), because
   CSS variables don't work in SVG attributes.
+
+## KPI tiles (2026-11-11)
+
+Headline figures are scorecard tiles (`src/components/ui/KpiTile.tsx`): a boxed `kpi-tile` you can
+press to open the module behind it, with the label and a 16 px icon, the number in Archivo Black,
+and then, when there is one:
+
+- a thin Uplift bar towards its target, with "74% of 25,000 target" (targets are set by management
+  in `src/config/kpiTargets.ts`; without one there is no bar);
+- the change from the period before, with an arrow and the words it is measured against ("vs last
+  year"), green when the change is good and red when it is not (fewer is good for low stock);
+- a muted trend line of the running total.
+
+Home opens with the Scorecard (people, households, activities and places this year, from the
+statistics records). In Statistics, picking a year adds the change from the year before.
+
+## Badges (2026-11-11)
+
+Badges are rewards, so they are the one exception to "depth without effects". Each is a medal
+(`src/components/tasks/Medal.tsx`, styles in `src/index.css`) with a metal rim in its rarity's
+colour, a dark face and the badge's Lucide icon:
+
+| Rarity | Rim | For |
+| --- | --- | --- |
+| Common | Steel grey | A first step, or five of something |
+| Rare | Blue | Ten of something, or a coordinator's kudos |
+| Epic | Purple | Streaks and rapid responses; a slow looping shine |
+| Legendary | Gold | A hundred tasks; a faster shine |
+
+- The shine stops for people who turn motion off (`prefers-reduced-motion`).
+- A badge not earned yet is flat grey with a lock, ringed in Uplift by how far along you are
+  (your own progress, so it is the accent).
+- Rarity colours are kept apart from the bronze-to-platinum level rings on the profile photo, so a
+  badge is never mistaken for a level. The three rarest earned badges sit beside the photo.
 
 ## Buttons (2026-11-09)
 

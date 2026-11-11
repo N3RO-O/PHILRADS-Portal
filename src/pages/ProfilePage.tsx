@@ -5,7 +5,7 @@ import { ThemeSwitch } from '../components/ui/ThemeSwitch';
 import { useTheme } from '../lib/theme';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../components/auth/AuthProvider';
-import { BADGE_ICON, FRAME_RING, FRAME_TEXT } from '../components/tasks/taskMeta';
+import { FRAME_RING, FRAME_TEXT } from '../components/tasks/taskMeta';
 import { Avatar } from '../components/ui/Avatar';
 import { AvatarFrame } from '../components/ui/AvatarFrame';
 import { ViewPhoto } from '../components/ui/PhotoViewer';
@@ -14,7 +14,8 @@ import { EmptyState, LoadError, Skeleton } from '../components/ui/Card';
 import { SampleBadge } from '../components/ui/SampleBadge';
 import { Dialog } from '../components/ui/Dialog';
 import { formatNumber, initialsOf } from '../lib/format';
-import { BADGES, badgesFor, levelFor } from '../lib/taskProgress';
+import { BADGES, RARITY_LABEL, badgesFor, bestBadges, levelFor } from '../lib/taskProgress';
+import { Medal } from '../components/tasks/Medal';
 import { profileService } from '../services';
 import { PhotoCropper } from '../components/profile/PhotoCropper';
 import { BusyLabel } from '../components/ui/BusyLabel';
@@ -108,11 +109,11 @@ function ProfileCard({
   /** Your own profile: the picture is the button to change it. */
   onPhoto?: () => void;
 }) {
-  const strip = narrow ? 5 : 8;
   const color = p.avatarColor ?? DEFAULT_COLOR;
   const level = progress ? levelFor(progress.xp) : null;
   const badges = progress ? badgesFor(progress.stats) : [];
   const earned = badges.filter((b) => b.earned);
+  const best = bestBadges(badges);
   const since = memberSince(p.memberSince);
   const [openBadge, setOpenBadge] = useState<string | null>(null);
   const shown = badges.find((b) => b.badge.id === openBadge) ?? null;
@@ -141,24 +142,15 @@ function ProfileCard({
             </ViewPhoto>
           )}
           {earned.length > 0 && (
-            <ul className="mb-1 flex max-w-[60%] flex-wrap justify-end gap-1 rounded-xl border border-line/70 bg-surface-sunken p-1.5" aria-label="Badges">
-              {earned.slice(0, strip).map(({ badge }) => {
-                const Icon = BADGE_ICON[badge.icon];
-                return (
-                  <li key={badge.id}>
-                    <button
-                      type="button"
-                      title={badge.name}
-                      onClick={() => setOpenBadge(badge.id)}
-                      className="grid h-7 w-7 place-items-center rounded-lg text-ink-soft transition hover:bg-surface-raised hover:text-ink"
-                      aria-label={`${badge.name}. Show details`}
-                    >
-                      <Icon className="h-[1.05rem] w-[1.05rem]" aria-hidden />
-                    </button>
-                  </li>
-                );
-              })}
-              {earned.length > strip && <li className="grid h-7 place-items-center px-1 text-xs font-semibold text-muted">+{earned.length - strip}</li>}
+            <ul className="mb-1 flex items-center gap-1.5" aria-label="Best badges">
+              {best.slice(0, 3).map(({ badge }) => (
+                <li key={badge.id}>
+                  <button type="button" title={`${badge.name} · ${RARITY_LABEL[badge.rarity]}`} onClick={() => setOpenBadge(badge.id)} className="grid place-items-center rounded-full transition hover:scale-105" aria-label={`${badge.name}, ${RARITY_LABEL[badge.rarity]}. Show details`}>
+                    <Medal badge={badge} earned size="md" />
+                  </button>
+                </li>
+              ))}
+              {earned.length > 3 && <li className="grid h-7 place-items-center px-1 text-xs font-semibold text-muted">+{earned.length - 3}</li>}
             </ul>
           )}
         </div>
@@ -240,26 +232,17 @@ function ProfileCard({
               {/* Compact: one icon per badge with a ring showing progress; tap for the details. */}
               <ul className={`grid gap-x-1 gap-y-2.5 ${narrow ? 'grid-cols-5' : 'grid-cols-5 sm:grid-cols-6'}`}>
                 {(showLocked ? badges : earned).map(({ badge, value, earned: got }) => {
-                  const Icon = BADGE_ICON[badge.icon];
-                  const pct = Math.round((value / badge.target) * 100);
                   return (
                     <li key={badge.id}>
                       <button
                         type="button"
                         onClick={() => setOpenBadge(badge.id)}
-                        aria-label={`${badge.name}: ${got ? 'earned' : `${value} of ${badge.target}`}. Show details`}
+                        aria-label={`${badge.name}, ${RARITY_LABEL[badge.rarity]}: ${got ? 'earned' : `${value} of ${badge.target}`}. Show details`}
                         className="tap group flex w-full flex-col items-center gap-1 rounded-lg p-1 text-center hover:bg-ink/[0.04]"
                       >
-                        <span
-                          className="grid h-11 w-11 place-items-center rounded-full p-[3px]"
-                          style={{ background: got ? 'rgba(236,149,42,0.9)' : `conic-gradient(rgba(236,149,42,0.75) ${pct}%, rgba(255,255,255,0.08) 0)` }}
-                          aria-hidden
-                        >
-                          <span className={`grid h-full w-full place-items-center rounded-full ${got ? 'bg-surface-raised text-uplift' : 'bg-surface-sunken text-ink-mute'}`}>
-                            {got ? <Icon className="h-[1.15rem] w-[1.15rem]" /> : <Lock className="h-3.5 w-3.5" />}
-                          </span>
-                        </span>
+                        <Medal badge={badge} earned={got} value={value} size="md" />
                         <span className={`line-clamp-2 text-[0.625rem] font-semibold leading-tight ${got ? 'text-ink' : 'text-muted'}`}>{badge.name}</span>
+                        {got && <span className={`text-[0.5625rem] font-bold uppercase tracking-wider rarity-${badge.rarity}`}>{RARITY_LABEL[badge.rarity]}</span>}
                       </button>
                     </li>
                   );
@@ -282,20 +265,12 @@ function ProfileCard({
 
 /** One badge: what it's for, and how far along (or when it was earned). */
 function BadgeDetails({ item: { badge, value, earned }, mine, onClose }: { item: ReturnType<typeof badgesFor>[number]; mine: boolean; onClose: () => void }) {
-  const Icon = BADGE_ICON[badge.icon];
   const pct = Math.min(100, Math.round((value / badge.target) * 100));
   return (
     <Dialog open title={badge.name} onClose={onClose}>
       <div className="flex flex-col items-center gap-4 pb-2 text-center">
-        <span
-          className="grid h-20 w-20 place-items-center rounded-full p-1"
-          style={{ background: earned ? 'rgba(236,149,42,0.9)' : `conic-gradient(rgba(236,149,42,0.75) ${pct}%, rgba(255,255,255,0.08) 0)` }}
-          aria-hidden
-        >
-          <span className={`grid h-full w-full place-items-center rounded-full ${earned ? 'bg-surface-raised text-uplift' : 'bg-surface-sunken text-ink-mute'}`}>
-            {earned ? <Icon className="h-9 w-9" /> : <Lock className="h-7 w-7" />}
-          </span>
-        </span>
+        <Medal badge={badge} earned={earned} value={value} size="xl" />
+        <p className={`-mt-1 text-xs font-bold uppercase tracking-[0.12em] rarity-${badge.rarity}`}>{RARITY_LABEL[badge.rarity]}</p>
         <p className="text-sm text-ink-soft">{badge.description}</p>
         {earned ? (
           <p className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1 text-xs font-semibold text-ink-soft">

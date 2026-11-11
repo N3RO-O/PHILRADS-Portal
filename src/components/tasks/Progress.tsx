@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
 import { Award, CalendarCheck, Check, ChevronRight, Sparkles, Trophy } from 'lucide-react';
 import { formatNumber } from '../../lib/format';
-import { FRAME_LABEL, XP_RULES, type Level, type Progress } from '../../lib/taskProgress';
+import { FRAME_LABEL, RARITY_LABEL, XP_RULES, bestBadges, type Level, type Progress } from '../../lib/taskProgress';
+import { Medal } from './Medal';
 import { Dialog } from '../ui/Dialog';
-import { BADGE_ICON, FRAME_RING, FRAME_TEXT } from './taskMeta';
+import { FRAME_RING, FRAME_TEXT } from './taskMeta';
 
 /** The person's initials in the profile ring their level has unlocked, with the level on a tab. */
 export function LevelAvatar({ initials, progress, size = 'lg' }: { initials: string; progress: Progress; size?: 'md' | 'lg' }) {
@@ -85,16 +86,17 @@ export function ProgressPanel({ initials, progress, onOpen }: { initials: string
       </p>
 
       {earned.length > 0 && (
-        <ul className="hidden flex-wrap gap-2 sm:flex" aria-label="Latest badges">
-          {earned.slice(-6).map(({ badge }) => {
-            const Icon = BADGE_ICON[badge.icon];
-            return (
-              <li key={badge.id} title={`${badge.name}: ${badge.description}`} className="grid h-9 w-9 place-items-center rounded-full border border-line text-ink-soft">
-                <Icon className="h-4 w-4" aria-hidden />
-                <span className="sr-only">{badge.name}</span>
+        <ul className="hidden flex-wrap gap-2 sm:flex" aria-label="Best badges">
+          {bestBadges(progress.badges)
+            .slice(0, 6)
+            .map(({ badge }) => (
+              <li key={badge.id} title={`${badge.name} · ${RARITY_LABEL[badge.rarity]}: ${badge.description}`}>
+                <Medal badge={badge} earned size="sm" />
+                <span className="sr-only">
+                  {badge.name}, {RARITY_LABEL[badge.rarity]}
+                </span>
               </li>
-            );
-          })}
+            ))}
         </ul>
       )}
 

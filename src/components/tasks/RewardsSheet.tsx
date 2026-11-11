@@ -1,10 +1,10 @@
 import { CheckCircle2, Lock, Printer, Sparkles } from 'lucide-react';
 import { formatNumber, formatShortInstant } from '../../lib/format';
-import { FRAME_LABEL, LEVELS, XP_RULES, type Progress } from '../../lib/taskProgress';
+import { FRAME_LABEL, LEVELS, RARITY_LABEL, XP_RULES, type Progress } from '../../lib/taskProgress';
 import type { Kudos } from '../../services/tasks/types';
 import { Sheet } from '../ui/Sheet';
 import { SlidingPill } from '../ui/SlidingPill';
-import { BADGE_ICON } from './taskMeta';
+import { Medal } from './Medal';
 
 export type RewardsTab = 'badges' | 'levels' | 'kudos';
 
@@ -52,14 +52,13 @@ export function RewardsSheet({ tab, progress, kudos, onTab, onClose, onPrintCert
       {tab === 'badges' && (
         <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {progress.badges.map(({ badge, value, earned: got }) => {
-            const Icon = BADGE_ICON[badge.icon];
             return (
-              <li key={badge.id} className={`tile flex items-start gap-3 p-3 ${got ? '' : 'opacity-75'}`}>
-                <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-full border ${got ? 'border-line text-ink-soft' : 'border-line text-muted'}`}>
-                  {got ? <Icon className="h-5 w-5" aria-hidden /> : <Lock className="h-4 w-4" aria-hidden />}
-                </span>
+              <li key={badge.id} className={`tile flex items-start gap-3 p-3 ${got ? '' : 'opacity-80'}`}>
+                <Medal badge={badge} earned={got} value={value} size="md" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold leading-tight">{badge.name}</p>
+                  <p className="text-sm font-semibold leading-tight">
+                    {badge.name} <span className={`ml-1 text-[0.625rem] font-bold uppercase tracking-wider rarity-${badge.rarity}`}>{RARITY_LABEL[badge.rarity]}</span>
+                  </p>
                   <p className="mt-0.5 text-xs text-muted">{badge.description}</p>
                   {!got && badge.target > 1 && (
                     <div className="mt-2 flex items-center gap-2">
