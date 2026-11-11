@@ -21,6 +21,7 @@ import {
 import { LINK_KIND_LABEL, parseResourceLink, type LinkKind } from '../../lib/resourceLinks';
 import { formatShortInstant } from '../../lib/format';
 import { useDismiss } from '../../hooks/useDismiss';
+import { HOLDABLE, useLongPress } from '../../hooks/useLongPress';
 import type { Resource, ResourceFileType } from '../../services/resources/types';
 
 export const TYPE_ICON: Record<ResourceFileType, LucideIcon> = {
@@ -68,10 +69,13 @@ interface Props {
   selecting?: boolean;
   selected?: boolean;
   onSelect?: (e: MouseEvent) => void;
+  /** Press and hold (touch): start selecting with this resource. */
+  onLongPress?: () => void;
 }
 
 /** One resource: what it is, where it lives, a one-tap Preview (or Open), and Open / Download / Copy link under the ⋯ menu. */
-export function ResourceCard({ resource: r, canManage, onEdit, onPreview, selecting = false, selected = false, onSelect }: Props) {
+export function ResourceCard({ resource: r, canManage, onEdit, onPreview, selecting = false, selected = false, onSelect, onLongPress }: Props) {
+  const hold = useLongPress(onLongPress);
   const link = parseResourceLink(r.url);
   const [copied, setCopied] = useState<'ok' | 'failed' | null>(null);
   useEffect(() => {
@@ -90,7 +94,8 @@ export function ResourceCard({ resource: r, canManage, onEdit, onPreview, select
 
   return (
     <div
-      className={`tile group/card flex h-full flex-col border border-line/50 p-4 transition-colors hover:border-line ${selecting ? 'cursor-pointer select-none' : ''} ${selected ? 'ring-2 ring-uplift' : ''}`}
+      {...hold}
+      className={`tile group/card flex h-full flex-col border border-line/50 p-4 transition-colors hover:border-line ${selecting ? 'cursor-pointer select-none' : ''} ${onLongPress ? HOLDABLE : ''} ${selected ? 'ring-2 ring-uplift' : ''}`}
       onClick={selecting ? onSelect : (e) => (e.shiftKey || e.ctrlKey || e.metaKey) && onSelect?.(e)}
       onMouseDown={(e) => e.shiftKey && e.preventDefault()}
       aria-selected={selecting ? selected : undefined}

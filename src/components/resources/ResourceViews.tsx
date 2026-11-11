@@ -1,6 +1,7 @@
 import { useState, type MouseEvent } from 'react';
 import { Check, Copy, Download, ExternalLink, Eye, MousePointerClick, Pencil, Pin } from 'lucide-react';
 import type { DocPane, DocView } from '../documentation/DocViews';
+import { HOLDABLE, useLongPress } from '../../hooks/useLongPress';
 import { formatShortInstant } from '../../lib/format';
 import { LINK_KIND_LABEL, parseResourceLink } from '../../lib/resourceLinks';
 import type { Resource } from '../../services/resources/types';
@@ -64,13 +65,17 @@ interface ItemProps {
   compact: boolean;
   onClick: (e: MouseEvent) => void;
   onDoubleClick: () => void;
+  /** Press and hold (touch): start selecting with this resource. */
+  onLongPress?: () => void;
 }
 
-export function ResourceItem({ resource: r, view, selecting, selected, focused, compact, onClick, onDoubleClick }: ItemProps) {
+export function ResourceItem({ resource: r, view, selecting, selected, focused, compact, onClick, onDoubleClick, onLongPress }: ItemProps) {
   const Icon = iconOf(r);
-  const base = 'tap group w-full text-left outline-none focus-visible:ring-2 focus-visible:ring-uplift';
+  const hold = useLongPress(onLongPress);
+  const base = `tap group w-full text-left outline-none focus-visible:ring-2 focus-visible:ring-uplift ${onLongPress ? HOLDABLE : ''}`;
   const rowState = selected ? 'bg-burgundy-500/25 ring-1 ring-inset ring-burgundy-400' : focused ? 'bg-surface-raised' : 'hover:bg-ink/[0.04]';
   const props = {
+    ...hold,
     type: 'button' as const,
     onClick,
     onDoubleClick,

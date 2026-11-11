@@ -1,7 +1,6 @@
-import { useCallback, useLayoutEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react';
 import {
   Check,
-  ChevronDown,
   Download,
   Eye,
   FileText,
@@ -12,6 +11,7 @@ import {
   LayoutGrid,
   LayoutList,
   List,
+  MoreVertical,
   MousePointerClick,
   PanelRight,
   PanelRightOpen,
@@ -21,7 +21,9 @@ import {
   Table,
   type LucideIcon,
 } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { useDismiss } from '../../hooks/useDismiss';
+import { HOLDABLE, useLongPress } from '../../hooks/useLongPress';
 import { formatBytes, formatShortDate, formatShortInstant, formatTime } from '../../lib/format';
 import type { DocFile, DocLinks } from '../../services/documentation/documentationService';
 
@@ -80,60 +82,141 @@ export function useDocViewPrefs(storeKey = STORE) {
   return [prefs, update] as const;
 }
 
-// ───────────────────────── The View menu ─────────────────────────
+// ───────────────────────── The ⋯ menu (view, and the page's quieter actions) ─────────────────────────
 
-export function ViewMenu({ view, pane, onChange, showPanes }: { view: DocView; pane: DocPane; onChange: (p: Partial<{ view: DocView; pane: DocPane }>) => void; showPanes: boolean }) {
-  const [open, setOpen] = useState(false);
-  // Kept on screen: after it opens, it's nudged in from whichever edge it would cross.
-  const [shift, setShift] = useState(0);
+/** Something the page can do from its ⋯ menu (select files, change the Drive folder…). */
+export interface MenuAction {
+  label: string;
+  icon: LucideIcon;
+  onClick: () => void;
+}
+
+/**
+ * The page's three-dot menu: how files are laid out (and, on wide screens, the side panes), plus
+ * any less-used page actions. Kept out of the way so the files come first.
+ */
+export function ViewMenu({
+  view,
+  pane,
+  onChange,
+  showPanes,
+  actions = [],
+}: {
+  view: DocView;
+  pane: DocPane;
+  onChange: (p: Partial<{ view: DocView; pane: DocPane }>) => void;
+  showPanes: boolean;
+  actions?: MenuAction[];
+}) {
+  /** Where it floats (fixed, in a portal: above the page's floating buttons, never cut off). */
+  const [at, setAt] = useState<{ right: number; top?: number; bottom?: number; maxHeight: number } | null>(null);
   const menu = useRef<HTMLDivElement>(null);
-  useLayoutEffect(() => {
-    if (!open || !menu.current) return;
-    const r = menu.current.getBoundingClientRect();
-    const edge = document.documentElement.clientWidth - 8;
-    setShift((s) => s + (r.left < 8 ? 8 - r.left : r.right > edge ? edge - r.right : 0));
-  }, [open]);
   const wrap = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
-  const close = useCallback(() => setOpen(false), []);
-  useDismiss(open, wrap, close, button);
-  const Current = VIEWS.find((v) => v.id === view)?.icon ?? Grid2x2;
-  const item = 'flex min-h-10 w-full items-center gap-3 rounded-lg px-2.5 text-left text-sm text-ink transition-colors hover:bg-ink/[0.06]';
+  const close = useCallback(() => setAt(null), []);
+  useDismiss(Boolean(at), wrap, close, button);
+  useLayoutEffect(() => {
+    if (!at) return;
+    (menu.current?.querySelector<HTMLElement>('[role^="menuitem"]') ?? menu.current)?.focus({ preventScroll: true });
+    // It floats in place, so it closes rather than drift when the page moves.
+    const away = (e: Event) => !menu.current?.contains(e.target as Node) && close();
+    window.addEventListener('scroll', away, true);
+    window.addEventListener('resize', close);
+    return () => {
+      window.removeEventListener('scroll', away, true);
+      window.removeEventListener('resize', close);
+    };
+  }, [at, close]);
+  const toggle = () => {
+    if (at) return close();
+    const b = button.current!.getBoundingClientRect();
+    const right = Math.max(8, document.documentElement.clientWidth - b.right);
+    const below = window.innerHeight - b.bottom - 12;
+    // Opens downward, or upward when there's more room above (a button low on the screen).
+    setAt(below >= 320 || below >= b.top ? { right, top: b.bottom + 4, maxHeight: below } : { right, bottom: window.innerHeight - b.top + 4, maxHeight: b.top - 12 });
+  };
+  const item =
+    'flex min-h-11 w-full items-center gap-3 rounded-lg px-2.5 text-left text-sm text-ink transition-colors hover:bg-ink/[0.06] focus-visible:bg-ink/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-uplift';
   const dot = (on: boolean) => <Check className={`h-4 w-4 shrink-0 ${on ? '' : 'invisible'}`} aria-hidden />;
+  const moveFocus = (e: KeyboardEvent) => {
+    if (e.key === 'Tab') return close();
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    e.preventDefault();
+    const items = [...(menu.current?.querySelectorAll<HTMLElement>('[role^="menuitem"]') ?? [])];
+    const i = items.indexOf(document.activeElement as HTMLElement);
+    items[(i + (e.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length]?.focus();
+  };
+  const pick = (fn: () => void) => () => {
+    close();
+    button.current?.focus({ preventScroll: true });
+    fn();
+  };
   return (
-    <div ref={wrap} className="relative">
-      <button ref={button} type="button" className="btn-ghost min-h-11 px-3.5" aria-haspopup="menu" aria-expanded={open} onClick={() => {
-          setShift(0);
-          setOpen((o) => !o);
-        }}>
-        <Current className="h-4 w-4" aria-hidden /> View <ChevronDown className="h-4 w-4 text-muted" aria-hidden />
+    <div ref={wrap} className="relative shrink-0">
+      <button
+        ref={button}
+        type="button"
+        className="icon-btn h-11 w-11 border border-line bg-surface"
+        aria-label="View and more options"
+        title="View and more"
+        aria-haspopup="menu"
+        aria-expanded={Boolean(at)}
+        onClick={toggle}
+      >
+        <MoreVertical className="h-5 w-5" aria-hidden />
       </button>
-      {open && (
-        <div ref={menu} role="menu" aria-label="View" className="popover absolute right-0 top-12 z-40 w-60 max-w-[calc(100vw-1rem)] origin-top animate-pop-in p-1.5" style={{ right: -shift }}>
-          {VIEWS.map((v) => (
-            <button key={v.id} type="button" role="menuitemradio" aria-checked={view === v.id} className={item} onClick={() => (onChange({ view: v.id }), setOpen(false))}>
-              {dot(view === v.id)}
-              <v.icon className="h-4 w-4 text-ink-soft" aria-hidden /> {v.label}
-            </button>
-          ))}
-          {showPanes && (
-            <>
-              <hr className="my-1.5 border-line/70" />
-              {(
-                [
-                  ['details', 'Details pane', PanelRight],
-                  ['preview', 'Preview pane', PanelRightOpen],
-                ] as const
-              ).map(([id, label, Icon]) => (
-                <button key={id} type="button" role="menuitemcheckbox" aria-checked={pane === id} className={item} onClick={() => (onChange({ pane: pane === id ? 'none' : id }), setOpen(false))}>
-                  {dot(pane === id)}
-                  <Icon className="h-4 w-4 text-ink-soft" aria-hidden /> {label}
-                </button>
-              ))}
-            </>
-          )}
-        </div>
-      )}
+      {at &&
+        createPortal(
+          <div
+            ref={menu}
+            role="menu"
+            aria-label="View and more"
+            tabIndex={-1}
+            data-popover-child
+            onKeyDown={moveFocus}
+            className={`popover fixed z-[70] w-64 max-w-[calc(100vw-1rem)] animate-pop-in overflow-y-auto overscroll-contain p-1.5 outline-none ${at.top !== undefined ? 'origin-top-right' : 'origin-bottom-right'}`}
+            style={{ right: at.right, top: at.top, bottom: at.bottom, maxHeight: at.maxHeight }}
+          >
+            {/* The page's own actions first: on a phone they'd otherwise sit below the fold of the menu. */}
+            {actions.length > 0 && (
+              <>
+                {actions.map((a) => (
+                  <button key={a.label} type="button" role="menuitem" className={item} onClick={pick(a.onClick)}>
+                    {dot(false)}
+                    <a.icon className="h-4 w-4 text-ink-soft" aria-hidden /> {a.label}
+                  </button>
+                ))}
+                <hr className="my-1.5 border-line/70" />
+              </>
+            )}
+            <p className="px-2.5 pb-1 pt-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-muted" aria-hidden>
+              View
+            </p>
+            {VIEWS.map((v) => (
+              <button key={v.id} type="button" role="menuitemradio" aria-checked={view === v.id} className={item} onClick={pick(() => onChange({ view: v.id }))}>
+                {dot(view === v.id)}
+                <v.icon className="h-4 w-4 text-ink-soft" aria-hidden /> {v.label}
+              </button>
+            ))}
+            {showPanes && (
+              <>
+                <hr className="my-1.5 border-line/70" />
+                {(
+                  [
+                    ['details', 'Details pane', PanelRight],
+                    ['preview', 'Preview pane', PanelRightOpen],
+                  ] as const
+                ).map(([id, label, Icon]) => (
+                  <button key={id} type="button" role="menuitemcheckbox" aria-checked={pane === id} className={item} onClick={pick(() => onChange({ pane: pane === id ? 'none' : id }))}>
+                    {dot(pane === id)}
+                    <Icon className="h-4 w-4 text-ink-soft" aria-hidden /> {label}
+                  </button>
+                ))}
+              </>
+            )}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
@@ -191,13 +274,17 @@ interface ItemProps {
   onDoubleClick: () => void;
   /** The side pane is open: Details shows fewer columns (the pane has the rest). */
   compact?: boolean;
+  /** Press and hold (touch): start selecting with this file. */
+  onLongPress?: () => void;
 }
 
-/** One file. Shift-click and Ctrl-click are handled by the page (selecting several). */
-export function DocItem({ doc, thumb, view, selecting, selected, focused, onClick, onDoubleClick, compact = false }: ItemProps) {
-  const base = 'tap group w-full text-left outline-none focus-visible:ring-2 focus-visible:ring-uplift';
+/** One file. Shift-click, Ctrl-click and a long press (touch) are handled by the page (selecting several). */
+export function DocItem({ doc, thumb, view, selecting, selected, focused, onClick, onDoubleClick, compact = false, onLongPress }: ItemProps) {
+  const hold = useLongPress(onLongPress);
+  const base = `tap group w-full text-left outline-none focus-visible:ring-2 focus-visible:ring-uplift ${onLongPress ? HOLDABLE : ''}`;
   const rowState = selected ? 'bg-burgundy-500/25 ring-1 ring-inset ring-burgundy-400' : focused ? 'bg-surface-raised' : 'hover:bg-ink/[0.04]';
   const props = {
+    ...hold,
     type: 'button' as const,
     onClick,
     onDoubleClick,
