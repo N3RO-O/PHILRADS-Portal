@@ -1,5 +1,5 @@
-import { useEffect, useId, useState, type FormEvent, type KeyboardEvent, type ReactNode } from 'react';
-import { Camera, Check, CheckCircle2, Lock, Loader2, Plus, RotateCcw, Sparkles, Sun, Trash2, Undo2, X } from 'lucide-react';
+import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from 'react';
+import { Camera, Check, CheckCircle2, ChevronDown, Lock, Loader2, Plus, RotateCcw, Search, Sparkles, Sun, Trash2, Undo2, X } from 'lucide-react';
 import { addDays, LIST_META, RECURRENCE_LABEL, weekday } from '../../lib/tasks';
 import { XP_RULES } from '../../lib/taskProgress';
 import { TASK_LISTS, type Assignee, type Recurrence, type Task, type TaskDraft, type TaskList } from '../../services/tasks/types';
@@ -8,6 +8,7 @@ import { DoneCheck } from '../ui/DoneCheck';
 import { Sheet } from '../ui/Sheet';
 import { Switch } from '../ui/Switch';
 import { Reorderable } from '../ui/Reorderable';
+import { PersonAvatar } from '../ui/PersonAvatar';
 
 interface Props {
   open: boolean;
@@ -25,6 +26,11 @@ interface Props {
   onClose: () => void;
   /** Resolves to an error message, or null when saved. */
   onSave: (draft: TaskDraft) => Promise<string | null>;
+  /**
+   * A new task given to several people: one copy each (same everything, their own to finish).
+   * Without it, a new task goes to one person.
+   */
+  onSaveMany?: (drafts: TaskDraft[]) => Promise<string | null>;
   onToggleDone: (task: Task) => void;
   onRemove: (task: Task) => Promise<void>;
   /** The person who gave a finished task sends it back with a reason. Resolves to an error message, or null. */
@@ -68,7 +74,7 @@ export const draftOf = (t: Task): TaskDraft => ({
 });
 
 /** Add or edit a task with everything Any.do offers: list, Field/Office, due date and time, today’s plan, repeat, subtasks. */
-export function TaskSheet({ open, task, initial, today, me, canAssign, canGive = canAssign, people, onRespond, onClose, onSave, onToggleDone, onRemove, onSendBack, onSetStatus }: Props) {
+export function TaskSheet({ open, task, initial, today, me, canAssign, canGive = canAssign, people, onRespond, onClose, onSave, onSaveMany, onToggleDone, onRemove, onSendBack, onSetStatus }: Props) {
   const uid = useId();
   const [d, setD] = useState<TaskDraft>(EMPTY);
   const [base, setBase] = useState<TaskDraft>(EMPTY);
@@ -78,12 +84,18 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, canGive =
   const [reason, setReason] = useState('');
   const [declining, setDeclining] = useState(false);
   const [answering, setAnswering] = useState(false);
+  /** New task: everyone it's for (your own id when it's yours). */
+  const [forIds, setForIds] = useState<string[]>([]);
+  /** One id per person's copy, kept across retries so a second Save doesn't add a second copy. */
+  const copyIds = useRef<Record<string, string>>({});
 
   useEffect(() => {
     if (!open) return;
     const start = task ? draftOf(task) : { ...EMPTY, ...initial };
     setD(start);
     setBase(start);
+    setForIds([start.assigneeId ?? me ?? ''].filter(Boolean));
+    copyIds.current = {};
     setSub('');
     setError(null);
     setReason('');
@@ -91,7 +103,13 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, canGive =
   }, [open, task, initial]);
 
   const set = <K extends keyof TaskDraft>(k: K, v: TaskDraft[K]) => setD((x) => ({ ...x, [k]: v }));
-  const dirty = JSON.stringify(d) !== JSON.stringify(base) || sub.trim().length > 0;
+  const multi = !task && Boolean(onSaveMany) && canGive;
+  const pickFor = (ids: string[]) => {
+    setForIds(ids);
+    // The draft keeps the first person (what XP and the photo rule are worked out for).
+    set('assigneeId', !ids[0] || ids[0] === me ? null : ids[0]);
+  };
+  const dirty = JSON.stringify(d) !== JSON.stringify(base) || sub.trim().length > 0 || forIds.length > 1;
   const done = task?.status === 'done';
   const forSelf = (d.assigneeId ?? me) === me && (!task || task.createdById === me);
   const worth = forSelf ? XP_RULES.self : XP_RULES.base[d.priority];
@@ -161,7 +179,16 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, canGive =
     setError(null);
     // A subtask still in the box is kept, not lost.
     const toSave = sub.trim() ? { ...d, subtasks: [...d.subtasks, { id: `s-${Date.now().toString(36)}`, title: sub.trim(), done: false }] } : d;
-    const err = await onSave(toSave);
+    const err =
+      multi && forIds.length > 1 && onSaveMany
+        ? await onSaveMany(
+            forIds.map((id) => ({
+              ...toSave,
+              assigneeId: id === me ? null : id,
+              newId: (copyIds.current[id] ??= crypto.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`),
+            })),
+          )
+        : await onSave(toSave);
     setBusy(null);
     if (err) setError(err);
     else onClose();
@@ -392,6 +419,7 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, canGive =
               ))}
             </select>
           </Field>
+          {multi ? null : (
           <Field id={`${uid}-assignee`} label="Assigned to">
             {canGive && isGiver ? (
               <select id={`${uid}-assignee`} className="field" disabled={locked} value={d.assigneeId ?? me ?? ''} onChange={(e) => set('assigneeId', e.target.value === me ? null : e.target.value)}>
@@ -407,7 +435,9 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, canGive =
               </p>
             )}
           </Field>
+          )}
         </div>
+        {multi && <PeoplePicker id={`${uid}-assignee`} people={people} me={me} value={forIds} onChange={pickFor} />}
 
         <PhotoToggle
           on={Boolean(d.requiresPhoto)}
@@ -482,6 +512,83 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, canGive =
         </p>
       </form>
     </Sheet>
+  );
+}
+
+/**
+ * Who a new task is for: one person or several. Each person chosen gets their own copy, to accept,
+ * start and finish on their own. A search box shows up once the list is long.
+ */
+function PeoplePicker({ id, people, me, value, onChange }: { id: string; people: Assignee[]; me: string | null; value: string[]; onChange: (ids: string[]) => void }) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState('');
+  const nameOf = (pid: string) => (pid === me ? 'You' : (people.find((p) => p.id === pid)?.name ?? 'Someone'));
+  const names = value.map(nameOf);
+  const summary = names.length <= 2 ? names.join(' and ') : `${names.slice(0, 2).join(', ')} +${names.length - 2}`;
+  // You first, then everyone else as listed.
+  // Anyone already chosen who isn't on the list still gets a row, so they can be taken off.
+  const list = [...people, ...value.filter((pid) => !people.some((p) => p.id === pid)).map((pid) => ({ id: pid, name: 'Someone not on this list' }))].sort(
+    (a, b) => Number(b.id === me) - Number(a.id === me),
+  );
+  const shown = q.trim() ? list.filter((p) => p.name.toLowerCase().includes(q.trim().toLowerCase())) : list;
+  const flip = (pid: string) => {
+    const next = value.includes(pid) ? value.filter((x) => x !== pid) : [...value, pid];
+    // Someone always has it: taking off the last person leaves it with you.
+    onChange(next.length ? next : me ? [me] : value);
+  };
+  return (
+    <Field id={id} label="Assigned to" hint={value.length > 1 ? `${value.length} people, a copy each` : 'Pick one or several'}>
+      <button
+        id={id}
+        type="button"
+        className="field flex items-center gap-2 text-left"
+        aria-expanded={open}
+        aria-controls={`${id}-list`}
+        aria-describedby={`${id}-hint`}
+        onClick={() => setOpen((o) => !o)}
+      >
+        <span className="flex shrink-0 -space-x-1.5" aria-hidden>
+          {value.slice(0, 3).map((pid) => (
+            <PersonAvatar key={pid} id={pid} name={people.find((p) => p.id === pid)?.name ?? nameOf(pid)} size="xs" ring="ring-2 ring-surface" frame={false} />
+          ))}
+        </span>
+        <span className="min-w-0 flex-1 truncate">{summary}</span>
+        <ChevronDown className={`h-4 w-4 shrink-0 text-muted transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden />
+      </button>
+      {open && (
+        <div id={`${id}-list`} className="flex flex-col gap-1.5 rounded-xl border border-line bg-surface-sunken p-1.5">
+          {people.length > 6 && (
+            <label className="relative block">
+              <span className="sr-only">Find a person</span>
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
+              <input className="field py-2 pl-9 text-sm" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find a person" />
+            </label>
+          )}
+          <ul className="flex max-h-64 flex-col overflow-y-auto" role="group" aria-label="People">
+            {shown.map((p) => {
+              const on = value.includes(p.id);
+              return (
+                <li key={p.id}>
+                  <label className={`flex min-h-11 cursor-pointer items-center gap-2.5 rounded-lg px-2 text-sm transition-colors hover:bg-surface-raised ${on ? 'text-ink' : 'text-ink-soft'}`}>
+                    <input type="checkbox" className="h-4 w-4 shrink-0 accent-burgundy-500" checked={on} onChange={() => flip(p.id)} />
+                    <PersonAvatar id={p.id} name={p.name} size="xs" ring="ring-0" frame={false} />
+                    <span className="min-w-0 flex-1 truncate">{p.id === me ? `${p.name} (you)` : p.name}</span>
+                  </label>
+                </li>
+              );
+            })}
+            {shown.length === 0 && <li className="px-2 py-3 text-xs text-muted">No one by that name.</li>}
+          </ul>
+          <div className="flex items-center justify-between gap-2 px-1 pb-0.5">
+            <span className="text-xs text-muted">{value.length} chosen</span>
+            <button type="button" className="link text-sm" onClick={() => (setOpen(false), setQ(''))}>
+              Done
+            </button>
+          </div>
+        </div>
+      )}
+      {value.length > 1 && <p className="text-xs text-muted">Each person gets their own copy to accept, start and finish. You’ll see each one in Given to others.</p>}
+    </Field>
   );
 }
 

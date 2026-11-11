@@ -370,6 +370,28 @@ export function TasksPage() {
     }
   };
 
+  /** A new task for several people: one copy each. Already-saved copies are found again on a retry (same ids). */
+  const saveManyFromSheet = async (drafts: TaskDraft[]) => {
+    const saved: Task[] = [];
+    let problem: string | null = null;
+    for (const d of drafts) {
+      try {
+        saved.push(await tasksService.save(d));
+      } catch (e) {
+        problem ??= errorText(e);
+      }
+    }
+    if (saved.length) {
+      setTasks((ts) => saved.reduce((list, t) => upsert(list, t), ts ?? []));
+      onboarding.complete('task');
+    }
+    if (problem) return `Saved for ${saved.length} of ${drafts.length}. ${problem} Save again to send the rest (no one gets it twice).`;
+    const others = drafts.filter((d) => d.assigneeId).length;
+    const self = drafts.length - others;
+    setToast({ text: `Gave “${drafts[0].title}” to ${others} ${others === 1 ? 'person' : 'people'}${self ? ' and you' : ''}. Each has their own copy.`, tone: 'ok' });
+    return null;
+  };
+
   const remove = async (t: Task) => {
     if (!window.confirm(`Remove “${t.title}”? It won’t show in your lists any more.`)) return;
     // The sheet closes first, so the row can be seen sliding away.
@@ -968,6 +990,7 @@ export function TasksPage() {
         onRespond={respond}
         onClose={() => setSheet(null)}
         onSave={saveFromSheet}
+        onSaveMany={saveManyFromSheet}
         onToggleDone={tick}
         onRemove={remove}
         onSendBack={sendBack}
