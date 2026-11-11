@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, Check, ChevronRight, Eraser, FileText, Plus, Printer } from 'lucide-react';
+import { ChevronRight, FileText } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../components/auth/AuthProvider';
 import { EmptyState } from '../components/ui/Card';
 import { FORMS, type FormDef } from '../forms/catalog';
 import { FormProvider, Sheets, type Values } from '../forms/kit';
 import { SignatureSheet } from '../components/forms/SignatureSheet';
+import { FormToolbar, MARGIN_MM, clampScale, type Margin } from '../components/forms/FormToolbar';
 
 const key = (id: string) => `philrads.form.${id}.v1`;
 
@@ -73,8 +74,10 @@ function FormEditor({ form }: { form: FormDef }) {
     }
   });
   const rows = Math.max(form.rows?.initial ?? 0, Number(values.__rows) || 0);
-  // Size of the typed text (85% to 150%), kept with the draft and used when printing.
-  const scale = Math.min(1.5, Math.max(0.85, Number(values.__scale) || 1));
+  // Size of the typed text (85% to 150%) and the side margins, kept with the draft and used when printing.
+  const scale = clampScale(Number(values.__scale) || 1);
+  const margin: Margin = !form.fixedMargins && (values.__mx === 'narrow' || values.__mx === 'wide') ? values.__mx : 'standard';
+  const look = { '--ff-scale': scale, '--ff-mx': `${MARGIN_MM[margin]}mm` } as CSSProperties;
   const [signing, setSigning] = useState<string | null>(null);
   const [saved, setSaved] = useState<'idle' | 'saved' | 'failed'>('idle');
   const [printing, setPrinting] = useState(false);
@@ -89,7 +92,7 @@ function FormEditor({ form }: { form: FormDef }) {
   useEffect(() => {
     const t = setTimeout(() => {
       try {
-        const empty = Object.entries(values).every(([k, v]) => k === form.preparedBy || k === '__rows' || !v);
+        const empty = Object.entries(values).every(([k, v]) => k === form.preparedBy || k.startsWith('__') || !v);
         if (empty) localStorage.removeItem(key(form.id));
         else localStorage.setItem(key(form.id), JSON.stringify(values));
         setSaved('saved');
@@ -125,52 +128,33 @@ function FormEditor({ form }: { form: FormDef }) {
 
   const clear = () => {
     if (!window.confirm(`Clear everything typed on the ${form.title}? This can’t be undone.`)) return;
-    setValues(form.preparedBy && profile ? { [form.preparedBy]: profile.fullName || profile.displayName } : {});
+    // The text size and margins stay: they're how you like the form, not what's on it.
+    setValues({
+      ...(values.__scale ? { __scale: values.__scale } : {}),
+      ...(values.__mx ? { __mx: values.__mx } : {}),
+      ...(form.preparedBy && profile ? { [form.preparedBy]: profile.fullName || profile.displayName } : {}),
+    });
   };
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="floating sticky top-16 z-20 rounded-2xl flex flex-wrap items-center gap-2 p-3">
-        <button type="button" className="icon-btn" onClick={() => navigate('/forms')} aria-label="All forms">
-          <ArrowLeft className="h-5 w-5" aria-hidden />
-        </button>
-        <div className="min-w-0 flex-1">
-          <h2 className="truncate font-semibold leading-tight">{form.title}</h2>
-          <p className="truncate text-xs text-muted">
-            {form.paper}
-            {saved === 'saved' && (
-              <span className="ml-2 inline-flex items-center gap-1 text-status-in">
-                <Check className="h-3 w-3" aria-hidden /> Draft kept on this device
-              </span>
-            )}
-            {saved === 'failed' && <span className="ml-2 text-status-low">This device couldn’t keep the draft</span>}
-          </p>
-        </div>
-        {form.rows && (
-          <button type="button" className="btn-ghost min-h-10 px-3 text-sm" onClick={() => set('__rows', String(rows + 5))}>
-            <Plus className="h-4 w-4" aria-hidden /> 5 more {form.rows.label}
-          </button>
-        )}
-        <div className="flex items-center rounded-xl border border-line bg-surface-raised/60" role="group" aria-label="Text size">
-          <button type="button" className="icon-btn h-10 w-10 rounded-l-xl rounded-r-none" onClick={() => set('__scale', String(Math.max(0.85, +(scale - 0.1).toFixed(2))))} disabled={scale <= 0.85} aria-label="Smaller text">
-            <span className="text-xs font-bold">A−</span>
-          </button>
-          <span className="min-w-[3.25rem] text-center text-xs font-semibold tabular-nums text-ink-soft" aria-live="polite">
-            {Math.round(scale * 100)}%
-          </span>
-          <button type="button" className="icon-btn h-10 w-10 rounded-l-none rounded-r-xl" onClick={() => set('__scale', String(Math.min(1.5, +(scale + 0.1).toFixed(2))))} disabled={scale >= 1.5} aria-label="Bigger text">
-            <span className="text-base font-bold">A+</span>
-          </button>
-        </div>
-        <button type="button" className="btn-ghost min-h-10 px-3 text-sm" onClick={clear}>
-          <Eraser className="h-4 w-4" aria-hidden /> Clear the form
-        </button>
-        <button type="button" className="btn-primary min-h-10 px-4 text-sm" onClick={print}>
-          <Printer className="h-4 w-4" aria-hidden /> Print / Save as PDF
-        </button>
-      </div>
+      <FormToolbar
+        title={form.title}
+        paper={form.paper}
+        saved={saved}
+        scale={scale}
+        onScale={(n) => set('__scale', String(n))}
+        margin={margin}
+        onMargin={(m) => set('__mx', m === 'standard' ? '' : m)}
+        marginsFixed={form.fixedMargins}
+        rowsLabel={form.rows?.label}
+        onAddRows={form.rows ? () => set('__rows', String(rows + 5)) : undefined}
+        onBack={() => navigate('/forms')}
+        onClear={clear}
+        onPrint={print}
+      />
 
-      <div style={{ '--ff-scale': scale } as CSSProperties}>
+      <div style={look}>
         <FormProvider mode="edit" values={values} set={set} sign={setSigning}>
           <Sheets>{form.render(rows)}</Sheets>
         </FormProvider>
@@ -179,7 +163,7 @@ function FormEditor({ form }: { form: FormDef }) {
 
       {printing &&
         createPortal(
-          <div className="print-form" style={{ '--ff-scale': scale } as CSSProperties}>
+          <div className="print-form" style={look}>
             <FormProvider mode="print" values={values} set={set}>
               {form.render(rows)}
             </FormProvider>
