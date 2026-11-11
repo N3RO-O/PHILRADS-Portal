@@ -6,7 +6,6 @@ import { PrismMark, PrismWord } from '../ui/PrismMark';
 import { ActiveFaces } from './ActiveFaces';
 import { GlobalSearch } from './GlobalSearch';
 import { NotificationsMenu } from './NotificationsMenu';
-import { OnlinePill } from './OnlineStatus';
 import { ProfileMenu } from './ProfileMenu';
 
 interface TopBarProps {
@@ -66,7 +65,6 @@ export function TopBar({ search, onSearch, menuOpen, onOpenMenu, hideMobileSearc
         </Link>
         <GlobalSearch value={search} onChange={onSearch} inputRef={desktopInput} shortcut={SHORTCUT_LABEL} className="hidden w-full max-w-md md:block" />
         <div className="ml-auto flex items-center gap-1 sm:gap-2">
-          <OnlinePill className="hidden sm:inline-flex" />
           {onToggleActive && <ActiveFaces shown={activeShown} onToggle={onToggleActive} />}
           <NotificationsMenu />
           <ProfileMenu />

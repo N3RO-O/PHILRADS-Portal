@@ -22,8 +22,8 @@ type Props = Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value' | 
  *   so it never disappears the way a placeholder does.
  * - Late to scold: no error while you are still typing; it shows when you leave the field or submit.
  * - Early to praise: the green check draws in the moment the value is right.
- * - The next keystroke clears the error, and a line under the box is always kept for the message,
- *   so nothing below jumps when one appears.
+ * - The problem shows in the label itself (in red), so the form never moves when one appears;
+ *   the next keystroke clears it. Screen readers get it through the field's description.
  */
 export const FloatField = forwardRef<HTMLInputElement, Props>(function FloatField(
   { id, label, value, onChange, type = 'text', validate, reveal = 0, praise = false, className = '', onBlur, ...rest },
@@ -69,7 +69,13 @@ export const FloatField = forwardRef<HTMLInputElement, Props>(function FloatFiel
           {...rest}
         />
         <label htmlFor={id} className="float-field-label">
-          {label}
+          {showError ? (
+            <span key={problem} className="animate-fade-in">
+              {problem.replace(/\.$/, '')}
+            </span>
+          ) : (
+            label
+          )}
         </label>
         {isPassword ? (
           <button
@@ -90,9 +96,9 @@ export const FloatField = forwardRef<HTMLInputElement, Props>(function FloatFiel
           )
         )}
       </div>
-      {/* Always here, so the form keeps its shape whether or not there is a message. */}
-      <p id={msgId} className="float-field-msg" aria-live="polite">
-        {showError ? <span key={problem} className="inline-block animate-fade-in">{problem}</span> : null}
+      {/* For screen readers only: the label already shows it. */}
+      <p id={msgId} className="sr-only" aria-live="polite">
+        {showError ? problem : null}
       </p>
     </div>
   );

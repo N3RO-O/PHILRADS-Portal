@@ -24,6 +24,8 @@ export interface StaffMember {
   lastSignInAt: string | null;
   /** Set when archived (always switched off while archived). */
   archivedAt: string | null;
+  /** Their position, set by an administrator (null: the role they were invited with stands in). */
+  position?: string | null;
 }
 
 export interface StaffInvite {
@@ -46,6 +48,8 @@ export interface StaffService {
   /** Sends the invitation email; the account starts switched on with this role. */
   invite(invite: StaffInvite): Promise<void>;
   setRole(id: string, roleKey: StaffRoleKey): Promise<void>;
+  /** Administrators only: someone's position (empty: back to their role). */
+  setPosition(id: string, position: string): Promise<void>;
   setActive(id: string, isActive: boolean): Promise<void>;
   /** Moves the account to Archived and switches it off. Administrators can't be archived. */
   archive(id: string): Promise<void>;

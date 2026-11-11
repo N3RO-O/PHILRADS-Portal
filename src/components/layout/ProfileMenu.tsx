@@ -28,15 +28,15 @@ export function ProfileMenu() {
   const wrap = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
   const panelId = useId();
-  const close = useCallback(() => setOpen(false), []);
+  const presence = usePresence();
+  const [picking, setPicking] = useState(false);
+  const close = useCallback(() => (setOpen(false), setPicking(false)), []);
   useDismiss(open, wrap, close, button);
   const install = useInstallAvailability();
   const soundOn = useErrorSound();
   const tingOn = useNotificationSound();
   const [unlockOpen, setUnlockOpen] = useState(false);
   const quick = useQuickUnlock();
-  const presence = usePresence();
-  const [picking, setPicking] = useState(false);
 
   if (!profile) return null;
   const statusLabel = presence.choice === 'invisible' ? 'Invisible' : STATUS_META[presence.choice].label;
@@ -55,7 +55,7 @@ export function ProfileMenu() {
         aria-label="Account menu"
         aria-expanded={open}
         aria-controls={panelId}
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => (setOpen((o) => !o), setPicking(false))}
         className="flex h-10 items-center gap-2 rounded-xl pl-1 pr-2 transition-colors hover:bg-surface-raised"
       >
         <span className="relative">
@@ -66,8 +66,17 @@ export function ProfileMenu() {
         <ChevronDown className="h-4 w-4 text-muted" aria-hidden />
       </button>
       {open && (
-        <div id={panelId} className="popover absolute right-0 top-12 z-50 w-72 origin-top-right animate-pop-in p-3">
-          <div className="flex items-center gap-3 border-b border-line px-2 pb-3">
+        <div
+          id={panelId}
+          className="popover absolute right-0 top-12 z-50 w-72 origin-top-right animate-pop-in p-3"
+          onKeyDown={(e) => {
+            if (picking && e.key === 'Escape') {
+              e.stopPropagation();
+              setPicking(false);
+            }
+          }}
+        >
+          <div className="relative flex items-center gap-3 border-b border-line px-2 pb-3">
             {/* Tap your picture (with its status dot) to change your status. */}
             <button
               type="button"
@@ -89,10 +98,10 @@ export function ProfileMenu() {
               <p className="truncate font-semibold">{profile.displayName}</p>
               <p className="truncate text-xs text-muted">{[profile.jobTitle || profile.roleName, profile.office].filter(Boolean).join(' · ')}</p>
             </div>
-          </div>
-          <div className="flex flex-col gap-0.5 py-2">
+            {/* Floats over the menu, so nothing under it moves. A tap anywhere else in the menu closes it. */}
+            {picking && <button type="button" tabIndex={-1} aria-hidden className="fixed inset-0 z-10 cursor-default" onClick={() => setPicking(false)} />}
             {picking && (
-              <div className="mb-1 flex animate-pop-in flex-col rounded-xl bg-ink/[0.03] p-1" role="radiogroup" aria-label="Your status">
+              <div className="popover absolute left-0 top-full z-20 mt-1.5 flex w-64 origin-top-left animate-pop-in flex-col p-1 shadow-2xl shadow-black/40" role="radiogroup" aria-label="Your status">
                 {CHOICES.map((c) => (
                   <button
                     key={c.value}
@@ -111,6 +120,8 @@ export function ProfileMenu() {
                 ))}
               </div>
             )}
+          </div>
+          <div className="flex flex-col gap-0.5 py-2">
             <Link to="/profile" className={itemClass} onClick={() => setOpen(false)}>
               <UserRound className="h-4 w-4" aria-hidden /> Your profile
             </Link>

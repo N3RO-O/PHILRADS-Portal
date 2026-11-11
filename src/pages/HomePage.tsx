@@ -6,7 +6,6 @@ import { useLocation } from 'react-router-dom';
 import { useLayoutContext } from '../components/layout/AppLayout';
 import { useAuth } from '../components/auth/AuthProvider';
 import { DeadlineCalendar } from '../components/dashboard/DeadlineCalendar';
-import { OverviewKpis } from '../components/dashboard/OverviewKpis';
 import { ProjectsTable } from '../components/dashboard/ProjectsTable';
 import { RecentActivity } from '../components/dashboard/RecentActivity';
 import { StockLevelsChart } from '../components/dashboard/StockLevelsChart';
@@ -22,7 +21,7 @@ import { useWelcomePending } from '../lib/welcome';
  *  - phones: one column, ordered by what staff need first (`order-*`)
  *  - md–lg: two columns; wide cards span both
  *  - xl: 12 columns in aligned rows, in DOM order:
- *      welcome (12) | verse (12) | my tasks (12) | calendar (12) | recent activity, folded (12) | overview (8) + stock levels (4) | projects (12)
+ *      welcome (12) | verse (12) | my tasks (12) | calendar (12) | recent activity, folded (12) | stock levels (12) | projects (12)
  * The calendar has the whole row, so its agenda stays beside it; recent activity opens when clicked.
  * The calendar leads, right after the welcome, at every width.
  * The verse always comes first, at every width (one a day, changing at midnight).
@@ -85,10 +84,7 @@ export function HomePage() {
           <Cell className="order-4 md:col-span-2 xl:col-span-12" step={2}>
             <RecentActivity search={query} />
           </Cell>
-          <Cell className="order-3 md:col-span-2 xl:col-span-8" step={3}>
-            <OverviewKpis />
-          </Cell>
-          <Cell className="order-8 md:col-span-2 xl:col-span-4" step={4}>
+          <Cell className="order-8 md:col-span-2 xl:col-span-12" step={3}>
             <StockLevelsChart stock={stock} />
           </Cell>
           <Cell className="order-6 md:col-span-2 xl:col-span-12" step={5}>

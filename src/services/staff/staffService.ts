@@ -82,6 +82,12 @@ export const mockStaffService: StaffService = {
     checkChange(id, { roleKey });
     await later(null);
   },
+  async setPosition(id, position) {
+    // Not a role change: any administrator may set anyone's position, their own included.
+    sample = sampleState().map((m) => (m.id === id ? { ...m, position: position.trim() || null } : m));
+    persist();
+    await later(null);
+  },
   async setActive(id, isActive) {
     checkChange(id, { isActive });
     await later(null);
@@ -131,6 +137,7 @@ export function createSupabaseStaffService(client: SupabaseClient): StaffService
         invitedAt: (r.invited_at as string | null) ?? null,
         lastSignInAt: (r.last_sign_in_at as string | null) ?? null,
         archivedAt: (r.archived_at as string | null) ?? null,
+        position: (r.job_title as string | null | undefined) ?? null,
       }));
     },
     async invite(invite) {
@@ -154,6 +161,7 @@ export function createSupabaseStaffService(client: SupabaseClient): StaffService
       }
     },
     setRole: (id, roleKey) => update(id, { role_key: roleKey }, 'change the role'),
+    setPosition: (id, position) => update(id, { job_title: position.trim().slice(0, 100) || null }, 'change the position'),
     setActive: (id, isActive) => update(id, { is_active: isActive }, isActive ? 'switch the account on' : 'switch the account off'),
     // The database switches an archived account off and refuses to archive administrators.
     archive: (id) => update(id, { archived_at: new Date().toISOString() }, 'archive the account'),

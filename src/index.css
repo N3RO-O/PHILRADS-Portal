@@ -132,6 +132,10 @@
   .float-field-label {
     position: absolute;
     left: 1rem;
+    max-width: calc(100% - 3.5rem);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
     top: 50%;
     transform: translateY(-50%);
     font-size: 0.875rem;
@@ -181,13 +185,6 @@
   }
   .float-field[data-state='good'] .float-field-input:not(:focus) {
     border-color: rgb(var(--status-in) / 0.55);
-  }
-  .float-field-msg {
-    min-height: 1.25rem;
-    padding: 0.25rem 0.25rem 0;
-    font-size: 0.75rem;
-    line-height: 1rem;
-    color: rgb(var(--status-out));
   }
   /*
    * Design rules: docs/design-system.md. Three surface levels give depth (page, surface, raised);
@@ -1813,4 +1810,33 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .launch-hint { animation: none; }
+}
+
+/* "Profile saved": rises in with a little overshoot, holds, then slips away (ProfilePage SavedPop). */
+.saved-pop {
+  animation: saved-pop 2.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes saved-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(1.25rem) scale(0.92);
+  }
+  12% {
+    opacity: 1;
+    transform: translateY(-0.125rem) scale(1.02);
+  }
+  18%,
+  85% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(0.75rem) scale(0.97);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .saved-pop {
+    animation: none !important;
+  }
 }

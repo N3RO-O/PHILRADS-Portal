@@ -127,6 +127,9 @@ function LockScreen({ uid, onUnlock }: { uid: string; onUnlock: () => void }) {
   const hasPin = pinSet(uid);
   const hasBio = biometricSetUp(uid);
   const tried = useRef(false);
+  // One way at a time: fingerprint first when it's set up, the PIN only when asked for or when the
+  // fingerprint didn't work.
+  const [mode, setMode] = useState<'bio' | 'pin'>(hasBio ? 'bio' : 'pin');
 
   const done = useCallback(() => {
     setState('ok');
@@ -135,8 +138,11 @@ function LockScreen({ uid, onUnlock }: { uid: string; onUnlock: () => void }) {
 
   const bio = useCallback(async () => {
     setNote(null);
-    if (await verifyBiometric(uid)) done();
-    else setNote(hasPin ? 'Fingerprint didn’t work. Enter your PIN.' : 'Fingerprint didn’t work. Try again.');
+    if (await verifyBiometric(uid)) return done();
+    if (hasPin) {
+      setMode('pin');
+      setNote('Fingerprint didn’t work. Enter your PIN.');
+    } else setNote('Fingerprint didn’t work. Try again.');
   }, [uid, hasPin, done]);
 
   // Fingerprint or face is offered straight away.
@@ -149,7 +155,7 @@ function LockScreen({ uid, onUnlock }: { uid: string; onUnlock: () => void }) {
 
   const onDigit = useCallback(
     (d: string) => {
-      if (!hasPin || state === 'checking' || state === 'ok') return;
+      if (!hasPin || mode !== 'pin' || state === 'checking' || state === 'ok') return;
       setState('idle');
       setNote(null);
       setPinValue((p) => {
@@ -172,10 +178,10 @@ function LockScreen({ uid, onUnlock }: { uid: string; onUnlock: () => void }) {
         return next;
       });
     },
-    [hasPin, state, uid, done, signOut],
+    [hasPin, mode, state, uid, done, signOut],
   );
   const onBack = useCallback(() => setPinValue((p) => p.slice(0, -1)), []);
-  useDigits(true, onDigit, onBack);
+  useDigits(mode === 'pin', onDigit, onBack);
 
   return (
     <div role="dialog" aria-modal="true" aria-label="Portal locked" className="fixed inset-0 z-[1300] flex animate-fade-in flex-col items-center justify-center overflow-y-auto bg-page px-6 py-10 backdrop-blur-2xl">
@@ -188,28 +194,32 @@ function LockScreen({ uid, onUnlock }: { uid: string; onUnlock: () => void }) {
         </span>
         <div>
           <h2 className="text-2xl font-bold text-ink">{state === 'ok' ? `Welcome back, ${profile?.displayName.split(' ')[0] ?? ''}` : 'Portal locked'}</h2>
-          <p className="mt-1 text-sm text-muted">{hasPin ? 'Enter your 6-digit PIN' : 'Use your fingerprint or face'}</p>
+          <p className="mt-1 text-sm text-muted">{mode === 'pin' ? 'Enter your 6-digit PIN' : 'Use your fingerprint or face'}</p>
         </div>
-        {hasPin && <PinBoxes value={pin} state={state === 'checking' ? 'idle' : state} />}
+        {mode === 'pin' && <PinBoxes value={pin} state={state === 'checking' ? 'idle' : state} />}
         <p className={`min-h-5 text-sm ${state === 'wrong' ? 'text-rose' : 'text-muted'}`} role="status">
           {state === 'checking' ? <Loader2 className="mx-auto h-4 w-4 animate-spin" aria-hidden /> : note}
         </p>
-        {hasPin ? (
-          <Keypad
-            onDigit={onDigit}
-            onBack={onBack}
-            extra={
-              hasBio ? (
-                <button type="button" onClick={() => void bio()} className="press grid h-16 w-16 place-items-center rounded-full text-ink hover:bg-surface-raised" aria-label="Use fingerprint or face">
-                  <Fingerprint className="h-8 w-8" aria-hidden />
-                </button>
-              ) : null
-            }
-          />
+        {mode === 'pin' ? (
+          <>
+            <Keypad onDigit={onDigit} onBack={onBack} />
+            {hasBio && (
+              <button type="button" className="link text-sm" onClick={() => (setMode('bio'), setPinValue(''), setState('idle'), void bio())}>
+                <Fingerprint className="h-4 w-4" aria-hidden /> Use fingerprint instead
+              </button>
+            )}
+          </>
         ) : (
-          <button type="button" onClick={() => void bio()} className="press relative grid h-24 w-24 place-items-center rounded-full border-2 border-line text-ink-soft" aria-label="Use fingerprint or face">
-            <Fingerprint className="h-12 w-12" aria-hidden />
-          </button>
+          <>
+            <button type="button" onClick={() => void bio()} className="press relative grid h-24 w-24 place-items-center rounded-full border-2 border-line text-ink-soft hover:border-uplift hover:text-ink" aria-label="Use fingerprint or face">
+              <Fingerprint className="h-12 w-12" aria-hidden />
+            </button>
+            {hasPin && (
+              <button type="button" className="link text-sm" onClick={() => (setMode('pin'), setNote(null))}>
+                Use PIN instead
+              </button>
+            )}
+          </>
         )}
         <button type="button" className="link mt-2 text-sm text-muted" onClick={() => (clearQuickUnlock(uid), void signOut())}>
           <LogOut className="h-4 w-4" aria-hidden /> Forgot it? Sign out and sign in with your password

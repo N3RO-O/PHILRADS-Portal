@@ -12,6 +12,9 @@ import { ViewPhoto } from '../components/ui/PhotoViewer';
 import { AVATAR_FRAMES, frameUnlocked, hasAllFrames, type AvatarFrameInfo } from '../lib/avatarFrames';
 import { EmptyState, LoadError, Skeleton } from '../components/ui/Card';
 import { SampleBadge } from '../components/ui/SampleBadge';
+import { StatusDot } from '../components/ui/StatusDot';
+import { DoneCheck } from '../components/ui/DoneCheck';
+import { usePresence } from '../lib/presence';
 import { Dialog } from '../components/ui/Dialog';
 import { formatNumber, initialsOf } from '../lib/format';
 import { BADGES, badgesFor, levelFor } from '../lib/taskProgress';
@@ -116,6 +119,9 @@ function ProfileCard({
   const since = memberSince(p.memberSince);
   const [openBadge, setOpenBadge] = useState<string | null>(null);
   const shown = badges.find((b) => b.badge.id === openBadge) ?? null;
+  // Online, idle, do not disturb or offline: a dot on the picture, the way Discord shows it.
+  const status = usePresence().statusOf(p.id);
+  const dot = <StatusDot status={status} size={22} ring="rgb(var(--surface))" className="absolute bottom-2 right-2 z-10" />;
   return (
     <article className="overflow-hidden rounded-2xl border border-line bg-surface" aria-label={`${p.displayName}’s profile`}>
       <div
@@ -132,13 +138,17 @@ function ProfileCard({
                 <Avatar initials={p.initials} src={p.avatar} color={p.avatarColor} size="xl" ring={`ring-4 ${FRAME_RING[level?.frame ?? 'none']}`} />
               </AvatarFrame>
               <PhotoOverlay />
+              {dot}
             </button>
           ) : (
-            <ViewPhoto id={p.id} name={p.displayName} subtitle={p.jobTitle || undefined} profileLink={false} className="-mt-14 bg-surface p-1.5">
-              <AvatarFrame frame={p.avatarFrame}>
-                <Avatar initials={p.initials} src={p.avatar} color={p.avatarColor} size="xl" ring={`ring-4 ${FRAME_RING[level?.frame ?? 'none']}`} />
-              </AvatarFrame>
-            </ViewPhoto>
+            <span className="relative -mt-14">
+              <ViewPhoto id={p.id} name={p.displayName} subtitle={p.jobTitle || undefined} profileLink={false} className="bg-surface p-1.5">
+                <AvatarFrame frame={p.avatarFrame}>
+                  <Avatar initials={p.initials} src={p.avatar} color={p.avatarColor} size="xl" ring={`ring-4 ${FRAME_RING[level?.frame ?? 'none']}`} />
+                </AvatarFrame>
+              </ViewPhoto>
+              {dot}
+            </span>
           )}
           {earned.length > 0 && (
             <ul className="mb-1 flex max-w-[60%] flex-wrap justify-end gap-1 rounded-xl border border-line/70 bg-surface-sunken p-1.5" aria-label="Badges">
@@ -359,6 +369,11 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
       return null;
     });
   const [message, setMessage] = useState<{ text: string; error?: boolean } | null>(null);
+  /** The "Saved" pop-up, shown for a moment after each save. */
+  const [savedAt, setSavedAt] = useState(0);
+  // Only an administrator changes a position; everyone else's comes from the role they were invited with.
+  const { can } = useAuth();
+  const canSetPosition = can('staff.manage');
   const set = <K extends keyof ProfilePatch>(k: K, v: ProfilePatch[K]) => setD((x) => ({ ...x, [k]: v }));
   const dirty = JSON.stringify(d) !== JSON.stringify(start);
 
@@ -393,7 +408,7 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
     try {
       await profileService.save(person.id, d);
       onSaved({ ...preview, displayName: d.displayName.trim() });
-      setMessage({ text: 'Saved. Your profile is up to date.' });
+      setSavedAt(Date.now());
     } catch (e) {
       setMessage({ text: e instanceof Error ? e.message : 'Not saved.', error: true });
     } finally {
@@ -499,10 +514,23 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
             </Field>
           </div>
           <div className="grid grid-cols-1 gap-3 [@container(min-width:32rem)]:grid-cols-2">
-            <Field id={`${uid}-job`} label="Position" hint="Optional">
+            <Field id={`${uid}-job`} label="Position" hint={canSetPosition ? 'Optional' : 'Set by an administrator'}>
               <span className="relative block">
-                <Briefcase className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
-                <input id={`${uid}-job`} className="field pl-10" maxLength={100} value={d.jobTitle} onChange={(e) => set('jobTitle', e.target.value)} placeholder="e.g. Field officer" />
+                {canSetPosition ? (
+                  <Briefcase className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
+                ) : (
+                  <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
+                )}
+                <input
+                  id={`${uid}-job`}
+                  className={`field pl-10 ${canSetPosition ? '' : 'cursor-not-allowed opacity-70'}`}
+                  maxLength={100}
+                  value={canSetPosition ? d.jobTitle : d.jobTitle || person.roleName || ''}
+                  onChange={(e) => set('jobTitle', e.target.value)}
+                  placeholder={person.roleName || 'e.g. Field officer'}
+                  readOnly={!canSetPosition}
+                  aria-readonly={!canSetPosition || undefined}
+                />
               </span>
             </Field>
             <Field id={`${uid}-phone`} label="Phone" hint="Optional">
@@ -542,6 +570,7 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
             />
           </div>
           <ThemeRow />
+          <SavedPop at={savedAt} />
           {message && (
             <p role={message.error ? 'alert' : 'status'} className={`rounded-xl border px-4 py-3 text-sm ${message.error ? 'border-status-out/40 bg-status-out/10' : 'border-status-in/40 bg-status-in/10'}`}>
               {message.text}
@@ -735,6 +764,32 @@ function ThemeRow() {
         <span className="block text-xs text-muted">{theme === 'system' ? 'Follows this device’s setting.' : `${theme === 'light' ? 'Light' : 'Dark'} on this device.`} Saved straight away.</span>
       </span>
       <ThemeSwitch />
+    </div>
+  );
+}
+
+/** After a save: a check that draws itself in a card that pops up at the bottom, then slips away. */
+function SavedPop({ at }: { at: number }) {
+  const [shown, setShown] = useState(0);
+  useEffect(() => {
+    if (!at) return;
+    setShown(at);
+    const t = setTimeout(() => setShown(0), 2600);
+    return () => clearTimeout(t);
+  }, [at]);
+  return (
+    <div className="pointer-events-none fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+1.25rem)] z-50 flex justify-center" role="status" aria-live="polite">
+      {shown > 0 && (
+        <div key={shown} className="saved-pop flex items-center gap-3 rounded-2xl border border-status-in/40 bg-surface-raised py-3 pl-3 pr-5 shadow-2xl shadow-black/60">
+          <span className="grid h-10 w-10 place-items-center rounded-full bg-status-in/15 text-status-in">
+            <DoneCheck className="h-6 w-6" />
+          </span>
+          <span>
+            <span className="block text-sm font-bold text-ink">Profile saved</span>
+            <span className="block text-xs text-muted">Your profile is up to date.</span>
+          </span>
+        </div>
+      )}
     </div>
   );
 }
