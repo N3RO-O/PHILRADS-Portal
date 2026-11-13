@@ -26,20 +26,21 @@
     --shadow-strength: 0.75;
   }
   /*
-   * Light (2026-11-11, "white cards on cool grey", the pattern Facebook, LinkedIn and Gmail share):
-   * a cool light-grey page, pure white panels with a soft shadow, near-black text and one mid grey
-   * for secondary text. Burgundy is kept for buttons and selected chips (as a soft rose tint), and
-   * accent and status colours are deepened so each reads at 4.5:1 or better on the page and on white.
+   * Light (2026-11-13): soft cool greys, never pure white, so it is easy on the eyes. The page is
+   * slate-100 (#F1F5F9), panels a step lighter at slate-50 (#F8FAFC) with a soft shadow, and text
+   * is slate-800 (#1E293B), not black. Burgundy is kept for buttons and selected chips (as a soft
+   * rose tint), and secondary, accent and status colours each read at 4.5:1 or better on the page,
+   * on panels and on sunken fields.
    */
   :root[data-theme='light'] {
-    --page: 240 242 245;
-    --surface: 255 255 255;
-    --surface-sunken: 228 230 235;
-    --surface-raised: 255 255 255;
-    --line: 218 221 225;
-    --ink: 28 30 33;
-    --ink-soft: 75 79 86;
-    --ink-mute: 101 103 107;
+    --page: 241 245 249;
+    --surface: 248 250 252;
+    --surface-sunken: 226 232 240;
+    --surface-raised: 248 250 252;
+    --line: 218 225 233;
+    --ink: 30 41 59;
+    --ink-soft: 71 85 105;
+    --ink-mute: 91 101 119;
     --uplift: 154 74 0;
     --uplift-soft: 168 84 4;
     --prism-1: 140 20 20;
@@ -48,7 +49,7 @@
     --status-in: 24 112 58;
     --status-low: 152 70 6;
     --status-out: 192 38 45;
-    --shadow: 28 30 33;
+    --shadow: 30 41 59;
     --shadow-strength: 0.18;
   }
   html {
