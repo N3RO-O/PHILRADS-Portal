@@ -1,5 +1,5 @@
 /**
- * The PRISM launch theme (public/sounds/prism-launch.mp3, about a minute, looping) on the sign-in
+ * The sign-in theme (public/sounds/prism-signin.mp3, about four minutes, looping) on the sign-in
  * screen: fades in softly whenever the screen opens and fades out when the person signs in or
  * leaves. Never for data saving; the speaker button turns it off on this device.
  *
@@ -12,7 +12,7 @@
  */
 import { useSyncExternalStore } from 'react';
 
-const SRC = '/sounds/prism-launch.mp3';
+const SRC = '/sounds/prism-signin.mp3';
 /** Quiet: background music under the sign-in form. */
 const VOLUME = 0.2;
 const MUTE_KEY = 'philrads.sound.launch';
