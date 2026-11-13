@@ -22,6 +22,8 @@ interface Props {
   statusLabel: string;
   me: Person;
   team: Person[];
+  /** Everyone's names, so administrators who post (and aren't on the team) show by name. */
+  directory?: Person[];
 }
 
 type Pending = ChatMessage & { state?: 'sending' | 'failed' };
@@ -48,7 +50,7 @@ const dayOf = (iso: string) => {
  * The team chat of one project: messages live, who's typing, emoji and GIFs, replies. A full-height
  * sheet on phones and a side panel on wider screens.
  */
-export function ProjectChat({ open, onClose, projectId, projectName, canPost, statusLabel, me, team }: Props) {
+export function ProjectChat({ open, onClose, projectId, projectName, canPost, statusLabel, me, team, directory }: Props) {
   const [messages, setMessages] = useState<Pending[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
@@ -62,7 +64,7 @@ export function ProjectChat({ open, onClose, projectId, projectName, canPost, st
   const end = useRef<HTMLDivElement>(null);
   const { statusOf } = usePresence();
 
-  const names = useMemo(() => new Map(team.map((p) => [p.id, p.name])), [team]);
+  const names = useMemo(() => new Map([...(directory ?? []), ...team].map((p) => [p.id, p.name])), [team, directory]);
   const nameOf = (id: string) => (id === me.id ? 'You' : (names.get(id) ?? 'Former team member'));
   const online = team.filter((p) => p.id !== me.id && statusOf(p.id) !== 'offline').length;
 
@@ -302,7 +304,7 @@ export function ProjectChat({ open, onClose, projectId, projectName, canPost, st
               👋
             </p>
             <p className="mt-2 font-semibold">No messages yet</p>
-            <p className="mt-1 text-sm text-muted">Only this project’s team can read and post here.</p>
+            <p className="mt-1 text-sm text-muted">Only this project’s team and administrators can read and post here.</p>
           </div>
         ) : (
           messages.map((m, i) => {

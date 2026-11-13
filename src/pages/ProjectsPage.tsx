@@ -307,19 +307,20 @@ interface DetailProps {
   onEdit: () => void;
 }
 
-function ProjectDetail({ project: p, me, canManage, canCost, people, onChanged, onEdit }: DetailProps) {
+function ProjectDetail({ project: p, me, canManage, canSetLead, canCost, people, onChanged, onEdit }: DetailProps) {
   const today = todayKey();
   const onTeam = canManage || (Boolean(me) && (p.leadId === me || p.members.some((m) => m.profileId === me)));
   const { profile } = useAuth();
 
-  // Team chat: only the lead and members (not every manager), as the account enforces.
+  // Team chat: the lead and members, plus administrators (projects.manage, here canSetLead) on
+  // every project, as the account enforces.
   const chatTeam = useMemo(() => {
     const list = p.members.map((m) => ({ id: m.profileId, name: m.name }));
     if (p.leadId && !list.some((x) => x.id === p.leadId)) list.push({ id: p.leadId, name: p.leadName ?? 'Project lead' });
     setSampleTeam(p.id, list);
     return list;
   }, [p.id, p.members, p.leadId, p.leadName]);
-  const onChatTeam = Boolean(me) && chatTeam.some((x) => x.id === me);
+  const onChatTeam = Boolean(me) && (canSetLead || chatTeam.some((x) => x.id === me));
   const [params, setParams] = useSearchParams();
   const chatOpen = onChatTeam && params.get('chat') === '1';
   const setChat = (open: boolean) => setParams(open ? { chat: '1' } : {}, { replace: !open });
@@ -494,6 +495,7 @@ function ProjectDetail({ project: p, me, canManage, canCost, people, onChanged, 
           statusLabel={statusLabel(p.status)}
           me={{ id: me, name: profile.displayName }}
           team={chatTeam}
+          directory={people}
         />
       )}
     </div>

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-11-13.4",
+    "version": "1.10.11",
+    "date": "2026-11-13",
+    "title": "Administrators in every project chat",
+    "items": [
+      {
+        "icon": "messages",
+        "title": "Administrators can join any project chat",
+        "body": "Administrators now see Team chat on every project, not only the ones they lead or belong to, and can read and post there. Their messages show their name. New-message alerts still go to the project team only."
+      }
+    ]
+  },
+  {
     "id": "2026-11-13.3",
     "version": "1.10.10",
     "date": "2026-11-13",
