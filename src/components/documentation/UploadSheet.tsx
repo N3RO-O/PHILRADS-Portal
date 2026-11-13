@@ -86,8 +86,10 @@ export function UploadSheet({ open, onClose, onUpload, events, places, projects,
   const ok = picked.filter((p) => !problem(p));
   const leftOut = picked.length - ok.length;
   const total = useMemo(() => ok.reduce((s, p) => s + p.file.size, 0), [ok]);
+  // Every upload says what it documents: a response, a project or a place (at least one).
+  const forWhat = Boolean(eventId || projectId || placeId);
   const submit = () => {
-    if (!ok.length) return;
+    if (!ok.length || !forWhat) return;
     const event = events.find((e) => e.id === eventId);
     onUpload(
       ok.map((p) => ({
@@ -105,9 +107,11 @@ export function UploadSheet({ open, onClose, onUpload, events, places, projects,
       title="Upload documentation"
       subtitle="Photos, videos and reports from the field. They’re saved to the PHILRADS Google Drive."
       footer={
-        <button type="button" className="btn-primary h-12 w-full text-base" onClick={submit} disabled={!ok.length}>
+        <button type="button" className="btn-primary h-12 w-full text-base" onClick={submit} disabled={!ok.length || !forWhat}>
           <Upload className="h-5 w-5" aria-hidden />
-          {ok.length
+          {ok.length && !forWhat
+            ? 'Choose the response, project or place'
+            : ok.length
             ? `Upload ${ok.length} file${ok.length === 1 ? '' : 's'} (${formatBytes(total)})${leftOut ? `, ${leftOut} left out` : ''}`
             : picked.length
               ? 'None of these fit this category'
@@ -182,7 +186,9 @@ export function UploadSheet({ open, onClose, onUpload, events, places, projects,
             <input id={`${uid}-taken`} type="date" className="field" value={takenOn} max={today} onChange={(e) => setTakenOn(e.target.value)} />
           </label>
           <label className="flex flex-col gap-1.5" htmlFor={`${uid}-event`}>
-            <span className="text-sm font-semibold text-ink-soft">For which response?</span>
+            <span className="text-sm font-semibold text-ink-soft">
+              For which response? <span className="font-normal text-muted">(or a project or place below: one is needed)</span>
+            </span>
             <select id={`${uid}-event`} className="field" value={eventId} onChange={(e) => setEventId(e.target.value)}>
               <option value="">Not for a response</option>
               {events.map((e) => (

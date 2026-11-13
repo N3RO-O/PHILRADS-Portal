@@ -102,13 +102,11 @@ function ProfileCard({
   person: p,
   progress,
   showLocked = false,
-  narrow = false,
   onPhoto,
 }: {
   person: PersonProfile;
   progress: ProfileProgress | null;
   showLocked?: boolean;
-  narrow?: boolean;
   /** Your own profile: the picture is the button to change it. */
   onPhoto?: () => void;
 }) {
@@ -119,6 +117,8 @@ function ProfileCard({
   const best = bestBadges(badges);
   const since = memberSince(p.memberSince);
   const [openBadge, setOpenBadge] = useState<string | null>(null);
+  // Badges fold to one row (earned first, then the closest to earning); "Show all" opens the rest.
+  const [allBadges, setAllBadges] = useState(false);
   const shown = badges.find((b) => b.badge.id === openBadge) ?? null;
   // Online, idle, do not disturb or offline: a dot on the picture, the way Discord shows it.
   const status = usePresence().statusOf(p.id);
@@ -242,8 +242,16 @@ function ProfileCard({
           {progress && (showLocked || earned.length > 0) && (
             <Section title={`Badges · ${earned.length} of ${badges.length}`}>
               {/* Compact: one icon per badge with a ring showing progress; tap for the details. */}
-              <ul className={`grid gap-x-1 gap-y-2.5 ${narrow ? 'grid-cols-5' : 'grid-cols-5 sm:grid-cols-6'}`}>
-                {(showLocked ? badges : earned).map(({ badge, value, earned: got }) => {
+              {(() => {
+                const list = (showLocked ? badges : earned)
+                  .slice()
+                  .sort((a, b) => Number(b.earned) - Number(a.earned) || b.value / b.badge.target - a.value / a.badge.target);
+                const row = 5;
+                const shownList = allBadges ? list : list.slice(0, row);
+                return (
+                  <>
+              <ul id={`${p.id}-badges`} className="grid grid-cols-5 gap-x-1 gap-y-2.5">
+                {shownList.map(({ badge, value, earned: got }) => {
                   return (
                     <li key={badge.id}>
                       <button
@@ -260,6 +268,21 @@ function ProfileCard({
                   );
                 })}
               </ul>
+              {list.length > row && (
+                <button
+                  type="button"
+                  className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg py-1.5 text-xs font-semibold text-ink-soft hover:bg-ink/[0.04] hover:text-ink"
+                  aria-expanded={allBadges}
+                  aria-controls={`${p.id}-badges`}
+                  onClick={() => setAllBadges((v) => !v)}
+                >
+                  {allBadges ? 'Show less' : `Show all ${list.length}`}
+                  <ChevronDown className={`h-3.5 w-3.5 transition-transform ${allBadges ? 'rotate-180' : ''}`} aria-hidden />
+                </button>
+              )}
+                  </>
+                );
+              })()}
             </Section>
           )}
           {progress && !showLocked && earned.length === 0 && (
@@ -563,7 +586,7 @@ function EditProfile({ person, progress, mine, onSaved }: { person: PersonProfil
         <p className="flex items-center gap-2 text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-ink-soft">
           Preview {profileService.source === 'mock' && <SampleBadge />}
         </p>
-        <ProfileCard person={preview} progress={progress} showLocked={mine} narrow onPhoto={choosePhoto} />
+        <ProfileCard person={preview} progress={progress} showLocked={mine} onPhoto={choosePhoto} />
       </aside>
 
       <PhotoCropper

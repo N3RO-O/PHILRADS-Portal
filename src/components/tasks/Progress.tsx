@@ -5,15 +5,22 @@ import { FRAME_LABEL, RARITY_LABEL, XP_RULES, bestBadges, type Level, type Progr
 import { Medal } from './Medal';
 import { Dialog } from '../ui/Dialog';
 import { FRAME_RING, FRAME_TEXT } from './taskMeta';
+import { useAuth } from '../auth/AuthProvider';
 
-/** The person's initials in the profile ring their level has unlocked, with the level on a tab. */
+/** Your picture (or initials in your colour) in the ring your level has unlocked, with the level on a tab. */
 export function LevelAvatar({ initials, progress, size = 'lg' }: { initials: string; progress: Progress; size?: 'md' | 'lg' }) {
+  const { profile } = useAuth();
   const box = size === 'lg' ? 'h-16 w-16 text-lg' : 'h-11 w-11 text-sm';
+  const ring = `rounded-full ring-[3px] ring-offset-2 ring-offset-surface ${FRAME_RING[progress.level.frame]} ${box}`;
   return (
     <span className="relative inline-grid shrink-0" aria-hidden>
-      <span className={`grid place-items-center rounded-full bg-burgundy-600 font-semibold tracking-wide text-white ring-[3px] ring-offset-2 ring-offset-surface ${FRAME_RING[progress.level.frame]} ${box}`}>
-        {initials}
-      </span>
+      {profile?.avatar ? (
+        <img src={profile.avatar} alt="" className={`object-cover ${ring}`} />
+      ) : (
+        <span className={`grid place-items-center font-semibold tracking-wide text-white ${profile?.avatarColor ? '' : 'bg-burgundy-600'} ${ring}`} style={profile?.avatarColor ? { background: profile.avatarColor } : undefined}>
+          {initials}
+        </span>
+      )}
       <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 rounded-full border border-surface bg-uplift px-1.5 text-[0.625rem] font-bold leading-4 text-onaccent">
         {progress.level.level}
       </span>

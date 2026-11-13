@@ -698,13 +698,7 @@
 .map-tiles-dark {
   filter: invert(100%) hue-rotate(180deg) brightness(92%) contrast(88%) saturate(55%);
 }
-/* Light theme: the map as OpenStreetMap draws it, softened a little. */
-[data-theme='light'] .map-tiles-dark {
-  filter: saturate(80%);
-}
-[data-theme='light'] .leaflet-container {
-  background: #e8e9ee;
-}
+/* The map keeps this one look in light and dark mode; only the portal around it changes. */
 
 /* ───────── Forms: PHILRADS paper forms, typed on screen and printed (src/forms) ───────── */
 .form-page {
@@ -1459,6 +1453,9 @@
 [data-theme='light'] .chip[aria-pressed='true'] {
   border-color: #ebc9c4;
   background-color: #f7e4e1;
+  /* Not the dark theme's deep red gradient: dark red text on it couldn't be read. */
+  background-image: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
   color: #7a0b0b;
 }
 /* Light theme: a solid Uplift fill keeps the bright brand orange (dark text on it); only Uplift text is deepened. */
@@ -1937,3 +1934,13 @@
     animation: none !important;
   }
 }
+
+/* Level colours for text (src/components/tasks/taskMeta.tsx FRAME_TEXT): bright on dark, deep on light. */
+.level-text-bronze { color: #d9a273; }
+.level-text-silver { color: #d7dbe2; }
+.level-text-gold { color: #f0c862; }
+.level-text-platinum { color: #b9ecf6; }
+[data-theme='light'] .level-text-bronze { color: #8a5424; }
+[data-theme='light'] .level-text-silver { color: #55606e; }
+[data-theme='light'] .level-text-gold { color: #85640a; }
+[data-theme='light'] .level-text-platinum { color: #17707f; }

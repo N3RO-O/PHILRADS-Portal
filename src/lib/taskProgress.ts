@@ -25,6 +25,8 @@ export const XP_RULES = {
   fullWeek: 50,
   /** Finishing the Get started checklist, once. */
   onboarding: 50,
+  /** Checking in on Home, once a day (Manila time). */
+  daily: 10,
 } as const;
 
 /** Score a finished task (sample mode). `selfXpToday`: XP already earned today from self-set tasks. */

@@ -48,6 +48,9 @@ export async function POST(request: Request) {
   const parsed = body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return json(400, { error: parsed.error.issues[0]?.message ?? 'Check the file details.' });
   const m = parsed.data;
+  // Every upload says what it documents: a response, a project or a place (PHILRADS, 2026-11-13).
+  if (!m.imsEventId && !m.projectId && !m.mapPlaceId)
+    return json(400, { error: 'Choose the response, project or place this documents, then upload again.' });
   if (!CATEGORY_KINDS[m.category].includes(kindOf(m.mimeType)))
     return json(400, { error: `This file doesn’t fit ${m.category}: choose the category that matches it (photo, video or document).` });
 

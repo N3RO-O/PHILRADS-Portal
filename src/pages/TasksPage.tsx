@@ -18,7 +18,8 @@ import { LoadError, Skeleton } from '../components/ui/Card';
 import { ViewSwitch } from '../components/ui/ViewSwitch';
 import { SampleBadge } from '../components/ui/SampleBadge';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
-import { formatLongDate, formatNumber, manilaDayKey } from '../lib/format';
+import { useDailyXp } from '../hooks/useDailyXp';
+import { formatLongDate, formatNumber, formatShortDate, manilaDayKey } from '../lib/format';
 import { todayKey } from '../lib/inventory';
 import { BUCKET_LABEL, BUCKETS, bucketOf, compareTasks, daysBetween, LIST_META, type Bucket } from '../lib/tasks';
 import { computeProgress, LEVELS, XP_RULES, type Level } from '../lib/taskProgress';
@@ -30,6 +31,8 @@ import type { OutputDraft } from '../services/tasks/staffBoard';
 import { TASK_LISTS, TaskRuleError, type Assignee, type Kudos, type Task, type TaskDraft, type TaskList, type TeamProgress, type WeekBonus, type XpAward } from '../services/tasks/types';
 import { TopLayer } from '../components/ui/TopLayer';
 import { DoneCheck } from '../components/ui/DoneCheck';
+import { Dialog } from '../components/ui/Dialog';
+import { PersonAvatar } from '../components/ui/PersonAvatar';
 
 type View = 'myday' | 'upcoming' | 'calendar' | 'assigned' | 'delegated' | 'team' | 'done' | 'list';
 type Where = 'all' | 'field' | 'office';
@@ -85,6 +88,7 @@ export function TasksPage() {
     return () => ro.disconnect();
   }, [layoutEl]);
   const onboarding = useOnboarding();
+  const daily = useDailyXp();
   const online = useOnlineStatus();
   const canManage = can('tasks.manage');
   // Anyone from volunteer up can give a task to someone; from the same or a lower role it waits to be accepted.
@@ -179,6 +183,9 @@ export function TasksPage() {
   const showOpen = (t: Task) => t.status !== 'done' || t.id in linger;
   /** Someone asks you to take this on: it waits at the top of Today until you answer. */
   const isOffer = (t: Task) => t.assigneeId === me && t.createdById !== me && t.acceptance === 'pending' && t.status !== 'done';
+  // Tasks given to you that wait for your answer pop up each time you open Staff Tasks.
+  const [offersClosed, setOffersClosed] = useState(false);
+  const offers = all.filter(isOffer);
   const doneToday = (t: Task) => t.status === 'done' && !(t.id in linger) && t.completedAt !== null && manilaDayKey(t.completedAt) === today;
 
   const openMine = all.filter((t) => isMine(t) && whereOk(t) && t.status !== 'done');
@@ -218,7 +225,7 @@ export function TasksPage() {
     .sort((a, b) => Number(isOffer(b)) - Number(isOffer(a)) || compareTasks(a, b));
 
   const awardOf = useMemo(() => new Map(awards.map((a) => [a.taskId, a])), [awards]);
-  const progress = useMemo(() => computeProgress({ awards, kudos, weekBonuses, tasks: all, userId: me, today, bonusXp: onboarding.bonusXp }), [awards, kudos, weekBonuses, all, me, today, onboarding.bonusXp]);
+  const progress = useMemo(() => computeProgress({ awards, kudos, weekBonuses, tasks: all, userId: me, today, bonusXp: onboarding.bonusXp + daily.total }), [awards, kudos, weekBonuses, all, me, today, onboarding.bonusXp, daily.total]);
 
   // ── Actions ──
   const [toast, setToast] = useState<{ text: ReactNode; tone: 'ok' | 'warn'; undo?: () => void } | null>(null);
@@ -269,7 +276,7 @@ export function TasksPage() {
           1800,
         ),
       );
-      const after = computeProgress({ awards: nextAwards, kudos, weekBonuses, tasks: nextTasks, userId: me, today, bonusXp: onboarding.bonusXp });
+      const after = computeProgress({ awards: nextAwards, kudos, weekBonuses, tasks: nextTasks, userId: me, today, bonusXp: onboarding.bonusXp + daily.total });
       const fullWeek = after.week.workDone === 5 && before.week.workDone < 5;
       if (after.level.level > before.level.level) setLevelUp(LEVELS.find((l) => l.level === after.level.level) ?? null);
       const newBadges = after.badges.filter((b) => b.earned && !before.badges.find((x) => x.badge.id === b.badge.id)?.earned);
@@ -621,7 +628,7 @@ export function TasksPage() {
     setTasks(nextTasks);
     setAwards(nextAwards);
     tasksService.progress().then((p) => setWeekBonuses(p.weekBonuses), () => undefined);
-    const after = computeProgress({ awards: nextAwards, kudos, weekBonuses, tasks: nextTasks, userId: me, today, bonusXp: onboarding.bonusXp });
+    const after = computeProgress({ awards: nextAwards, kudos, weekBonuses, tasks: nextTasks, userId: me, today, bonusXp: onboarding.bonusXp + daily.total });
     if (after.level.level > before.level.level) setLevelUp(LEVELS.find((l) => l.level === after.level.level) ?? null);
     const n = ok.length - skipped.filter((s) => s.r === 'failed').length;
     finishBulk(
@@ -997,6 +1004,13 @@ export function TasksPage() {
         onSetStatus={(t, st) => void setStatus(t, st)}
       />
       <FinishSheet task={finishing} onClose={() => setFinishing(null)} onFinish={finish} />
+      <OffersDialog
+        open={!offersClosed && tasks !== null && offers.length > 0}
+        offers={offers}
+        onAccept={(o) => respond(o, true)}
+        onSee={() => (setOffersClosed(true), setParam({ view: 'myday' }))}
+        onClose={() => setOffersClosed(true)}
+      />
       <RewardsSheet tab={rewardsTab} progress={progress} kudos={kudos} onTab={(tab) => setParam({ rewards: tab })} onClose={() => setParam({ rewards: null })} onPrintCertificate={(l) => setPrintLevel(LEVELS.find((x) => x.level === l) ?? null)} />
       <LevelUpDialog level={levelUp} onClose={() => setLevelUp(null)} onViewRewards={() => (setLevelUp(null), setParam({ rewards: 'levels' }))} />
       {printLevel && <Certificate name={profile?.displayName ?? 'Staff member'} level={printLevel} tasksDone={progress.stats.total} />}
@@ -1223,5 +1237,48 @@ function AddTaskButton({ label = 'Add a task' }: { label?: string }) {
     >
       <Plus className="h-4 w-4" aria-hidden /> {label}
     </button>
+  );
+}
+
+/** "New tasks for you": the tasks given to you that still wait for your answer, each with Accept. */
+function OffersDialog({ open, offers, onAccept, onSee, onClose }: { open: boolean; offers: Task[]; onAccept: (t: Task) => Promise<string | null>; onSee: () => void; onClose: () => void }) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const accept = async (t: Task) => {
+    setBusy(t.id);
+    setError(await onAccept(t));
+    setBusy(null);
+  };
+  const n = offers.length;
+  return (
+    <Dialog open={open} title={n === 1 ? 'A new task for you' : `${n} new tasks for you`} onClose={onClose}>
+      <p className="-mt-1 mb-3 text-sm text-muted">{n === 1 ? 'Someone gave you a task. Accept it to start, or see it to decline with a reason.' : 'You were given these tasks. Accept them to start, or see them to decline with a reason.'}</p>
+      <ul className="flex max-h-[50vh] flex-col gap-2 overflow-y-auto overscroll-contain">
+        {offers.map((t) => (
+          <li key={t.id} className="flex items-center gap-3 rounded-xl border border-line bg-surface-sunken/60 p-3">
+            <PersonAvatar id={t.createdById} name={t.createdByName ?? '?'} size="sm" ring="ring-0" frame={false} />
+            <span className="min-w-0 flex-1">
+              <span className="line-clamp-2 text-sm font-semibold leading-snug text-ink">{t.title}</span>
+              <span className="block truncate text-xs text-muted">
+                From {t.createdByName ?? 'a colleague'}
+                {t.dueDate ? ` · due ${formatShortDate(t.dueDate)}` : ''}
+              </span>
+            </span>
+            <button type="button" className="btn-primary min-h-9 shrink-0 px-3 text-sm" onClick={() => void accept(t)} disabled={busy !== null} aria-busy={busy === t.id || undefined}>
+              {busy === t.id ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Check className="h-4 w-4" aria-hidden />} Accept
+            </button>
+          </li>
+        ))}
+      </ul>
+      {error && <p className="mt-2 text-sm text-rose" role="alert">{error}</p>}
+      <div className="mt-4 flex gap-2">
+        <button type="button" className="btn-ghost flex-1" onClick={onClose}>
+          Not now
+        </button>
+        <button type="button" className="btn-ghost flex-1" onClick={onSee}>
+          See {n === 1 ? 'it' : 'them'} in My Day
+        </button>
+      </div>
+    </Dialog>
   );
 }

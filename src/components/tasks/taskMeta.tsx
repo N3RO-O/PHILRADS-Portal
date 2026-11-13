@@ -66,8 +66,9 @@ export const FRAME_RING: Record<Frame, string> = {
 };
 export const FRAME_TEXT: Record<Frame, string> = {
   none: 'text-ink-soft',
-  bronze: 'text-[#d9a273]',
-  silver: 'text-[#d7dbe2]',
-  gold: 'text-[#f0c862]',
-  platinum: 'text-[#b9ecf6]',
+  // Bright on dark, deepened in light mode (src/index.css, .level-text-*), so they stay readable.
+  bronze: 'level-text-bronze',
+  silver: 'level-text-silver',
+  gold: 'level-text-gold',
+  platinum: 'level-text-platinum',
 };

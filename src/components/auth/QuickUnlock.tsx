@@ -77,7 +77,8 @@ export function PinBoxes({ value, state = 'idle' }: { value: string; state?: 'id
             }`}
             style={state === 'ok' ? { transitionDelay: `${i * 40}ms` } : undefined}
           >
-            {filled && <span key={value.length} className={`h-3.5 w-3.5 animate-pop-in rounded-full ${state === 'ok' ? 'bg-status-in' : state === 'wrong' ? 'bg-rose' : 'bg-uplift'}`} />}
+            {/* Only the dot that just appeared pops in; the earlier ones stay still. */}
+            {filled && <span className={`h-3.5 w-3.5 animate-pop-in rounded-full ${state === 'ok' ? 'bg-status-in' : state === 'wrong' ? 'bg-rose' : 'bg-uplift'}`} />}
             {current && <span className="h-6 w-0.5 animate-pulse rounded bg-uplift" />}
           </span>
         );
@@ -204,8 +205,8 @@ function LockScreen({ uid, onUnlock }: { uid: string; onUnlock: () => void }) {
           <>
             <Keypad onDigit={onDigit} onBack={onBack} />
             {hasBio && (
-              <button type="button" className="link text-sm" onClick={() => (setMode('bio'), setPinValue(''), setState('idle'), void bio())}>
-                <Fingerprint className="h-4 w-4" aria-hidden /> Use fingerprint instead
+              <button type="button" className="link gap-1.5 text-sm leading-none" onClick={() => (setMode('bio'), setPinValue(''), setState('idle'), void bio())}>
+                <Fingerprint className="h-4 w-4 shrink-0" aria-hidden /> Use fingerprint instead
               </button>
             )}
           </>
@@ -221,8 +222,8 @@ function LockScreen({ uid, onUnlock }: { uid: string; onUnlock: () => void }) {
             )}
           </>
         )}
-        <button type="button" className="link mt-2 text-sm text-muted" onClick={() => (clearQuickUnlock(uid), void signOut())}>
-          <LogOut className="h-4 w-4" aria-hidden /> Forgot it? Sign out and sign in with your password
+        <button type="button" className="mt-2 max-w-[18rem] text-balance text-center text-sm font-semibold leading-snug text-muted hover:text-ink hover:underline" onClick={() => (clearQuickUnlock(uid), void signOut())}>
+          <LogOut className="mr-1.5 inline-block h-4 w-4 align-[-0.2em]" aria-hidden /> Forgot it? Sign out and sign in with your password
         </button>
       </div>
     </div>
