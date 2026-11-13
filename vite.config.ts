@@ -67,8 +67,8 @@ export default defineConfig({
       workbox: {
         // Precache only the built app shell and static assets.
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,mp3}'],
-        // The sign-in theme is a minute long (1.4 MB): streamed when needed, not stored on every install.
-        globIgnores: ['**/sounds/prism-launch.mp3'],
+        // The sign-in theme is four minutes long (5 MB): streamed when needed, not stored on every install.
+        globIgnores: ['**/sounds/prism-signin.mp3'],
         navigateFallback: '/index.html',
         // Phone notifications: shows pushed notes and opens the right page when one is tapped.
         importScripts: ['push-sw.js'],

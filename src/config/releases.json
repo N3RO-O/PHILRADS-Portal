@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-11-13.1",
+    "version": "1.10.8",
+    "date": "2026-11-13",
+    "title": "New music on the sign-in screen",
+    "items": [
+      {
+        "icon": "volume",
+        "title": "New sign-in music",
+        "body": "The sign-in screen has a new song, mixed so the voice comes through clearly and the opening isn’t too quiet. It still starts softly, and the speaker button turns it off on this device."
+      }
+    ]
+  },
+  {
     "id": "2026-11-11.2",
     "version": "1.10.7",
     "date": "2026-11-11",
