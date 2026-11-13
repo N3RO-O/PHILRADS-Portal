@@ -12,7 +12,7 @@ import { ViewPhoto } from '../components/ui/PhotoViewer';
 import { AVATAR_FRAMES, frameUnlocked, hasAllFrames, type AvatarFrameInfo } from '../lib/avatarFrames';
 import { EmptyState, LoadError, Skeleton } from '../components/ui/Card';
 import { SampleBadge } from '../components/ui/SampleBadge';
-import { StatusDot } from '../components/ui/StatusDot';
+import { StatusAvatar } from '../components/ui/StatusAvatar';
 import { DoneCheck } from '../components/ui/DoneCheck';
 import { usePresence } from '../lib/presence';
 import { Dialog } from '../components/ui/Dialog';
@@ -122,7 +122,6 @@ function ProfileCard({
   const shown = badges.find((b) => b.badge.id === openBadge) ?? null;
   // Online, idle, do not disturb or offline: a dot on the picture, the way Discord shows it.
   const status = usePresence().statusOf(p.id);
-  const dot = <StatusDot status={status} size={22} ring="rgb(var(--surface))" className="absolute bottom-2 right-2 z-10" />;
   return (
     <article className="overflow-hidden rounded-2xl border border-line bg-surface" aria-label={`${p.displayName}’s profile`}>
       <div
@@ -135,20 +134,23 @@ function ProfileCard({
         <div className="flex items-end justify-between gap-3">
           {onPhoto ? (
             <button type="button" onClick={onPhoto} className="group relative -mt-14 rounded-full bg-surface p-1.5" aria-label="Change your photo" title="Change your photo">
-              <AvatarFrame frame={p.avatarFrame}>
-                <Avatar initials={p.initials} src={p.avatar} color={p.avatarColor} size="xl" ring={`ring-4 ${FRAME_RING[level?.frame ?? 'none']}`} />
-              </AvatarFrame>
-              <PhotoOverlay />
-              {dot}
+              <StatusAvatar status={status} size={112}>
+                <AvatarFrame frame={p.avatarFrame}>
+                  <Avatar initials={p.initials} src={p.avatar} color={p.avatarColor} size="xl" ring={`ring-4 ${FRAME_RING[level?.frame ?? 'none']}`} />
+                </AvatarFrame>
+              </StatusAvatar>
+              {/* No camera badge on the preview card: the picture itself opens "Change your photo". */}
+              <span aria-hidden className="pointer-events-none absolute inset-0 rounded-full bg-black/0 transition-colors group-hover:bg-black/25" />
             </button>
           ) : (
             <span className="relative -mt-14">
               <ViewPhoto id={p.id} name={p.displayName} subtitle={p.jobTitle || undefined} profileLink={false} className="bg-surface p-1.5">
-                <AvatarFrame frame={p.avatarFrame}>
-                  <Avatar initials={p.initials} src={p.avatar} color={p.avatarColor} size="xl" ring={`ring-4 ${FRAME_RING[level?.frame ?? 'none']}`} />
-                </AvatarFrame>
+                <StatusAvatar status={status} size={112}>
+                  <AvatarFrame frame={p.avatarFrame}>
+                    <Avatar initials={p.initials} src={p.avatar} color={p.avatarColor} size="xl" ring={`ring-4 ${FRAME_RING[level?.frame ?? 'none']}`} />
+                  </AvatarFrame>
+                </StatusAvatar>
               </ViewPhoto>
-              {dot}
             </span>
           )}
           {earned.length > 0 && (

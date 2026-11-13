@@ -11,7 +11,7 @@ import { LoadError, Skeleton } from '../ui/Card';
 import { PersonAvatar } from '../ui/PersonAvatar';
 import { ViewPhoto } from '../ui/PhotoViewer';
 import { Sheet } from '../ui/Sheet';
-import { StatusDot } from '../ui/StatusDot';
+import { StatusAvatar } from '../ui/StatusAvatar';
 import { SuccessTick } from '../ui/SuccessTick';
 import { TaskTimeline, type Standing, type TimelineItem } from './TaskTimeline';
 
@@ -218,12 +218,11 @@ export function PersonTasks({ person, status, me, onClose, onChanged }: { person
       onClose={onClose}
       title={
         <span className="flex items-center gap-3">
-          <span className="relative">
-            <ViewPhoto id={person.id} name={person.name} subtitle={person.roleName ?? 'Staff'} onLeave={onClose}>
+          <ViewPhoto id={person.id} name={person.name} subtitle={person.roleName ?? 'Staff'} onLeave={onClose}>
+            <StatusAvatar status={status} size={56}>
               <PersonAvatar id={person.id} name={person.name} size="lg" />
-            </ViewPhoto>
-            <StatusDot status={status} size={20} ring="rgb(var(--surface))" className="absolute -bottom-1 -right-1" />
-          </span>
+            </StatusAvatar>
+          </ViewPhoto>
           <span className="min-w-0">
             <span className="block truncate">{mine ? 'Your tasks' : person.name}</span>
             <span className="block text-xs font-normal text-muted">

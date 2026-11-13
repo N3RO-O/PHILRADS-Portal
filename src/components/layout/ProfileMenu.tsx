@@ -4,6 +4,7 @@ import { BellRing, ChevronDown, Download, Fingerprint, Gift, LogOut, Rocket, Squ
 import { QuickUnlockSheet, useQuickUnlock } from '../auth/QuickUnlock';
 import { CHOICES, STATUS_META, usePresence, type Choice } from '../../lib/presence';
 import { StatusDot } from '../ui/StatusDot';
+import { StatusAvatar } from '../ui/StatusAvatar';
 import { whatsNew } from '../../lib/whatsNew';
 import { errorSound, useErrorSound } from '../../lib/errorSound';
 import { notificationSound, useNotificationSound } from '../../lib/notificationSound';
@@ -58,10 +59,9 @@ export function ProfileMenu() {
         onClick={() => (setOpen((o) => !o), setPicking(false))}
         className="flex h-10 items-center gap-2 rounded-xl pl-1 pr-2 transition-colors hover:bg-surface-raised"
       >
-        <span className="relative">
+        <StatusAvatar status={presence.mine} size={32}>
           <Avatar initials={profile.initials} src={profile.avatar} color={profile.avatarColor} size="sm" />
-          <StatusDot status={presence.mine} size={13} ring="rgb(var(--page))" className="absolute -bottom-0.5 -right-0.5" />
-        </span>
+        </StatusAvatar>
         <span className="hidden max-w-[9rem] truncate text-sm font-medium text-ink sm:block">{profile.displayName}</span>
         <ChevronDown className="h-4 w-4 text-muted" aria-hidden />
       </button>
@@ -86,13 +86,9 @@ export function ProfileMenu() {
               title="Change status"
               className="group relative shrink-0 rounded-full"
             >
-              <Avatar initials={profile.initials} src={profile.avatar} color={profile.avatarColor} />
-              <StatusDot
-                status={presence.mine}
-                size={16}
-                ring="rgb(var(--surface-raised))"
-                className={`absolute -bottom-1 -right-1 transition-transform duration-200 group-hover:scale-125 ${picking ? 'scale-125' : ''}`}
-              />
+              <StatusAvatar status={presence.mine} size={40} className={`transition-transform duration-200 group-hover:scale-105 ${picking ? 'scale-105' : ''}`}>
+                <Avatar initials={profile.initials} src={profile.avatar} color={profile.avatarColor} />
+              </StatusAvatar>
             </button>
             <div className="min-w-0">
               <p className="truncate font-semibold">{profile.displayName}</p>

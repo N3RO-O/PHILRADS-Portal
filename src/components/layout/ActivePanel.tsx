@@ -9,7 +9,7 @@ import { TASK_ANSWERED, type BoardPerson } from '../../services/tasks/staffBoard
 import { PersonTasks } from '../tasks/PersonTasksSheet';
 import { PersonAvatar } from '../ui/PersonAvatar';
 import { Skeleton } from '../ui/Card';
-import { StatusDot } from '../ui/StatusDot';
+import { StatusAvatar } from '../ui/StatusAvatar';
 
 /** Highest first, like the role hierarchy. */
 const ROLES: { key: string; label: string }[] = [
@@ -158,10 +158,9 @@ export function ActivePanel({ onClose, variant }: { onClose: () => void; variant
                         className={`press group flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-ink/[0.06] ${g.offline ? 'opacity-45 hover:opacity-90' : ''}`}
                         aria-label={`${p.name}${me ? ' (you)' : ''}, ${role.label}, ${STATUS_META[status].label}, ${line.text}`}
                       >
-                        <span className="relative shrink-0">
+                        <StatusAvatar status={status} size={32}>
                           <PersonAvatar id={p.id} name={p.name} size="sm" ring="ring-0" />
-                          <StatusDot status={status} size={14} ring="rgb(var(--page))" className="absolute -bottom-0.5 -right-0.5" />
-                        </span>
+                        </StatusAvatar>
                         <span className="min-w-0 flex-1">
                           <span className="flex items-center gap-1.5">
                             <span className="truncate text-sm font-semibold text-ink">
