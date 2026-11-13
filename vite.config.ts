@@ -38,6 +38,28 @@ export default defineConfig({
         this.emitFile({ type: 'asset', fileName: 'releases.json', source: readFileSync('src/config/releases.json', 'utf8') });
       },
     },
+    // Dev only: Our Daily Bread through the same parsing as /api/weather?devotional= (Vercel serves it live).
+    {
+      name: 'odb-dev',
+      configureServer(server) {
+        server.middlewares.use('/api/weather', async (req, res, next) => {
+          const day = new URL(req.url ?? '', 'http://dev').searchParams.get('devotional');
+          if (day === null) return next();
+          const { isDayKey, odbApiUrl, parseOdb } = await import('./src/services/verse/odb');
+          res.setHeader('Content-Type', 'application/json');
+          if (!isDayKey(day)) return void ((res.statusCode = 400), res.end('{"error":"Ask for a day as YYYY-MM-DD."}'));
+          try {
+            const up = await fetch(odbApiUrl(day), { headers: { Accept: 'application/json' } });
+            const found = parseOdb(await up.json(), day);
+            res.statusCode = found ? 200 : 404;
+            res.end(JSON.stringify(found ?? { error: 'No devotional for that day.' }));
+          } catch {
+            res.statusCode = 502;
+            res.end('{"error":"Our Daily Bread is unreachable."}');
+          }
+        });
+      },
+    },
     VitePWA({
       // The app shows its own "new version available" prompt (src/components/pwa/UpdatePrompt.tsx),
       // so a new service worker only takes over when staff choose to reload.

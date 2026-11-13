@@ -3,6 +3,9 @@ import { BookOpen, BookOpenText, Check, Copy, HandHeart, Loader2, MessageSquareQ
 import { BusyLabel } from '../ui/BusyLabel';
 import { devotionalFor } from '../../config/devotionals';
 import { verseOfTheDay } from '../../config/verse';
+import { useOdbDevotional } from '../../hooks/useOdbDevotional';
+import { todayKey } from '../../lib/inventory';
+import { OdbReader } from './OdbReader';
 import { formatTime } from '../../lib/format';
 import { reflectionsService } from '../../services';
 import { REFLECTION_MAX, ReflectionError, type Reflection } from '../../services/verse/reflectionsService';
@@ -220,9 +223,12 @@ function Reflections({ verseRef }: { verseRef: string }) {
 
 export function VerseOfTheDay() {
   const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle');
-  // One verse a day (changes at midnight, Manila time).
-  const verse = verseOfTheDay();
-  const devotional = devotionalFor(verse.reference);
+  // Today's Our Daily Bread key verse (Manila day); the built-in verse of the day when it can't be had.
+  const today = todayKey();
+  const odb = useOdbDevotional(today);
+  const own = verseOfTheDay();
+  const verse = odb?.verse.text ? { text: odb.verse.text, reference: odb.verse.reference } : own;
+  const devotional = odb ? null : devotionalFor(own.reference);
   const [reading, setReading] = useState(false);
 
   useEffect(() => {
@@ -253,12 +259,15 @@ export function VerseOfTheDay() {
           </h2>
           <blockquote className="mt-3">
             <p className="max-w-4xl font-serif text-[1.4rem] leading-snug text-ink md:text-[1.6rem]">“{verse.text}”</p>
-            <footer className="mt-2 text-sm font-medium text-ink-soft">— {verse.reference}</footer>
+            <footer className="mt-2 text-sm font-medium text-ink-soft">
+              — {verse.reference}
+              {odb && <span className="font-normal text-muted"> · Our Daily Bread</span>}
+            </footer>
           </blockquote>
         </div>
         <div className="flex shrink-0 flex-col gap-1 md:items-end">
           <div className="flex items-center gap-2">
-            {devotional && (
+            {(odb || devotional) && (
               <button type="button" onClick={() => setReading(true)} className="btn-ghost min-h-10 px-4">
                 <BookOpenText className="h-4 w-4" aria-hidden /> Read more
               </button>
@@ -279,6 +288,7 @@ export function VerseOfTheDay() {
         </div>
       </div>
 
+      {odb && <OdbReader open={reading} onClose={() => setReading(false)} today={today} todayExtra={reading && <Reflections verseRef={verse.reference} />} />}
       {devotional && (
         <Sheet open={reading} onClose={() => setReading(false)} title={devotional.title} subtitle={`Reflection on ${verse.reference}`}>
           <article className="flex flex-col gap-5">
