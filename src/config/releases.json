@@ -1,5 +1,33 @@
 [
   {
+    "id": "2026-11-13.3",
+    "version": "1.10.10",
+    "date": "2026-11-13",
+    "title": "Our Daily Bread on Home, and your profile in the menu",
+    "items": [
+      {
+        "icon": "sparkles",
+        "title": "Our Daily Bread every day",
+        "body": "The Verse of the Day is now today's key verse from Our Daily Bread. Tap Read more for the full devotional: the picture, today's scripture, Bible in a Year, the audio to listen to, the devotion, Reflect & Pray and Today's Insights. Go back to earlier days, and share your own reflection on today's."
+      },
+      {
+        "icon": "user",
+        "title": "Your profile in the menu",
+        "body": "On phones and tablets, your picture, name and status are now at the top of the menu (☰), under PRISM. Tap it for your profile and settings; they open over the menu, so nothing moves."
+      },
+      {
+        "icon": "messages",
+        "title": "Tidier project chat",
+        "body": "The message box lines up neatly, and Team chat fits beside the project's status on phones."
+      },
+      {
+        "icon": "volume",
+        "title": "Louder sign-in music",
+        "body": "The sign-in music is easier to hear. The speaker button still turns it off on this device."
+      }
+    ]
+  },
+  {
     "id": "2026-11-13.2",
     "version": "1.10.9",
     "date": "2026-11-13",
