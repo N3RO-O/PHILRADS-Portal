@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026-11-13.2",
+    "version": "1.10.9",
+    "date": "2026-11-13",
+    "title": "Team chat for ongoing projects",
+    "items": [
+      {
+        "icon": "messages",
+        "title": "Chat with your project team",
+        "body": "Open a project you're on and tap Team chat. Only the project's lead and members can read and post, and messages arrive straight away. You can see who's typing, reply to a message, delete your own, and add emoji or GIFs. When a project is no longer ongoing, its chat stays readable but nobody can post."
+      },
+      {
+        "icon": "bell-ring",
+        "title": "Chat notifications",
+        "body": "A new message rings your bell once per chat, not once per message. Tap it to open that chat; opening it clears the notification."
+      },
+      {
+        "icon": "gift",
+        "title": "+10 XP for checking in",
+        "body": "Claim 10 XP on Home once a day. It counts toward your level like finished tasks."
+      },
+      {
+        "icon": "list-checks",
+        "title": "New tasks pop up",
+        "body": "When someone gives you tasks, a pop-up lets you accept each one or look at them later in My Day."
+      },
+      {
+        "icon": "circle-dot",
+        "title": "Neater status dot and badges",
+        "body": "Your status dot now sits in a clean notch on your picture. Badges on your profile show five at first, with Show all for the rest."
+      },
+      {
+        "icon": "sun",
+        "title": "Light mode fixes",
+        "body": "Pressed filter chips and level names are easier to read in light mode, and the map keeps its dark look."
+      }
+    ]
+  },
+  {
     "id": "2026-11-13.1",
     "version": "1.10.8",
     "date": "2026-11-13",
