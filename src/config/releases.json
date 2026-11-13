@@ -3,12 +3,17 @@
     "id": "2026-11-13.4",
     "version": "1.10.11",
     "date": "2026-11-13",
-    "title": "Administrators in every project chat",
+    "title": "Administrators in every project chat, smoother scorecard",
     "items": [
       {
         "icon": "messages",
         "title": "Administrators can join any project chat",
         "body": "Administrators now see Team chat on every project, not only the ones they lead or belong to, and can read and post there. Their messages show their name. New-message alerts still go to the project team only."
+      },
+      {
+        "icon": "sparkles",
+        "title": "Smoother scorecard trends",
+        "body": "The small trend lines on the Home scorecard are now smooth curves with a soft shade underneath, and a dot marks where things stand today."
       }
     ]
   },
