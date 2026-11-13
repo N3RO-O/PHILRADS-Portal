@@ -48,7 +48,7 @@ export interface ChatService {
   markRead(projectId: string): Promise<void>;
   /** Unread messages per project, for the chats you're on. */
   unread(): Promise<Record<string, number>>;
-  /** GIPHY search (trending when the words are empty), through /api/gifs. */
+  /** GIPHY search (trending when the words are empty), through /api/weather?gifs=. */
   gifs(q: string): Promise<GifResult[]>;
   subscribe(
     projectId: string,
@@ -265,7 +265,7 @@ export function createSupabaseChatService(client: SupabaseClient): ChatService {
       const { data } = await client.auth.getSession();
       let res: Response;
       try {
-        res = await fetch(`/api/gifs?q=${encodeURIComponent(q.trim())}`, { headers: { Authorization: `Bearer ${data.session?.access_token ?? ''}` } });
+        res = await fetch(`/api/weather?gifs=${encodeURIComponent(q.trim())}`, { headers: { Authorization: `Bearer ${data.session?.access_token ?? ''}` } });
       } catch {
         throw new Error('Couldn’t reach GIPHY. Check your connection.');
       }

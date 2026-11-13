@@ -191,7 +191,9 @@ export function ProjectChat({ open, onClose, projectId, projectName, canPost, st
     const el = input.current;
     if (!el) return;
     el.style.height = 'auto';
-    el.style.height = `${Math.min(el.scrollHeight, 132)}px`;
+    const full = el.scrollHeight + 1;
+    el.style.height = `${Math.min(full, 132)}px`;
+    el.style.overflowY = full > 132 ? 'auto' : 'hidden';
   }, [draft]);
 
   // The Reply / Delete row of a tapped message comes into view.
@@ -255,11 +257,11 @@ export function ProjectChat({ open, onClose, projectId, projectName, canPost, st
             placeholder="Message the team…"
             aria-label="Message"
             enterKeyHint="send"
-            className="max-h-[8.25rem] min-w-0 flex-1 resize-none bg-transparent px-1 py-2.5 text-[0.9375rem] leading-snug outline-none placeholder:text-muted"
+            className="block h-10 max-h-[8.25rem] min-w-0 flex-1 resize-none overflow-hidden bg-transparent px-1 py-2.5 text-[0.9375rem] leading-5 outline-none placeholder:text-muted"
           />
           <button
             type="button"
-            className={`mb-1.5 shrink-0 rounded-md border px-1.5 py-0.5 text-[0.625rem] font-bold tracking-wide ${panel === 'gif' ? 'border-uplift text-uplift' : 'border-line text-muted hover:text-ink'}`}
+            className={`mb-2.5 shrink-0 rounded-md border px-1.5 py-0.5 text-[0.625rem] font-bold tracking-wide ${panel === 'gif' ? 'border-uplift text-uplift' : 'border-line text-muted hover:text-ink'}`}
             aria-label="GIFs"
             aria-pressed={panel === 'gif'}
             onClick={() => setPanel((x) => (x === 'gif' ? null : 'gif'))}

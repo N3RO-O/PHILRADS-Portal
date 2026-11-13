@@ -390,7 +390,7 @@ function ProjectDetail({ project: p, me, canManage, canCost, people, onChanged, 
           <div className="flex flex-wrap items-center gap-2">
             {canManage ? (
               <select
-                className="field min-h-10 w-auto py-1.5 text-xs font-semibold"
+                className="field h-10 min-h-0 w-auto py-1.5 text-xs font-semibold"
                 aria-label="Status"
                 value={p.status}
                 disabled={busy === 'status'}
@@ -406,8 +406,8 @@ function ProjectDetail({ project: p, me, canManage, canCost, people, onChanged, 
               <span className={`rounded-md px-2 py-1 text-xs font-semibold ${STATUS_TONE[p.status]}`}>{statusLabel(p.status)}</span>
             )}
             {canManage && (
-              <button type="button" className="btn-ghost min-h-10 px-3 text-xs" onClick={onEdit}>
-                <Pencil className="h-3.5 w-3.5" aria-hidden /> Edit project
+              <button type="button" className="btn-ghost min-h-10 px-3 text-xs" onClick={onEdit} aria-label="Edit project">
+                <Pencil className="h-3.5 w-3.5" aria-hidden /> <span className="hidden sm:inline">Edit project</span>
               </button>
             )}
             {onChatTeam && (

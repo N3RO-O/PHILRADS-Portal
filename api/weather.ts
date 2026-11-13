@@ -7,7 +7,10 @@
  * Only these two fixed requests are passed on (it is not an open proxy), and answers are shared
  * by everyone for up to 30 minutes, so the whole team stays well inside Open-Meteo's free limits.
  * Public forecast data only: no login, nothing about the user is sent.
+ *
+ *   ?gifs=words                       project chat GIF search (signed-in staff; see _gifs.ts)
  */
+import { gifs } from './_gifs.js';
 import { gridUrl, spotUrl, validGrid, validSpot } from '../src/services/weather/openMeteo.js';
 
 const fail = (status: number, error: string) =>
@@ -15,6 +18,7 @@ const fail = (status: number, error: string) =>
 
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
+  if (params.has('gifs')) return gifs(request);
   let upstream: string;
   let maxAge: number;
   const grid = params.get('grid');

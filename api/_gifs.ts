@@ -1,5 +1,7 @@
 /**
- * GET /api/gifs?q=thanks   GIFs for the project chat, from GIPHY (trending when q is empty).
+ * GIFs for the project chat, from GIPHY (trending when q is empty). Served by /api/weather?gifs=<words>:
+ * the Hobby plan allows 12 functions per deployment, so this rides on an existing one
+ * (files starting with "_" are not deployed as endpoints).
  *
  * Only signed-in, active staff can use it, and the GIPHY key stays on the server
  * (GIPHY_API_KEY in Vercel's environment variables, never VITE_*). Only the search words are sent
@@ -21,7 +23,7 @@ interface GiphyGif {
 const GIPHY = /^https:\/\/(media[0-9]*|i)\.giphy\.com\//;
 const clean = (url?: string) => (url ? url.split('?')[0] : '');
 
-export async function GET(request: Request) {
+export async function gifs(request: Request) {
   const key = process.env.GIPHY_API_KEY ?? '';
   if (!key) return json(503, { error: 'GIFs aren’t set up yet. An administrator needs to add a free GIPHY key (GIPHY_API_KEY).' });
   const c = config();
@@ -29,7 +31,7 @@ export async function GET(request: Request) {
   const who = await caller(c, request);
   if (!who) return json(401, { error: 'Sign in first.' });
 
-  const q = (new URL(request.url).searchParams.get('q') ?? '').trim().slice(0, 50);
+  const q = (new URL(request.url).searchParams.get('gifs') ?? '').trim().slice(0, 50);
   const upstream = q
     ? `https://api.giphy.com/v1/gifs/search?api_key=${encodeURIComponent(key)}&q=${encodeURIComponent(q)}&limit=24&rating=g&lang=en`
     : `https://api.giphy.com/v1/gifs/trending?api_key=${encodeURIComponent(key)}&limit=24&rating=g`;
