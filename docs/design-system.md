@@ -82,10 +82,11 @@ are semibold Cloud, notes are muted, figures are large and tabular.
   `tailwind.config.js` reads them, so every `bg-surface`, `text-ink`, `border-line` follows the theme.
 - People choose Dark, Light or Auto in Profile or the account menu (`src/lib/theme.ts`); `index.html`
   applies the choice before the page draws.
-- Light (2026-11-11) is "white cards on cool grey", the pattern Facebook, LinkedIn and Gmail share:
-  the page is `#F0F2F5`, panels and tiles you press are white with a small shadow, text is near-black
-  `#1C1E21` and secondary text one mid grey `#65676B`. Accent text and status colours are deepened
-  so each reads at 4.5:1 or better on the page, on white and on sunken fields.
+- Light (2026-11-13) is soft cool greys and never pure white or pure black: the page is slate-100
+  `#F1F5F9`, panels and tiles you press are a step lighter at slate-50 `#F8FAFC` with a small
+  shadow, fields are slate-200 `#E2E8F0`, text is slate-800 `#1E293B` and secondary text slate-600
+  `#475569`. Muted text, accent text and status colours are deepened so each reads at 4.5:1 or
+  better on the page, on panels and on fields.
 - On light, a selected chip is a soft rose tint (`#F7E4E1`) with burgundy text instead of a solid
   burgundy fill, so the brand shows without heavy blocks of colour.
 - A solid Uplift fill stays the bright brand orange with dark text (`text-onaccent`) in both themes.
