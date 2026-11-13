@@ -21,8 +21,12 @@ import {
   UserPlus,
   Users,
   X,
+  MessagesSquare,
 } from 'lucide-react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { ProjectChat } from '../components/chat/ProjectChat';
+import { capCount } from '../components/ui/CountBadge';
+import { setSampleTeam } from '../services/chat/chatService';
 import { useAuth } from '../components/auth/AuthProvider';
 import { AssigneePicker } from '../components/projects/AssigneePicker';
 import { ProjectSheet } from '../components/projects/ProjectSheet';
@@ -31,7 +35,7 @@ import { SampleBadge } from '../components/ui/SampleBadge';
 import { formatDateTime, formatNumber, formatPeso, formatShortDate } from '../lib/format';
 import { todayKey } from '../lib/inventory';
 import { daysBetween } from '../lib/tasks';
-import { documentationService, projectsService, tasksService } from '../services';
+import { chatService, documentationService, projectsService, tasksService } from '../services';
 import type { DocFile, DocLinks } from '../services/documentation/documentationService';
 import {
   nextDeadline,
@@ -306,6 +310,29 @@ interface DetailProps {
 function ProjectDetail({ project: p, me, canManage, canCost, people, onChanged, onEdit }: DetailProps) {
   const today = todayKey();
   const onTeam = canManage || (Boolean(me) && (p.leadId === me || p.members.some((m) => m.profileId === me)));
+  const { profile } = useAuth();
+
+  // Team chat: only the lead and members (not every manager), as the account enforces.
+  const chatTeam = useMemo(() => {
+    const list = p.members.map((m) => ({ id: m.profileId, name: m.name }));
+    if (p.leadId && !list.some((x) => x.id === p.leadId)) list.push({ id: p.leadId, name: p.leadName ?? 'Project lead' });
+    setSampleTeam(p.id, list);
+    return list;
+  }, [p.id, p.members, p.leadId, p.leadName]);
+  const onChatTeam = Boolean(me) && chatTeam.some((x) => x.id === me);
+  const [params, setParams] = useSearchParams();
+  const chatOpen = onChatTeam && params.get('chat') === '1';
+  const setChat = (open: boolean) => setParams(open ? { chat: '1' } : {}, { replace: !open });
+  const [unread, setUnread] = useState(0);
+  useEffect(() => {
+    if (!onChatTeam || chatOpen) return setUnread(0);
+    let alive = true;
+    chatService.unread().then((u) => alive && setUnread(u[p.id] ?? 0), () => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [p.id, onChatTeam, chatOpen]);
+
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const act = async (key: string, fn: () => Promise<unknown>) => {
@@ -383,6 +410,16 @@ function ProjectDetail({ project: p, me, canManage, canCost, people, onChanged, 
                 <Pencil className="h-3.5 w-3.5" aria-hidden /> Edit project
               </button>
             )}
+            {onChatTeam && (
+              <button type="button" className="btn-primary min-h-10 px-3.5 text-xs" onClick={() => setChat(true)}>
+                <MessagesSquare className="h-4 w-4" aria-hidden /> Team chat
+                {unread > 0 && (
+                  <span className="rounded-full bg-status-out px-1.5 py-px text-[0.625rem] font-bold leading-4 text-white" aria-label={`${unread} unread`}>
+                    {capCount(unread)}
+                  </span>
+                )}
+              </button>
+            )}
           </div>
         </div>
         {facts.length > 0 && (
@@ -447,6 +484,18 @@ function ProjectDetail({ project: p, me, canManage, canCost, people, onChanged, 
           )}
         </div>
       </div>
+      {onChatTeam && me && profile && (
+        <ProjectChat
+          open={chatOpen}
+          onClose={() => setChat(false)}
+          projectId={p.id}
+          projectName={p.name}
+          canPost={p.status === 'active'}
+          statusLabel={statusLabel(p.status)}
+          me={{ id: me, name: profile.displayName }}
+          team={chatTeam}
+        />
+      )}
     </div>
   );
 }

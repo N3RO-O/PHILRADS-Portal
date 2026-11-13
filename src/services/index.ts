@@ -13,6 +13,7 @@ import { createInventoryStore } from './inventory/inventoryStore';
 import { createSupabaseMapService, mockMapService } from './map/mapService';
 import type { MapService } from './map/types';
 import { createSupabaseOnboardingService, mockOnboardingService, type OnboardingService } from './onboarding/onboardingService';
+import { createSupabaseChatService, mockChatService, type ChatService } from './chat/chatService';
 import { createSupabaseDailyXpService, mockDailyXpService, type DailyXpService } from './dailyXp/dailyXpService';
 import { createSupabaseProfileService, mockProfileService, type ProfileService } from './profiles/profileService';
 import { createSupabaseProjectsService, mockProjectsService, type ProjectsService } from './projects/projectsService';
@@ -72,6 +73,9 @@ export const onboardingService: OnboardingService = live ? createSupabaseOnboard
 
 /** Daily check-in XP (+10 once per Manila day), decided by the account. */
 export const dailyXpService: DailyXpService = live ? createSupabaseDailyXpService(live) : mockDailyXpService;
+
+/** Project team chats: live messages, typing, GIFs (team-only, enforced by the account). */
+export const chatService: ChatService = live ? createSupabaseChatService(live) : mockChatService;
 
 /** Statistics: PHILRADS projects and activities since 2023 (where, when, who was served). */
 export const activitiesService: ActivitiesService = withDeviceCopy(live ? createSupabaseActivitiesService(live) : mockActivitiesService, 'activities', ['list']);
