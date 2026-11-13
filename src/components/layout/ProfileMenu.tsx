@@ -97,7 +97,9 @@ export function AccountPanel({ onClose, onInstall, onUnlock, collapsible = false
         {picking && <button type="button" tabIndex={-1} aria-hidden className="fixed inset-0 z-10 cursor-default" onClick={() => setPicking(false)} />}
         {picking && (
           <div
-            className="popover absolute left-0 top-full z-20 mt-1.5 flex w-64 max-w-[calc(100vw-3rem)] origin-top-left animate-pop-in flex-col p-1 shadow-2xl shadow-black/40"
+            className={`popover absolute top-full z-20 flex origin-top-left animate-pop-in flex-col p-1 shadow-2xl shadow-black/40 ${
+              collapsible ? '-left-2 -right-2 mt-3' : 'left-0 mt-1.5 w-64 max-w-[calc(100vw-3rem)]'
+            }`}
             role="radiogroup"
             aria-label="Your status"
           >

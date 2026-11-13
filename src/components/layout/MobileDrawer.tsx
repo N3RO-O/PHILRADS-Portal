@@ -51,7 +51,7 @@ export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
             </button>
           </div>
           {/* You, at the top: tap to open your account and settings. Folded again each time the drawer opens. */}
-          <div className="mx-3 shrink-0 rounded-2xl border border-line/70 bg-ink/[0.03] p-2">
+          <div className="mx-3 shrink-0 rounded-2xl bg-surface-raised p-2 shadow-lg shadow-black/25">
             {open && <AccountPanel collapsible onClose={onClose} onInstall={onInstall} onUnlock={onUnlock} />}
           </div>
           <nav aria-label="Modules" className="relative flex flex-col px-3 py-3">
