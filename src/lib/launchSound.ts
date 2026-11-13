@@ -13,8 +13,8 @@
 import { useSyncExternalStore } from 'react';
 
 const SRC = '/sounds/prism-signin.mp3';
-/** Quiet: background music under the sign-in form. */
-const VOLUME = 0.2;
+/** Background music under the sign-in form: clearly audible, still under the screen (0.2 was too quiet). */
+const VOLUME = 0.5;
 const MUTE_KEY = 'philrads.sound.launch';
 /** The events that give a page permission to play sound. */
 const GESTURES = ['pointerup', 'touchend', 'click', 'keydown'] as const;

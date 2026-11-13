@@ -67,7 +67,10 @@ export function TopBar({ search, onSearch, menuOpen, onOpenMenu, hideMobileSearc
         <div className="ml-auto flex items-center gap-1 sm:gap-2">
           {onToggleActive && <ActiveFaces shown={activeShown} onToggle={onToggleActive} />}
           <NotificationsMenu />
-          <ProfileMenu />
+          {/* On phones and tablets you're at the top of the navigation drawer instead. */}
+          <div className="hidden lg:block">
+            <ProfileMenu />
+          </div>
         </div>
       </div>
       <div className={`px-4 pb-3 sm:px-6 md:hidden ${hideMobileSearch ? 'hidden' : ''}`}>
