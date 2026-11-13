@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowDownRight, ArrowUpRight, Minus, type LucideIcon } from 'lucide-react';
 import { formatNumber } from '../../lib/format';
@@ -76,18 +77,65 @@ export function KpiTile({ icon: Icon, label, value, changeLabel = 'vs last year'
   );
 }
 
-/** A small line of the running total, with the latest point marked. */
+/**
+ * A smooth path through the points: monotone cubic interpolation (as d3's curveMonotoneX and
+ * Recharts' "monotone"), so the curve never bulges past a point and a running total never seems to dip.
+ */
+function smoothPath(pts: [number, number][]): string {
+  const f = (n: number) => n.toFixed(2);
+  if (pts.length < 3) return pts.map(([px, py], i) => `${i ? 'L' : 'M'}${f(px)},${f(py)}`).join('');
+  const sign = (n: number) => (n < 0 ? -1 : 1);
+  const slope = (i: number) => (pts[i + 1][1] - pts[i][1]) / (pts[i + 1][0] - pts[i][0]);
+  const t = pts.map((_, i) => {
+    if (i === 0 || i === pts.length - 1) return NaN;
+    const [s0, s1] = [slope(i - 1), slope(i)];
+    const [h0, h1] = [pts[i][0] - pts[i - 1][0], pts[i + 1][0] - pts[i][0]];
+    const p = (s0 * h1 + s1 * h0) / (h0 + h1);
+    return (sign(s0) + sign(s1)) * Math.min(Math.abs(s0), Math.abs(s1), 0.5 * Math.abs(p)) || 0;
+  });
+  // The ends lean the way the next tangent does.
+  t[0] = (3 * slope(0) - t[1]) / 2;
+  const last = pts.length - 1;
+  t[last] = (3 * slope(last - 1) - t[last - 1]) / 2;
+  let d = `M${f(pts[0][0])},${f(pts[0][1])}`;
+  for (let i = 0; i < last; i++) {
+    const [[x0, y0], [x1, y1]] = [pts[i], pts[i + 1]];
+    const dx = (x1 - x0) / 3;
+    d += `C${f(x0 + dx)},${f(y0 + dx * t[i])} ${f(x1 - dx)},${f(y1 - dx * t[i + 1])} ${f(x1)},${f(y1)}`;
+  }
+  return d;
+}
+
+/** A small, smooth line of the running total over a soft fade, with the latest point marked. */
 function Sparkline({ values, label }: { values: number[]; label: string }) {
+  const fade = `spark-${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const w = 120;
   const h = 28;
   const max = Math.max(...values);
   const min = Math.min(...values);
-  const x = (i: number) => (i / (values.length - 1)) * (w - 4) + 2;
-  const y = (v: number) => (max === min ? h / 2 : h - 3 - ((v - min) / (max - min)) * (h - 6));
-  const points = values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const x = (i: number) => (i / (values.length - 1)) * (w - 6) + 3;
+  const y = (v: number) => (max === min ? h / 2 : h - 4 - ((v - min) / (max - min)) * (h - 8));
+  const pts = values.map((v, i) => [x(i), y(v)] as [number, number]);
+  const line = smoothPath(pts);
+  const [endX, endY] = pts[pts.length - 1];
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="mt-auto h-7 w-full" role="img" aria-label={`${label}, month by month: from ${formatNumber(values[0])} to ${formatNumber(values[values.length - 1])}`}>
-      <polyline points={points} fill="none" style={{ stroke: 'rgb(var(--ink-mute))' }} strokeWidth={1.75} strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-    </svg>
+    <span className="relative mt-auto block h-7 w-full">
+      <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="absolute inset-0 h-full w-full overflow-visible" role="img" aria-label={`${label}, month by month: from ${formatNumber(values[0])} to ${formatNumber(values[values.length - 1])}`}>
+        <defs>
+          <linearGradient id={fade} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" style={{ stopColor: 'rgb(var(--ink-mute))', stopOpacity: 0.22 }} />
+            <stop offset="100%" style={{ stopColor: 'rgb(var(--ink-mute))', stopOpacity: 0 }} />
+          </linearGradient>
+        </defs>
+        <path d={`${line}L${endX.toFixed(2)},${h}L${pts[0][0].toFixed(2)},${h}Z`} fill={`url(#${fade})`} stroke="none" />
+        <path d={line} fill="none" style={{ stroke: 'rgb(var(--ink-mute))' }} strokeWidth={1.75} strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+      </svg>
+      {/* Drawn outside the stretched picture, so it stays round. */}
+      <span
+        aria-hidden
+        className="absolute h-[7px] w-[7px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-ink-soft ring-2 ring-surface"
+        style={{ left: `${(endX / w) * 100}%`, top: `${(endY / h) * 100}%` }}
+      />
+    </span>
   );
 }
