@@ -44,7 +44,8 @@ export async function POST(request: Request) {
   const c = config();
   const who = await caller(c, request);
   if (!who) return json(401, { error: 'Sign in again, then try once more.' });
-  if (!(await can(c, who, 'documents.upload'))) return json(403, { error: 'Your role can’t upload documentation.' });
+  const [allowed, conn] = await Promise.all([can(c, who, 'documents.upload'), connection(c)]);
+  if (!allowed) return json(403, { error: 'Your role can’t upload documentation.' });
   const parsed = body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return json(400, { error: parsed.error.issues[0]?.message ?? 'Check the file details.' });
   const m = parsed.data;
@@ -54,7 +55,6 @@ export async function POST(request: Request) {
   if (!CATEGORY_KINDS[m.category].includes(kindOf(m.mimeType)))
     return json(400, { error: `This file doesn’t fit ${m.category}: choose the category that matches it (photo, video or document).` });
 
-  const conn = await connection(c);
   if (!conn) return json(503, { error: 'Google Drive isn’t connected yet. An administrator connects it on the Documentation page.' });
   try {
     const token = await accessToken(c, conn);

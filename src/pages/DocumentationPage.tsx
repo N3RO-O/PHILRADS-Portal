@@ -160,17 +160,29 @@ export function DocumentationPage() {
   const loadStatus = useCallback(() => documentationService.status().then(setStatus, () => setStatus(null)), []);
   useEffect(() => void loadStatus(), [loadStatus]);
 
-  // Uploads carry on in the background; when one finishes, show it.
-  useEffect(
-    () =>
-      uploadQueue.subscribe((items) => {
-        setQueue((prev) => {
-          if (items.some((i) => i.status === 'done' && prev.find((p) => p.key === i.key)?.status !== 'done')) void load();
-          return items;
-        });
-      }),
-    [load],
-  );
+  // Uploads carry on in the background; finished ones show up. In a batch the list is fetched again
+  // at most every 4 s (and once at the end), not after every file, so it doesn't slow the uploads.
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let lastLoad = 0;
+    let prev = uploadQueue.items();
+    const refresh = () => {
+      timer = undefined;
+      lastLoad = Date.now();
+      void load();
+    };
+    const off = uploadQueue.subscribe((items) => {
+      const finished = items.some((i) => i.status === 'done' && prev.find((p) => p.key === i.key)?.status !== 'done');
+      prev = items;
+      setQueue(items);
+      if (!finished || timer) return;
+      timer = setTimeout(refresh, uploadQueue.busy() ? Math.max(0, lastLoad + 4000 - Date.now()) : 0);
+    });
+    return () => {
+      off();
+      if (timer) clearTimeout(timer);
+    };
+  }, [load]);
   // Leaving the portal mid-upload loses it: ask first.
   useEffect(() => {
     const warn = (e: BeforeUnloadEvent) => {

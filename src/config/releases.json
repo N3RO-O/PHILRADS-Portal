@@ -3,8 +3,13 @@
     "id": "2026-11-13.4",
     "version": "1.10.11",
     "date": "2026-11-13",
-    "title": "Administrators in every project chat, smoother scorecard",
+    "title": "Faster bulk uploads, admins in every project chat",
     "items": [
+      {
+        "icon": "sparkles",
+        "title": "Faster bulk uploads",
+        "body": "Picking many photos at once uploads much faster: four go up together instead of two, each one starts sooner, and big videos send bigger pieces on a good connection. The list refreshes every few seconds while they finish instead of after every file. Files keep their original quality."
+      },
       {
         "icon": "messages",
         "title": "Administrators can join any project chat",

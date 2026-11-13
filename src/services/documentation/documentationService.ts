@@ -103,8 +103,15 @@ export const titleFor = (fileName: string) => fileName.replace(/\.[a-z0-9]{1,5}$
 const COLUMNS =
   'id, title, category, notes, file_name, mime_type, size_bytes, taken_on, ims_event_id, ims_event_name, map_place_id, project_id, uploaded_by, uploaded_at, drive_path, width, height, duration_ms, uploader:profiles!documents_uploaded_by_fkey(display_name)';
 
-/** Pieces sent to Google: a multiple of 256 KiB, small enough to retry quickly on a weak signal. */
-const CHUNK = 8 * 1024 * 1024;
+/**
+ * Pieces sent to Google (multiples of 256 KiB). They start at 8 MB, grow up to 64 MB while each one
+ * goes quickly (fewer round trips on good Wi-Fi), and shrink down to 2 MB on a slow or dropping
+ * signal, so a lost piece is quick to send again.
+ */
+const MB = 1024 * 1024;
+const CHUNK = 8 * MB;
+const CHUNK_MIN = 2 * MB;
+const CHUNK_MAX = 64 * MB;
 
 export function createSupabaseDocumentationService(client: SupabaseClient): DocumentationService {
   const token = async () => (await client.auth.getSession()).data.session?.access_token ?? '';
@@ -206,17 +213,25 @@ export function createSupabaseDocumentationService(client: SupabaseClient): Docu
       let offset = 0;
       let fileId: string | null = null;
       let failures = 0;
+      let chunk = CHUNK;
       while (!fileId) {
         if (options.signal?.aborted) throw new DOMException('Cancelled', 'AbortError');
-        const end = Math.min(offset + CHUNK, file.size);
+        const end = Math.min(offset + chunk, file.size);
+        const started = performance.now();
         try {
           const r = await putChunk(uploadUrl, file.slice(offset, end), offset, file.size, (n) => options.onProgress?.((offset + n) / file.size), options.signal);
           if (r.status === 200 || r.status === 201) fileId = (JSON.parse(r.body) as { id: string }).id;
-          else if (r.status === 308) offset = end;
-          else throw new Error(`google ${r.status}`);
+          else if (r.status === 308) {
+            // A full piece in under 4 s: send bigger ones; over 20 s: smaller.
+            const took = performance.now() - started;
+            if (end - offset === chunk && took < 4000) chunk = Math.min(CHUNK_MAX, chunk * 2);
+            else if (took > 20_000) chunk = Math.max(CHUNK_MIN, chunk / 2);
+            offset = end;
+          } else throw new Error(`google ${r.status}`);
           failures = 0;
         } catch (e) {
           if (e instanceof DOMException && e.name === 'AbortError') throw e;
+          chunk = Math.max(CHUNK_MIN, chunk / 2);
           // Weak signal: wait, ask Google how much it has, and carry on from there.
           if (++failures > 6) throw new Error('The connection kept dropping. Try again with a better signal.');
           await new Promise((r) => setTimeout(r, Math.min(30_000, 1000 * 2 ** failures)));
@@ -386,8 +401,10 @@ export interface QueuedUpload {
 
 /**
  * Uploads in progress, kept outside the page so they carry on while staff look around the portal.
- * Two at a time; each can be cancelled or retried.
+ * Four at a time for photos and documents (a batch of photos is mostly waiting on round trips, not
+ * the signal), two when a big video is going; each can be cancelled or retried.
  */
+const BIG = 50 * 1024 * 1024;
 export function createUploadQueue(service: DocumentationService) {
   let items: QueuedUpload[] = [];
   const controllers = new Map<string, AbortController>();
@@ -399,9 +416,11 @@ export function createUploadQueue(service: DocumentationService) {
   };
 
   const pump = () => {
-    while (items.filter((i) => i.status === 'uploading').length < 2) {
+    for (;;) {
       const next = items.find((i) => i.status === 'waiting');
       if (!next) return;
+      const going = items.filter((i) => i.status === 'uploading');
+      if (going.length >= (next.file.size > BIG || going.some((i) => i.file.size > BIG) ? 2 : 4)) return;
       const ctl = new AbortController();
       controllers.set(next.key, ctl);
       patch(next.key, { status: 'uploading', progress: 0, error: null });

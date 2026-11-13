@@ -18,7 +18,32 @@
  *   GOOGLE_REDIRECT_URI (optional; default <site>/api/drive/callback).
  * The encryption and signing keys are derived from SUPABASE_SERVICE_ROLE_KEY: no extra secret to manage.
  */
-import { createCipheriv, createDecipheriv, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+
+/**
+ * Answers kept for a short while in this server instance. A warm instance serves a whole batch of
+ * uploads, so after the first file the sign-in, permission, connection and folder lookups are
+ * already known: each file then costs a couple of round trips instead of nine. Requests at the
+ * same moment share one lookup. Failures and "no" answers aren't kept.
+ */
+function remember<T>(ttlMs: number) {
+  const kept = new Map<string, { until: number; value: Promise<T> }>();
+  return {
+    get(key: string, load: () => Promise<T>, keep: (v: T) => boolean = () => true): Promise<T> {
+      const hit = kept.get(key);
+      if (hit && hit.until > Date.now()) return hit.value;
+      if (kept.size > 500) kept.clear();
+      const value = load();
+      kept.set(key, { until: Date.now() + ttlMs, value });
+      const drop = () => {
+        if (kept.get(key)?.value === value) kept.delete(key);
+      };
+      value.then((v) => !keep(v) && drop(), drop);
+      return value;
+    },
+    clear: () => kept.clear(),
+  };
+}
 
 export function config() {
   return {
@@ -55,9 +80,16 @@ export interface Caller {
 }
 
 /** The signed-in, active staff member behind the request's bearer token, or null. */
+// Up to a minute: someone switched off can still finish what they started in that minute.
+const callers = remember<Caller | null>(60_000);
+
 export async function caller(c: Config, request: Request): Promise<Caller | null> {
   const token = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ?? '';
   if (!token) return null;
+  return callers.get(createHash('sha256').update(token).digest('base64url'), () => lookUpCaller(c, token), Boolean);
+}
+
+async function lookUpCaller(c: Config, token: string): Promise<Caller | null> {
   const res = await fetch(`${c.supabaseUrl}/auth/v1/user`, { headers: { apikey: c.serviceKey, Authorization: `Bearer ${token}` } });
   if (!res.ok) return null;
   const user = (await res.json().catch(() => null)) as { id?: string } | null;
@@ -73,9 +105,12 @@ export async function caller(c: Config, request: Request): Promise<Caller | null
 
 /** Same rule as has_permission(key) in the database. */
 export async function can(c: Config, who: Caller, key: string): Promise<boolean> {
-  const rows = await rest<unknown[]>(c, `role_permissions?role_key=eq.${encodeURIComponent(who.roleKey)}&permission_key=eq.${encodeURIComponent(key)}&select=role_key`);
-  return rows.length > 0;
+  return permissions.get(`${who.roleKey}|${key}`, async () => {
+    const rows = await rest<unknown[]>(c, `role_permissions?role_key=eq.${encodeURIComponent(who.roleKey)}&permission_key=eq.${encodeURIComponent(key)}&select=role_key`);
+    return rows.length > 0;
+  });
 }
+const permissions = remember<boolean>(60_000);
 
 /** A line in the admin log (the service key may write it; browsers can't). */
 export async function log(c: Config, entry: { actor: string | null; action: string; summary: string; metadata?: Record<string, unknown>; audience?: 'everyone' | 'admins' }) {
@@ -131,9 +166,13 @@ export interface Connection {
 }
 
 export async function connection(c: Config): Promise<Connection | null> {
-  const [row] = await rest<Connection[]>(c, 'drive_connection?id=eq.1&select=google_email,folder_id,folder_name,refresh_token_enc');
-  return row ?? null;
+  return connections.get(
+    'drive',
+    async () => (await rest<Connection[]>(c, 'drive_connection?id=eq.1&select=google_email,folder_id,folder_name,refresh_token_enc'))[0] ?? null,
+    Boolean,
+  );
 }
+const connections = remember<Connection | null>(30_000);
 
 let cached: { token: string; until: number; for: string } | null = null;
 
@@ -239,7 +278,12 @@ async function mergeInto(c: Config, token: string, keep: string, dup: string): P
  * list, then adopts the folder if Drive already has it (folding any duplicates from before into
  * the oldest) or makes it; uploads at the same moment wait for that and use the same folder.
  */
-export async function folderFor(c: Config, token: string, parent: string, tagKey: TagKey, tagValue: string, name: string): Promise<string> {
+export function folderFor(c: Config, token: string, parent: string, tagKey: TagKey, tagValue: string, name: string): Promise<string> {
+  return folders.get(`${parent}|${tagKey}|${tagValue}|${name}`, () => findOrMakeFolder(c, token, parent, tagKey, tagValue, name));
+}
+const folders = remember<string>(10 * 60_000);
+
+async function findOrMakeFolder(c: Config, token: string, parent: string, tagKey: TagKey, tagValue: string, name: string): Promise<string> {
   const path = rowPath(parent, tagKey, tagValue);
   const [known] = await rest<FolderRow[]>(c, `${path}&select=folder_id,name,claimed_at`);
   if (known?.folder_id) {
@@ -307,6 +351,7 @@ export async function folderFor(c: Config, token: string, parent: string, tagKey
 
 /** Forget folders the portal made (e.g. someone deleted them in Drive), so they're made again. */
 export async function forgetFolders(c: Config, ids: string[]): Promise<void> {
+  folders.clear();
   const list = ids.filter(Boolean).map((id) => `"${id}"`).join(',');
   if (list) await rest(c, `drive_folders?folder_id=in.(${list})`, { method: 'DELETE', headers: { Prefer: 'return=minimal' } }).catch(() => undefined);
 }

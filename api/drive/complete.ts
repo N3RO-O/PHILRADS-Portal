@@ -32,11 +32,10 @@ export async function POST(request: Request) {
   const b = (await request.json().catch(() => ({}))) as { sessionId?: string; fileId?: string };
   if (!b.sessionId || !/^[0-9a-f-]{36}$/i.test(b.sessionId) || !b.fileId || !/^[A-Za-z0-9_-]{10,200}$/.test(b.fileId)) return json(400, { error: 'Missing upload details.' });
 
-  const [s] = await rest<Session[]>(c, `drive_upload_sessions?id=eq.${b.sessionId}&user_id=eq.${who.id}&select=*`);
+  const [[s], conn] = await Promise.all([rest<Session[]>(c, `drive_upload_sessions?id=eq.${b.sessionId}&user_id=eq.${who.id}&select=*`), connection(c)]);
   if (!s) return json(404, { error: 'That upload wasn’t found. Upload the file again.' });
   if (s.document_id) return json(200, { documentId: s.document_id });
 
-  const conn = await connection(c);
   if (!conn) return json(503, { error: 'Google Drive isn’t connected.' });
   const token = await accessToken(c, conn);
   const f = await drive<{ id: string; name: string; mimeType: string; size?: string; parents?: string[]; appProperties?: Record<string, string>; imageMediaMetadata?: { width?: number; height?: number }; videoMediaMetadata?: { width?: number; height?: number; durationMillis?: string } }>(
