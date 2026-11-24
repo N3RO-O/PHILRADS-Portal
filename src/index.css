@@ -1769,14 +1769,13 @@ dialog[data-closing] {
   display: grid;
   place-items: center;
 }
-.pg-mark .pm-fan {
-  transform-origin: 60px 36px;
-  animation: pg-fan 4.8s ease-in-out infinite;
+/* The window's glass brightens pane by pane, as if the sun moved behind it. */
+.pg-mark .pm-pane {
+  animation: pg-pane 4.8s ease-in-out infinite;
 }
-.pg-mark .pm-glint {
-  transform-origin: 29px 40.4px;
-  animation: pg-glint 4.8s ease-in-out infinite;
-}
+.pg-mark .pm-pane:nth-child(2) { animation-delay: 0.4s; }
+.pg-mark .pm-pane:nth-child(3) { animation-delay: 0.8s; }
+.pg-mark .pm-pane:nth-child(4) { animation-delay: 1.2s; }
 .pg-mark > svg {
   animation: pg-float 6s ease-in-out infinite;
   filter: drop-shadow(0 6px 14px rgba(40, 0, 0, 0.45));
@@ -1812,60 +1811,11 @@ dialog[data-closing] {
     pg-ring-in 900ms cubic-bezier(0.22, 1, 0.36, 1) 700ms backwards,
     pg-spin 7s linear infinite;
 }
-/* White light in: a beam shoots from the left edge and hits the prism's left face. */
-.pg-beam-in {
-  position: absolute;
-  top: calc(40.4% - 1px);
-  right: 71%;
-  width: 240px;
-  height: 2px;
-  border-radius: 2px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.55) 60%, #fff);
-  box-shadow: 0 0 10px 1px rgba(255, 240, 220, 0.55);
-  transform-origin: left center;
-  animation:
-    pg-beam-in 650ms cubic-bezier(0.65, 0, 0.35, 1) 150ms backwards,
-    pg-beam-pulse 4.8s ease-in-out 1s infinite;
-}
-/* Spectrum out: red, amber and gold fan out to the right and fade. */
-.pg-beam-out {
-  position: absolute;
-  top: calc(37% - 64px);
-  left: 60%;
-  width: 260px;
-  height: 128px;
-  background: linear-gradient(180deg, rgba(229, 38, 43, 0) 0%, #e5262b 30%, #f08a24 50%, #f7c948 70%, rgba(247, 201, 72, 0) 100%);
-  clip-path: polygon(0 50%, 100% 0, 100% 100%);
-  -webkit-mask-image: linear-gradient(90deg, #000 0%, rgba(0, 0, 0, 0.55) 35%, transparent 90%);
-  mask-image: linear-gradient(90deg, #000 0%, rgba(0, 0, 0, 0.55) 35%, transparent 90%);
-  mix-blend-mode: screen;
-  opacity: 0.6;
-  transform-origin: left center;
-  animation:
-    pg-beam-out 800ms cubic-bezier(0.22, 1, 0.36, 1) 700ms backwards,
-    pg-fan-out 4.8s ease-in-out 1.5s infinite;
-}
 @keyframes pg-spin {
   to { transform: rotate(360deg); }
 }
 @keyframes pg-ring-in {
   from { opacity: 0; transform: scale(0.6) rotate(-90deg); }
-}
-@keyframes pg-beam-in {
-  from { transform: scaleX(0); opacity: 0; }
-  to { transform: scaleX(1); opacity: 1; }
-}
-@keyframes pg-beam-pulse {
-  0%, 100% { opacity: 0.75; }
-  50% { opacity: 1; }
-}
-@keyframes pg-beam-out {
-  from { transform: scaleX(0) scaleY(0.4); opacity: 0; }
-  to { transform: scaleX(1) scaleY(1); opacity: 0.6; }
-}
-@keyframes pg-fan-out {
-  0%, 100% { opacity: 0.5; transform: scaleY(0.92); }
-  50% { opacity: 0.72; transform: scaleY(1.06); }
 }
 .pg-word {
   display: inline-flex;
@@ -1922,29 +1872,28 @@ dialog[data-closing] {
   0%, 100% { transform: translateY(0) rotate(0deg); }
   50% { transform: translateY(-4px) rotate(-1.5deg); }
 }
-@keyframes pg-fan {
-  0%, 100% { opacity: 0.8; transform: scaleY(0.94); }
-  50% { opacity: 1; transform: scaleY(1.06); }
-}
-@keyframes pg-glint {
-  0%, 100% { opacity: 0.6; transform: scale(0.85); }
-  50% { opacity: 1; transform: scale(1.25); }
+@keyframes pg-pane {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.18); }
 }
 @keyframes pg-halo {
   0%, 100% { opacity: 0.55; transform: scale(0.92); }
   50% { opacity: 1; transform: scale(1.06); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .pg-orb, .pg-sheen, .pg-mark > svg, .pg-mark .pm-fan, .pg-mark .pm-glint, .pg-halo, .pg-p, .pg-letter, .pg-rays, .pg-ring, .pg-beam-in, .pg-beam-out { animation: none !important; }
+  .pg-orb, .pg-sheen, .pg-mark > svg, .pg-mark .pm-pane, .pg-halo, .pg-p, .pg-letter, .pg-rays, .pg-ring { animation: none !important; }
   .pg-sheen { display: none; }
 }
 
-/* "PRISM" in the menu and top bar: the P in PHILRADS red (a brighter red on dark surfaces). */
+/* "PRISM" in the menu and top bar: the P in PHILRADS red (a brighter red on dark surfaces).
+   --prism-deep: the window mark's lowest pane, maroon on light surfaces and cream on dark. */
 :root {
   --prism-p: #ef4a3f;
+  --prism-deep: #f3ede8;
 }
 [data-theme='light'] {
   --prism-p: #8c1414;
+  --prism-deep: #6e1424;
 }
 .prism-p {
   color: var(--prism-p);

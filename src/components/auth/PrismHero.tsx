@@ -13,7 +13,7 @@ export function PrismHero({
   children,
 }: {
   className?: string;
-  /** Just the triangle with its P (and all its light), without the PRISM / by PHILRADS words: the sign-in page. */
+  /** Just the window mark (and its light), without the PRISM / by PHILRADS words: the sign-in page. */
   markOnly?: boolean;
   children?: ReactNode;
 }) {
@@ -33,13 +33,11 @@ export function PrismHero({
       <span className="pg-fx pg-follow" aria-hidden />
       <span className="pg-fx pg-sheen" aria-hidden />
       <span className="pg-mark animate-fade-up">
-        {/* The mark's own story, told across the header: white light shoots in from the left, hits
-            the prism and leaves as a red-amber-gold spectrum, inside a slowly turning ring of light. */}
+        {/* Light behind the window: soft rays turning slowly, a warm halo and a thin ring of the
+            glass's colours. The panes themselves brighten one after another (.pm-pane). */}
         <span className="pg-rays" aria-hidden />
         <span className="pg-halo" aria-hidden />
         <span className="pg-ring" aria-hidden />
-        <span className="pg-beam-in" aria-hidden />
-        <span className="pg-beam-out" aria-hidden />
         <PrismMark className={`relative ${markOnly ? 'h-28 w-28' : 'h-24 w-24'}`} tone="brand" />
       </span>
       {markOnly ? (

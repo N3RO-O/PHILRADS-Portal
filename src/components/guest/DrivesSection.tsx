@@ -63,7 +63,7 @@ function OpenDrive({ d }: { d: DonationDrive }) {
               <ChevronDown className={`h-4 w-4 transition-transform ${giving ? 'rotate-180' : ''}`} aria-hidden />
             </button>
           )}
-          <ShareButton title={d.title} path={`/guest#drive-${d.id}`} />
+          <ShareButton title={d.title} path={`/guest/give#drive-${d.id}`} />
         </div>
         {giving && d.howToGive && (
           <div id={`give-${d.id}`} className="animate-fade-in rounded-xl border border-line bg-surface-sunken p-4">

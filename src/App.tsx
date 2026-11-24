@@ -31,7 +31,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           {/* No account needed: what guests can see (the parts open as they're built). */}
-          <Route path="guest" element={<GuestPage />} />
+          <Route path="guest/:screen?" element={<GuestPage />} />
           <Route
             element={
               <AuthGate>

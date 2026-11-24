@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Lock, Star } from 'lucide-react';
 import { guestService } from '../../services';
 import { GuestRuleError, MESSAGE_MAX, type MessageKind } from '../../services/guest/guestService';
@@ -17,18 +17,16 @@ const KINDS: { key: Exclude<MessageKind, 'order'>; label: string; prompt: string
 const STARS = [1, 2, 3, 4, 5] as const;
 const STAR_WORDS = ['', 'Poor', 'Could be better', 'Okay', 'Good', 'Very good'];
 
-export interface FeedbackHandle {
-  /** Open the form on a given kind (from the header's Volunteer button). */
-  choose: (k: Exclude<MessageKind, 'order'>) => void;
-}
+export type FeedbackKind = Exclude<MessageKind, 'order'>;
+export const isFeedbackKind = (k: string | null): k is FeedbackKind => KINDS.some((x) => x.key === k);
 
 /**
  * Feedback: thanks, needs, ideas, concerns and offers to volunteer. Names are optional, so concerns
  * can be raised anonymously; only coordinators and administrators read what is sent.
  * (Community feedback practice: CHS commitment 5, UNHCR AAP guidance.)
  */
-export const FeedbackSection = forwardRef<FeedbackHandle>(function FeedbackSection(_, ref) {
-  const [kind, setKind] = useState<Exclude<MessageKind, 'order'>>('thanks');
+export function FeedbackSection({ initialKind }: { initialKind?: FeedbackKind }) {
+  const [kind, setKind] = useState<FeedbackKind>(initialKind ?? 'thanks');
   const [rating, setRating] = useState<number | null>(null);
   const [message, setMessage] = useState('');
   const [community, setCommunity] = useState('');
@@ -42,13 +40,10 @@ export const FeedbackSection = forwardRef<FeedbackHandle>(function FeedbackSecti
   const needsContact = kind === 'volunteer';
   const rates = kind === 'thanks' || kind === 'suggestion';
 
-  useImperativeHandle(ref, () => ({
-    choose: (k) => {
-      setKind(k);
-      setSent(null);
-      setTimeout(() => text.current?.focus({ preventScroll: true }), 350);
-    },
-  }));
+  // Opened from the Volunteer button: straight to the message box.
+  useEffect(() => {
+    if (initialKind) text.current?.focus({ preventScroll: true });
+  }, [initialKind]);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -202,4 +197,4 @@ export const FeedbackSection = forwardRef<FeedbackHandle>(function FeedbackSecti
       )}
     </GuestSection>
   );
-});
+}

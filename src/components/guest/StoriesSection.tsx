@@ -92,7 +92,7 @@ export function StoriesSection({ stories, onRetry }: { stories: AsyncState<Guest
         onClose={() => show(null)}
         title={<span className="font-serif text-2xl leading-tight">{open?.title}</span>}
         subtitle={open && <Byline s={open} />}
-        footer={open && <ShareButton title={open.title} path={`/guest?story=${open.id}`} />}
+        footer={open && <ShareButton title={open.title} path={`/guest/stories?story=${open.id}`} />}
       >
         {open && (
           <article className="mx-auto max-w-[34rem]">

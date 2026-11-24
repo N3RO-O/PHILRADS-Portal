@@ -1,5 +1,28 @@
 [
   {
+    "id": "2026-11-25.2",
+    "version": "1.12.0",
+    "date": "2026-11-25",
+    "title": "A new logo, and a guest page that works like an app",
+    "items": [
+      {
+        "icon": "palette",
+        "title": "The new PRISM logo",
+        "body": "PRISM's mark is now an arched church window, its glass divided by the cross, in gold, amber, red and maroon: light turned into colour, as a prism does. You'll see it in the menu, on the sign-in screen and as the app icon (on some phones the home-screen icon changes after you remove the app and add it again)."
+      },
+      {
+        "icon": "smartphone",
+        "title": "Guest page tabs",
+        "body": "Guests now move around with tabs along the bottom, like a phone app: Map, News, Stories, Give and More (Merch and Feedback). Each tab keeps its place, the screen's name moves up into the top bar as you scroll, and News shows how many alerts are happening now."
+      },
+      {
+        "icon": "sparkles",
+        "title": "A welcome that steps aside",
+        "body": "On a guest's first visit the welcome opens over the map, with Give your donation and Volunteer. Close it and it stays closed on that phone; the logo in the top bar opens it again."
+      }
+    ]
+  },
+  {
     "id": "2026-11-25.1",
     "version": "1.11.0",
     "date": "2026-11-25",
