@@ -396,6 +396,27 @@ function GuestTabBar({ tab, live, onPress }: { tab: Tab; live: boolean; onPress:
       <div className="mx-auto flex max-w-lg px-1">
         {TABS.map((t) => {
           const on = tab === t.id;
+          // Give, the one thing we most hope a guest does, sits raised in the middle on the portal's burgundy.
+          if (t.id === 'give')
+            return (
+              <Link
+                key={t.id}
+                to={pathOf(t.id)}
+                onClick={onPress(t.id)}
+                aria-current={on ? 'page' : undefined}
+                className="tap group flex min-h-16 flex-1 flex-col items-center justify-end gap-1 pb-2"
+              >
+                {/* The page-coloured collar lifts it off the bar (a ring would fight .gloss's own shadow). */}
+                <span className="-mt-7 rounded-full bg-page p-1">
+                  <span
+                    className={`gloss grid h-14 w-14 place-items-center rounded-full bg-burgundy-500 transition-transform duration-300 ease-glide group-active:scale-95 ${on ? 'scale-105' : ''}`}
+                  >
+                    <t.icon className="h-6 w-6 text-cloud" strokeWidth={on ? 2.25 : 2} aria-hidden />
+                  </span>
+                </span>
+                <span className="text-[0.6875rem] font-semibold leading-none text-ink">{t.label}</span>
+              </Link>
+            );
           return (
             <Link
               key={t.id}
