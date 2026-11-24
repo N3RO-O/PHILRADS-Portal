@@ -109,7 +109,7 @@ export function DrivesSection({ drives, onRetry }: { drives: AsyncState<Donation
           )}
           {done.length > 0 && (
             <div className="mt-6">
-              <button type="button" className="flex items-center gap-1.5 text-sm font-semibold text-ink-soft hover:text-ink" onClick={() => setShowDone((s) => !s)} aria-expanded={showDone}>
+              <button type="button" className="flex min-h-10 items-center gap-1.5 text-sm font-semibold text-ink-soft hover:text-ink" onClick={() => setShowDone((s) => !s)} aria-expanded={showDone}>
                 <ChevronDown className={`h-4 w-4 transition-transform ${showDone ? 'rotate-180' : ''}`} aria-hidden />
                 Completed drives ({done.length})
               </button>

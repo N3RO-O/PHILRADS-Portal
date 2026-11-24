@@ -52,7 +52,7 @@ function Announcements({ list }: { list: GuestAnnouncement[] }) {
                 )}
                 {a.publishedAt && <span>Posted {timeAgo(a.publishedAt)}</span>}
                 {a.linkUrl && (
-                  <a className="link" href={a.linkUrl} target="_blank" rel="noopener noreferrer">
+                  <a className="link hit" href={a.linkUrl} target="_blank" rel="noopener noreferrer">
                     More details <ExternalLink className="h-3 w-3" aria-hidden />
                   </a>
                 )}
@@ -90,10 +90,10 @@ function HazardRow({ h, onShow }: { h: Hazard; onShow: (h: Hazard) => void }) {
         <p className="mt-0.5 text-sm text-ink-soft">{h.detail}</p>
         <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
           <span>{when(h)}</span>
-          <button type="button" className="link" onClick={() => onShow(h)}>
+          <button type="button" className="link hit" onClick={() => onShow(h)}>
             <MapPin className="h-3.5 w-3.5" aria-hidden /> Show on map
           </button>
-          <a className="link" href={h.url} target="_blank" rel="noopener noreferrer">
+          <a className="link hit" href={h.url} target="_blank" rel="noopener noreferrer">
             {h.source} report <ExternalLink className="h-3 w-3" aria-hidden />
           </a>
         </p>
@@ -129,13 +129,13 @@ function FacebookCard({ p }: { p: FacebookPost }) {
       <div className="flex min-w-0 flex-1 flex-col px-4 py-3.5">
         <p className={`whitespace-pre-line break-words text-sm leading-relaxed text-ink ${full ? '' : 'line-clamp-4'}`}>{p.text}</p>
         {long && (
-          <button type="button" className="mt-1 self-start text-xs font-semibold text-ink-soft hover:text-ink" onClick={() => setFull((f) => !f)} aria-expanded={full}>
+          <button type="button" className="hit mt-1 self-start text-xs font-semibold text-ink-soft hover:text-ink" onClick={() => setFull((f) => !f)} aria-expanded={full}>
             {full ? 'Show less' : 'Read more'}
           </button>
         )}
         <p className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-2 text-xs text-muted">
           {p.postedAt && <span>Posted {timeAgo(p.postedAt)}</span>}
-          <a className="link" href={p.url} target="_blank" rel="noopener noreferrer">
+          <a className="link hit" href={p.url} target="_blank" rel="noopener noreferrer">
             Open on Facebook <ExternalLink className="h-3 w-3" aria-hidden />
           </a>
         </p>
@@ -153,7 +153,7 @@ function FacebookPosts({ feed }: { feed: FacebookFeed | null }) {
     <div className="mt-7">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <h3 className="text-sm font-semibold text-ink">On our Facebook page</h3>
-        <a className="link text-xs" href={feed.page} target="_blank" rel="noopener noreferrer">
+        <a className="link hit text-xs" href={feed.page} target="_blank" rel="noopener noreferrer">
           See all on Facebook <ExternalLink className="h-3 w-3" aria-hidden />
         </a>
       </div>

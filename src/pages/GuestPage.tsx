@@ -540,9 +540,9 @@ export function GuestPage() {
   let body: ReactNode;
   if (screen === 'map')
     body = (
-      <section aria-labelledby="guest-title" className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-x-8">
-        {/* Phones: what it shows, the map, then what you pressed. Wide: the map on the left, the rest beside it. */}
-        <div className="flex flex-col gap-4 lg:col-start-2 lg:row-start-1">
+      <section aria-labelledby="guest-title" className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem] xl:gap-x-8">
+        {/* Phones: what it shows, the map, then what you pressed. Wide (1280+): the map on the left, the rest beside it. */}
+        <div className="flex flex-col gap-4 xl:col-start-2 xl:row-start-1">
           {overview.data ? <Reach totals={overview.data.totals} /> : <p className="text-sm text-ink-soft">Where PHILRADS has worked, its offices and response sites, and hazards affecting the Philippines now.</p>}
           <div className="flex flex-wrap gap-2" role="group" aria-label="Show on the map">
             <button type="button" className="chip gap-1.5" aria-pressed={layers.work} onClick={() => setLayers((l) => ({ ...l, work: !l.work }))}>
@@ -560,7 +560,7 @@ export function GuestPage() {
             </button>
           </div>
         </div>
-        <div className="relative isolate h-[24rem] overflow-hidden rounded-2xl border border-line bg-surface-sunken sm:h-[30rem] lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:h-[calc(100dvh-12.5rem)] lg:min-h-[32rem]">
+        <div className="relative isolate h-[24rem] max-h-[72dvh] overflow-hidden rounded-2xl border border-line bg-surface-sunken sm:h-[30rem] xl:max-h-none xl:col-start-1 xl:row-span-2 xl:row-start-1 xl:h-[calc(100dvh-12.5rem)] xl:min-h-[32rem]">
           {overview.status === 'error' ? (
             <div className="grid h-full place-items-center p-6">
               <SectionError message={overview.error.message} onRetry={overview.reload} />
@@ -571,11 +571,11 @@ export function GuestPage() {
             </Suspense>
           )}
         </div>
-        <div className="flex flex-col gap-3 lg:col-start-2 lg:row-start-2">
+        <div className="flex flex-col gap-3 xl:col-start-2 xl:row-start-2">
           <Picked pick={pick} overview={overview.data} hazards={hazards} onClose={() => setPick(null)} />
-          {!pick && <p className="hidden text-sm text-muted lg:block">Press a dot, a place or a hazard on the map to see what it is.</p>}
+          {!pick && <p className="hidden text-sm text-muted xl:block">Press a dot, a place or a hazard on the map to see what it is.</p>}
           {layers.work && programsShown.length > 0 && (
-            <ul className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted lg:flex-col" aria-label="Dot colours">
+            <ul className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted xl:flex-col" aria-label="Dot colours">
               {programsShown.map((p) => (
                 <li key={p.key} className="flex items-center gap-1.5">
                   <span className="h-2.5 w-2.5 rounded-full" style={{ background: p.color }} aria-hidden />
