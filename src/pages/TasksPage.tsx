@@ -1,17 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Fab } from '../components/ui/Fab';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Building2, CalendarClock, CalendarDays, Check, CheckCheck, ChevronDown, CloudOff, Inbox, Layers, ListChecks, Loader2, MapPin, Plus, RefreshCw, Send, Sun, SunMedium, Trash2, UserRoundCheck, UsersRound, X } from 'lucide-react';
+import { Building2, CalendarClock, CalendarDays, Check, CheckCheck, ChevronDown, CircleHelp, CloudOff, Inbox, Layers, ListChecks, Loader2, MapPin, Plus, RefreshCw, Send, SlidersHorizontal, Sun, SunMedium, Trash2, UserRoundCheck, UsersRound, X } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
 import { useOnboarding } from '../components/onboarding/OnboardingProvider';
 import { Certificate } from '../components/tasks/Certificate';
-import { LevelUpDialog, ProgressPanel } from '../components/tasks/Progress';
+import { LevelUpDialog, ProgressChip, ProgressPanel } from '../components/tasks/Progress';
 import { QuickAdd } from '../components/tasks/QuickAdd';
 import { RewardsSheet, type RewardsTab } from '../components/tasks/RewardsSheet';
 import { TaskCalendar } from '../components/tasks/TaskCalendar';
 import { LIST_STYLE } from '../components/tasks/taskMeta';
 import { TaskRow } from '../components/tasks/TaskRow';
 import { TaskSheet } from '../components/tasks/TaskSheet';
+import { TasksTour, tasksTourDue } from '../components/tasks/TasksTour';
 import { TeamTasks } from '../components/tasks/TeamTasks';
 import { TeamGoalCard } from '../components/tasks/TeamGoalCard';
 import { LoadError, Skeleton } from '../components/ui/Card';
@@ -46,8 +47,8 @@ const VIEW_META: Record<Exclude<View, 'list'>, { label: string; icon: typeof Sun
   upcoming: { label: 'Upcoming', icon: CalendarClock, note: 'All your open tasks, soonest first.' },
   calendar: { label: 'Calendar', icon: CalendarDays, note: 'Your tasks on their due dates. Tap a day to see them.' },
   assigned: { label: 'Assigned to me', icon: UserRoundCheck, note: 'Tasks a coordinator gave you.' },
-  delegated: { label: 'Given to others', icon: Send, note: 'Tasks you gave to someone else.' },
-  team: { label: 'Team tasks', icon: UsersRound, note: 'Tasks given out, by person.' },
+  delegated: { label: 'Assigned by me', icon: Send, note: 'Tasks you gave to someone else.' },
+  team: { label: 'Whole team', icon: UsersRound, note: 'Tasks given out, by person.' },
   done: { label: 'Completed', icon: CheckCheck, note: 'What you’ve finished, with the XP each earned.' },
 };
 
@@ -56,11 +57,11 @@ const VIEW_META: Record<Exclude<View, 'list'>, { label: string; icon: typeof Sun
  * short row of pills under the first, instead of seven chips wrapping onto several rows.
  */
 const VIEW_GROUPS: { key: 'mine' | 'given' | 'team'; label: string; views: Exclude<View, 'list'>[] }[] = [
-  { key: 'mine', label: 'Mine', views: ['myday', 'upcoming', 'calendar', 'assigned', 'done'] },
-  { key: 'given', label: 'Given', views: ['delegated'] },
-  { key: 'team', label: 'Team', views: ['team'] },
+  { key: 'mine', label: 'My tasks', views: ['myday', 'upcoming', 'calendar', 'assigned', 'done'] },
+  { key: 'given', label: 'I assigned', views: ['delegated'] },
+  { key: 'team', label: 'Whole team', views: ['team'] },
 ];
-const SHORT: Partial<Record<Exclude<View, 'list'>, string>> = { assigned: 'Assigned', done: 'Done' };
+const SHORT: Partial<Record<Exclude<View, 'list'>, string>> = { done: 'Done' };
 
 const errorText = (e: unknown) => (e instanceof TaskRuleError ? e.message : !navigator.onLine ? 'You’re offline. Connect and try again.' : e instanceof Error ? e.message : 'Something went wrong. Try again.');
 
@@ -101,6 +102,9 @@ export function TasksPage() {
   const where = (['field', 'office'].includes(params.get('where') ?? '') ? params.get('where') : 'all') as Where;
   const rawDay = params.get('day');
   const rewardsTab = (['badges', 'levels', 'kudos'].includes(params.get('rewards') ?? '') ? params.get('rewards') : null) as RewardsTab | null;
+  // Phones: list and Field/Office sit behind one Filter button.
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filtered = view === 'list' || where !== 'all';
 
   const setParam = useCallback(
     (patch: Record<string, string | null>) =>
@@ -120,6 +124,14 @@ export function TasksPage() {
   const calDay = rawDay && /^\d{4}-\d{2}-\d{2}$/.test(rawDay) && !Number.isNaN(Date.parse(rawDay)) ? rawDay : today;
   const [me, setMe] = useState<string | null>(null);
   const [tasks, setTasks] = useState<Task[] | null>(null);
+  // First visit on this device: a short "how it works" once the tasks are in; the ? button opens it again.
+  const [tourOpen, setTourOpen] = useState(false);
+  const tasksIn = tasks !== null;
+  useEffect(() => {
+    if (!tasksIn || !tasksTourDue()) return;
+    const t = setTimeout(() => setTourOpen(true), 600);
+    return () => clearTimeout(t);
+  }, [tasksIn]);
   const { leaving, leave } = useLeaving();
   const [loadError, setLoadError] = useState<string | null>(null);
   const [awards, setAwards] = useState<XpAward[]>([]);
@@ -728,9 +740,9 @@ export function TasksPage() {
       </nav>
 
       <div className="flex min-w-0 flex-col gap-4">
-        {/* Narrower: progress first, then views as chips. */}
+        {/* Narrower: the tasks come first; your level is one line here, the full panel below the list. */}
         <div className={cols === 3 ? 'hidden' : ''}>
-          <ProgressPanel initials={profile?.initials ?? '?'} progress={progress} onOpen={(tab) => setParam({ rewards: tab })} />
+          <ProgressChip initials={profile?.initials ?? '?'} progress={progress} onOpen={(tab) => setParam({ rewards: tab })} />
         </div>
 
         <section ref={listRef} className="card flex flex-col gap-4">
@@ -749,7 +761,35 @@ export function TasksPage() {
                 };
               })}
             />
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+            {/* The list and Field/Office pickers fold into one Filter button. */}
+            <div className="flex min-w-0 items-center gap-2">
+              <button
+                type="button"
+                className={`chip shrink-0 gap-1.5 ${filtered ? 'border-uplift text-uplift' : ''}`}
+                aria-expanded={filtersOpen}
+                aria-controls="task-filters"
+                onClick={() => setFiltersOpen((o) => !o)}
+              >
+                <SlidersHorizontal className="h-4 w-4" aria-hidden /> Filter
+                {filtered && <span className="h-1.5 w-1.5 rounded-full bg-uplift" aria-label="(on)" />}
+                <ChevronDown className={`h-3.5 w-3.5 transition-transform ${filtersOpen ? 'rotate-180' : ''}`} aria-hidden />
+              </button>
+              {filtered && (
+                <>
+                  <span className="min-w-0 truncate text-xs text-muted">
+                    {[view === 'list' ? LIST_META[listKey].label : null, where !== 'all' ? (where === 'field' ? 'Field' : 'Office') : null].filter(Boolean).join(' · ')}
+                  </span>
+                  <button
+                    type="button"
+                    className="link shrink-0 text-xs"
+                    onClick={() => setParam({ where: null, ...(view === 'list' ? { view: 'upcoming', list: null, day: null } : {}) })}
+                  >
+                    Clear
+                  </button>
+                </>
+              )}
+            </div>
+            <div id="task-filters" className={`${filtersOpen ? 'grid' : 'hidden'} grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]`}>
               <label className="sr-only" htmlFor="task-list-select">
                 List
               </label>
@@ -783,7 +823,10 @@ export function TasksPage() {
               </h2>
               <p className="mt-0.5 text-sm text-muted">{note}</p>
             </div>
-            <div className="flex shrink-0 items-start gap-3">
+            <div className="flex shrink-0 items-start gap-2">
+              <button type="button" className="icon-btn h-9 w-9" onClick={() => setTourOpen(true)} aria-label="How Staff Tasks works" title="How Staff Tasks works">
+                <CircleHelp className="h-[1.125rem] w-[1.125rem]" aria-hidden />
+              </button>
               {view === 'myday' && plannedToday > 0 && (
                 <p className="text-right text-xs text-muted">
                   <span className="block text-lg font-bold tabular-nums text-ink">
@@ -864,7 +907,10 @@ export function TasksPage() {
                     <span className="min-w-0 flex-1 truncate text-sm">{t.title}</span>
                     <span className={`shrink-0 text-xs ${t.dueDate && t.dueDate < today ? 'text-rose' : 'text-muted'}`}>{t.dueDate && t.dueDate < today ? 'Overdue' : t.dueDate === today ? 'Today' : 'Soon'}</span>
                     <button type="button" className="btn-ghost min-h-9 shrink-0 px-2.5 text-xs" onClick={() => void toggleMyDay(t)} aria-label={`Add “${t.title}” to today`}>
-                      <Sun className="h-3.5 w-3.5" aria-hidden /> Add
+                      <Plus className="h-3.5 w-3.5 sm:hidden" aria-hidden />
+                      <Sun className="hidden h-3.5 w-3.5 sm:block" aria-hidden />
+                      <span className="sm:hidden">Today</span>
+                      <span className="hidden sm:inline">Add to today</span>
                     </button>
                   </li>
                 ))}
@@ -940,6 +986,9 @@ export function TasksPage() {
         </section>
 
         <div className={cols === 3 ? 'hidden' : ''}>
+          <ProgressPanel initials={profile?.initials ?? '?'} progress={progress} onOpen={(tab) => setParam({ rewards: tab })} />
+        </div>
+        <div className={cols === 3 ? 'hidden' : ''}>
           <TeamGoalCard team={team} canManage={canManage} people={people} me={me} onSetGoal={setGoal} onKudos={sendKudos} />
         </div>
       </div>
@@ -949,6 +998,7 @@ export function TasksPage() {
         <TeamGoalCard team={team} canManage={canManage} people={people} me={me} onSetGoal={setGoal} onKudos={sendKudos} />
       </aside>
 
+      <TasksTour open={tourOpen} onClose={() => setTourOpen(false)} />
       {!selecting && (
         <Fab onClick={() => setSheet({ task: null, initial: null })} icon={<Plus className="h-6 w-6" aria-hidden />}>
           New task

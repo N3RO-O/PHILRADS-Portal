@@ -271,13 +271,15 @@ export function TaskRow({ task: t, today, me, onToggle, onOpen, onMyDay, onStart
             {onMyDay && !done && (
               <button
                 type="button"
-                className={`icon-btn h-9 w-9 ${inMyDay ? 'text-ink' : 'opacity-60 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100'}`}
+                className={`icon-btn h-9 w-9 sm:w-auto sm:gap-1.5 sm:px-2.5 ${inMyDay ? 'text-ink' : 'opacity-60 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100'}`}
                 aria-pressed={inMyDay}
-                aria-label={inMyDay ? `Take “${t.title}” off today’s plan` : `Plan “${t.title}” for today`}
-                title={inMyDay ? 'Planned for today' : 'Plan for today'}
+                aria-label={inMyDay ? `Take “${t.title}” off today’s plan` : `Do “${t.title}” today`}
+                title={inMyDay ? 'On today’s plan. Tap to take it off.' : 'Do today'}
                 onClick={() => onMyDay(t)}
               >
                 <Sun className={`h-4 w-4 ${inMyDay ? 'fill-uplift/30' : ''}`} aria-hidden />
+                {/* Named where there's room; on phones the tour explains the sun. */}
+                <span className="hidden text-xs font-semibold sm:inline">{inMyDay ? 'Today' : 'Do today'}</span>
               </button>
             )}
           </span>

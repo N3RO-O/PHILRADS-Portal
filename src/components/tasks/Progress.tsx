@@ -28,6 +28,32 @@ export function LevelAvatar({ initials, progress, size = 'lg' }: { initials: str
   );
 }
 
+/** One line above the tasks: your level and XP, opening Badges and rewards. The full panel sits below the list. */
+export function ProgressChip({ initials, progress, onOpen }: { initials: string; progress: Progress; onOpen: (tab: 'badges' | 'levels' | 'kudos') => void }) {
+  const { level, xp } = progress;
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen('badges')}
+      className="press flex w-full items-center gap-3 rounded-2xl border border-line bg-surface-raised/60 px-3 py-2.5 text-left transition-colors hover:bg-surface-raised"
+      aria-label={`Level ${level.level}, ${level.title}, ${formatNumber(xp)} XP. Open badges and rewards.`}
+    >
+      <LevelAvatar initials={initials} progress={progress} size="md" />
+      <span className="min-w-0 flex-1">
+        <span className="flex min-w-0 items-baseline gap-1.5 text-sm">
+          <span className={`shrink-0 font-semibold ${FRAME_TEXT[level.frame]}`}>Level {level.level}</span>
+          <span className="truncate font-semibold text-ink">{level.title}</span>
+        </span>
+        <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-surface-sunken" aria-hidden>
+          <span className="block h-full rounded-full bg-uplift transition-[width] duration-700" style={{ width: `${Math.max(4, level.progress * 100)}%` }} />
+        </span>
+      </span>
+      <span className="shrink-0 text-xs font-semibold tabular-nums text-ink-soft">{formatNumber(xp)} XP</span>
+      <ChevronRight className="h-4 w-4 shrink-0 text-muted" aria-hidden />
+    </button>
+  );
+}
+
 /** Level, XP towards the next level, streak and latest badges: private to the person. */
 export function ProgressPanel({ initials, progress, onOpen }: { initials: string; progress: Progress; onOpen: (tab: 'badges' | 'levels' | 'kudos') => void }) {
   const { level, xp } = progress;

@@ -1,5 +1,28 @@
 [
   {
+    "id": "2026-11-24.1",
+    "version": "1.10.12",
+    "date": "2026-11-24",
+    "title": "Staff Tasks, easier to start with",
+    "items": [
+      {
+        "icon": "sparkles",
+        "title": "A short tour of Staff Tasks",
+        "body": "The first time you open Staff Tasks, four quick steps show how it works: your Today list, tapping the circle when a task is done, the sun to plan it for today, and adding your own. Open it again any time with the ? button."
+      },
+      {
+        "icon": "list-checks",
+        "title": "Your tasks come first",
+        "body": "On phones and tablets your tasks now start near the top. Your level is one line above them; tap it for badges and rewards, or scroll down for the full progress card."
+      },
+      {
+        "icon": "circle-dot",
+        "title": "Fewer buttons, plainer words",
+        "body": "The list and Field or Office pickers are now behind one Filter button. Views read My tasks, I assigned and Whole team, and the sun says Do today."
+      }
+    ]
+  },
+  {
     "id": "2026-11-13.4",
     "version": "1.10.11",
     "date": "2026-11-13",
