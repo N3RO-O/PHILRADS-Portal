@@ -21,6 +21,11 @@
         "body": "On a guest's first visit the welcome opens over the map, with Give your donation and Volunteer. Close it and it stays closed on that phone; the logo in the top bar opens it again."
       },
       {
+        "icon": "camera",
+        "title": "Our Facebook posts, on the guest page",
+        "body": "Disaster News now shows PHILRADS's latest Facebook posts, with their pictures, right after the alerts happening now. They come in on their own from the PHILRADS page; guests can read the whole post or open it on Facebook."
+      },
+      {
         "icon": "bell",
         "title": "Post your own news for guests",
         "body": "Coordinators and administrators can now post announcements on the guest page from Guest page → News: an evacuation site opening, where relief is being handed out, or an advisory for an area. Mark one Update, Advisory or Urgent, and set a day for it to come down on its own. They sit above the alerts from GDACS and USGS, urgent ones first."

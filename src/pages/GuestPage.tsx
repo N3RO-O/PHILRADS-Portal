@@ -458,6 +458,7 @@ export function GuestPage() {
   const feed = useAsyncData(useCallback(() => guestService.hazards(), []));
   const stories = useAsyncData(useCallback(() => guestService.stories(), []));
   const notes = useAsyncData(useCallback(() => guestService.announcements(), []));
+  const facebook = useAsyncData(useCallback(() => guestService.facebook(), []));
   const drives = useAsyncData(useCallback(() => guestService.drives(), []));
   const merch = useAsyncData(useCallback(() => guestService.merch(), []));
 
@@ -587,7 +588,7 @@ export function GuestPage() {
         </div>
       </section>
     );
-  else if (screen === 'news') body = <NewsSection feed={feed} notes={notes.data ?? []} onRetry={feed.reload} onShow={showHazard} />;
+  else if (screen === 'news') body = <NewsSection feed={feed} notes={notes.data ?? []} facebook={facebook.data ?? null} onRetry={feed.reload} onShow={showHazard} />;
   else if (screen === 'stories') body = <StoriesSection stories={stories} onRetry={stories.reload} />;
   else if (screen === 'give') body = <DrivesSection drives={drives} onRetry={drives.reload} />;
   else if (screen === 'merch') body = <MerchSection merch={merch} onRetry={merch.reload} />;

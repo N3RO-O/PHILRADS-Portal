@@ -11,6 +11,7 @@
  *   ?gifs=words                       project chat GIF search (signed-in staff; see _gifs.ts)
  *   ?devotional=YYYY-MM-DD            Our Daily Bread for that day (public text, cached; see verse/odb.ts)
  *   ?hazards=ph                       guest Disaster News: GDACS and USGS for the Philippines (cached; see guest/hazards.ts)
+ *   ?facebook=page                    guest Disaster News: PHILRADS's Facebook posts via rss.app (cached; see guest/facebook.ts)
  *
  * The extra jobs ride on this function because the Hobby plan allows 12 functions per deployment.
  */
@@ -18,6 +19,7 @@ import { gifs } from './_gifs.js';
 import { gridUrl, spotUrl, validGrid, validSpot } from '../src/services/weather/openMeteo.js';
 import { isDayKey, odbApiUrl, parseOdb } from '../src/services/verse/odb.js';
 import { fetchHazards } from '../src/services/guest/hazards.js';
+import { FACEBOOK_PAGE, parseFacebookFeed, validFeedUrl } from '../src/services/guest/facebook.js';
 
 const fail = (status: number, error: string) =>
   new Response(JSON.stringify({ error }), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
@@ -51,10 +53,32 @@ async function hazards() {
   });
 }
 
+/**
+ * PHILRADS's Facebook posts, from the rss.app feed set in FACEBOOK_FEED_URL, shared by every guest
+ * for 15 minutes. 404 until the feed is set, so the page simply leaves the posts out.
+ */
+async function facebook() {
+  const url = validFeedUrl(process.env.FACEBOOK_FEED_URL);
+  if (!url) return fail(404, 'The Facebook feed is not set up.');
+  let res: Response;
+  try {
+    res = await fetch(url, { headers: { Accept: 'application/feed+json, application/json, application/rss+xml, application/xml', 'User-Agent': 'PHILRADS-Portal' } });
+  } catch {
+    return fail(502, 'The Facebook feed is unreachable.');
+  }
+  if (!res.ok) return fail(502, `The Facebook feed answered ${res.status}.`);
+  const posts = parseFacebookFeed(await res.text());
+  return new Response(JSON.stringify({ posts, page: FACEBOOK_PAGE, checkedAt: new Date().toISOString() }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=300, s-maxage=900, stale-while-revalidate=3600' },
+  });
+}
+
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
   if (params.has('gifs')) return gifs(request);
   if (params.get('hazards') === 'ph') return hazards();
+  if (params.get('facebook') === 'page') return facebook();
   const day = params.get('devotional');
   if (day !== null) return devotional(day);
   let upstream: string;

@@ -3,6 +3,7 @@ import type { DataSource } from '../../types';
 import type { ProgramKey } from '../activities/types';
 import type { PlaceKind } from '../map/types';
 import { fetchHazards, type HazardFeed } from './hazards';
+import { FACEBOOK_PAGE, type FacebookFeed } from './facebook';
 
 // ───────────────────────── Shapes ─────────────────────────
 
@@ -182,6 +183,8 @@ export interface GuestService {
   merch(): Promise<MerchItem[]>;
   send(draft: GuestMessageDraft): Promise<void>;
   hazards(signal?: AbortSignal): Promise<HazardFeed>;
+  /** PHILRADS's Facebook posts (none until the rss.app feed is set up in Vercel). */
+  facebook(signal?: AbortSignal): Promise<FacebookFeed>;
   // Staff with guest.manage.
   allStories(): Promise<GuestStory[]>;
   saveStory(d: StoryDraft): Promise<GuestStory>;
@@ -226,6 +229,19 @@ async function loadHazards(signal?: AbortSignal): Promise<HazardFeed> {
   const feed = await fetchHazards(fetch, signal);
   if (feed.missing.length === 2) throw new Error('Disaster news is unreachable right now. Check the official sources below.');
   return feed;
+}
+
+/** The Facebook posts from the shared copy; an empty list when the feed isn't set up or can't be reached. */
+async function loadFacebook(signal?: AbortSignal): Promise<FacebookFeed> {
+  const none: FacebookFeed = { posts: [], page: FACEBOOK_PAGE, checkedAt: new Date().toISOString() };
+  if (import.meta.env.DEV) return none;
+  try {
+    const res = await fetch('/api/weather?facebook=page', { signal });
+    return res.ok ? ((await res.json()) as FacebookFeed) : none;
+  } catch (e) {
+    if ((e as Error).name === 'AbortError') throw e;
+    return none;
+  }
 }
 
 function checkImage(file: File) {
@@ -438,6 +454,27 @@ export function createMockGuestService(overview: () => Promise<GuestOverview>): 
       await wait(null, 500);
     },
     hazards: loadHazards,
+    facebook: () =>
+      wait({
+        page: FACEBOOK_PAGE,
+        checkedAt: new Date().toISOString(),
+        posts: [
+          {
+            id: 'fb1',
+            url: FACEBOOK_PAGE,
+            text: 'Relief packs went out today to 240 families in Virac, Catanduanes. Thank you to every volunteer who packed through the night, and to everyone who gave. (sample)',
+            image: '/media/welcome-dance-still.webp',
+            postedAt: new Date(Date.now() - 5 * 3_600_000).toISOString(),
+          },
+          {
+            id: 'fb2',
+            url: FACEBOOK_PAGE,
+            text: 'Kids in Brgy. Sample are back in class with new school kits. Help us reach the next school: philrads.org (sample)',
+            image: null,
+            postedAt: new Date(Date.now() - 3 * 86_400_000).toISOString(),
+          },
+        ],
+      }),
     allStories: () => wait(store.stories),
     async saveStory(d) {
       const prev = d.id ? store.stories.find((s) => s.id === d.id) : undefined;
@@ -694,6 +731,7 @@ export function createSupabaseGuestService(client: SupabaseClient): GuestService
       if (error) fail('send', error, 'Your message could not be sent. Check the connection and try again.');
     },
     hazards: loadHazards,
+    facebook: loadFacebook,
     allStories: () => list('guest_stories', toStory, (q) => q.select('*').order('updated_at', { ascending: false }).limit(200), 'the stories'),
     saveStory: (d) => saveRow('guest_stories', d.id, fromStory(d), toStory, 'story'),
     removeStory: (id) => removeRow('guest_stories', id, 'story'),

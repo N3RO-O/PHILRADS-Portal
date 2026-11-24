@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Activity, ExternalLink, Flame, MapPin, Megaphone, Mountain, Phone, Sun, Waves, Wind, type LucideIcon } from 'lucide-react';
 import type { Hazard, HazardFeed, HazardKind, HazardLevel } from '../../services/guest/hazards';
+import type { FacebookFeed, FacebookPost } from '../../services/guest/facebook';
 import { announcementLevelLabel, type AnnouncementLevel, type GuestAnnouncement } from '../../services/guest/guestService';
 import { timeAgo } from '../../lib/geo';
 import { formatShortInstant } from '../../lib/format';
@@ -105,15 +106,83 @@ function HazardRow({ h, onShow }: { h: Hazard; onShow: (h: Hazard) => void }) {
  * Disaster News: what is affecting the Philippines now and in the last few months, from GDACS
  * and USGS, with the official agencies to check before acting.
  */
+/** One Facebook post: its picture (top on phones, beside the text on wider screens), the text, a link. */
+function FacebookCard({ p }: { p: FacebookPost }) {
+  const [broken, setBroken] = useState(false);
+  const [full, setFull] = useState(false);
+  const long = p.text.length > 260 || p.text.split('\n').length > 4;
+  return (
+    <li className="overflow-hidden rounded-2xl border border-line bg-surface sm:flex">
+      {p.image && !broken && (
+        <a href={p.url} target="_blank" rel="noopener noreferrer" tabIndex={-1} aria-hidden className="relative block bg-surface-sunken sm:min-h-[10rem] sm:w-56 sm:shrink-0">
+          <img
+            src={p.image}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            referrerPolicy="no-referrer"
+            onError={() => setBroken(true)}
+            className="aspect-[16/10] w-full object-cover sm:absolute sm:inset-0 sm:aspect-auto sm:h-full"
+          />
+        </a>
+      )}
+      <div className="flex min-w-0 flex-1 flex-col px-4 py-3.5">
+        <p className={`whitespace-pre-line break-words text-sm leading-relaxed text-ink ${full ? '' : 'line-clamp-4'}`}>{p.text}</p>
+        {long && (
+          <button type="button" className="mt-1 self-start text-xs font-semibold text-ink-soft hover:text-ink" onClick={() => setFull((f) => !f)} aria-expanded={full}>
+            {full ? 'Show less' : 'Read more'}
+          </button>
+        )}
+        <p className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-2 text-xs text-muted">
+          {p.postedAt && <span>Posted {timeAgo(p.postedAt)}</span>}
+          <a className="link" href={p.url} target="_blank" rel="noopener noreferrer">
+            Open on Facebook <ExternalLink className="h-3 w-3" aria-hidden />
+          </a>
+        </p>
+      </div>
+    </li>
+  );
+}
+
+/** PHILRADS's latest Facebook posts (through rss.app); nothing at all until the feed is set up. */
+function FacebookPosts({ feed }: { feed: FacebookFeed | null }) {
+  const [all, setAll] = useState(false);
+  if (!feed?.posts.length) return null;
+  const shown = all ? feed.posts : feed.posts.slice(0, 3);
+  return (
+    <div className="mt-7">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <h3 className="text-sm font-semibold text-ink">On our Facebook page</h3>
+        <a className="link text-xs" href={feed.page} target="_blank" rel="noopener noreferrer">
+          See all on Facebook <ExternalLink className="h-3 w-3" aria-hidden />
+        </a>
+      </div>
+      <ul className="mt-2.5 flex flex-col gap-3">
+        {shown.map((p) => (
+          <FacebookCard key={p.id} p={p} />
+        ))}
+      </ul>
+      {feed.posts.length > 3 && (
+        <button type="button" className="chip mt-3" onClick={() => setAll((a) => !a)} aria-expanded={all}>
+          {all ? 'Show fewer' : `Show ${feed.posts.length - 3} more`}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function NewsSection({
   feed,
   notes,
+  facebook,
   onRetry,
   onShow,
 }: {
   feed: AsyncState<HazardFeed>;
   /** Staff announcements; if they can't load, the alerts still show. */
   notes: GuestAnnouncement[];
+  /** PHILRADS's Facebook posts; null while loading or when the feed isn't set up. */
+  facebook: FacebookFeed | null;
   onRetry: () => void;
   onShow: (h: Hazard) => void;
 }) {
@@ -127,13 +196,19 @@ export function NewsSection({
     <GuestSection
       id="news"
       title="Disaster News"
-      lead="Announcements from PHILRADS, and typhoons, floods, earthquakes and volcanoes affecting the Philippines from international alert systems. Always follow the official advisories below."
+      lead="Announcements and posts from PHILRADS, and typhoons, floods, earthquakes and volcanoes affecting the Philippines from international alert systems. Always follow the official advisories below."
     >
       <Announcements list={notes} />
       {feed.status === 'loading' ? (
-        <RowsLoading />
+        <>
+          <RowsLoading />
+          <FacebookPosts feed={facebook} />
+        </>
       ) : feed.status === 'error' ? (
-        <SectionError message={feed.error.message || 'Disaster news could not be loaded.'} onRetry={onRetry} />
+        <>
+          <SectionError message={feed.error.message || 'Disaster news could not be loaded.'} onRetry={onRetry} />
+          <FacebookPosts feed={facebook} />
+        </>
       ) : (
         <>
           <h3 className="text-sm font-semibold text-ink">Happening now</h3>
@@ -146,9 +221,10 @@ export function NewsSection({
           ) : (
             <p className="mt-2 rounded-xl bg-surface-sunken px-4 py-3 text-sm text-ink-soft">No active alerts for the Philippines right now.</p>
           )}
+          <FacebookPosts feed={facebook} />
           {earlier.length > 0 && (
             <>
-              <h3 className="mt-6 text-sm font-semibold text-ink">Earlier</h3>
+              <h3 className="mt-7 text-sm font-semibold text-ink">Earlier alerts</h3>
               <ul className="divide-y divide-line/70">
                 {shownEarlier.map((h) => (
                   <HazardRow key={h.id} h={h} onShow={onShow} />
