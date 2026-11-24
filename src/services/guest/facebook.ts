@@ -71,6 +71,8 @@ const httpsUrl = (u: unknown) => {
   const s = decode(u.trim());
   return /^https:\/\/[^\s"'<>]+$/i.test(s) ? s : null;
 };
+/** rss.app links to Facebook's mobile site; the main address works on phones and computers alike. */
+const postUrl = (u: unknown) => httpsUrl(u)?.replace(/^https:\/\/(m|mobile|mbasic)\.facebook\.com\//i, 'https://www.facebook.com/') ?? null;
 const firstImg = (html: string) => httpsUrl(/<img[^>]+src=["']([^"']+)["']/i.exec(html)?.[1]);
 const isoDate = (d: unknown) => {
   const t = typeof d === 'string' ? Date.parse(d) : NaN;
@@ -90,7 +92,7 @@ function parseJsonFeed(json: unknown): FacebookPost[] {
   if (!Array.isArray(items)) return [];
   return items.flatMap((raw): FacebookPost[] => {
     const it = raw as Record<string, unknown>;
-    const url = httpsUrl(it.url) ?? httpsUrl(it.external_url);
+    const url = postUrl(it.url) ?? postUrl(it.external_url);
     if (!url) return [];
     const html = typeof it.content_html === 'string' ? it.content_html : '';
     const body = typeof it.content_text === 'string' && it.content_text.trim() ? plainText(it.content_text) : plainText(html);
@@ -108,7 +110,7 @@ const attr = (xml: string, name: string, at: string) => new RegExp(`<${name}\\s[
 function parseRss(xml: string): FacebookPost[] {
   const items = xml.match(/<item[\s>][\s\S]*?<\/item>/gi) ?? [];
   return items.flatMap((it): FacebookPost[] => {
-    const url = httpsUrl(plainText(tag(it, 'link'))) ?? httpsUrl(plainText(tag(it, 'guid')));
+    const url = postUrl(plainText(tag(it, 'link'))) ?? postUrl(plainText(tag(it, 'guid')));
     if (!url) return [];
     const html = tag(it, 'content:encoded') || tag(it, 'description');
     const rawHtml = html.replace(/<!\[CDATA\[|\]\]>/g, '');
