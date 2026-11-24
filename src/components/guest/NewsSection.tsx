@@ -106,7 +106,7 @@ function HazardRow({ h, onShow }: { h: Hazard; onShow: (h: Hazard) => void }) {
  * Disaster News: what is affecting the Philippines now and in the last few months, from GDACS
  * and USGS, with the official agencies to check before acting.
  */
-/** One Facebook post: its picture (top on phones, beside the text on wider screens), the text, a link. */
+/** One Facebook post: its whole picture (posts are often graphics with words on them, so nothing is cropped; on top on phones, beside the text on wider screens), the text, a link. */
 function FacebookCard({ p }: { p: FacebookPost }) {
   const [broken, setBroken] = useState(false);
   const [full, setFull] = useState(false);
@@ -122,7 +122,7 @@ function FacebookCard({ p }: { p: FacebookPost }) {
             decoding="async"
             referrerPolicy="no-referrer"
             onError={() => setBroken(true)}
-            className="aspect-[16/10] w-full object-cover sm:absolute sm:inset-0 sm:aspect-auto sm:h-full"
+            className="mx-auto max-h-[30rem] w-full object-contain sm:absolute sm:inset-0 sm:h-full sm:max-h-none"
           />
         </a>
       )}
