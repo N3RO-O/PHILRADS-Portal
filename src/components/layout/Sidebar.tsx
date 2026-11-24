@@ -28,7 +28,7 @@ export function Sidebar({ expanded, onToggle }: SidebarProps) {
         </span>
       </Link>
       {/* Scrolls when the window is too short for every module (hover labels float outside it, so nothing is clipped). */}
-      <nav aria-label="Modules" className="relative flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-contain px-3 py-3">
+      <nav aria-label="Modules" className="relative flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-contain px-3 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <NavItems expanded={expanded} rail />
       </nav>
       <div className="flex shrink-0 flex-col gap-1 border-t border-line/70 px-3 py-3">

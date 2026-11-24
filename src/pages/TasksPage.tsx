@@ -713,31 +713,9 @@ export function TasksPage() {
   return (
     <div
       ref={layoutRef}
-      className={`grid gap-4 ${selecting ? 'pb-44' : 'pb-6'} ${cols === 3 ? `${roomy ? 'grid-cols-[13.5rem_minmax(0,1fr)_20rem]' : 'grid-cols-[12.5rem_minmax(0,1fr)_18rem]'} items-start` : cols === 2 ? 'grid-cols-[13.5rem_minmax(0,1fr)]' : 'grid-cols-1'}`}
+      className={`grid gap-4 ${selecting ? 'pb-44' : 'pb-6'} ${cols === 3 ? `${roomy ? 'grid-cols-[minmax(0,1fr)_20rem]' : 'grid-cols-[minmax(0,1fr)_18rem]'} items-start` : 'grid-cols-1'}`}
     >
-      {/* Views and lists: a side menu when there's room. */}
-      <nav aria-label="Task views" className={`panel sticky top-20 flex-col gap-4 p-3 ${cols >= 2 ? 'flex' : 'hidden'}`}>
-        <ul className="flex flex-col gap-0.5">
-          {(Object.keys(VIEW_META) as Exclude<View, 'list'>[])
-            .filter((v) => (v !== 'delegated' || canManage || counts.delegated > 0) && (v !== 'team' || canManage))
-            .map((v) => {
-              const Icon = VIEW_META[v].icon;
-              return (
-                <NavItem key={v} active={view === v} onClick={() => go(v)} icon={<Icon className={`h-4 w-4 ${v === 'myday' ? 'text-uplift' : ''}`} aria-hidden />} label={VIEW_META[v].label} count={v === 'done' ? undefined : counts[v]} />
-              );
-            })}
-        </ul>
-        <div>
-          <p className="px-2 pb-1 text-[0.6875rem] font-semibold uppercase tracking-wider text-muted">Lists</p>
-          <ul className="flex flex-col gap-0.5">
-            {TASK_LISTS.map((l) => {
-              const s = LIST_STYLE[l];
-              return <NavItem key={l} active={view === 'list' && listKey === l} onClick={() => go('list', l)} icon={<s.icon className={`h-4 w-4 ${s.text}`} aria-hidden />} label={LIST_META[l].label} count={listCount(l)} />;
-            })}
-          </ul>
-        </div>
-        <WhereToggle where={where} onChange={(w) => setParam({ where: w === 'all' ? null : w })} />
-      </nav>
+      {/* One layout for every size, as on phones: whose tasks (My tasks / I assigned / Whole team) as tabs above the list. */}
 
       <div className="flex min-w-0 flex-col gap-4">
         {/* Narrower: the tasks come first; your level is one line here, the full panel below the list. */}
@@ -746,7 +724,7 @@ export function TasksPage() {
         </div>
 
         <section ref={listRef} className="card flex flex-col gap-4">
-          <div className={`flex flex-col gap-3 ${cols >= 2 ? 'hidden' : ''}`}>
+          <div className="flex flex-col gap-3">
             <ViewSwitch
               label="Whose tasks"
               value={view === 'list' ? null : view}
@@ -1127,23 +1105,6 @@ function BulkButton({ onClick, disabled, busy, count, icon, className, children 
       </span>
       <span className="text-[0.625rem] font-normal tabular-nums text-muted">{count}</span>
     </button>
-  );
-}
-
-function NavItem({ active, onClick, icon, label, count }: { active: boolean; onClick: () => void; icon: ReactNode; label: string; count?: number }) {
-  return (
-    <li>
-      <button
-        type="button"
-        aria-current={active ? 'page' : undefined}
-        onClick={onClick}
-        className="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2 text-left text-sm text-ink-soft transition-colors hover:bg-surface-raised hover:text-ink aria-[current=page]:bg-surface-raised aria-[current=page]:font-semibold aria-[current=page]:text-ink"
-      >
-        {icon}
-        <span className="min-w-0 flex-1 truncate">{label}</span>
-        {count !== undefined && count > 0 && <span className="text-xs tabular-nums text-muted">{count}</span>}
-      </button>
-    </li>
   );
 }
 

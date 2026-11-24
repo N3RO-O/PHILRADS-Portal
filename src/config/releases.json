@@ -18,12 +18,12 @@
       {
         "icon": "circle-dot",
         "title": "Fewer buttons, plainer words",
-        "body": "The list and Field or Office pickers are now behind one Filter button. Views read My tasks, I assigned and Whole team, and the sun says Do today."
+        "body": "On every screen, from phone to desktop, Staff Tasks now opens with the same three tabs: My tasks, I assigned and Whole team, with Today, Upcoming, Calendar and Done below. The list and Field or Office pickers are behind one Filter button, and the sun says Do today."
       },
       {
         "icon": "sparkles",
         "title": "Smoother, quicker motion",
-        "body": "Folding the sidebar is now one smooth movement: the icons stay put, the words fade, and the highlight moves with them. Panels, pop-ups and the phone menu now slide or fade away when they close instead of vanishing, and animations across the portal are a little quicker."
+        "body": "Folding the sidebar is now one smooth movement: the icons stay put, the words fade, and the highlight moves with them and stays centred on its icon. Panels, pop-ups and the phone menu now slide or fade away when they close instead of vanishing, and animations across the portal are a little quicker."
       }
     ]
   },
