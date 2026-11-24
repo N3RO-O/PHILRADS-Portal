@@ -10,12 +10,14 @@
  *
  *   ?gifs=words                       project chat GIF search (signed-in staff; see _gifs.ts)
  *   ?devotional=YYYY-MM-DD            Our Daily Bread for that day (public text, cached; see verse/odb.ts)
+ *   ?hazards=ph                       guest Disaster News: GDACS and USGS for the Philippines (cached; see guest/hazards.ts)
  *
  * The extra jobs ride on this function because the Hobby plan allows 12 functions per deployment.
  */
 import { gifs } from './_gifs.js';
 import { gridUrl, spotUrl, validGrid, validSpot } from '../src/services/weather/openMeteo.js';
 import { isDayKey, odbApiUrl, parseOdb } from '../src/services/verse/odb.js';
+import { fetchHazards } from '../src/services/guest/hazards.js';
 
 const fail = (status: number, error: string) =>
   new Response(JSON.stringify({ error }), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
@@ -39,9 +41,20 @@ async function devotional(day: string) {
   });
 }
 
+/** Hazards affecting the Philippines, shared by every guest for 10 minutes. */
+async function hazards() {
+  const feed = await fetchHazards((url, init) => fetch(url, { ...init, headers: { ...init?.headers, 'User-Agent': 'PHILRADS-Portal' } }));
+  if (feed.missing.length === 2) return fail(502, 'Disaster news sources are unreachable.');
+  return new Response(JSON.stringify(feed), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': `public, max-age=300, s-maxage=${feed.missing.length ? 120 : 600}, stale-while-revalidate=1800` },
+  });
+}
+
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
   if (params.has('gifs')) return gifs(request);
+  if (params.get('hazards') === 'ph') return hazards();
   const day = params.get('devotional');
   if (day !== null) return devotional(day);
   let upstream: string;

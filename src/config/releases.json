@@ -1,5 +1,38 @@
 [
   {
+    "id": "2026-11-25.1",
+    "version": "1.11.0",
+    "date": "2026-11-25",
+    "title": "The guest page is open",
+    "items": [
+      {
+        "icon": "map",
+        "title": "A guest page for visitors",
+        "body": "“Guest” on the sign-in screen now opens a full page for people without an account: a map of where PHILRADS has worked and its offices and response sites, Disaster News, PHILReads stories, Donation Drives, Merch and Feedback. Staff locations, partners, funding and donors are never shown there."
+      },
+      {
+        "icon": "bell-ring",
+        "title": "Disaster News",
+        "body": "Typhoons, floods, volcanoes and earthquakes affecting the Philippines, from the GDACS and USGS alert systems, with their alert level and a pin on the map. Links to PAGASA, PHIVOLCS and NDRRMC sit right under them."
+      },
+      {
+        "icon": "gift",
+        "title": "Donation drives with progress",
+        "body": "Each drive shows what it's for, how close it is to its goal, what a gift does, and how to give, with the details one tap to copy. Finished drives stay listed so donors can see them reach their goal."
+      },
+      {
+        "icon": "messages",
+        "title": "Messages from guests",
+        "body": "Guests can say thanks, share a community need, raise a concern (without their name if they prefer), offer to volunteer or ask to order merch. Coordinators and administrators hear about each one in the bell."
+      },
+      {
+        "icon": "pen",
+        "title": "Guest page in the Admin menu",
+        "body": "Coordinators and administrators write PHILReads stories, start and update donation drives, list merch with photos, and answer guest messages from Guest page in the Admin menu."
+      }
+    ]
+  },
+  {
     "id": "2026-11-24.1",
     "version": "1.10.12",
     "date": "2026-11-24",

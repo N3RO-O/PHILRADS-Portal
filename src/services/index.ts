@@ -26,6 +26,7 @@ import { createOfflineTasks, type OfflineTasksService } from './tasks/offlineTas
 import { createSupabaseTasksService, mockTasksService } from './tasks/tasksService';
 import { createSupabaseTaskExtras, mockTaskExtras, type TaskExtrasService } from './tasks/taskExtras';
 import { createSupabaseReflections, mockReflections, type ReflectionsService } from './verse/reflectionsService';
+import { createMockGuestService, createSupabaseGuestService, type GuestOverview, type GuestService } from './guest/guestService';
 
 export type { DashboardService } from './dashboard/types';
 export { driveUploadService, DriveNotConfiguredError } from './googleDrive';
@@ -89,3 +90,27 @@ export const staffBoardService: StaffBoardService = live ? createSupabaseStaffBo
 
 /** Verse of the Day: short reflections staff share on today's verse. */
 export const reflectionsService: ReflectionsService = live ? createSupabaseReflections(live) : mockReflections;
+
+/** Sample-mode guest map: the sample activities and public kinds of place, without anything private. */
+async function sampleGuestOverview(): Promise<GuestOverview> {
+  const [acts, places] = await Promise.all([mockActivitiesService.list(), mockMapService.listPlaces()]);
+  const sites = acts
+    .filter((a) => a.lat !== null && a.lng !== null)
+    .map((a) => ({ id: a.id, year: a.year, program: a.program, response: a.response, activity: a.activity, site: a.site, lat: a.lat!, lng: a.lng!, dateLabel: a.dateLabel, startDate: a.startDate, households: a.householdsServed, individuals: a.individualsServed, status: a.status }));
+  return {
+    sites,
+    places: places
+      .filter((p) => ['office', 'response_site', 'distribution_point', 'evacuation_center'].includes(p.kind))
+      .map((p) => ({ id: p.id, name: p.name, kind: p.kind, lat: p.lat, lng: p.lng, address: p.address })),
+    totals: {
+      activities: acts.length,
+      individuals: acts.reduce((n, a) => n + (a.individualsServed ?? 0), 0),
+      households: acts.reduce((n, a) => n + (a.householdsServed ?? 0), 0),
+      places: new Set(acts.map((a) => a.site.trim().toLowerCase())).size,
+      since: acts.length ? Math.min(...acts.map((a) => a.year)) : null,
+    },
+  };
+}
+
+/** Guest pages (no account): the map, Disaster News, PHILReads, drives, merch and messages; edited by guest.manage. */
+export const guestService: GuestService = live ? createSupabaseGuestService(live) : createMockGuestService(sampleGuestOverview);

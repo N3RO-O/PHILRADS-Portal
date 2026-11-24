@@ -14,6 +14,7 @@ export type ModuleId =
   | 'resources'
   | 'staff'
   | 'logs'
+  | 'guest-admin'
   | 'profile';
 
 /** Where a value came from. The UI labels anything from "mock" as sample data. */

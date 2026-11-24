@@ -2033,3 +2033,61 @@ dialog[data-closing] {
 @media (prefers-reduced-motion: reduce) {
   .typing-dot { animation-duration: 2.4s; transform: none !important; }
 }
+
+/* ───────── Guest pages (src/pages/GuestPage.tsx, src/components/guest) ───────── */
+/* Map pins: hazards are a warning triangle in their alert colour, with a slow ripple while still going on. */
+.gm-hazard {
+  position: relative;
+  display: block;
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.5));
+}
+.gm-hazard > svg {
+  position: relative;
+  display: block;
+}
+.gm-hazard.gm-live::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 62%;
+  width: 70%;
+  height: 70%;
+  margin: -35% 0 0 -35%;
+  border-radius: 9999px;
+  border: 2px solid var(--c);
+  animation: gm-ripple 2.4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+@keyframes gm-ripple {
+  from {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+/* Public places: a small diamond, so they never read as one of the activity dots. */
+.gm-place {
+  display: block;
+  transform: rotate(45deg);
+  border-radius: 3px;
+  background: var(--c);
+  border: 2px solid #fff;
+}
+/* The section bar under the header: stays in reach while scrolling, scrolls sideways on phones. */
+.guest-nav {
+  scrollbar-width: none;
+}
+.guest-nav::-webkit-scrollbar {
+  display: none;
+}
+/* PHILReads: stories read in the serif, at a comfortable measure. */
+.guest-prose p + p {
+  margin-top: 1em;
+}
+@media (prefers-reduced-motion: reduce) {
+  .gm-hazard.gm-live::after {
+    animation: none;
+  }
+}
