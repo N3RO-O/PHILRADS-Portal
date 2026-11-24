@@ -60,6 +60,36 @@ export interface GuestStory {
 }
 export type StoryDraft = Omit<GuestStory, 'id' | 'publishedAt' | 'updatedAt'> & { id?: string };
 
+export type AnnouncementLevel = 'update' | 'advisory' | 'urgent';
+export const ANNOUNCEMENT_LEVELS: { key: AnnouncementLevel; label: string; note: string }[] = [
+  { key: 'update', label: 'Update', note: 'News from PHILRADS: a site opening, relief being handed out.' },
+  { key: 'advisory', label: 'Advisory', note: 'Something people in an area should know or prepare for.' },
+  { key: 'urgent', label: 'Urgent', note: 'Act now. Shown first, in red.' },
+];
+export const announcementLevelLabel = (k: AnnouncementLevel) => ANNOUNCEMENT_LEVELS.find((l) => l.key === k)?.label ?? k;
+
+/** PHILRADS's own post at the top of Disaster News. */
+export interface GuestAnnouncement {
+  id: string;
+  title: string;
+  body: string;
+  level: AnnouncementLevel;
+  area: string | null;
+  linkUrl: string | null;
+  isPublished: boolean;
+  publishedAt: string | null;
+  /** Off the guest page after this moment; null keeps it up until unpublished. */
+  expiresAt: string | null;
+  updatedAt: string;
+}
+export type AnnouncementDraft = Omit<GuestAnnouncement, 'id' | 'publishedAt' | 'updatedAt'> & { id?: string };
+
+/** Live on the guest page right now: published and not past its time. */
+export const isLive = (a: GuestAnnouncement, now = Date.now()) => a.isPublished && (!a.expiresAt || Date.parse(a.expiresAt) > now);
+const LEVEL_ORDER: Record<AnnouncementLevel, number> = { urgent: 0, advisory: 1, update: 2 };
+/** Urgent first, then advisories, then updates; newest first within each. */
+export const byImportance = (a: GuestAnnouncement, b: GuestAnnouncement) => LEVEL_ORDER[a.level] - LEVEL_ORDER[b.level] || (b.publishedAt ?? '').localeCompare(a.publishedAt ?? '');
+
 export type DriveStatus = 'draft' | 'open' | 'closed';
 export interface DonationDrive {
   id: string;
@@ -147,6 +177,7 @@ export interface GuestService {
   // What guests see.
   overview(): Promise<GuestOverview>;
   stories(): Promise<GuestStory[]>;
+  announcements(): Promise<GuestAnnouncement[]>;
   drives(): Promise<DonationDrive[]>;
   merch(): Promise<MerchItem[]>;
   send(draft: GuestMessageDraft): Promise<void>;
@@ -155,6 +186,9 @@ export interface GuestService {
   allStories(): Promise<GuestStory[]>;
   saveStory(d: StoryDraft): Promise<GuestStory>;
   removeStory(id: string): Promise<void>;
+  allAnnouncements(): Promise<GuestAnnouncement[]>;
+  saveAnnouncement(d: AnnouncementDraft): Promise<GuestAnnouncement>;
+  removeAnnouncement(id: string): Promise<void>;
   allDrives(): Promise<DonationDrive[]>;
   saveDrive(d: DriveDraft): Promise<DonationDrive>;
   removeDrive(id: string): Promise<void>;
@@ -199,6 +233,11 @@ function checkImage(file: File) {
   if (file.size > IMAGE_MAX_BYTES) throw new GuestRuleError('Choose a picture under 3 MB.');
 }
 
+function checkAnnouncement(d: AnnouncementDraft) {
+  if (!d.title.trim()) throw new GuestRuleError('Give the announcement a title.');
+  if (d.linkUrl && !/^https:\/\/\S+$/.test(d.linkUrl.trim())) throw new GuestRuleError('The link has to start with https://');
+}
+
 function checkMessage(d: GuestMessageDraft) {
   const msg = d.message.trim();
   if (msg.length < 2) throw new GuestRuleError('Write a message first.');
@@ -214,6 +253,7 @@ const ago = (days: number) => new Date(Date.now() - days * 86_400_000).toISOStri
 
 interface SampleStore {
   stories: GuestStory[];
+  announcements: GuestAnnouncement[];
   drives: DonationDrive[];
   merch: MerchItem[];
   messages: GuestMessage[];
@@ -221,6 +261,20 @@ interface SampleStore {
 
 function seed(): SampleStore {
   return {
+    announcements: [
+      {
+        id: 'an1',
+        title: 'Relief packs at Virac covered court, Saturday 8 AM (sample)',
+        body: 'Families in Brgy. Sample who signed up last week can collect their packs. Bring the family card the team gave you.',
+        level: 'update',
+        area: 'Virac, Catanduanes',
+        linkUrl: null,
+        isPublished: true,
+        publishedAt: ago(0.5),
+        expiresAt: new Date(Date.now() + 3 * 86_400_000).toISOString(),
+        updatedAt: ago(0.5),
+      },
+    ],
     stories: [
       {
         id: 'st1',
@@ -330,7 +384,8 @@ function seed(): SampleStore {
 function load(): SampleStore {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return JSON.parse(raw) as SampleStore;
+    // Sample data saved before announcements existed gets the sample ones added.
+    if (raw) return { announcements: seed().announcements, ...(JSON.parse(raw) as Partial<SampleStore>) } as SampleStore;
   } catch {
     /* fall through to the sample */
   }
@@ -358,6 +413,7 @@ export function createMockGuestService(overview: () => Promise<GuestOverview>): 
     source: 'mock',
     overview,
     stories: () => wait(store.stories.filter((s) => s.isPublished).sort((a, b) => (b.publishedAt ?? '').localeCompare(a.publishedAt ?? ''))),
+    announcements: () => wait(store.announcements.filter((a) => isLive(a)).sort(byImportance)),
     drives: () => wait(store.drives.filter((d) => d.status !== 'draft')),
     merch: () => wait(store.merch.filter((m) => m.isListed).sort((a, b) => a.sortOrder - b.sortOrder)),
     async send(d) {
@@ -394,6 +450,20 @@ export function createMockGuestService(overview: () => Promise<GuestOverview>): 
     },
     async removeStory(id) {
       store.stories = store.stories.filter((s) => s.id !== id);
+      commit();
+    },
+    allAnnouncements: () => wait([...store.announcements].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))),
+    async saveAnnouncement(d) {
+      checkAnnouncement(d);
+      const prev = d.id ? store.announcements.find((a) => a.id === d.id) : undefined;
+      const now = new Date().toISOString();
+      const a: GuestAnnouncement = { ...d, id: d.id ?? newId(), publishedAt: prev?.publishedAt ?? (d.isPublished ? now : null), updatedAt: now };
+      upsert(store.announcements, a);
+      commit();
+      return wait(a);
+    },
+    async removeAnnouncement(id) {
+      store.announcements = store.announcements.filter((a) => a.id !== id);
       commit();
     },
     allDrives: () => wait(store.drives),
@@ -484,6 +554,27 @@ const fromStory = (d: StoryDraft) => ({
   cover_url: d.coverUrl || null,
   author_name: d.authorName?.trim() || null,
   is_published: d.isPublished,
+});
+const toAnnouncement = (r: Row): GuestAnnouncement => ({
+  id: String(r.id),
+  title: String(r.title),
+  body: String(r.body ?? ''),
+  level: r.level as AnnouncementLevel,
+  area: s(r.area),
+  linkUrl: s(r.link_url),
+  isPublished: Boolean(r.is_published),
+  publishedAt: s(r.published_at),
+  expiresAt: s(r.expires_at),
+  updatedAt: String(r.updated_at),
+});
+const fromAnnouncement = (d: AnnouncementDraft) => ({
+  title: d.title.trim(),
+  body: d.body.trim(),
+  level: d.level,
+  area: d.area?.trim() || null,
+  link_url: d.linkUrl?.trim() || null,
+  is_published: d.isPublished,
+  expires_at: d.expiresAt || null,
 });
 const toDrive = (r: Row): DonationDrive => ({
   id: String(r.id),
@@ -580,6 +671,11 @@ export function createSupabaseGuestService(client: SupabaseClient): GuestService
       };
     },
     stories: () => list('guest_stories', toStory, (q) => q.select('*').eq('is_published', true).order('published_at', { ascending: false }).limit(60), 'the stories'),
+    async announcements() {
+      // The database hides expired ones too; sorting by level happens here.
+      const rows = await list('guest_announcements', toAnnouncement, (q) => q.select('*').eq('is_published', true).order('published_at', { ascending: false }).limit(30), 'the announcements');
+      return rows.filter((a) => isLive(a)).sort(byImportance);
+    },
     drives: () => list('donation_drives', toDrive, (q) => q.select('*').in('status', ['open', 'closed']).order('ends_on', { ascending: false, nullsFirst: true }).limit(40), 'the donation drives'),
     merch: () => list('merch_items', toMerch, (q) => q.select('*').eq('is_listed', true).order('sort_order').limit(60), 'the merch'),
     async send(d) {
@@ -601,6 +697,12 @@ export function createSupabaseGuestService(client: SupabaseClient): GuestService
     allStories: () => list('guest_stories', toStory, (q) => q.select('*').order('updated_at', { ascending: false }).limit(200), 'the stories'),
     saveStory: (d) => saveRow('guest_stories', d.id, fromStory(d), toStory, 'story'),
     removeStory: (id) => removeRow('guest_stories', id, 'story'),
+    allAnnouncements: () => list('guest_announcements', toAnnouncement, (q) => q.select('*').order('updated_at', { ascending: false }).limit(200), 'the announcements'),
+    saveAnnouncement: (d) => {
+      checkAnnouncement(d);
+      return saveRow('guest_announcements', d.id, fromAnnouncement(d), toAnnouncement, 'announcement');
+    },
+    removeAnnouncement: (id) => removeRow('guest_announcements', id, 'announcement'),
     allDrives: () => list('donation_drives', toDrive, (q) => q.select('*').order('created_at', { ascending: false }).limit(200), 'the donation drives'),
     saveDrive: (d) => saveRow('donation_drives', d.id, fromDrive(d), toDrive, 'drive'),
     removeDrive: (id) => removeRow('donation_drives', id, 'drive'),

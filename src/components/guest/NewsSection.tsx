@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Activity, ExternalLink, Flame, MapPin, Mountain, Phone, Sun, Waves, Wind, type LucideIcon } from 'lucide-react';
+import { Activity, ExternalLink, Flame, MapPin, Megaphone, Mountain, Phone, Sun, Waves, Wind, type LucideIcon } from 'lucide-react';
 import type { Hazard, HazardFeed, HazardKind, HazardLevel } from '../../services/guest/hazards';
+import { announcementLevelLabel, type AnnouncementLevel, type GuestAnnouncement } from '../../services/guest/guestService';
 import { timeAgo } from '../../lib/geo';
 import { formatShortInstant } from '../../lib/format';
 import type { AsyncState } from '../../hooks/useAsyncData';
@@ -19,6 +20,49 @@ const OFFICIAL = [
   { name: 'PHIVOLCS', what: 'Earthquake, tsunami and volcano bulletins', href: 'https://www.phivolcs.dost.gov.ph/' },
   { name: 'NDRRMC', what: 'National disaster situation reports', href: 'https://ndrrmc.gov.ph/' },
 ];
+
+const NOTE_STYLE: Record<AnnouncementLevel, { card: string; label: string }> = {
+  urgent: { card: 'border-status-out/50 bg-status-out/10', label: 'text-status-out' },
+  advisory: { card: 'border-status-low/45 bg-status-low/10', label: 'text-status-low' },
+  update: { card: 'border-line bg-surface-sunken', label: 'text-ink-soft' },
+};
+
+/** PHILRADS's own posts, written by staff in the portal: above the alerts, urgent ones first. */
+function Announcements({ list }: { list: GuestAnnouncement[] }) {
+  if (!list.length) return null;
+  return (
+    <div className="mb-7">
+      <h3 className="flex items-center gap-2 text-sm font-semibold text-ink">
+        <Megaphone className="h-4 w-4 text-ink-soft" aria-hidden /> From PHILRADS
+      </h3>
+      <ul className="mt-2.5 flex flex-col gap-2.5">
+        {list.map((a) => {
+          const look = NOTE_STYLE[a.level];
+          return (
+            <li key={a.id} className={`rounded-2xl border px-4 py-3.5 ${look.card}`}>
+              <p className={`text-xs font-bold ${look.label}`}>{announcementLevelLabel(a.level)}</p>
+              <p className="mt-0.5 font-semibold leading-snug text-ink">{a.title}</p>
+              {a.body && <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-ink-soft">{a.body}</p>}
+              <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+                {a.area && (
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin className="h-3.5 w-3.5" aria-hidden /> {a.area}
+                  </span>
+                )}
+                {a.publishedAt && <span>Posted {timeAgo(a.publishedAt)}</span>}
+                {a.linkUrl && (
+                  <a className="link" href={a.linkUrl} target="_blank" rel="noopener noreferrer">
+                    More details <ExternalLink className="h-3 w-3" aria-hidden />
+                  </a>
+                )}
+              </p>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
 
 function when(h: Hazard) {
   if (h.kind === 'earthquake') return timeAgo(h.from);
@@ -61,7 +105,18 @@ function HazardRow({ h, onShow }: { h: Hazard; onShow: (h: Hazard) => void }) {
  * Disaster News: what is affecting the Philippines now and in the last few months, from GDACS
  * and USGS, with the official agencies to check before acting.
  */
-export function NewsSection({ feed, onRetry, onShow }: { feed: AsyncState<HazardFeed>; onRetry: () => void; onShow: (h: Hazard) => void }) {
+export function NewsSection({
+  feed,
+  notes,
+  onRetry,
+  onShow,
+}: {
+  feed: AsyncState<HazardFeed>;
+  /** Staff announcements; if they can't load, the alerts still show. */
+  notes: GuestAnnouncement[];
+  onRetry: () => void;
+  onShow: (h: Hazard) => void;
+}) {
   const [more, setMore] = useState(false);
   const hazards = feed.data?.hazards ?? [];
   const now = hazards.filter((h) => h.current);
@@ -72,8 +127,9 @@ export function NewsSection({ feed, onRetry, onShow }: { feed: AsyncState<Hazard
     <GuestSection
       id="news"
       title="Disaster News"
-      lead="Typhoons, floods, earthquakes and volcanoes affecting the Philippines, from international alert systems. Always follow the official advisories below."
+      lead="Announcements from PHILRADS, and typhoons, floods, earthquakes and volcanoes affecting the Philippines from international alert systems. Always follow the official advisories below."
     >
+      <Announcements list={notes} />
       {feed.status === 'loading' ? (
         <RowsLoading />
       ) : feed.status === 'error' ? (

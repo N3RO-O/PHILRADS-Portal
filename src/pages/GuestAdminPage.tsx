@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { BookOpen, ExternalLink, HandCoins, ImagePlus, Inbox, Mail, Phone, Plus, Shirt, Star, Trash2, type LucideIcon } from 'lucide-react';
+import { BookOpen, ExternalLink, HandCoins, ImagePlus, Inbox, Mail, Megaphone, Phone, Plus, Shirt, Star, Trash2, type LucideIcon } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
 import { Picture } from '../components/guest/guestUi';
 import { BusyLabel } from '../components/ui/BusyLabel';
@@ -14,10 +14,15 @@ import { formatDateTime, formatShortDate, formatShortInstant } from '../lib/form
 import { guestService } from '../services';
 import {
   amount,
+  ANNOUNCEMENT_LEVELS,
+  announcementLevelLabel,
+  isLive,
   GuestRuleError,
   messageKindLabel,
   STORY_KINDS,
+  type AnnouncementDraft,
   type DonationDrive,
+  type GuestAnnouncement,
   type DriveDraft,
   type DriveStatus,
   type GuestMessage,
@@ -28,9 +33,10 @@ import {
   type StoryDraft,
 } from '../services/guest/guestService';
 
-type Tab = 'inbox' | 'stories' | 'drives' | 'merch';
+type Tab = 'inbox' | 'news' | 'stories' | 'drives' | 'merch';
 const TABS: { key: Tab; label: string }[] = [
   { key: 'inbox', label: 'Messages' },
+  { key: 'news', label: 'News' },
   { key: 'stories', label: 'PHILReads' },
   { key: 'drives', label: 'Drives' },
   { key: 'merch', label: 'Merch' },
@@ -185,6 +191,78 @@ function useEditor<D>(save: (d: D) => Promise<unknown>, remove: (id: string) => 
     }
   };
   return { busy, error, setError, run, del };
+}
+
+// ───────────────────────── News ─────────────────────────
+
+const blankAnnouncement = (): AnnouncementDraft => ({ title: '', body: '', level: 'update', area: '', linkUrl: '', isPublished: false, expiresAt: null });
+/** The Philippine date of a moment, for the date box. */
+const phDate = (iso: string | null) => (iso ? new Date(Date.parse(iso) + 8 * 3_600_000).toISOString().slice(0, 10) : '');
+/** The end of that Philippine day, as the moment it comes down. */
+const endOfPhDay = (date: string) => (date ? new Date(`${date}T23:59:59+08:00`).toISOString() : null);
+
+function AnnouncementEditor({ draft, onClose, onSaved }: { draft: AnnouncementDraft | null; onClose: () => void; onSaved: () => void }) {
+  const [d, setD] = useState<AnnouncementDraft>(blankAnnouncement);
+  const [dirty, setDirty] = useState(false);
+  useEffect(() => {
+    if (draft) {
+      setD(draft);
+      setDirty(false);
+    }
+  }, [draft]);
+  const set = (patch: Partial<AnnouncementDraft>) => {
+    setD((x) => ({ ...x, ...patch }));
+    setDirty(true);
+  };
+  const ed = useEditor<AnnouncementDraft>(guestService.saveAnnouncement, guestService.removeAnnouncement, onSaved);
+  const level = ANNOUNCEMENT_LEVELS.find((l) => l.key === d.level)!;
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!d.title.trim()) return ed.setError('Give the announcement a title.');
+    if (d.isPublished && d.expiresAt && Date.parse(d.expiresAt) < Date.now()) return ed.setError('The take-down date has passed. Pick a later one, or leave it empty.');
+    void ed.run(d);
+  };
+  return (
+    <Sheet
+      open={!!draft}
+      onClose={onClose}
+      dirty={dirty}
+      title={draft?.id ? 'Edit announcement' : 'New announcement'}
+      subtitle="Shown at the top of Disaster News on the guest page once published."
+      footer={<EditorFooter form="announcement-form" busy={ed.busy} error={ed.error} onDelete={d.id ? () => ed.del(d.id!) : undefined} what="announcement" />}
+    >
+      <form id="announcement-form" onSubmit={submit} noValidate className="flex flex-col gap-4">
+        <Field label="Title">
+          <input className="field font-normal" value={d.title} onChange={(e) => set({ title: e.target.value })} maxLength={140} placeholder="Evacuation center open at Virac Central School" data-autofocus />
+        </Field>
+        <div>
+          <div role="radiogroup" aria-label="How important" className="flex flex-wrap gap-2">
+            {ANNOUNCEMENT_LEVELS.map((l) => (
+              <button key={l.key} type="button" role="radio" aria-checked={d.level === l.key} aria-pressed={d.level === l.key} className="chip" onClick={() => set({ level: l.key })}>
+                {l.label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-1.5 text-xs text-muted">{level.note}</p>
+        </div>
+        <Field label="Details" note="What is happening, who it is for, and what to do or bring.">
+          <textarea className="field min-h-36 font-normal leading-relaxed" value={d.body} onChange={(e) => set({ body: e.target.value })} maxLength={2000} />
+        </Field>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Where (optional)">
+            <input className="field font-normal" value={d.area ?? ''} onChange={(e) => set({ area: e.target.value })} maxLength={120} placeholder="Virac, Catanduanes" />
+          </Field>
+          <Field label="Take it down after (optional)" note="It leaves the guest page at the end of that day.">
+            <input type="date" className="field font-normal" value={phDate(d.expiresAt)} onChange={(e) => set({ expiresAt: endOfPhDay(e.target.value) })} />
+          </Field>
+        </div>
+        <Field label="Link (optional)" note="An official bulletin or a map, if there is one.">
+          <input type="url" inputMode="url" className="field font-normal" value={d.linkUrl ?? ''} onChange={(e) => set({ linkUrl: e.target.value })} maxLength={600} placeholder="https://" />
+        </Field>
+        <SwitchRow label="Published" note={d.isPublished ? 'Guests can see it.' : 'Only staff can see it here.'} checked={d.isPublished} onChange={(isPublished) => set({ isPublished })} />
+      </form>
+    </Sheet>
+  );
 }
 
 // ───────────────────────── PHILReads ─────────────────────────
@@ -636,17 +714,19 @@ export function GuestAdminPage() {
   const [params, setParams] = useSearchParams();
   const tab = (TABS.find((t) => t.key === params.get('tab'))?.key ?? 'inbox') as Tab;
   const setTab = (t: Tab) => setParams((p) => (p.set('tab', t), p), { replace: true });
+  const [note, setNote] = useState<AnnouncementDraft | null>(null);
   const [story, setStory] = useState<StoryDraft | null>(null);
   const [drive, setDrive] = useState<DriveDraft | null>(null);
   const [item, setItem] = useState<MerchDraft | null>(null);
   const [reload, setReload] = useState(0);
   const saved = () => {
+    setNote(null);
     setStory(null);
     setDrive(null);
     setItem(null);
     setReload((n) => n + 1);
   };
-  const loaders = useMemo(() => ({ stories: () => guestService.allStories(), drives: () => guestService.allDrives(), merch: () => guestService.allMerch() }), []);
+  const loaders = useMemo(() => ({ news: () => guestService.allAnnouncements(), stories: () => guestService.allStories(), drives: () => guestService.allDrives(), merch: () => guestService.allMerch() }), []);
 
   if (!can('guest.manage'))
     return (
@@ -682,6 +762,35 @@ export function GuestAdminPage() {
       </div>
 
       {tab === 'inbox' && <InboxTab />}
+      {tab === 'news' && (
+        <>
+          <p className="text-sm text-ink-soft">Your announcements sit above the typhoon, flood and earthquake alerts, which keep coming in from GDACS and USGS on their own.</p>
+          <ListTab<GuestAnnouncement>
+            load={loaders.news}
+            reloadKey={reload}
+            newLabel="New announcement"
+            onNew={() => setNote(blankAnnouncement())}
+            onEdit={(a) => setNote({ id: a.id, title: a.title, body: a.body, level: a.level, area: a.area ?? '', linkUrl: a.linkUrl ?? '', isPublished: a.isPublished, expiresAt: a.expiresAt })}
+            empty={{ icon: Megaphone, title: 'No announcements yet', body: 'Post where relief is being handed out, an evacuation site that opened, or an advisory for an area.' }}
+            row={(a) => {
+              const live = isLive(a);
+              return (
+                <>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-semibold text-ink">{a.title}</span>
+                    <span className="block truncate text-xs text-muted">
+                      <span className={a.level === 'urgent' ? 'font-semibold text-status-out' : a.level === 'advisory' ? 'font-semibold text-status-low' : ''}>{announcementLevelLabel(a.level)}</span>
+                      {a.area ? `, ${a.area}` : ''}
+                      {a.isPublished && a.expiresAt ? `, ${live ? 'until' : 'ended'} ${formatShortDate(phDate(a.expiresAt))}` : ''}
+                    </span>
+                  </span>
+                  <State on={live}>{live ? 'Live' : a.isPublished ? 'Ended' : 'Draft'}</State>
+                </>
+              );
+            }}
+          />
+        </>
+      )}
       {tab === 'stories' && (
         <ListTab<GuestStory>
           load={loaders.stories}
@@ -751,6 +860,7 @@ export function GuestAdminPage() {
         />
       )}
 
+      <AnnouncementEditor draft={note} onClose={() => setNote(null)} onSaved={saved} />
       <StoryEditor draft={story} onClose={() => setStory(null)} onSaved={saved} />
       <DriveEditor draft={drive} onClose={() => setDrive(null)} onSaved={saved} />
       <MerchEditor draft={item} onClose={() => setItem(null)} onSaved={saved} />

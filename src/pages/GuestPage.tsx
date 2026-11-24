@@ -333,6 +333,7 @@ export function GuestPage() {
   const overview = useAsyncData(useCallback(() => guestService.overview(), []));
   const feed = useAsyncData(useCallback(() => guestService.hazards(), []));
   const stories = useAsyncData(useCallback(() => guestService.stories(), []));
+  const notes = useAsyncData(useCallback(() => guestService.announcements(), []));
   const drives = useAsyncData(useCallback(() => guestService.drives(), []));
   const merch = useAsyncData(useCallback(() => guestService.merch(), []));
 
@@ -340,7 +341,8 @@ export function GuestPage() {
   const [pick, setPick] = useState<GuestPick>(null);
   const [focus, setFocus] = useState<{ lat: number; lng: number; key: number } | null>(null);
   const hazards = feed.data?.hazards ?? [];
-  const live = hazards.filter((h) => h.current).length;
+  // The News tab's count: alerts happening now, and PHILRADS's urgent announcements.
+  const live = hazards.filter((h) => h.current).length + (notes.data ?? []).filter((a) => a.level === 'urgent').length;
   // The map keeps to what matters now: ongoing hazards and those from the last 30 days.
   const recent = useMemo(() => hazards.filter((h) => h.current || Date.now() - Date.parse(h.to ?? h.from) < 30 * 86_400_000), [hazards]);
   const programsShown = useMemo(() => PROGRAMS.filter((p) => overview.data?.sites.some((s) => s.program === p.key)), [overview.data]);
@@ -428,7 +430,7 @@ export function GuestPage() {
               <path d="M12 2.8 22.4 20.6H1.6Z" fill="#f59e0b" stroke="#fff" strokeWidth="2" strokeLinejoin="round" />
             </svg>{' '}
             Hazards
-            {live > 0 && <span className="tabular-nums">({live} now)</span>}
+            {hazards.some((h) => h.current) && <span className="tabular-nums">({hazards.filter((h) => h.current).length} now)</span>}
           </button>
         </div>
         <div className="relative isolate mt-3 h-[22rem] overflow-hidden rounded-2xl border border-line bg-surface-sunken sm:h-[27rem]">
@@ -463,7 +465,7 @@ export function GuestPage() {
         <p className="mt-2 text-xs text-muted">Staff locations are never shown here.</p>
       </GuestSection>
     );
-  else if (screen === 'news') body = <NewsSection feed={feed} onRetry={feed.reload} onShow={showHazard} />;
+  else if (screen === 'news') body = <NewsSection feed={feed} notes={notes.data ?? []} onRetry={feed.reload} onShow={showHazard} />;
   else if (screen === 'stories') body = <StoriesSection stories={stories} onRetry={stories.reload} />;
   else if (screen === 'give') body = <DrivesSection drives={drives} onRetry={drives.reload} />;
   else if (screen === 'merch') body = <MerchSection merch={merch} onRetry={merch.reload} />;
@@ -535,7 +537,7 @@ export function GuestPage() {
                   )}
                 </span>
                 {t.label}
-                {t.id === 'news' && live > 0 && <span className="sr-only">, {live} happening now</span>}
+                {t.id === 'news' && live > 0 && <span className="sr-only">, {live} to see now</span>}
               </Link>
             );
           })}
