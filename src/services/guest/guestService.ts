@@ -463,7 +463,7 @@ export function createMockGuestService(overview: () => Promise<GuestOverview>): 
             id: 'fb1',
             url: FACEBOOK_PAGE,
             text: 'Relief packs went out today to 240 families in Virac, Catanduanes. Thank you to every volunteer who packed through the night, and to everyone who gave. (sample)',
-            image: '/media/welcome-dance-still.webp',
+            image: null,
             postedAt: new Date(Date.now() - 5 * 3_600_000).toISOString(),
           },
           {
