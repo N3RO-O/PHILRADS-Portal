@@ -9,6 +9,7 @@ import { Sheet } from '../ui/Sheet';
 import { Switch } from '../ui/Switch';
 import { Reorderable } from '../ui/Reorderable';
 import { PersonAvatar } from '../ui/PersonAvatar';
+import { TaskComments } from './TaskComments';
 
 interface Props {
   open: boolean;
@@ -494,6 +495,8 @@ export function TaskSheet({ open, task, initial, today, me, canAssign, canGive =
         <Field id={`${uid}-notes`} label="Notes" hint="Optional">
           <textarea id={`${uid}-notes`} className="field min-h-24" rows={3} disabled={locked} value={d.notes} onChange={(e) => set('notes', e.target.value)} maxLength={4000} />
         </Field>
+
+        {task && <TaskComments task={task} me={me} />}
 
         <p className="flex items-start gap-2 rounded-xl border border-line bg-surface-sunken px-4 py-3 text-xs text-ink-soft">
           <Sparkles className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />

@@ -188,15 +188,21 @@ export function ProjectChat({ open, onClose, projectId, projectName, canPost, st
     });
   };
 
-  // The text box grows with what's typed, up to about five lines.
+  // The text box grows with what's typed, up to about five lines. One line stays at its own height
+  // (h-10), so the words sit centred beside the emoji and GIF buttons. While the chat is closed the
+  // box has no size to measure, so it's measured again when the chat opens.
   useEffect(() => {
     const el = input.current;
     if (!el) return;
+    el.style.height = '';
+    el.style.overflowY = 'hidden';
+    if (!open || (!draft.includes('\n') && el.scrollHeight <= el.clientHeight)) return;
     el.style.height = 'auto';
-    const full = el.scrollHeight + 1;
-    el.style.height = `${Math.min(full, 132)}px`;
+    const full = el.scrollHeight;
+    if (full === 0) return void (el.style.height = '');
+    el.style.height = `${Math.min(Math.max(full, 40), 132)}px`;
     el.style.overflowY = full > 132 ? 'auto' : 'hidden';
-  }, [draft]);
+  }, [draft, open]);
 
   // The Reply / Delete row of a tapped message comes into view.
   useEffect(() => {

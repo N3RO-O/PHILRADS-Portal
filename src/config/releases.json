@@ -3,8 +3,23 @@
     "id": "2026-11-24.1",
     "version": "1.10.12",
     "date": "2026-11-24",
-    "title": "Staff Tasks, easier to start with; smoother motion",
+    "title": "Staff Tasks: comments, templates and an easier start",
     "items": [
+      {
+        "icon": "messages",
+        "title": "Comments on tasks",
+        "body": "Open a task to ask a question or share an update. The person who gave it and the person doing it hear about each comment in the bell, and the link opens the task. You can delete your own comments."
+      },
+      {
+        "icon": "kanban",
+        "title": "Task templates",
+        "body": "For work you do again and again, like a relief distribution: open Templates (the stack button beside ?), pick one, choose the start date, who does it and the project, and every task is added at once with its own due date. Anyone can make a template; only its maker or a coordinator can change it."
+      },
+      {
+        "icon": "calendar",
+        "title": "Catch up on overdue tasks",
+        "body": "In Upcoming, overdue tasks sit in their own box with Move all to Today or Tomorrow. Only the first three show until you ask for more, so a long backlog doesn't bury the rest."
+      },
       {
         "icon": "sparkles",
         "title": "A short tour of Staff Tasks",
@@ -23,7 +38,7 @@
       {
         "icon": "sparkles",
         "title": "Smoother, quicker motion",
-        "body": "Folding the sidebar is now one smooth movement: the icons stay put, the words fade, and the highlight moves with them and stays centred on its icon. Panels, pop-ups and the phone menu now slide or fade away when they close instead of vanishing, and animations across the portal are a little quicker."
+        "body": "Folding the sidebar is now one smooth movement: the icons stay put, the words fade, and the highlight moves with them and stays centred on its icon. Panels, pop-ups and the phone menu now slide or fade away when they close instead of vanishing, and animations across the portal are a little quicker. In project chats, the message box stays centred beside the emoji and GIF buttons."
       }
     ]
   },

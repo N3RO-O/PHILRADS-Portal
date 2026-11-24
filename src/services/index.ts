@@ -24,6 +24,7 @@ import type { StaffService } from './staff/types';
 import { createSupabaseStaffBoard, mockStaffBoard, type StaffBoardService } from './tasks/staffBoard';
 import { createOfflineTasks, type OfflineTasksService } from './tasks/offlineTasks';
 import { createSupabaseTasksService, mockTasksService } from './tasks/tasksService';
+import { createSupabaseTaskExtras, mockTaskExtras, type TaskExtrasService } from './tasks/taskExtras';
 import { createSupabaseReflections, mockReflections, type ReflectionsService } from './verse/reflectionsService';
 
 export type { DashboardService } from './dashboard/types';
@@ -50,6 +51,9 @@ export const staffService: StaffService = live ? createSupabaseStaffService(live
 
 /** Tasks, XP, kudos and the team goal (Tasks module). Works offline: changes wait on the device and sync later. */
 export const tasksService: OfflineTasksService = createOfflineTasks(live ? createSupabaseTasksService(live) : mockTasksService);
+
+/** Comments on tasks and task templates (online only). */
+export const taskExtras: TaskExtrasService = live ? createSupabaseTaskExtras(live) : mockTaskExtras;
 
 /** Live Map: places (offline: the last copy on this device) and today's team check-ins. */
 export const mapService: MapService = withDeviceCopy(live ? createSupabaseMapService(live) : mockMapService, 'map', ['listPlaces']);

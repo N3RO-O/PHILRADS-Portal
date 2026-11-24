@@ -7,6 +7,7 @@ import { useOnboarding } from '../components/onboarding/OnboardingProvider';
 import { Certificate } from '../components/tasks/Certificate';
 import { LevelUpDialog, ProgressChip, ProgressPanel } from '../components/tasks/Progress';
 import { QuickAdd } from '../components/tasks/QuickAdd';
+import { TemplatesSheet } from '../components/tasks/TemplatesSheet';
 import { RewardsSheet, type RewardsTab } from '../components/tasks/RewardsSheet';
 import { TaskCalendar } from '../components/tasks/TaskCalendar';
 import { LIST_STYLE } from '../components/tasks/taskMeta';
@@ -126,6 +127,7 @@ export function TasksPage() {
   const [tasks, setTasks] = useState<Task[] | null>(null);
   // First visit on this device: a short "how it works" once the tasks are in; the ? button opens it again.
   const [tourOpen, setTourOpen] = useState(false);
+  const [templatesOpen, setTemplatesOpen] = useState(false);
   const tasksIn = tasks !== null;
   useEffect(() => {
     if (!tasksIn || !tasksTourDue()) return;
@@ -411,6 +413,27 @@ export function TasksPage() {
     return null;
   };
 
+  /** A template's tasks, added at once. Already-added ones are found again on a retry (same ids). */
+  const applyTemplate = async (drafts: TaskDraft[]) => {
+    const saved: Task[] = [];
+    let problem: string | null = null;
+    for (const d of drafts) {
+      try {
+        saved.push(await tasksService.save(d));
+      } catch (e) {
+        problem ??= errorText(e);
+      }
+    }
+    if (saved.length) {
+      setTasks((ts) => saved.reduce((list, t) => upsert(list, t), ts ?? []));
+      onboarding.complete('task');
+    }
+    if (problem) return `Added ${saved.length} of ${drafts.length}. ${problem} Press Add again for the rest (none is added twice).`;
+    const who = drafts[0]?.assigneeId ? people.find((p) => p.id === drafts[0].assigneeId)?.name.split(' ')[0] : null;
+    setToast({ text: `Added ${drafts.length} ${drafts.length === 1 ? 'task' : 'tasks'}${who ? ` for ${who}` : ''}.`, tone: 'ok' });
+    return null;
+  };
+
   const remove = async (t: Task) => {
     if (!window.confirm(`Remove “${t.title}”? It won’t show in your lists any more.`)) return;
     // The sheet closes first, so the row can be seen sliding away.
@@ -693,6 +716,28 @@ export function TasksPage() {
     for (const t of ok) if (failed.has(t.id)) skipped.push({ t, r: 'failed' });
     finishBulk(`Removed ${plural(ok.length - failed.size)}.${skippedNote(skipped, 'remove')}`, skipped.length > 0);
   };
+  // Overdue tasks, moved in one go. Only the person who gave a task (or a stand-in once they've
+  // left) can change its date, as the database checks; the rest are named in the note.
+  const mayRedate = (t: Task) => t.status !== 'done' && (t.createdById === me || (canManage && giverGone(t)));
+  const moveOverdue = async (list: Task[], days: 0 | 1) => {
+    const dueDate = days === 0 ? today : new Date(Date.parse(`${today}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
+    const ok = list.filter(mayRedate);
+    const skipped: { t: Task; r: Skip }[] = list.filter((t) => !mayRedate(t)).map((t) => ({ t, r: 'not yours' as Skip }));
+    if (ok.length === 0) return setToast({ text: `Nothing you can move.${skippedNote(skipped, 'today')}`, tone: 'warn' });
+    const ids = new Set(ok.map((t) => t.id));
+    setTasks((ts) => ts && ts.map((x) => (ids.has(x.id) ? { ...x, dueDate } : x)));
+    for (const t of ok) {
+      try {
+        const saved = await tasksService.patch(t.id, { dueDate });
+        setTasks((ts) => ts && upsert(ts, saved));
+      } catch {
+        skipped.push({ t, r: 'failed' });
+        setTasks((ts) => ts && ts.map((x) => (x.id === t.id ? t : x)));
+      }
+    }
+    const n = ok.length - skipped.filter((s) => s.r === 'failed').length;
+    setToast({ text: `Moved ${plural(n)} to ${days === 0 ? 'today' : 'tomorrow'}.${skippedNote(skipped, 'today')}`, tone: skipped.length ? 'warn' : 'ok' });
+  };
   const doneCount = allowed('done').length;
   const todayCount = allowed('today').length;
   const removeCount = allowed('remove').length;
@@ -802,6 +847,9 @@ export function TasksPage() {
               <p className="mt-0.5 text-sm text-muted">{note}</p>
             </div>
             <div className="flex shrink-0 items-start gap-2">
+              <button type="button" className="icon-btn h-9 w-9" onClick={() => setTemplatesOpen(true)} aria-label="Task templates" title="Task templates: add a set of tasks at once">
+                <Layers className="h-[1.125rem] w-[1.125rem]" aria-hidden />
+              </button>
               <button type="button" className="icon-btn h-9 w-9" onClick={() => setTourOpen(true)} aria-label="How Staff Tasks works" title="How Staff Tasks works">
                 <CircleHelp className="h-[1.125rem] w-[1.125rem]" aria-hidden />
               </button>
@@ -951,6 +999,8 @@ export function TasksPage() {
                 linger={linger}
                 rowProps={rowProps}
                 showList={view !== 'list'}
+                canMove={mayRedate}
+                onMove={(ts, d) => void moveOverdue(ts, d)}
                 empty={view === 'assigned' ? 'No tasks from others right now. You can still plan your own.' : view === 'delegated' ? 'You haven’t given anyone a task.' : 'No open tasks here.'}
                 emptyAction={
                   view === 'delegated' ? (
@@ -977,6 +1027,7 @@ export function TasksPage() {
       </aside>
 
       <TasksTour open={tourOpen} onClose={() => setTourOpen(false)} />
+      <TemplatesSheet open={templatesOpen} onClose={() => setTemplatesOpen(false)} today={today} me={me} canGive={canGive} canManage={canManage} people={people} onApply={applyTemplate} />
       {!selecting && (
         <Fab onClick={() => setSheet({ task: null, initial: null })} icon={<Plus className="h-6 w-6" aria-hidden />}>
           New task
@@ -1133,7 +1184,31 @@ function WhereToggle({ where, onChange, compact }: { where: Where; onChange: (w:
   );
 }
 
-function Buckets({ tasks, today, linger, rowProps, showList, empty, emptyAction }: { tasks: Task[]; today: string; linger: Record<string, number>; rowProps: RowProps; showList: boolean; empty: string; emptyAction?: ReactNode }) {
+/** Overdue rows shown before "Show all": a long backlog doesn't push everything else off the screen. */
+const OVERDUE_SHOWN = 3;
+
+function Buckets({
+  tasks,
+  today,
+  linger,
+  rowProps,
+  showList,
+  empty,
+  emptyAction,
+  canMove,
+  onMove,
+}: {
+  tasks: Task[];
+  today: string;
+  linger: Record<string, number>;
+  rowProps: RowProps;
+  showList: boolean;
+  empty: string;
+  emptyAction?: ReactNode;
+  canMove?: (t: Task) => boolean;
+  onMove?: (tasks: Task[], days: 0 | 1) => void;
+}) {
+  const [allOverdue, setAllOverdue] = useState(false);
   if (tasks.length === 0)
     return (
       <Empty icon={<Inbox className="h-8 w-8 text-muted" aria-hidden />} action={emptyAction}>
@@ -1147,18 +1222,42 @@ function Buckets({ tasks, today, linger, rowProps, showList, empty, emptyAction 
   }
   return (
     <div className="flex flex-col gap-4">
-      {BUCKETS.filter((b) => groups.has(b)).map((b) => (
-        <section key={b} aria-label={BUCKET_LABEL[b]}>
-          <h3 className={`mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider ${b === 'overdue' ? 'text-rose' : b === 'today' ? 'text-uplift' : 'text-muted'}`}>
-            {BUCKET_LABEL[b]} <span className="font-normal">{groups.get(b)!.length}</span>
-          </h3>
-          <ul className="-mx-2 flex flex-col">
-            {groups.get(b)!.map((t) => (
-              <TaskRow key={t.id} task={t} flash={linger[t.id] || null} showList={showList} {...rowProps} />
-            ))}
-          </ul>
-        </section>
-      ))}
+      {BUCKETS.filter((b) => groups.has(b)).map((b) => {
+        const list = groups.get(b)!;
+        const overdue = b === 'overdue';
+        const movable = overdue && onMove && canMove ? list.filter(canMove) : [];
+        const folded = overdue && !allOverdue && list.length > OVERDUE_SHOWN + 1;
+        return (
+          <section key={b} aria-label={BUCKET_LABEL[b]} className={overdue ? 'rounded-2xl border border-rose/25 bg-rose/[0.04] px-3 pb-2 pt-2.5' : ''}>
+            <div className="mb-1 flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+              <h3 className={`flex items-center gap-2 text-xs font-semibold uppercase tracking-wider ${overdue ? 'text-rose' : b === 'today' ? 'text-uplift' : 'text-muted'}`}>
+                {BUCKET_LABEL[b]} <span className="font-normal">{list.length}</span>
+              </h3>
+              {movable.length > 0 && (
+                <span className="flex items-center gap-1.5">
+                  <span className="text-xs text-muted">Move {movable.length === list.length ? 'all' : movable.length} to</span>
+                  <button type="button" className="chip min-h-8 px-2.5 text-xs" onClick={() => onMove!(list, 0)}>
+                    Today
+                  </button>
+                  <button type="button" className="chip min-h-8 px-2.5 text-xs" onClick={() => onMove!(list, 1)}>
+                    Tomorrow
+                  </button>
+                </span>
+              )}
+            </div>
+            <ul className={overdue ? '-mx-3 flex flex-col' : '-mx-2 flex flex-col'}>
+              {(folded ? list.slice(0, OVERDUE_SHOWN) : list).map((t) => (
+                <TaskRow key={t.id} task={t} flash={linger[t.id] || null} showList={showList} {...rowProps} />
+              ))}
+            </ul>
+            {overdue && list.length > OVERDUE_SHOWN + 1 && (
+              <button type="button" className="link mt-1 text-xs" onClick={() => setAllOverdue((v) => !v)} aria-expanded={!folded}>
+                {folded ? `Show ${list.length - OVERDUE_SHOWN} more overdue` : 'Show fewer'}
+              </button>
+            )}
+          </section>
+        );
+      })}
     </div>
   );
 }
