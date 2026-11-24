@@ -97,7 +97,7 @@ export function DrivesSection({ drives, onRetry }: { drives: AsyncState<Donation
       ) : (
         <>
           {open.length ? (
-            <div className="grid gap-4">
+            <div className="grid gap-4 xl:grid-cols-2">
               {open.map((d) => (
                 <OpenDrive key={d.id} d={d} />
               ))}

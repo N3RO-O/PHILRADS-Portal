@@ -160,7 +160,7 @@ export function MerchSection({ merch, onRetry }: { merch: AsyncState<MerchItem[]
       ) : !list.length ? (
         <p className="rounded-xl bg-surface-sunken px-4 py-3 text-sm text-ink-soft">New merch is on its way. Check back soon.</p>
       ) : (
-        <ul className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3">
+        <ul className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 lg:grid-cols-4 lg:gap-x-5 2xl:grid-cols-5">
           {list.map((m) => (
             <li key={m.id} className="flex flex-col">
               <Picture src={m.imageUrl} alt={m.name} icon={Shirt} className="aspect-square w-full rounded-2xl" />

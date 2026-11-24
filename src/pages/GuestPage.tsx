@@ -19,16 +19,16 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react';
-import { SignInBackground } from '../components/auth/SignInBackground';
 import { PrismHero } from '../components/auth/PrismHero';
 import { DrivesSection } from '../components/guest/DrivesSection';
 import { FeedbackSection, isFeedbackKind } from '../components/guest/FeedbackSection';
 import type { GuestPick } from '../components/guest/GuestMap';
-import { GuestSection, SectionError } from '../components/guest/guestUi';
+import { SectionError } from '../components/guest/guestUi';
 import { MerchSection } from '../components/guest/MerchSection';
 import { NewsSection } from '../components/guest/NewsSection';
 import { StoriesSection } from '../components/guest/StoriesSection';
-import { PrismMark } from '../components/ui/PrismMark';
+import { CountBadge } from '../components/ui/CountBadge';
+import { PrismMark, PrismWord } from '../components/ui/PrismMark';
 import { SampleBadge } from '../components/ui/SampleBadge';
 import { SlidingPill } from '../components/ui/SlidingPill';
 import { useBackdropClose } from '../components/ui/Sheet';
@@ -71,6 +71,26 @@ const SCREENS: Record<Screen, { title: string; tab: Tab; section: string }> = {
   merch: { title: 'Merch', tab: 'more', section: 'merch' },
   feedback: { title: 'Feedback', tab: 'more', section: 'feedback' },
 };
+/** Wide screens: the portal's own sidebar, in two groups (phones use the tabs, with Merch and Feedback under More). */
+const SIDE: { group: string; items: { id: Screen; label: string; icon: LucideIcon }[] }[] = [
+  {
+    group: 'Explore',
+    items: [
+      { id: 'map', label: 'Live Map', icon: MapIcon },
+      { id: 'news', label: 'Disaster News', icon: Siren },
+      { id: 'stories', label: 'PHILReads', icon: BookOpen },
+    ],
+  },
+  {
+    group: 'Ways to help',
+    items: [
+      { id: 'give', label: 'Donation Drives', icon: HandCoins },
+      { id: 'merch', label: 'Merch', icon: Shirt },
+      { id: 'feedback', label: 'Feedback', icon: MessageSquareHeart },
+    ],
+  },
+];
+
 const isScreen = (s: string): s is Screen => Object.prototype.hasOwnProperty.call(SCREENS, s);
 const pathOf = (s: Screen) => (s === 'map' ? '/guest' : `/guest/${s}`);
 
@@ -176,20 +196,6 @@ function Picked({ pick, overview, hazards, onClose }: { pick: GuestPick; overvie
   );
 }
 
-/** True once the screen's own big title has scrolled up under the app bar: then the bar shows it instead. */
-function useTitleTucked(id: string) {
-  const [tucked, setTucked] = useState(false);
-  useEffect(() => {
-    setTucked(false);
-    const el = document.getElementById(id);
-    if (!el) return;
-    const io = new IntersectionObserver(([e]) => setTucked(!e.isIntersecting && e.boundingClientRect.top < 100), { rootMargin: '-76px 0px 0px 0px' });
-    io.observe(el);
-    return () => io.disconnect();
-  }, [id]);
-  return tucked;
-}
-
 const WELCOMED = 'philrads.guest.welcomed.v1';
 const welcomedBefore = () => {
   try {
@@ -266,12 +272,12 @@ function MoreRow({ to, href, icon: Icon, title, note }: { to?: string; href?: st
       </span>
       <span className="min-w-0 flex-1">
         <span className="block font-semibold text-ink">{title}</span>
-        <span className="block text-sm text-ink-soft">{note}</span>
+        <span className="block text-xs text-muted">{note}</span>
       </span>
       {href ? <ExternalLink className="h-4 w-4 shrink-0 text-muted" aria-hidden /> : <ChevronRight className="h-5 w-5 shrink-0 text-muted" aria-hidden />}
     </>
   );
-  const cls = 'tap flex items-center gap-3.5 px-5 py-4 transition-colors hover:bg-surface-sunken sm:px-8';
+  const cls = 'tap flex items-center gap-3.5 px-4 py-3 transition-colors hover:bg-surface-raised';
   return (
     <li>
       {href ? (
@@ -287,32 +293,125 @@ function MoreRow({ to, href, icon: Icon, title, note }: { to?: string; href?: st
   );
 }
 
-/** Merch, Feedback and the ways out: the More tab. */
+/** Merch, Feedback and the ways out: the More tab (phones; wide screens have them in the sidebar). */
 function MoreScreen() {
   return (
-    <section aria-labelledby="more-title" className="py-7">
-      <h2 id="more-title" className="px-5 font-display text-[1.375rem] leading-tight tracking-[-0.01em] text-ink sm:px-8">
-        More
-      </h2>
-      <ul className="mt-4 divide-y divide-line/70 border-y border-line/70">
+    <div className="flex max-w-xl flex-col gap-6">
+      <ul className="divide-y divide-line/70 overflow-hidden rounded-2xl border border-line bg-surface">
         <MoreRow to="/guest/merch" icon={Shirt} title="Merch" note="PHILRADS shirts and other items you can order" />
         <MoreRow to="/guest/feedback" icon={MessageSquareHeart} title="Feedback" note="Say thanks, tell us a need, or offer to volunteer" />
       </ul>
-      <ul className="mt-6 divide-y divide-line/70 border-y border-line/70">
+      <ul className="divide-y divide-line/70 overflow-hidden rounded-2xl border border-line bg-surface">
         <MoreRow href="https://philrads.org/" icon={ExternalLink} title="philrads.org" note="Philippine Relief and Development Services, Inc." />
         <MoreRow to="/" icon={LogIn} title="Staff sign-in" note="For PHILRADS staff with an account" />
       </ul>
-      <p className="mt-6 flex items-center gap-2 px-5 text-sm text-ink-soft sm:px-8">
-        <Phone className="h-4 w-4 text-status-out" aria-hidden />
-        <span>
-          In an emergency, call{' '}
-          <a href="tel:911" className="font-semibold text-ink underline underline-offset-2">
-            911
-          </a>
-          .
+      <Emergency />
+    </div>
+  );
+}
+
+function Emergency() {
+  return (
+    <p className="flex items-center gap-2 text-sm text-ink-soft">
+      <Phone className="h-4 w-4 text-status-out" aria-hidden />
+      <span>
+        In an emergency, call{' '}
+        <a href="tel:911" className="font-semibold text-ink underline underline-offset-2">
+          911
+        </a>
+        .
+      </span>
+    </p>
+  );
+}
+
+/**
+ * Wide screens: the same sidebar as the staff portal (fixed, burgundy highlight that glides between
+ * pages), with the guest pages in two groups and the emergency number at the foot.
+ */
+function GuestSidebar({ screen, live, onWelcome }: { screen: Screen; live: boolean; onWelcome: () => void }) {
+  return (
+    <aside
+      aria-label="Guest navigation"
+      className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col overflow-hidden border-r border-line/70 bg-page bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0)_40%)] lg:flex"
+    >
+      <button type="button" onClick={onWelcome} className="flex h-16 shrink-0 items-center gap-3 pl-[1.125rem] text-left" aria-label="Show the welcome">
+        <PrismMark className="h-9 w-9 shrink-0 text-ink" />
+        <span className="flex min-w-0 flex-col leading-tight" aria-hidden>
+          <PrismWord className="font-display text-base tracking-[0.06em] text-ink" />
+          <span className="text-[0.5625rem] font-semibold uppercase tracking-[0.2em] text-muted">Guest</span>
         </span>
-      </p>
-    </section>
+      </button>
+      <nav aria-label="Guest pages" className="relative flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-contain px-3 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <SlidingPill className="gloss rounded-xl bg-burgundy-500 ring-1 ring-inset ring-burgundy-400" />
+        {SIDE.map((g, gi) => (
+          <div key={g.group} role="group" aria-label={g.group} className="flex flex-col gap-1">
+            {gi > 0 && <hr className="mx-2 my-2 border-line/70" aria-hidden />}
+            {g.items.map((item) => {
+              const on = screen === item.id;
+              return (
+                <Link
+                  key={item.id}
+                  to={pathOf(item.id)}
+                  aria-current={on ? 'page' : undefined}
+                  className={`relative z-10 flex h-10 shrink-0 items-center gap-3 rounded-xl px-3 text-sm transition-colors ${
+                    on ? 'font-semibold text-cloud' : 'font-medium text-ink-soft hover:bg-ink/[0.04] hover:text-ink'
+                  }`}
+                >
+                  <span className="relative shrink-0">
+                    <item.icon className="h-5 w-5" aria-hidden />
+                    {item.id === 'news' && live && <CountBadge tone="new" />}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                  {item.id === 'news' && live && <span className="sr-only">(new alerts)</span>}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
+      </nav>
+      <div className="flex shrink-0 flex-col gap-1 border-t border-line/70 px-3 py-3">
+        <a href="tel:911" className="flex h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium text-ink-soft transition-colors hover:bg-ink/[0.04] hover:text-ink">
+          <Phone className="h-5 w-5 shrink-0 text-status-out" aria-hidden /> Emergency: call 911
+        </a>
+        <a href="https://philrads.org/" target="_blank" rel="noopener noreferrer" className="flex h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium text-ink-soft transition-colors hover:bg-ink/[0.04] hover:text-ink">
+          <ExternalLink className="h-5 w-5 shrink-0" aria-hidden /> philrads.org
+        </a>
+      </div>
+    </aside>
+  );
+}
+
+/**
+ * Phones: the tab bar docked at the bottom, as phone apps have it. The selected tab's icon sits on
+ * the portal's burgundy, which opens out from the middle when you choose it.
+ */
+function GuestTabBar({ tab, live, onPress }: { tab: Tab; live: boolean; onPress: (t: Tab) => (e: MouseEvent) => void }) {
+  return (
+    <nav aria-label="Guest" className="fixed inset-x-0 bottom-0 z-30 border-t border-line/70 bg-page pb-[env(safe-area-inset-bottom)] lg:hidden">
+      <div className="mx-auto flex max-w-lg px-1">
+        {TABS.map((t) => {
+          const on = tab === t.id;
+          return (
+            <Link
+              key={t.id}
+              to={pathOf(t.id)}
+              onClick={onPress(t.id)}
+              aria-current={on ? 'page' : undefined}
+              className="tap flex min-h-16 flex-1 flex-col items-center justify-center gap-1 pb-1 pt-2"
+            >
+              <span className="relative grid h-8 w-14 place-items-center">
+                <span className="gnav-ind gloss absolute inset-0 rounded-full" data-on={on} aria-hidden />
+                <t.icon className={`relative h-5 w-5 transition-colors duration-300 ${on ? 'text-cloud' : 'text-ink-soft'}`} strokeWidth={on ? 2.25 : 1.75} aria-hidden />
+                {t.id === 'news' && live && <CountBadge tone="new" className="!bottom-[60%] !left-[62%]" />}
+              </span>
+              <span className={`text-[0.6875rem] leading-none transition-colors duration-300 ${on ? 'font-semibold text-ink' : 'font-medium text-ink-soft'}`}>{t.label}</span>
+              {t.id === 'news' && live && <span className="sr-only">(new alerts)</span>}
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
   );
 }
 
@@ -341,13 +440,12 @@ export function GuestPage() {
   const [pick, setPick] = useState<GuestPick>(null);
   const [focus, setFocus] = useState<{ lat: number; lng: number; key: number } | null>(null);
   const hazards = feed.data?.hazards ?? [];
-  // The News tab's count: alerts happening now, and PHILRADS's urgent announcements.
-  const live = hazards.filter((h) => h.current).length + (notes.data ?? []).filter((a) => a.level === 'urgent').length;
+  // News has something now: an alert happening, or an urgent PHILRADS announcement (a dot, as portal news gets).
+  const live = hazards.some((h) => h.current) || (notes.data ?? []).some((a) => a.level === 'urgent');
   // The map keeps to what matters now: ongoing hazards and those from the last 30 days.
   const recent = useMemo(() => hazards.filter((h) => h.current || Date.now() - Date.parse(h.to ?? h.from) < 30 * 86_400_000), [hazards]);
   const programsShown = useMemo(() => PROGRAMS.filter((p) => overview.data?.sites.some((s) => s.program === p.key)), [overview.data]);
   const onPick = useCallback((p: GuestPick) => setPick(p), []);
-  const tucked = useTitleTucked(`${meta.section}-title`);
 
   // First visit only, and not over a shared link to a drive or story.
   const [welcome, setWelcome] = useState(() => !welcomedBefore() && screen === 'map' && !location.hash && !search.get('story'));
@@ -368,6 +466,9 @@ export function GuestPage() {
     window.addEventListener('scroll', save, { passive: true });
     return () => window.removeEventListener('scroll', save);
   }, []);
+  useEffect(() => {
+    document.title = `${meta.title} · PRISM Guest`;
+  }, [meta.title]);
   useLayoutEffect(() => {
     shown.current = screen;
     if (!location.hash) window.scrollTo({ top: scrolls.current.get(screen) ?? 0, behavior: 'instant' });
@@ -407,63 +508,59 @@ export function GuestPage() {
   const sample = guestService.source === 'mock';
   const sub = screen === 'merch' || screen === 'feedback';
   const about = search.get('about');
-  const showTitle = tucked || sub;
+
+  const hazardsShown = layers.hazards ? (pick?.type === 'hazard' && !recent.some((h) => h.id === pick.id) ? [...recent, ...hazards.filter((h) => h.id === pick.id)] : recent) : [];
 
   let body: ReactNode;
   if (screen === 'map')
     body = (
-      <GuestSection
-        id="map"
-        title="Live Map"
-        lead={overview.data ? <Reach totals={overview.data.totals} /> : 'Where PHILRADS has worked, its offices and response sites, and hazards affecting the Philippines now.'}
-        aside={sample ? <SampleBadge /> : undefined}
-      >
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Show on the map">
-          <button type="button" className="chip gap-1.5" aria-pressed={layers.work} onClick={() => setLayers((l) => ({ ...l, work: !l.work }))}>
-            <span className="h-2 w-2 rounded-full bg-[#E07A7A]" aria-hidden /> Our work
-          </button>
-          <button type="button" className="chip gap-1.5" aria-pressed={layers.places} onClick={() => setLayers((l) => ({ ...l, places: !l.places }))}>
-            <MapPin className="h-3.5 w-3.5" aria-hidden /> Offices and sites
-          </button>
-          <button type="button" className="chip gap-1.5" aria-pressed={layers.hazards} onClick={() => setLayers((l) => ({ ...l, hazards: !l.hazards }))}>
-            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" aria-hidden>
-              <path d="M12 2.8 22.4 20.6H1.6Z" fill="#f59e0b" stroke="#fff" strokeWidth="2" strokeLinejoin="round" />
-            </svg>{' '}
-            Hazards
-            {hazards.some((h) => h.current) && <span className="tabular-nums">({hazards.filter((h) => h.current).length} now)</span>}
-          </button>
+      <section aria-labelledby="guest-title" className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-x-8">
+        {/* Phones: what it shows, the map, then what you pressed. Wide: the map on the left, the rest beside it. */}
+        <div className="flex flex-col gap-4 lg:col-start-2 lg:row-start-1">
+          {overview.data ? <Reach totals={overview.data.totals} /> : <p className="text-sm text-ink-soft">Where PHILRADS has worked, its offices and response sites, and hazards affecting the Philippines now.</p>}
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Show on the map">
+            <button type="button" className="chip gap-1.5" aria-pressed={layers.work} onClick={() => setLayers((l) => ({ ...l, work: !l.work }))}>
+              <span className="h-2 w-2 rounded-full bg-[#E07A7A]" aria-hidden /> Our work
+            </button>
+            <button type="button" className="chip gap-1.5" aria-pressed={layers.places} onClick={() => setLayers((l) => ({ ...l, places: !l.places }))}>
+              <MapPin className="h-3.5 w-3.5" aria-hidden /> Offices and sites
+            </button>
+            <button type="button" className="chip gap-1.5" aria-pressed={layers.hazards} onClick={() => setLayers((l) => ({ ...l, hazards: !l.hazards }))}>
+              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" aria-hidden>
+                <path d="M12 2.8 22.4 20.6H1.6Z" fill="#f59e0b" stroke="#fff" strokeWidth="2" strokeLinejoin="round" />
+              </svg>{' '}
+              Hazards
+              {hazards.some((h) => h.current) && <span className="tabular-nums">({hazards.filter((h) => h.current).length} now)</span>}
+            </button>
+          </div>
         </div>
-        <div className="relative isolate mt-3 h-[22rem] overflow-hidden rounded-2xl border border-line bg-surface-sunken sm:h-[27rem]">
+        <div className="relative isolate h-[24rem] overflow-hidden rounded-2xl border border-line bg-surface-sunken sm:h-[30rem] lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:h-[calc(100dvh-12.5rem)] lg:min-h-[32rem]">
           {overview.status === 'error' ? (
             <div className="grid h-full place-items-center p-6">
               <SectionError message={overview.error.message} onRetry={overview.reload} />
             </div>
           ) : (
             <Suspense fallback={<div className="skeleton h-full w-full rounded-none" />}>
-              <GuestMap
-                sites={layers.work ? overview.data?.sites ?? [] : []}
-                places={layers.places ? overview.data?.places ?? [] : []}
-                hazards={layers.hazards ? (pick?.type === 'hazard' && !recent.some((h) => h.id === pick.id) ? [...recent, ...hazards.filter((h) => h.id === pick.id)] : recent) : []}
-                pick={pick}
-                onPick={onPick}
-                focus={focus}
-              />
+              <GuestMap sites={layers.work ? overview.data?.sites ?? [] : []} places={layers.places ? overview.data?.places ?? [] : []} hazards={hazardsShown} pick={pick} onPick={onPick} focus={focus} />
             </Suspense>
           )}
         </div>
-        <Picked pick={pick} overview={overview.data} hazards={hazards} onClose={() => setPick(null)} />
-        {layers.work && programsShown.length > 0 && (
-          <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted" aria-label="Dot colours">
-            {programsShown.map((p) => (
-              <li key={p.key} className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full" style={{ background: p.color }} aria-hidden />
-                {p.label}
-              </li>
-            ))}
-          </ul>
-        )}
-        <p className="mt-2 text-xs text-muted">Staff locations are never shown here.</p>
-      </GuestSection>
+        <div className="flex flex-col gap-3 lg:col-start-2 lg:row-start-2">
+          <Picked pick={pick} overview={overview.data} hazards={hazards} onClose={() => setPick(null)} />
+          {!pick && <p className="hidden text-sm text-muted lg:block">Press a dot, a place or a hazard on the map to see what it is.</p>}
+          {layers.work && programsShown.length > 0 && (
+            <ul className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted lg:flex-col" aria-label="Dot colours">
+              {programsShown.map((p) => (
+                <li key={p.key} className="flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: p.color }} aria-hidden />
+                  {p.label}
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="text-xs text-muted">Staff locations are never shown here.</p>
+        </div>
+      </section>
     );
   else if (screen === 'news') body = <NewsSection feed={feed} notes={notes.data ?? []} onRetry={feed.reload} onShow={showHazard} />;
   else if (screen === 'stories') body = <StoriesSection stories={stories} onRetry={stories.reload} />;
@@ -472,77 +569,66 @@ export function GuestPage() {
   else if (screen === 'feedback') body = <FeedbackSection key={about ?? ''} initialKind={isFeedbackKind(about) ? about : undefined} />;
   else body = <MoreScreen />;
 
+  // Reading pages keep a comfortable line length; drives and merch use the width.
+  const measure = screen === 'news' || screen === 'stories' || screen === 'feedback' ? 'max-w-3xl' : '';
+
   return (
-    <main className="relative isolate min-h-dvh px-3 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:px-4">
-      <SignInBackground />
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-3">
-        {/* The app bar: where you are, a way back, and the way to sign in. The screen's name slides
-            in here once its big title has scrolled away. */}
-        <header className="sticky top-0 z-30 -mx-3 px-3 pb-1 pt-[calc(0.5rem+env(safe-area-inset-top))] sm:-mx-4 sm:px-4">
-          <div className="floating flex h-14 items-center gap-1.5 rounded-2xl pl-1.5 pr-2 backdrop-blur">
-            {sub ? (
-              <Link to="/guest/more" className="icon-btn tap" aria-label="Back to More">
+    <div className="min-h-dvh">
+      <a href="#main" className="sr-only z-50 rounded-xl bg-uplift px-4 py-2 font-semibold text-onaccent focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
+        Skip to main content
+      </a>
+      <GuestSidebar screen={screen} live={live} onWelcome={() => setWelcome(true)} />
+      <div className="flex min-h-dvh flex-col lg:pl-64">
+        {/* The top bar, as in the portal: on phones the mark (or a way back), and Sign in on the right. */}
+        <header className="sticky top-0 z-30 border-b border-ink/[0.05] bg-page">
+          <div className="flex h-16 items-center gap-2 px-4 sm:gap-3 sm:px-6">
+            {sub && (
+              <Link to="/guest/more" className="icon-btn lg:hidden" aria-label="Back to More">
                 <ArrowLeft className="h-5 w-5" aria-hidden />
               </Link>
-            ) : (
-              <button type="button" onClick={() => setWelcome(true)} className="tap grid h-11 w-11 place-items-center rounded-xl hover:bg-surface-sunken" aria-label="Show the welcome">
-                <PrismMark className="h-8 w-8" />
-              </button>
             )}
-            <p className="relative h-6 min-w-0 flex-1 overflow-hidden font-display text-base leading-6 text-ink" aria-hidden>
-              <span className={`absolute inset-0 truncate transition-[opacity,transform] duration-300 ${showTitle ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}`}>
-                {meta.title}
-              </span>
-              <span className={`absolute inset-0 truncate tracking-[0.06em] transition-[opacity,transform] duration-300 ${showTitle ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'}`}>
-                <span className="prism-p">P</span>RISM <span className="font-sans text-xs font-semibold tracking-normal text-muted">Guest</span>
-              </span>
-            </p>
-            <Link to="/" className="chip tap shrink-0 gap-1.5">
-              <LogIn className="h-4 w-4" aria-hidden /> Sign in
-            </Link>
+            <button type="button" onClick={() => setWelcome(true)} className="flex items-center gap-2 lg:hidden" aria-label="Show the welcome">
+              <PrismMark className="h-8 w-8 text-ink" />
+              <PrismWord className="font-display text-sm tracking-[0.06em] text-ink" />
+              <span className="text-[0.6875rem] font-semibold text-muted">Guest</span>
+            </button>
+            <div className="ml-auto flex items-center gap-2">
+              <Link to="/guest/feedback?about=volunteer" className="chip hidden gap-1.5 sm:inline-flex">
+                <HandHeart className="h-4 w-4" aria-hidden /> Volunteer
+              </Link>
+              <Link to="/" className="chip gap-1.5">
+                <LogIn className="h-4 w-4" aria-hidden /> Sign in
+              </Link>
+            </div>
           </div>
         </header>
-
-        <h1 className="sr-only">PRISM guest page: {meta.title}</h1>
-        <div key={screen} className="floating animate-fade-in overflow-hidden rounded-2xl">
-          {body}
-        </div>
+        <main id="main" className="mx-auto w-full max-w-[100rem] flex-1 px-4 pb-10 sm:px-6" style={{ viewTransitionName: 'page' }}>
+          <div className="flex flex-wrap items-end justify-between gap-3 pb-6 pt-3">
+            <div className="min-w-0">
+              <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-muted">
+                PHILRADS <span aria-hidden className="mx-1 text-ink-mute/50">/</span> <span className="text-ink-soft">{sub ? 'More' : 'Guest'}</span>
+              </p>
+              <h1 id="guest-title" className="mt-1 text-2xl font-bold leading-tight tracking-tight text-ink sm:text-[1.75rem]">
+                {meta.title}
+              </h1>
+            </div>
+            {sample && <SampleBadge />}
+          </div>
+          {/* Keyed by screen so each one fades in, as portal pages do. */}
+          <div key={screen} className={`animate-fade-in ${measure}`}>
+            {body}
+          </div>
+        </main>
+        <footer className="app-footer flex flex-wrap items-center justify-between gap-2 border-t border-line/50 px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-4 text-xs text-muted sm:px-6 lg:pb-4">
+          <span>Philippine Relief and Development Services, Inc. · PRISM Guest</span>
+          <a href="https://philrads.org/" target="_blank" rel="noopener noreferrer" className="font-semibold text-uplift hover:underline">
+            philrads.org
+          </a>
+        </footer>
       </div>
 
+      <GuestTabBar tab={meta.tab} live={live} onPress={tabPress} />
       <WelcomeDialog open={welcome} onClose={closeWelcome} />
-
-      {/* The tab bar: always in reach, the current tab marked. */}
-      <nav aria-label="Guest" className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-30 sm:inset-x-4">
-        <div className="floating relative mx-auto flex max-w-md rounded-2xl p-1.5 backdrop-blur">
-          <SlidingPill className="rounded-xl bg-burgundy-500" />
-          {TABS.map((t) => {
-            const on = meta.tab === t.id;
-            const Icon = t.icon;
-            return (
-              <Link
-                key={t.id}
-                to={pathOf(t.id)}
-                onClick={tabPress(t.id)}
-                aria-current={on ? 'page' : undefined}
-                className={`tap relative z-10 flex min-h-[3.25rem] flex-1 flex-col items-center justify-center gap-0.5 rounded-xl text-[0.6875rem] font-semibold transition-colors ${
-                  on ? 'text-cloud' : 'text-ink-soft hover:text-ink'
-                }`}
-              >
-                <span className="relative">
-                  <Icon className="h-5 w-5" strokeWidth={on ? 2.25 : 1.75} aria-hidden />
-                  {t.id === 'news' && live > 0 && (
-                    <span className="absolute -right-2.5 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-status-out px-1 text-[0.625rem] font-bold leading-none text-white tabular-nums" aria-hidden>
-                      {live}
-                    </span>
-                  )}
-                </span>
-                {t.label}
-                {t.id === 'news' && live > 0 && <span className="sr-only">, {live} to see now</span>}
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
-    </main>
+    </div>
   );
 }

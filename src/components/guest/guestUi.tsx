@@ -1,19 +1,19 @@
 import { useState, type ReactNode } from 'react';
 import { Check, Copy, Share2, type LucideIcon } from 'lucide-react';
 
-/** The guest sections share one plain layout: a heavy title, one line on what it is, then the content. */
+/**
+ * A guest screen's content: the page header above it (in GuestPage) carries the title, so this is
+ * the one line on what it is, then the content. `title` names the section for screen readers.
+ */
 export function GuestSection({ id, title, lead, aside, children }: { id: string; title: string; lead?: ReactNode; aside?: ReactNode; children: ReactNode }) {
   return (
-    <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-20 border-t border-line/70 px-5 py-8 first:border-t-0 sm:px-8">
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
-        <div className="min-w-0 max-w-prose">
-          <h2 id={`${id}-title`} className="font-display text-[1.375rem] leading-tight tracking-[-0.01em] text-ink">
-            {title}
-          </h2>
-          {lead && <div className="mt-1.5 text-sm text-ink-soft">{lead}</div>}
+    <section id={id} aria-label={title}>
+      {(lead || aside) && (
+        <div className="mb-6 flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+          {lead && <div className="max-w-prose text-sm text-ink-soft">{lead}</div>}
+          {aside}
         </div>
-        {aside}
-      </div>
+      )}
       {children}
     </section>
   );

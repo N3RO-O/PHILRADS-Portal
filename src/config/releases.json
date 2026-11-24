@@ -12,8 +12,8 @@
       },
       {
         "icon": "smartphone",
-        "title": "Guest page tabs",
-        "body": "Guests now move around with tabs along the bottom, like a phone app: Map, News, Stories, Give and More (Merch and Feedback). Each tab keeps its place, the screen's name moves up into the top bar as you scroll, and News shows how many alerts are happening now."
+        "title": "The guest page, laid out like PRISM",
+        "body": "The guest page now has the same frame as the staff portal. On a computer, the pages are in a sidebar (Live Map, Disaster News and PHILReads; Donation Drives, Merch and Feedback), the map fills the screen with its details beside it, and pages glide and fade as they do for staff. On a phone, tabs are docked along the bottom like a phone app: Map, News, Stories, Give and More. Each tab keeps its place, and News shows a yellow dot when something is happening now."
       },
       {
         "icon": "sparkles",

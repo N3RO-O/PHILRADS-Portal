@@ -2025,11 +2025,24 @@ dialog[data-closing] {
   border: 2px solid #fff;
 }
 /* The section bar under the header: stays in reach while scrolling, scrolls sideways on phones. */
-.guest-nav {
-  scrollbar-width: none;
+/* Guest tab bar (phones): the selected tab's burgundy opens out from the middle (Material 3's
+   active indicator), on the portal's glide curve. */
+.gnav-ind {
+  opacity: 0;
+  transform: scaleX(0.4);
+  transition:
+    transform 400ms cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 160ms ease-out;
 }
-.guest-nav::-webkit-scrollbar {
-  display: none;
+.gnav-ind[data-on='true'] {
+  opacity: 1;
+  transform: scaleX(1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .gnav-ind {
+    transform: none;
+    transition: opacity 120ms linear;
+  }
 }
 /* PHILReads: stories read in the serif, at a comfortable measure. */
 .guest-prose p + p {
