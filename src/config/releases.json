@@ -13,7 +13,7 @@
       {
         "icon": "smartphone",
         "title": "The guest page, laid out like PRISM",
-        "body": "The guest page now has the same frame as the staff portal. On a computer, the pages are in a sidebar (Live Map, Disaster News and PHILReads; Donation Drives, Merch and Feedback), the map fills the screen with its details beside it, and pages glide and fade as they do for staff. On a phone, tabs are docked along the bottom like a phone app: Map, News, Stories, Give and More. Each tab keeps its place, and News shows a yellow dot when something is happening now."
+        "body": "The guest page now has the same frame as the staff portal. On a computer, the pages are in a sidebar (Live Map, Disaster News and PHILReads; Donation Drives, Merch and Feedback), the map fills the screen with its details beside it, and pages glide and fade as they do for staff. On a phone, tabs are docked along the bottom like a phone app: Map, Stories, Give in the middle, Merch, and More (Disaster News and Feedback). Each tab keeps its place, and More shows a yellow dot when something is happening now."
       },
       {
         "icon": "sparkles",

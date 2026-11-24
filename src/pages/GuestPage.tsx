@@ -51,27 +51,27 @@ const GuestMap = lazy(() => import('../components/guest/GuestMap'));
  * phone's back button, shared links and reloads all land where they should.
  */
 type Screen = 'map' | 'news' | 'stories' | 'give' | 'more' | 'merch' | 'feedback';
-type Tab = 'map' | 'news' | 'stories' | 'give' | 'more';
+type Tab = 'map' | 'stories' | 'give' | 'merch' | 'more';
 
 const TABS: { id: Tab; label: string; icon: LucideIcon }[] = [
   { id: 'map', label: 'Map', icon: MapIcon },
-  { id: 'news', label: 'News', icon: Siren },
   { id: 'stories', label: 'Stories', icon: BookOpen },
   { id: 'give', label: 'Give', icon: HandCoins },
+  { id: 'merch', label: 'Merch', icon: Shirt },
   { id: 'more', label: 'More', icon: LayoutGrid },
 ];
 
 /** Each screen's title, its tab, and the id of the section whose big title the app bar watches. */
 const SCREENS: Record<Screen, { title: string; tab: Tab; section: string }> = {
   map: { title: 'Live Map', tab: 'map', section: 'map' },
-  news: { title: 'Disaster News', tab: 'news', section: 'news' },
+  news: { title: 'Disaster News', tab: 'more', section: 'news' },
   stories: { title: 'PHILReads', tab: 'stories', section: 'stories' },
   give: { title: 'Donation Drives', tab: 'give', section: 'drives' },
   more: { title: 'More', tab: 'more', section: 'more' },
-  merch: { title: 'Merch', tab: 'more', section: 'merch' },
+  merch: { title: 'Merch', tab: 'merch', section: 'merch' },
   feedback: { title: 'Feedback', tab: 'more', section: 'feedback' },
 };
-/** Wide screens: the portal's own sidebar, in two groups (phones use the tabs, with Merch and Feedback under More). */
+/** Wide screens: the portal's own sidebar, in two groups (phones use the tabs, with Disaster News and Feedback under More). */
 const SIDE: { group: string; items: { id: Screen; label: string; icon: LucideIcon }[] }[] = [
   {
     group: 'Explore',
@@ -264,14 +264,18 @@ function WelcomeDialog({ open, onClose }: { open: boolean; onClose: () => void }
 }
 
 /** A row on the More screen. */
-function MoreRow({ to, href, icon: Icon, title, note }: { to?: string; href?: string; icon: LucideIcon; title: string; note: string }) {
+function MoreRow({ to, href, icon: Icon, title, note, dot }: { to?: string; href?: string; icon: LucideIcon; title: string; note: string; dot?: boolean }) {
   const body = (
     <>
-      <span className="icon-chip rounded-xl bg-surface-sunken">
+      <span className="icon-chip relative rounded-xl bg-surface-sunken">
         <Icon className="h-[1.125rem] w-[1.125rem]" aria-hidden />
+        {dot && <CountBadge tone="new" className="!bottom-[62%] !left-[68%]" />}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block font-semibold text-ink">{title}</span>
+        <span className="block font-semibold text-ink">
+          {title}
+          {dot && <span className="sr-only"> (something is happening now)</span>}
+        </span>
         <span className="block text-xs text-muted">{note}</span>
       </span>
       {href ? <ExternalLink className="h-4 w-4 shrink-0 text-muted" aria-hidden /> : <ChevronRight className="h-5 w-5 shrink-0 text-muted" aria-hidden />}
@@ -293,12 +297,12 @@ function MoreRow({ to, href, icon: Icon, title, note }: { to?: string; href?: st
   );
 }
 
-/** Merch, Feedback and the ways out: the More tab (phones; wide screens have them in the sidebar). */
-function MoreScreen() {
+/** Disaster News, Feedback and the ways out: the More tab (phones; wide screens have them in the sidebar). */
+function MoreScreen({ live }: { live: boolean }) {
   return (
     <div className="flex max-w-xl flex-col gap-6">
       <ul className="divide-y divide-line/70 overflow-hidden rounded-2xl border border-line bg-surface">
-        <MoreRow to="/guest/merch" icon={Shirt} title="Merch" note="PHILRADS shirts and other items you can order" />
+        <MoreRow to="/guest/news" icon={Siren} title="Disaster News" note="PHILRADS announcements, typhoons, floods and earthquakes" dot={live} />
         <MoreRow to="/guest/feedback" icon={MessageSquareHeart} title="Feedback" note="Say thanks, tell us a need, or offer to volunteer" />
       </ul>
       <ul className="divide-y divide-line/70 overflow-hidden rounded-2xl border border-line bg-surface">
@@ -403,10 +407,10 @@ function GuestTabBar({ tab, live, onPress }: { tab: Tab; live: boolean; onPress:
               <span className="relative grid h-8 w-14 place-items-center">
                 <span className="gnav-ind gloss absolute inset-0 rounded-full" data-on={on} aria-hidden />
                 <t.icon className={`relative h-5 w-5 transition-colors duration-300 ${on ? 'text-cloud' : 'text-ink-soft'}`} strokeWidth={on ? 2.25 : 1.75} aria-hidden />
-                {t.id === 'news' && live && <CountBadge tone="new" className="!bottom-[60%] !left-[62%]" />}
+                {t.id === 'more' && live && <CountBadge tone="new" className="!bottom-[60%] !left-[62%]" />}
               </span>
               <span className={`text-[0.6875rem] leading-none transition-colors duration-300 ${on ? 'font-semibold text-ink' : 'font-medium text-ink-soft'}`}>{t.label}</span>
-              {t.id === 'news' && live && <span className="sr-only">(new alerts)</span>}
+              {t.id === 'more' && live && <span className="sr-only">(new alerts in Disaster News)</span>}
             </Link>
           );
         })}
@@ -506,7 +510,7 @@ export function GuestPage() {
   };
 
   const sample = guestService.source === 'mock';
-  const sub = screen === 'merch' || screen === 'feedback';
+  const sub = screen === 'news' || screen === 'feedback';
   const about = search.get('about');
 
   const hazardsShown = layers.hazards ? (pick?.type === 'hazard' && !recent.some((h) => h.id === pick.id) ? [...recent, ...hazards.filter((h) => h.id === pick.id)] : recent) : [];
@@ -567,7 +571,7 @@ export function GuestPage() {
   else if (screen === 'give') body = <DrivesSection drives={drives} onRetry={drives.reload} />;
   else if (screen === 'merch') body = <MerchSection merch={merch} onRetry={merch.reload} />;
   else if (screen === 'feedback') body = <FeedbackSection key={about ?? ''} initialKind={isFeedbackKind(about) ? about : undefined} />;
-  else body = <MoreScreen />;
+  else body = <MoreScreen live={live} />;
 
   // Reading pages keep a comfortable line length; drives and merch use the width.
   const measure = screen === 'news' || screen === 'stories' || screen === 'feedback' ? 'max-w-3xl' : '';
