@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type MouseEvent, type PointerEvent, type ReactNode, type RefObject } from 'react';
 import { X } from 'lucide-react';
+import { closeDialog, openDialog } from '../../lib/dialogMotion';
 
 interface SheetProps {
   open: boolean;
@@ -25,12 +26,13 @@ export function Sheet({ open, title, subtitle, onClose, children, footer, dirty 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    if (open && !el.open) {
-      el.showModal();
+    if (open && (!el.open || el.dataset.closing !== undefined)) {
+      const wasOpen = el.open;
+      openDialog(el);
       // The browser focuses the first control (the close button); prefer the field marked data-autofocus.
-      el.querySelector<HTMLElement>('[data-autofocus]')?.focus();
+      if (!wasOpen) el.querySelector<HTMLElement>('[data-autofocus]')?.focus();
     }
-    if (!open && el.open) el.close();
+    if (!open) closeDialog(el);
   }, [open]);
 
   return (
@@ -38,8 +40,13 @@ export function Sheet({ open, title, subtitle, onClose, children, footer, dirty 
       ref={ref}
       aria-labelledby={titleId}
       onClose={onClose}
+      // Escape: slide away like the × does, instead of vanishing.
+      onCancel={(e) => {
+        e.preventDefault();
+        onClose();
+      }}
       {...backdrop.handlers}
-      className={`fixed inset-x-0 bottom-0 top-auto m-0 flex max-h-[92dvh] w-full max-w-none animate-sheet-up flex-col rounded-t-3xl floating p-0 text-ink ring-uplift/60 transition-shadow backdrop:animate-fade-in backdrop:bg-black/60 open:flex md:inset-y-0 md:left-auto md:right-0 md:h-dvh md:max-h-none md:w-[32rem] md:animate-sheet-left md:rounded-none md:rounded-l-3xl [&:not([open])]:hidden ${
+      className={`motion-sheet fixed inset-x-0 bottom-0 top-auto m-0 flex max-h-[92dvh] w-full max-w-none animate-sheet-up flex-col rounded-t-3xl floating p-0 text-ink ring-uplift/60 transition-shadow backdrop:animate-fade-in backdrop:bg-black/60 open:flex md:inset-y-0 md:left-auto md:right-0 md:h-dvh md:max-h-none md:w-[32rem] md:animate-sheet-left md:rounded-none md:rounded-l-3xl [&:not([open])]:hidden ${
         backdrop.nudge ? 'ring-2' : ''
       }`}
     >

@@ -61,12 +61,14 @@ export default {
       // Only transform and opacity are animated; all of it is disabled for prefers-reduced-motion (index.css).
       transitionTimingFunction: {
         DEFAULT: 'cubic-bezier(0.22, 1, 0.36, 1)',
+        // Quick start, soft landing: things that slide or fold (sidebar, sheets, drawers).
+        glide: 'cubic-bezier(0.32, 0.72, 0, 1)',
       },
       transitionDuration: {
         DEFAULT: '200ms',
       },
       keyframes: {
-        'fade-up': { from: { opacity: '0', transform: 'translateY(8px)' }, to: { opacity: '1', transform: 'translateY(0)' } },
+        'fade-up': { from: { opacity: '0', transform: 'translateY(6px)' }, to: { opacity: '1', transform: 'translateY(0)' } },
         'fade-in': { from: { opacity: '0' }, to: { opacity: '1' } },
         'pop-in': { from: { opacity: '0', transform: 'translateY(-6px) scale(0.98)' }, to: { opacity: '1', transform: 'translateY(0) scale(1)' } },
         'slide-in-left': { from: { transform: 'translateX(-100%)' }, to: { transform: 'translateX(0)' } },
@@ -83,18 +85,18 @@ export default {
       },
       animation: {
         // Entrances use fill-mode "backwards": hidden during their delay, and no transform is held afterwards.
-        'fade-up': 'fade-up 480ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
-        'fade-in': 'fade-in 240ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
-        'cal-next': 'cal-next 320ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
-        'cal-prev': 'cal-prev 320ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
+        'fade-up': 'fade-up 360ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
+        'fade-in': 'fade-in 200ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
+        'cal-next': 'cal-next 260ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
+        'cal-prev': 'cal-prev 260ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
         'pop-in': 'pop-in 180ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
-        'slide-in-left': 'slide-in-left 320ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
-        'grow-x': 'grow-x 800ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
-        'grow-y': 'grow-y 700ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
-        'sheet-up': 'sheet-up 320ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
-        'sheet-left': 'sheet-left 320ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
+        'slide-in-left': 'slide-in-left 300ms cubic-bezier(0.32, 0.72, 0, 1) backwards',
+        'grow-x': 'grow-x 560ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
+        'grow-y': 'grow-y 500ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
+        'sheet-up': 'sheet-up 300ms cubic-bezier(0.32, 0.72, 0, 1) backwards',
+        'sheet-left': 'sheet-left 300ms cubic-bezier(0.32, 0.72, 0, 1) backwards',
         'undo-countdown': 'undo-countdown 3s linear forwards',
-        'roll-in': 'roll-in 420ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
+        'roll-in': 'roll-in 320ms cubic-bezier(0.22, 1, 0.36, 1) backwards',
       },
     },
   },

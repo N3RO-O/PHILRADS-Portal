@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { PrismLogo } from '../ui/PrismMark';
+import { closeDialog, openDialog } from '../../lib/dialogMotion';
 import { NavItems } from './NavItems';
 import { AccountPanel, useAccountSheets } from './ProfileMenu';
 
@@ -17,8 +18,8 @@ export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    if (open && !el.open) el.showModal();
-    if (!open && el.open) el.close();
+    if (open) openDialog(el);
+    else closeDialog(el);
   }, [open]);
 
   // The page behind stays still while the drawer is open (no scrolling it through the backdrop).
@@ -40,8 +41,12 @@ export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
         ref={ref}
         aria-label="Navigation"
         onClose={onClose}
+        onCancel={(e) => {
+          e.preventDefault();
+          onClose();
+        }}
         onClick={(e) => e.target === ref.current && onClose()}
-        className="fixed inset-y-0 left-0 m-0 h-dvh max-h-none w-[min(17rem,86vw)] max-w-none animate-slide-in-left border-r border-line bg-page p-0 text-ink backdrop:animate-fade-in backdrop:bg-black/60"
+        className="motion-drawer fixed inset-y-0 left-0 m-0 h-dvh max-h-none w-[min(17rem,86vw)] max-w-none animate-slide-in-left border-r border-line bg-page p-0 text-ink backdrop:animate-fade-in backdrop:bg-black/60"
       >
         <div className="flex h-full flex-col overflow-y-auto overscroll-contain">
           <div className="flex h-16 shrink-0 items-center justify-between gap-3 px-5">

@@ -3,7 +3,7 @@
     "id": "2026-11-24.1",
     "version": "1.10.12",
     "date": "2026-11-24",
-    "title": "Staff Tasks, easier to start with",
+    "title": "Staff Tasks, easier to start with; smoother motion",
     "items": [
       {
         "icon": "sparkles",
@@ -19,6 +19,11 @@
         "icon": "circle-dot",
         "title": "Fewer buttons, plainer words",
         "body": "The list and Field or Office pickers are now behind one Filter button. Views read My tasks, I assigned and Whole team, and the sun says Do today."
+      },
+      {
+        "icon": "sparkles",
+        "title": "Smoother, quicker motion",
+        "body": "Folding the sidebar is now one smooth movement: the icons stay put, the words fade, and the highlight moves with them. Panels, pop-ups and the phone menu now slide or fade away when they close instead of vanishing, and animations across the portal are a little quicker."
       }
     ]
   },

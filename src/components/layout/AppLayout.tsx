@@ -119,7 +119,7 @@ export function AppLayout() {
       </a>
       <Sidebar expanded={expanded} onToggle={toggleSidebar} />
       <MobileDrawer open={menuOpen} onClose={() => setMenuOpen(false)} />
-      <div className={`flex min-h-dvh flex-col transition-[padding] duration-300 ${expanded ? 'lg:pl-64' : 'lg:pl-[4.5rem]'} ${activeDocked ? 'xl:pr-64' : ''}`}>
+      <div className={`flex min-h-dvh flex-col transition-[padding] duration-[260ms] ease-glide ${expanded ? 'lg:pl-64' : 'lg:pl-[4.5rem]'} ${activeDocked ? 'xl:pr-64' : ''}`}>
         <TopBar
           activeShown={wide ? activeDocked : activeDrawer}
           onToggleActive={toggleActive}

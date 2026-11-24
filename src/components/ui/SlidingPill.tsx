@@ -38,12 +38,22 @@ export function SlidingPill({ className = '' }: { className?: string }) {
     place();
     const mo = new MutationObserver(place);
     mo.observe(group, { subtree: true, childList: true, attributes: true, attributeFilter: ['aria-pressed', 'aria-selected', 'aria-current'] });
-    const ro = new ResizeObserver(place);
+    // A new choice glides; a group changing size (the sidebar folding) is followed frame by frame,
+    // so the highlight stays under its link instead of trailing behind.
+    let settle = 0;
+    const follow = () => {
+      pill.dataset.follow = '';
+      place();
+      clearTimeout(settle);
+      settle = window.setTimeout(() => delete pill.dataset.follow, 120);
+    };
+    const ro = new ResizeObserver(follow);
     ro.observe(group);
     for (const child of group.children) if (child !== pill) ro.observe(child);
     return () => {
       mo.disconnect();
       ro.disconnect();
+      clearTimeout(settle);
     };
   }, []);
   return <span ref={ref} aria-hidden className={`sliding-pill ${className}`} />;

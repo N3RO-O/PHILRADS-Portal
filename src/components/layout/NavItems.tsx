@@ -4,9 +4,18 @@ import { MODULES, NAV_GROUPS, moduleOpenTo } from '../../config/modules';
 import { useAuth } from '../auth/AuthProvider';
 import { SlidingPill } from '../ui/SlidingPill';
 
+/**
+ * Words beside an icon in the sidebar: always there, faded out when folded. They fade quickly as it
+ * folds, and come back just after it starts opening, so they never squeeze or jump.
+ */
+export const railLabel = (expanded: boolean) =>
+  `whitespace-nowrap transition-opacity ${expanded ? 'opacity-100 delay-75 duration-200' : 'pointer-events-none opacity-0 duration-100'}`;
+
 interface NavItemsProps {
   expanded: boolean;
   onNavigate?: () => void;
+  /** In the desktop sidebar, which folds: icons keep their place and the words fade. */
+  rail?: boolean;
 }
 
 /**
@@ -17,7 +26,7 @@ interface NavItemsProps {
  * floats (fixed) beside the rail, so the navigation can scroll without clipping it. Modules not built
  * yet carry a "Soon" tag.
  */
-export function NavItems({ expanded, onNavigate }: NavItemsProps) {
+export function NavItems({ expanded, onNavigate, rail = false }: NavItemsProps) {
   const { can, profile } = useAuth();
   const visible = MODULES.filter((m) => !m.hidden && moduleOpenTo(m, profile?.roleKey, can));
   const [tip, setTip] = useState<{ label: string; top: number; left: number } | null>(null);
@@ -56,8 +65,8 @@ export function NavItems({ expanded, onNavigate }: NavItemsProps) {
               onBlur={hideTip}
               aria-label={expanded ? undefined : m.soon ? `${m.label} (coming soon)` : m.label}
               className={({ isActive }) =>
-                `group relative z-10 flex h-10 shrink-0 items-center gap-3 rounded-xl text-sm transition-colors duration-500 ${
-                  expanded ? 'px-3' : 'justify-center'
+                `group relative z-10 flex h-10 shrink-0 items-center gap-3 rounded-xl text-sm transition-colors ${
+                  rail ? 'overflow-hidden pl-[0.875rem] pr-3' : expanded ? 'px-3' : 'justify-center'
                 } ${
                   isActive
                     ? // The burgundy highlight itself is the sliding pill above.
@@ -69,7 +78,12 @@ export function NavItems({ expanded, onNavigate }: NavItemsProps) {
               {() => (
                 <>
                   <m.icon className="h-5 w-5 shrink-0" aria-hidden />
-                  {expanded ? (
+                  {rail ? (
+                    <>
+                      <span className={`min-w-0 flex-1 ${railLabel(expanded)}`}>{m.label}</span>
+                      {m.soon && <span className={`shrink-0 text-[0.6875rem] font-medium text-muted ${railLabel(expanded)}`}>Soon</span>}
+                    </>
+                  ) : expanded ? (
                     <>
                       <span className="truncate">{m.label}</span>
                       {m.soon && (

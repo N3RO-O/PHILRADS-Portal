@@ -1038,10 +1038,65 @@
   pointer-events: none;
   opacity: 0;
   transition:
-    translate 640ms cubic-bezier(0.45, 0, 0.15, 1),
-    width 640ms cubic-bezier(0.45, 0, 0.15, 1),
-    height 640ms cubic-bezier(0.45, 0, 0.15, 1),
+    translate 400ms cubic-bezier(0.32, 0.72, 0, 1),
+    width 400ms cubic-bezier(0.32, 0.72, 0, 1),
+    height 400ms cubic-bezier(0.32, 0.72, 0, 1),
     opacity 200ms ease-out;
+}
+/* Following a resizing group (the sidebar folding): no glide, it moves with the links. */
+.sliding-pill[data-follow] {
+  transition: opacity 200ms ease-out;
+}
+
+/*
+ * Closing sheets, dialogs and the phone menu: a short exit that mirrors the way in, quicker than the
+ * entrance (src/lib/dialogMotion.ts adds data-closing, then closes the dialog when it ends).
+ */
+@keyframes exit-down {
+  to {
+    transform: translateY(100%);
+  }
+}
+@keyframes exit-right {
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes exit-left {
+  to {
+    transform: translateX(-100%);
+  }
+}
+@keyframes exit-pop {
+  to {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+}
+@keyframes exit-fade {
+  to {
+    opacity: 0;
+  }
+}
+.motion-sheet[data-closing] {
+  animation: exit-down 220ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+@media (min-width: 768px) {
+  .motion-sheet[data-closing] {
+    animation-name: exit-right;
+  }
+}
+.motion-drawer[data-closing] {
+  animation: exit-left 200ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+.motion-pop[data-closing] {
+  animation: exit-pop 140ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+dialog[data-closing]::backdrop {
+  animation: exit-fade 200ms ease-in forwards;
+}
+dialog[data-closing] {
+  pointer-events: none;
 }
 
 /* A deleted row slides off to the left, then the rows below glide up into its place. */
