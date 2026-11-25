@@ -240,7 +240,7 @@ export function NotificationsMenu() {
                 role="tab"
                 aria-selected={tab === t}
                 onClick={() => setTab(t)}
-                className={`press rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${tab === t ? 'text-ink-soft' : 'bg-ink/[0.07] text-ink-soft hover:bg-ink/[0.1]'}`}
+                className={`press rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${tab === t ? 'bg-ink/[0.12] text-ink' : 'text-ink-soft hover:bg-ink/[0.06] hover:text-ink'}`}
               >
                 {t === 'all' ? 'All' : `Unread${unread.length ? ` (${capCount(unread.length)})` : ''}`}
               </button>
