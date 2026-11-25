@@ -5,6 +5,17 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/guest/:screen?",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|Slackbot|WhatsApp|LinkedInBot|Discordbot|TelegramBot|SkypeUriPreview|Viber|Pinterestbot|redditbot|Iframely).*"
+        }
+      ],
+      "destination": "/api/weather?share=:screen"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }

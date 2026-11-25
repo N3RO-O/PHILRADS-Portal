@@ -90,7 +90,7 @@ export default defineConfig({
         // Precache only the built app shell and static assets.
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,mp3}'],
         // The sign-in theme is four minutes long (5 MB): streamed when needed, not stored on every install.
-        globIgnores: ['**/sounds/prism-signin.mp3'],
+        globIgnores: ['**/sounds/prism-signin.mp3', '**/brand/guest-share.png'],
         navigateFallback: '/index.html',
         // Phone notifications: shows pushed notes and opens the right page when one is tapped.
         importScripts: ['push-sw.js'],

@@ -1,5 +1,48 @@
 [
   {
+    "id": "2026-11-25.3",
+    "version": "1.13.0",
+    "date": "2026-11-25",
+    "title": "Guests can find help, get ready, and pray with us",
+    "items": [
+      {
+        "icon": "map",
+        "title": "Find the nearest site",
+        "body": "On the guest Live Map, Find the nearest site shows the three PHILRADS sites closest to the guest, how far each is, and directions. Their location stays on their phone."
+      },
+      {
+        "icon": "life-buoy",
+        "title": "Emergency hotlines",
+        "body": "A new Hotlines page lists numbers to call in an emergency, one tap to call: 911, the Red Cross, NDRRMC, PAGASA and PHIVOLCS to start. Staff with guest access add local disaster offices on the Guest page, under Hotlines."
+      },
+      {
+        "icon": "list-checks",
+        "title": "Be prepared",
+        "body": "Go bag and family plan checklists guests can tick off on their phone, and what to do before, during and after a typhoon, a flood and an earthquake."
+      },
+      {
+        "icon": "bell-ring",
+        "title": "Alerts for guests",
+        "body": "Guests can turn on phone notifications for PHILRADS's urgent announcements, and for typhoons coming near the regions they choose. No sign-up: turning alerts off removes their phone from the list."
+      },
+      {
+        "icon": "sparkles",
+        "title": "Pray with us",
+        "body": "Staff post prayer points on the Guest page, under Prayer. Guests press I prayed, and everyone sees how many have prayed."
+      },
+      {
+        "icon": "gift",
+        "title": "Where the gifts went",
+        "body": "When a drive is closed, staff can write what it did, how many families it reached, and add up to six photos. Guests see it on the drive, ready to share."
+      },
+      {
+        "icon": "smartphone",
+        "title": "Works without a signal",
+        "body": "The guest page keeps what it last loaded on the phone. With no signal it shows that copy and says how old it is. Links shared on Facebook or Messenger now show a proper title and picture."
+      }
+    ]
+  },
+  {
     "id": "2026-11-25.2",
     "version": "1.12.0",
     "date": "2026-11-25",

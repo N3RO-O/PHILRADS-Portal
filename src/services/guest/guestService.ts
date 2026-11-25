@@ -91,6 +91,10 @@ const LEVEL_ORDER: Record<AnnouncementLevel, number> = { urgent: 0, advisory: 1,
 /** Urgent first, then advisories, then updates; newest first within each. */
 export const byImportance = (a: GuestAnnouncement, b: GuestAnnouncement) => LEVEL_ORDER[a.level] - LEVEL_ORDER[b.level] || (b.publishedAt ?? '').localeCompare(a.publishedAt ?? '');
 
+/** Nationwide numbers first, then by area; staff order within each. */
+export const byHotline = (a: GuestHotline, b: GuestHotline) =>
+  Number(a.area !== null) - Number(b.area !== null) || (a.area ?? '').localeCompare(b.area ?? '') || a.sortOrder - b.sortOrder || a.name.localeCompare(b.name);
+
 export type DriveStatus = 'draft' | 'open' | 'closed';
 export interface DonationDrive {
   id: string;
@@ -107,8 +111,47 @@ export interface DonationDrive {
   coverUrl: string | null;
   status: DriveStatus;
   raisedUpdatedAt: string | null;
+  /** Where the gifts went: staff write it once the drive is done. */
+  report: string | null;
+  reportPhotos: string[];
+  /** Families (or people) reached, as staff count them. */
+  reportReached: number | null;
+  reportedAt: string | null;
 }
-export type DriveDraft = Omit<DonationDrive, 'id' | 'raisedUpdatedAt'> & { id?: string };
+export type DriveDraft = Omit<DonationDrive, 'id' | 'raisedUpdatedAt' | 'reportedAt'> & { id?: string };
+
+/** An emergency number on the Hotlines screen. No area: nationwide. */
+export interface GuestHotline {
+  id: string;
+  name: string;
+  number: string;
+  note: string | null;
+  area: string | null;
+  sortOrder: number;
+  isListed: boolean;
+}
+export type HotlineDraft = Omit<GuestHotline, 'id'> & { id?: string };
+
+/** A prayer point on Pray with us: for an area, a response, the people serving. */
+export interface GuestPrayer {
+  id: string;
+  title: string;
+  body: string;
+  area: string | null;
+  isPublished: boolean;
+  publishedAt: string | null;
+  prayedCount: number;
+  updatedAt: string;
+}
+export type PrayerDraft = Omit<GuestPrayer, 'id' | 'publishedAt' | 'prayedCount' | 'updatedAt'> & { id?: string };
+
+/** One phone's alert subscription (Web Push), and the regions it follows (none: the whole country). */
+export interface AlertSubscription {
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  regions: string[];
+}
 
 export interface MerchItem {
   id: string;
@@ -183,6 +226,12 @@ export interface GuestService {
   merch(): Promise<MerchItem[]>;
   send(draft: GuestMessageDraft): Promise<void>;
   hazards(signal?: AbortSignal): Promise<HazardFeed>;
+  hotlines(): Promise<GuestHotline[]>;
+  prayers(): Promise<GuestPrayer[]>;
+  /** "I prayed": returns the new count. */
+  pray(id: string): Promise<number>;
+  alertSubscribe(d: AlertSubscription): Promise<void>;
+  alertUnsubscribe(endpoint: string): Promise<void>;
   /** PHILRADS's Facebook posts (none until the rss.app feed is set up in Vercel). */
   facebook(signal?: AbortSignal): Promise<FacebookFeed>;
   // Staff with guest.manage.
@@ -192,6 +241,14 @@ export interface GuestService {
   allAnnouncements(): Promise<GuestAnnouncement[]>;
   saveAnnouncement(d: AnnouncementDraft): Promise<GuestAnnouncement>;
   removeAnnouncement(id: string): Promise<void>;
+  /** Send waiting guest alerts now (after an urgent announcement is published). Never fails. */
+  sendAlertsNow(): void;
+  allHotlines(): Promise<GuestHotline[]>;
+  saveHotline(d: HotlineDraft): Promise<GuestHotline>;
+  removeHotline(id: string): Promise<void>;
+  allPrayers(): Promise<GuestPrayer[]>;
+  savePrayer(d: PrayerDraft): Promise<GuestPrayer>;
+  removePrayer(id: string): Promise<void>;
   allDrives(): Promise<DonationDrive[]>;
   saveDrive(d: DriveDraft): Promise<DonationDrive>;
   removeDrive(id: string): Promise<void>;
@@ -254,6 +311,20 @@ function checkAnnouncement(d: AnnouncementDraft) {
   if (d.linkUrl && !/^https:\/\/\S+$/.test(d.linkUrl.trim())) throw new GuestRuleError('The link has to start with https://');
 }
 
+function checkHotline(d: HotlineDraft) {
+  if (!d.name.trim()) throw new GuestRuleError('Say whose number it is.');
+  if (!/^[0-9+() -]{3,30}$/.test(d.number.trim())) throw new GuestRuleError('Write the number with digits only (spaces, +, - and brackets are fine).');
+}
+
+function checkPrayer(d: PrayerDraft) {
+  if (!d.title.trim()) throw new GuestRuleError('Give the prayer point a title.');
+}
+
+function checkDrive(d: DriveDraft) {
+  if (d.reportPhotos.length > 6) throw new GuestRuleError('Keep it to six photos.');
+  if (d.reportReached !== null && (d.reportReached < 0 || !Number.isFinite(d.reportReached))) throw new GuestRuleError('The number reached can’t be below zero.');
+}
+
 function checkMessage(d: GuestMessageDraft) {
   const msg = d.message.trim();
   if (msg.length < 2) throw new GuestRuleError('Write a message first.');
@@ -270,13 +341,49 @@ const ago = (days: number) => new Date(Date.now() - days * 86_400_000).toISOStri
 interface SampleStore {
   stories: GuestStory[];
   announcements: GuestAnnouncement[];
+  hotlines: GuestHotline[];
+  prayers: GuestPrayer[];
   drives: DonationDrive[];
   merch: MerchItem[];
   messages: GuestMessage[];
 }
 
+const SAMPLE_HOTLINES: GuestHotline[] = [
+  { id: 'h1', name: 'National emergency hotline', number: '911', note: 'Police, fire and medical emergencies, any network, free', area: null, sortOrder: 0, isListed: true },
+  { id: 'h2', name: 'Philippine Red Cross', number: '143', note: 'Rescue, ambulance and blood, 24 hours', area: null, sortOrder: 1, isListed: true },
+  { id: 'h3', name: 'Philippine Red Cross (landline)', number: '(02) 8790-2300', note: null, area: null, sortOrder: 2, isListed: true },
+  { id: 'h4', name: 'NDRRMC Operations Center', number: '(02) 8911-5061', note: 'Lines 8911-5061 to 65', area: null, sortOrder: 3, isListed: true },
+  { id: 'h5', name: 'PAGASA (weather)', number: '(02) 8284-0800', note: 'Typhoon and rainfall updates', area: null, sortOrder: 4, isListed: true },
+  { id: 'h6', name: 'PHIVOLCS (earthquakes, volcanoes)', number: '(02) 8426-1468', note: 'Lines 8426-1468 to 79', area: null, sortOrder: 5, isListed: true },
+  { id: 'h7', name: 'Catanduanes PDRRMO (sample)', number: '0900 000 0000', note: 'Provincial disaster office', area: 'Catanduanes', sortOrder: 10, isListed: true },
+];
+const SAMPLE_PRAYERS = (): GuestPrayer[] => [
+  {
+    id: 'pr1',
+    title: 'Families in Cagayan and Isabela as the river rises',
+    body: 'Pray for safety for families near the Cagayan River, for local responders working through the night, and for dry places to stay. (sample)',
+    area: 'Cagayan Valley',
+    isPublished: true,
+    publishedAt: ago(1),
+    prayedCount: 37,
+    updatedAt: ago(1),
+  },
+  {
+    id: 'pr2',
+    title: 'Our volunteers packing relief this week',
+    body: 'Pray for strength and joy for the church volunteers packing food and water kits, and for every pack to reach the family that needs it. (sample)',
+    area: null,
+    isPublished: true,
+    publishedAt: ago(4),
+    prayedCount: 82,
+    updatedAt: ago(4),
+  },
+];
+
 function seed(): SampleStore {
   return {
+    hotlines: SAMPLE_HOTLINES,
+    prayers: SAMPLE_PRAYERS(),
     announcements: [
       {
         id: 'an1',
@@ -350,6 +457,10 @@ function seed(): SampleStore {
         coverUrl: null,
         status: 'open',
         raisedUpdatedAt: ago(1),
+        report: null,
+        reportPhotos: [],
+        reportReached: null,
+        reportedAt: null,
       },
       {
         id: 'dr2',
@@ -366,6 +477,10 @@ function seed(): SampleStore {
         coverUrl: null,
         status: 'open',
         raisedUpdatedAt: ago(3),
+        report: null,
+        reportPhotos: [],
+        reportReached: null,
+        reportedAt: null,
       },
       {
         id: 'dr3',
@@ -382,6 +497,11 @@ function seed(): SampleStore {
         coverUrl: null,
         status: 'closed',
         raisedUpdatedAt: '2024-10-15T08:00:00Z',
+        report:
+          'Your gifts bought 640 roofing sheets, nails and basic tools. Carpenters from the parish worked with each family, and every house on the list had a roof again before Christmas. (sample)',
+        reportPhotos: [],
+        reportReached: 96,
+        reportedAt: '2024-11-20T08:00:00Z',
       },
     ],
     merch: [
@@ -400,8 +520,13 @@ function seed(): SampleStore {
 function load(): SampleStore {
   try {
     const raw = localStorage.getItem(KEY);
-    // Sample data saved before announcements existed gets the sample ones added.
-    if (raw) return { announcements: seed().announcements, ...(JSON.parse(raw) as Partial<SampleStore>) } as SampleStore;
+    // Sample data saved before newer parts existed gets the sample ones added.
+    if (raw) {
+      const fresh = seed();
+      const old = JSON.parse(raw) as Partial<SampleStore>;
+      const drives = (old.drives ?? fresh.drives).map((d) => Object.assign({ report: null, reportPhotos: [], reportReached: null, reportedAt: null }, fresh.drives.find((f) => f.id === d.id), d) as DonationDrive);
+      return { announcements: fresh.announcements, hotlines: fresh.hotlines, prayers: fresh.prayers, ...old, drives } as SampleStore;
+    }
   } catch {
     /* fall through to the sample */
   }
@@ -454,6 +579,49 @@ export function createMockGuestService(overview: () => Promise<GuestOverview>): 
       await wait(null, 500);
     },
     hazards: loadHazards,
+    hotlines: () => wait(store.hotlines.filter((h) => h.isListed).sort(byHotline)),
+    prayers: () => wait(store.prayers.filter((p) => p.isPublished).sort((a, b) => (b.publishedAt ?? '').localeCompare(a.publishedAt ?? ''))),
+    async pray(id) {
+      const p = store.prayers.find((x) => x.id === id && x.isPublished);
+      if (!p) throw new GuestRuleError('That prayer point was taken down.');
+      p.prayedCount += 1;
+      commit();
+      return wait(p.prayedCount, 150);
+    },
+    async alertSubscribe() {
+      // Sample mode: the phone's permission and subscription are real, nothing is stored.
+      await wait(null, 300);
+    },
+    async alertUnsubscribe() {
+      await wait(null, 150);
+    },
+    sendAlertsNow: () => undefined,
+    allHotlines: () => wait([...store.hotlines].sort(byHotline)),
+    async saveHotline(d) {
+      checkHotline(d);
+      const h: GuestHotline = { ...d, id: d.id ?? newId(), number: d.number.trim(), name: d.name.trim() };
+      upsert(store.hotlines, h);
+      commit();
+      return wait(h);
+    },
+    async removeHotline(id) {
+      store.hotlines = store.hotlines.filter((h) => h.id !== id);
+      commit();
+    },
+    allPrayers: () => wait([...store.prayers].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))),
+    async savePrayer(d) {
+      checkPrayer(d);
+      const prev = d.id ? store.prayers.find((x) => x.id === d.id) : undefined;
+      const now = new Date().toISOString();
+      const p: GuestPrayer = { ...d, id: d.id ?? newId(), publishedAt: prev?.publishedAt ?? (d.isPublished ? now : null), prayedCount: prev?.prayedCount ?? 0, updatedAt: now };
+      upsert(store.prayers, p);
+      commit();
+      return wait(p);
+    },
+    async removePrayer(id) {
+      store.prayers = store.prayers.filter((p) => p.id !== id);
+      commit();
+    },
     facebook: () =>
       wait({
         page: FACEBOOK_PAGE,
@@ -505,9 +673,11 @@ export function createMockGuestService(overview: () => Promise<GuestOverview>): 
     },
     allDrives: () => wait(store.drives),
     async saveDrive(d) {
+      checkDrive(d);
       const prev = d.id ? store.drives.find((x) => x.id === d.id) : undefined;
       const moved = !prev || prev.raised !== d.raised || prev.donorCount !== d.donorCount;
-      const drive: DonationDrive = { ...d, id: d.id ?? newId(), raisedUpdatedAt: moved ? new Date().toISOString() : prev!.raisedUpdatedAt };
+      const reportedAt = d.report?.trim() ? prev?.reportedAt ?? new Date().toISOString() : null;
+      const drive: DonationDrive = { ...d, id: d.id ?? newId(), raisedUpdatedAt: moved ? new Date().toISOString() : prev!.raisedUpdatedAt, reportedAt };
       upsert(store.drives, drive);
       commit();
       return wait(drive);
@@ -628,6 +798,10 @@ const toDrive = (r: Row): DonationDrive => ({
   coverUrl: s(r.cover_url),
   status: r.status as DriveStatus,
   raisedUpdatedAt: s(r.raised_updated_at),
+  report: s(r.report),
+  reportPhotos: (r.report_photos as string[] | null) ?? [],
+  reportReached: n(r.report_reached),
+  reportedAt: s(r.reported_at),
 });
 const fromDrive = (d: DriveDraft) => ({
   title: d.title.trim(),
@@ -642,6 +816,42 @@ const fromDrive = (d: DriveDraft) => ({
   how_to_give: d.howToGive?.trim() || null,
   cover_url: d.coverUrl || null,
   status: d.status,
+  report: d.report?.trim() || null,
+  report_photos: d.reportPhotos,
+  report_reached: d.reportReached,
+});
+const toHotline = (r: Row): GuestHotline => ({
+  id: String(r.id),
+  name: String(r.name),
+  number: String(r.number),
+  note: s(r.note),
+  area: s(r.area),
+  sortOrder: Number(r.sort_order ?? 0),
+  isListed: Boolean(r.is_listed),
+});
+const fromHotline = (d: HotlineDraft) => ({
+  name: d.name.trim(),
+  number: d.number.trim(),
+  note: d.note?.trim() || null,
+  area: d.area?.trim() || null,
+  sort_order: d.sortOrder,
+  is_listed: d.isListed,
+});
+const toPrayer = (r: Row): GuestPrayer => ({
+  id: String(r.id),
+  title: String(r.title),
+  body: String(r.body ?? ''),
+  area: s(r.area),
+  isPublished: Boolean(r.is_published),
+  publishedAt: s(r.published_at),
+  prayedCount: Number(r.prayed_count ?? 0),
+  updatedAt: String(r.updated_at),
+});
+const fromPrayer = (d: PrayerDraft) => ({
+  title: d.title.trim(),
+  body: d.body.trim(),
+  area: d.area?.trim() || null,
+  is_published: d.isPublished,
 });
 const toMerch = (r: Row): MerchItem => ({
   id: String(r.id),
@@ -731,6 +941,37 @@ export function createSupabaseGuestService(client: SupabaseClient): GuestService
       if (error) fail('send', error, 'Your message could not be sent. Check the connection and try again.');
     },
     hazards: loadHazards,
+    hotlines: async () => (await list('guest_hotlines', toHotline, (q) => q.select('*').eq('is_listed', true).limit(300), 'the hotlines')).sort(byHotline),
+    prayers: () => list('guest_prayers', toPrayer, (q) => q.select('*').eq('is_published', true).order('published_at', { ascending: false }).limit(30), 'the prayer points'),
+    async pray(id) {
+      const { data, error } = await client.rpc('guest_pray', { p_id: id });
+      if (error) fail('pray', error, 'Could not count your prayer. Check the connection and try again.');
+      if (data === null || data === undefined) throw new GuestRuleError('That prayer point was taken down.');
+      return Number(data);
+    },
+    async alertSubscribe(d) {
+      const { error } = await client.rpc('guest_push_subscribe', { p_endpoint: d.endpoint, p_p256dh: d.p256dh, p_auth: d.auth, p_regions: d.regions });
+      if (error) fail('alerts on', error, 'Could not turn on alerts. Check the connection and try again.');
+    },
+    async alertUnsubscribe(endpoint) {
+      const { error } = await client.rpc('guest_push_unsubscribe', { p_endpoint: endpoint });
+      if (error) fail('alerts off', error, 'Could not turn off alerts. Check the connection and try again.');
+    },
+    sendAlertsNow: () => {
+      void client.functions.invoke('guest-alerts', { body: {} }).catch(() => undefined);
+    },
+    allHotlines: async () => (await list('guest_hotlines', toHotline, (q) => q.select('*').limit(500), 'the hotlines')).sort(byHotline),
+    saveHotline: (d) => {
+      checkHotline(d);
+      return saveRow('guest_hotlines', d.id, fromHotline(d), toHotline, 'hotline');
+    },
+    removeHotline: (id) => removeRow('guest_hotlines', id, 'hotline'),
+    allPrayers: () => list('guest_prayers', toPrayer, (q) => q.select('*').order('updated_at', { ascending: false }).limit(200), 'the prayer points'),
+    savePrayer: (d) => {
+      checkPrayer(d);
+      return saveRow('guest_prayers', d.id, fromPrayer(d), toPrayer, 'prayer point');
+    },
+    removePrayer: (id) => removeRow('guest_prayers', id, 'prayer point'),
     facebook: loadFacebook,
     allStories: () => list('guest_stories', toStory, (q) => q.select('*').order('updated_at', { ascending: false }).limit(200), 'the stories'),
     saveStory: (d) => saveRow('guest_stories', d.id, fromStory(d), toStory, 'story'),
@@ -742,7 +983,13 @@ export function createSupabaseGuestService(client: SupabaseClient): GuestService
     },
     removeAnnouncement: (id) => removeRow('guest_announcements', id, 'announcement'),
     allDrives: () => list('donation_drives', toDrive, (q) => q.select('*').order('created_at', { ascending: false }).limit(200), 'the donation drives'),
-    saveDrive: (d) => saveRow('donation_drives', d.id, fromDrive(d), toDrive, 'drive'),
+    saveDrive: async (d) => {
+      checkDrive(d);
+      // Dated when the report is first written; cleared if it is taken away.
+      const prev = d.id && d.report?.trim() ? (await client.from('donation_drives').select('reported_at').eq('id', d.id).maybeSingle()).data : null;
+      const reported_at = d.report?.trim() ? (prev?.reported_at as string | null) ?? new Date().toISOString() : null;
+      return saveRow('donation_drives', d.id, { ...fromDrive(d), reported_at }, toDrive, 'drive');
+    },
     removeDrive: (id) => removeRow('donation_drives', id, 'drive'),
     allMerch: () => list('merch_items', toMerch, (q) => q.select('*').order('sort_order').limit(200), 'the merch'),
     saveMerch: (d) => saveRow('merch_items', d.id, fromMerch(d), toMerch, 'item'),

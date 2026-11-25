@@ -10,7 +10,7 @@ export const VAPID_PUBLIC_KEY = 'BMc7RW_pphDRPKfy2OBA-kfp3i8aS3xiYuuY2f3T5dy6q4e
 
 export const pushSupported = () => typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 
-const keyBytes = (b64: string) => {
+export const keyBytes = (b64: string) => {
   const s = atob(b64.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - (b64.length % 4)) % 4));
   return Uint8Array.from(s, (c) => c.charCodeAt(0));
 };

@@ -11,11 +11,13 @@
  *   ?gifs=words                       project chat GIF search (signed-in staff; see _gifs.ts)
  *   ?devotional=YYYY-MM-DD            Our Daily Bread for that day (public text, cached; see verse/odb.ts)
  *   ?hazards=ph                       guest Disaster News: GDACS and USGS for the Philippines (cached; see guest/hazards.ts)
+ *   ?share=screen[&story=|&drive=]   guest share cards for link-preview robots (see _share.ts; routed in vercel.json)
  *   ?facebook=page                    guest Disaster News: PHILRADS's Facebook posts via rss.app (cached; see guest/facebook.ts)
  *
  * The extra jobs ride on this function because the Hobby plan allows 12 functions per deployment.
  */
 import { gifs } from './_gifs.js';
+import { share } from './_share.js';
 import { gridUrl, spotUrl, validGrid, validSpot } from '../src/services/weather/openMeteo.js';
 import { isDayKey, odbApiUrl, parseOdb } from '../src/services/verse/odb.js';
 import { fetchHazards } from '../src/services/guest/hazards.js';
@@ -77,6 +79,7 @@ async function facebook() {
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
   if (params.has('gifs')) return gifs(request);
+  if (params.has('share')) return share(request);
   if (params.get('hazards') === 'ph') return hazards();
   if (params.get('facebook') === 'page') return facebook();
   const day = params.get('devotional');

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Activity, ExternalLink, Flame, MapPin, Megaphone, Mountain, Phone, Sun, Waves, Wind, type LucideIcon } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Activity, BellRing, ExternalLink, Flame, MapPin, Megaphone, Mountain, Phone, Sun, Waves, Wind, type LucideIcon } from 'lucide-react';
 import type { Hazard, HazardFeed, HazardKind, HazardLevel } from '../../services/guest/hazards';
 import type { FacebookFeed, FacebookPost } from '../../services/guest/facebook';
 import { announcementLevelLabel, type AnnouncementLevel, type GuestAnnouncement } from '../../services/guest/guestService';
@@ -197,6 +198,11 @@ export function NewsSection({
       id="news"
       title="Disaster News"
       lead="Announcements and posts from PHILRADS, and typhoons, floods, earthquakes and volcanoes affecting the Philippines from international alert systems. Always follow the official advisories below."
+      aside={
+        <Link to="/guest/alerts" className="chip min-h-9 shrink-0 gap-1.5">
+          <BellRing className="h-4 w-4" aria-hidden /> Get alerts
+        </Link>
+      }
     >
       <Announcements list={notes} />
       {feed.status === 'loading' ? (

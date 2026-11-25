@@ -60,6 +60,7 @@ export default function GuestMap({
   pick,
   onPick,
   focus,
+  me = null,
 }: {
   sites: GuestSite[];
   places: GuestPlace[];
@@ -67,6 +68,8 @@ export default function GuestMap({
   pick: GuestPick;
   onPick: (p: GuestPick) => void;
   focus: { lat: number; lng: number; key: number } | null;
+  /** The guest's own position, when they asked for places near them. */
+  me?: { lat: number; lng: number } | null;
 }) {
   // Older work under newer work, so this year's dots are on top.
   const ordered = useMemo(() => [...sites].sort((a, b) => a.year - b.year), [sites]);
@@ -125,6 +128,12 @@ export default function GuestMap({
           keyboard
         />
       ))}
+      {me && (
+        <>
+          <CircleMarker center={[me.lat, me.lng]} radius={16} interactive={false} pathOptions={{ stroke: false, fillColor: '#3b82f6', fillOpacity: 0.18 }} />
+          <CircleMarker center={[me.lat, me.lng]} radius={7} interactive={false} pathOptions={{ color: '#ffffff', weight: 2.5, fillColor: '#3b82f6', fillOpacity: 1 }} />
+        </>
+      )}
     </MapContainer>
   );
 }

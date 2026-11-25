@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { BookOpen, ExternalLink, HandCoins, ImagePlus, Inbox, Mail, Megaphone, Phone, Plus, Shirt, Star, Trash2, type LucideIcon } from 'lucide-react';
+import { BookOpen, ExternalLink, HandCoins, HeartHandshake, ImagePlus, Inbox, Mail, Megaphone, Phone, Plus, Shirt, Star, Trash2, type LucideIcon } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
 import { Picture } from '../components/guest/guestUi';
 import { BusyLabel } from '../components/ui/BusyLabel';
@@ -23,6 +23,10 @@ import {
   type AnnouncementDraft,
   type DonationDrive,
   type GuestAnnouncement,
+  type GuestHotline,
+  type GuestPrayer,
+  type HotlineDraft,
+  type PrayerDraft,
   type DriveDraft,
   type DriveStatus,
   type GuestMessage,
@@ -33,11 +37,13 @@ import {
   type StoryDraft,
 } from '../services/guest/guestService';
 
-type Tab = 'inbox' | 'news' | 'stories' | 'drives' | 'merch';
+type Tab = 'inbox' | 'news' | 'hotlines' | 'stories' | 'prayer' | 'drives' | 'merch';
 const TABS: { key: Tab; label: string }[] = [
   { key: 'inbox', label: 'Messages' },
   { key: 'news', label: 'News' },
+  { key: 'hotlines', label: 'Hotlines' },
   { key: 'stories', label: 'PHILReads' },
+  { key: 'prayer', label: 'Prayer' },
   { key: 'drives', label: 'Drives' },
   { key: 'merch', label: 'Merch' },
 ];
@@ -214,7 +220,16 @@ function AnnouncementEditor({ draft, onClose, onSaved }: { draft: AnnouncementDr
     setD((x) => ({ ...x, ...patch }));
     setDirty(true);
   };
-  const ed = useEditor<AnnouncementDraft>(guestService.saveAnnouncement, guestService.removeAnnouncement, onSaved);
+  const ed = useEditor<AnnouncementDraft>(
+    async (x) => {
+      const saved = await guestService.saveAnnouncement(x);
+      // Guests who turned on alerts get an urgent one on their phones right away.
+      if (saved.level === 'urgent' && isLive(saved)) guestService.sendAlertsNow();
+      return saved;
+    },
+    guestService.removeAnnouncement,
+    onSaved,
+  );
   const level = ANNOUNCEMENT_LEVELS.find((l) => l.key === d.level)!;
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -258,6 +273,113 @@ function AnnouncementEditor({ draft, onClose, onSaved }: { draft: AnnouncementDr
         </div>
         <Field label="Link (optional)" note="An official bulletin or a map, if there is one.">
           <input type="url" inputMode="url" className="field font-normal" value={d.linkUrl ?? ''} onChange={(e) => set({ linkUrl: e.target.value })} maxLength={600} placeholder="https://" />
+        </Field>
+        <SwitchRow
+          label="Published"
+          note={d.isPublished ? (d.level === 'urgent' ? 'Guests can see it, and those who turned on alerts get it on their phones.' : 'Guests can see it.') : 'Only staff can see it here.'}
+          checked={d.isPublished}
+          onChange={(isPublished) => set({ isPublished })}
+        />
+      </form>
+    </Sheet>
+  );
+}
+
+// ───────────────────────── Hotlines ─────────────────────────
+
+const blankHotline = (order: number): HotlineDraft => ({ name: '', number: '', note: '', area: '', sortOrder: order, isListed: true });
+
+function HotlineEditor({ draft, onClose, onSaved }: { draft: HotlineDraft | null; onClose: () => void; onSaved: () => void }) {
+  const [d, setD] = useState<HotlineDraft>(() => blankHotline(0));
+  const [dirty, setDirty] = useState(false);
+  useEffect(() => {
+    if (draft) {
+      setD(draft);
+      setDirty(false);
+    }
+  }, [draft]);
+  const set = (patch: Partial<HotlineDraft>) => {
+    setD((x) => ({ ...x, ...patch }));
+    setDirty(true);
+  };
+  const ed = useEditor<HotlineDraft>(guestService.saveHotline, guestService.removeHotline, onSaved);
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!d.name.trim()) return ed.setError('Say whose number it is.');
+    if (!/^[0-9+() -]{3,30}$/.test(d.number.trim())) return ed.setError('Write the number with digits only (spaces, +, - and brackets are fine).');
+    void ed.run(d);
+  };
+  return (
+    <Sheet
+      open={!!draft}
+      onClose={onClose}
+      dirty={dirty}
+      title={draft?.id ? 'Edit hotline' : 'New hotline'}
+      subtitle="Guests tap it to call. Check the number before saving."
+      footer={<EditorFooter form="hotline-form" busy={ed.busy} error={ed.error} onDelete={d.id ? () => ed.del(d.id!) : undefined} what="hotline" />}
+    >
+      <form id="hotline-form" onSubmit={submit} noValidate className="flex flex-col gap-4">
+        <Field label="Name">
+          <input className="field font-normal" value={d.name} onChange={(e) => set({ name: e.target.value })} maxLength={100} placeholder="Albay PDRRMO" data-autofocus />
+        </Field>
+        <Field label="Number" note="As it is dialled from a phone, like 0917 123 4567 or (02) 8911-5061.">
+          <input className="field font-normal tabular-nums" inputMode="tel" value={d.number} onChange={(e) => set({ number: e.target.value })} maxLength={30} />
+        </Field>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Area (optional)" note="Province or city. Leave empty for a nationwide number.">
+            <input className="field font-normal" value={d.area ?? ''} onChange={(e) => set({ area: e.target.value })} maxLength={80} placeholder="Albay" />
+          </Field>
+          <Field label="Note (optional)">
+            <input className="field font-normal" value={d.note ?? ''} onChange={(e) => set({ note: e.target.value })} maxLength={160} placeholder="24 hours, rescue and evacuation" />
+          </Field>
+        </div>
+        <SwitchRow label="Shown to guests" checked={d.isListed} onChange={(isListed) => set({ isListed })} />
+      </form>
+    </Sheet>
+  );
+}
+
+// ───────────────────────── Prayer ─────────────────────────
+
+const blankPrayer = (): PrayerDraft => ({ title: '', body: '', area: '', isPublished: false });
+
+function PrayerEditor({ draft, onClose, onSaved }: { draft: PrayerDraft | null; onClose: () => void; onSaved: () => void }) {
+  const [d, setD] = useState<PrayerDraft>(blankPrayer);
+  const [dirty, setDirty] = useState(false);
+  useEffect(() => {
+    if (draft) {
+      setD(draft);
+      setDirty(false);
+    }
+  }, [draft]);
+  const set = (patch: Partial<PrayerDraft>) => {
+    setD((x) => ({ ...x, ...patch }));
+    setDirty(true);
+  };
+  const ed = useEditor<PrayerDraft>(guestService.savePrayer, guestService.removePrayer, onSaved);
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!d.title.trim()) return ed.setError('Give the prayer point a title.');
+    void ed.run(d);
+  };
+  return (
+    <Sheet
+      open={!!draft}
+      onClose={onClose}
+      dirty={dirty}
+      title={draft?.id ? 'Edit prayer point' : 'New prayer point'}
+      subtitle="Shown on Pray with us. Guests can say they prayed."
+      footer={<EditorFooter form="prayer-form" busy={ed.busy} error={ed.error} onDelete={d.id ? () => ed.del(d.id!) : undefined} what="prayer point" />}
+    >
+      <form id="prayer-form" onSubmit={submit} noValidate className="flex flex-col gap-4">
+        <Field label="Title">
+          <input className="field font-normal" value={d.title} onChange={(e) => set({ title: e.target.value })} maxLength={140} placeholder="Families in Cagayan as the river rises" data-autofocus />
+        </Field>
+        <Field label="What to pray for">
+          <textarea className="field min-h-32 font-normal leading-relaxed" value={d.body} onChange={(e) => set({ body: e.target.value })} maxLength={1500} />
+        </Field>
+        <Field label="Area (optional)">
+          <input className="field font-normal" value={d.area ?? ''} onChange={(e) => set({ area: e.target.value })} maxLength={120} placeholder="Cagayan Valley" />
         </Field>
         <SwitchRow label="Published" note={d.isPublished ? 'Guests can see it.' : 'Only staff can see it here.'} checked={d.isPublished} onChange={(isPublished) => set({ isPublished })} />
       </form>
@@ -333,7 +455,7 @@ function StoryEditor({ draft, onClose, onSaved }: { draft: StoryDraft | null; on
 
 // ───────────────────────── Drives ─────────────────────────
 
-const blankDrive = (): DriveDraft => ({ title: '', summary: '', impactNote: '', unit: 'PHP', goal: 0, raised: 0, donorCount: null, startsOn: new Date().toISOString().slice(0, 10), endsOn: null, howToGive: '', coverUrl: null, status: 'draft' });
+const blankDrive = (): DriveDraft => ({ title: '', summary: '', impactNote: '', unit: 'PHP', goal: 0, raised: 0, donorCount: null, startsOn: new Date().toISOString().slice(0, 10), endsOn: null, howToGive: '', coverUrl: null, status: 'draft', report: '', reportPhotos: [], reportReached: null });
 const DRIVE_STATUS: { key: DriveStatus; label: string; note: string }[] = [
   { key: 'draft', label: 'Draft', note: 'Only staff can see it.' },
   { key: 'open', label: 'Open', note: 'Shown to guests with its progress.' },
@@ -364,6 +486,7 @@ function DriveEditor({ draft, onClose, onSaved }: { draft: DriveDraft | null; on
     if (!money && !d.unit.trim()) return ed.setError('Say what is being collected, like “family packs”.');
     if (d.endsOn && d.startsOn && d.endsOn < d.startsOn) return ed.setError('The end date is before the start date.');
     if (d.status === 'open' && !d.howToGive?.trim()) return ed.setError('Add how to give before opening the drive.');
+    if (d.report?.trim() && d.status !== 'closed') return ed.setError('Close the drive before posting where the gifts went.');
     void ed.run({ ...d, unit: money ? 'PHP' : d.unit });
   };
   const numberField = (v: number | null, on: (n: number | null) => void, label: string, note?: string) => (
@@ -439,6 +562,30 @@ function DriveEditor({ draft, onClose, onSaved }: { draft: DriveDraft | null; on
           </div>
           <p className="mt-1.5 text-xs text-muted">{DRIVE_STATUS.find((s) => s.key === d.status)?.note}</p>
         </fieldset>
+        {d.status === 'closed' && (
+          <fieldset className="flex flex-col gap-4 border-t border-line/70 pt-4">
+            <legend className="sr-only">Where the gifts went</legend>
+            <div>
+              <p className="text-sm font-semibold text-ink">Where the gifts went</p>
+              <p className="text-xs text-muted">Shown on the finished drive, so donors see what their gift did.</p>
+            </div>
+            <Field label="What the gifts did">
+              <textarea className="field min-h-28 font-normal leading-relaxed" value={d.report ?? ''} onChange={(e) => set({ report: e.target.value })} maxLength={2000} placeholder="Your gifts bought 640 roofing sheets…" />
+            </Field>
+            {numberField(d.reportReached, (n) => set({ reportReached: n === null ? null : Math.round(n) }), 'Families reached (optional)')}
+            <div className="grid gap-4 sm:grid-cols-2">
+              {[...d.reportPhotos, ...(d.reportPhotos.length < 6 ? [null] : [])].map((url, i) => (
+                <ImageField
+                  key={url ?? `new-${i}`}
+                  label={url ? `Photo ${i + 1}` : d.reportPhotos.length ? 'Another photo' : 'Photos (up to 6)'}
+                  value={url}
+                  icon={HandCoins}
+                  onChange={(next) => set({ reportPhotos: next ? (url ? d.reportPhotos.map((x, j) => (j === i ? next : x)) : [...d.reportPhotos, next]) : d.reportPhotos.filter((_, j) => j !== i) })}
+                />
+              ))}
+            </div>
+          </fieldset>
+        )}
       </form>
     </Sheet>
   );
@@ -715,18 +862,22 @@ export function GuestAdminPage() {
   const tab = (TABS.find((t) => t.key === params.get('tab'))?.key ?? 'inbox') as Tab;
   const setTab = (t: Tab) => setParams((p) => (p.set('tab', t), p), { replace: true });
   const [note, setNote] = useState<AnnouncementDraft | null>(null);
+  const [hotline, setHotline] = useState<HotlineDraft | null>(null);
+  const [prayer, setPrayer] = useState<PrayerDraft | null>(null);
   const [story, setStory] = useState<StoryDraft | null>(null);
   const [drive, setDrive] = useState<DriveDraft | null>(null);
   const [item, setItem] = useState<MerchDraft | null>(null);
   const [reload, setReload] = useState(0);
   const saved = () => {
     setNote(null);
+    setHotline(null);
+    setPrayer(null);
     setStory(null);
     setDrive(null);
     setItem(null);
     setReload((n) => n + 1);
   };
-  const loaders = useMemo(() => ({ news: () => guestService.allAnnouncements(), stories: () => guestService.allStories(), drives: () => guestService.allDrives(), merch: () => guestService.allMerch() }), []);
+  const loaders = useMemo(() => ({ hotlines: () => guestService.allHotlines(), prayer: () => guestService.allPrayers(), news: () => guestService.allAnnouncements(), stories: () => guestService.allStories(), drives: () => guestService.allDrives(), merch: () => guestService.allMerch() }), []);
 
   if (!can('guest.manage'))
     return (
@@ -791,6 +942,55 @@ export function GuestAdminPage() {
           />
         </>
       )}
+      {tab === 'hotlines' && (
+        <>
+          <p className="text-sm text-ink-soft">Numbers guests can tap to call on the Hotlines screen. Add your provincial and city disaster offices, and check numbers now and then: agencies change them.</p>
+          <ListTab<GuestHotline>
+            load={loaders.hotlines}
+            reloadKey={reload}
+            newLabel="New hotline"
+            onNew={() => setHotline(blankHotline(100))}
+            onEdit={(h) => setHotline({ ...h, note: h.note ?? '', area: h.area ?? '' })}
+            empty={{ icon: Phone, title: 'No hotlines yet', body: 'Add the numbers people should call in an emergency, nationwide and in your areas.' }}
+            row={(h) => (
+              <>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-semibold text-ink">{h.name}</span>
+                  <span className="block truncate text-xs tabular-nums text-muted">
+                    {h.number}, {h.area ?? 'nationwide'}
+                  </span>
+                </span>
+                <State on={h.isListed}>{h.isListed ? 'Shown' : 'Hidden'}</State>
+              </>
+            )}
+          />
+        </>
+      )}
+      {tab === 'prayer' && (
+        <>
+          <p className="text-sm text-ink-soft">Prayer points for Pray with us: an area going through a disaster, a response, the people serving. Guests can press “I prayed”.</p>
+          <ListTab<GuestPrayer>
+            load={loaders.prayer}
+            reloadKey={reload}
+            newLabel="New prayer point"
+            onNew={() => setPrayer(blankPrayer())}
+            onEdit={(x) => setPrayer({ id: x.id, title: x.title, body: x.body, area: x.area ?? '', isPublished: x.isPublished })}
+            empty={{ icon: HeartHandshake, title: 'No prayer points yet', body: 'Post the first one: who to pray for this week, and why.' }}
+            row={(x) => (
+              <>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-semibold text-ink">{x.title}</span>
+                  <span className="block truncate text-xs tabular-nums text-muted">
+                    {x.prayedCount === 1 ? '1 prayed' : `${x.prayedCount.toLocaleString('en-PH')} prayed`}
+                    {x.area ? `, ${x.area}` : ''}
+                  </span>
+                </span>
+                <State on={x.isPublished}>{x.isPublished ? 'Published' : 'Draft'}</State>
+              </>
+            )}
+          />
+        </>
+      )}
       {tab === 'stories' && (
         <ListTab<GuestStory>
           load={loaders.stories}
@@ -820,7 +1020,7 @@ export function GuestAdminPage() {
           reloadKey={reload}
           newLabel="New drive"
           onNew={() => setDrive(blankDrive())}
-          onEdit={(d) => setDrive({ ...d, summary: d.summary ?? '', impactNote: d.impactNote ?? '', howToGive: d.howToGive ?? '' })}
+          onEdit={(d) => setDrive({ ...d, summary: d.summary ?? '', impactNote: d.impactNote ?? '', howToGive: d.howToGive ?? '', report: d.report ?? '' })}
           empty={{ icon: HandCoins, title: 'No drives yet', body: 'Start one when there is a need: say what it’s for, the goal and how to give.' }}
           row={(d) => (
             <>
@@ -861,6 +1061,8 @@ export function GuestAdminPage() {
       )}
 
       <AnnouncementEditor draft={note} onClose={() => setNote(null)} onSaved={saved} />
+      <HotlineEditor draft={hotline} onClose={() => setHotline(null)} onSaved={saved} />
+      <PrayerEditor draft={prayer} onClose={() => setPrayer(null)} onSaved={saved} />
       <StoryEditor draft={story} onClose={() => setStory(null)} onSaved={saved} />
       <DriveEditor draft={drive} onClose={() => setDrive(null)} onSaved={saved} />
       <MerchEditor draft={item} onClose={() => setItem(null)} onSaved={saved} />

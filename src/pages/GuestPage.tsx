@@ -2,11 +2,14 @@ import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRe
 import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft,
+  BellRing,
   BookOpen,
   ChevronRight,
+  CloudOff,
   ExternalLink,
   HandCoins,
   HandHeart,
+  HeartHandshake,
   LayoutGrid,
   LogIn,
   Map as MapIcon,
@@ -14,19 +17,27 @@ import {
   MessageSquareHeart,
   Navigation,
   Phone,
+  ShieldCheck,
   Shirt,
   Siren,
   X,
   type LucideIcon,
 } from 'lucide-react';
 import { PrismHero } from '../components/auth/PrismHero';
+import { AlertsSection } from '../components/guest/AlertsSection';
 import { DrivesSection } from '../components/guest/DrivesSection';
 import { FeedbackSection, isFeedbackKind } from '../components/guest/FeedbackSection';
 import type { GuestPick } from '../components/guest/GuestMap';
 import { SectionError } from '../components/guest/guestUi';
+import { HotlinesSection } from '../components/guest/HotlinesSection';
 import { MerchSection } from '../components/guest/MerchSection';
+import { NearMe, type Me } from '../components/guest/NearMe';
 import { NewsSection } from '../components/guest/NewsSection';
+import { PraySection } from '../components/guest/PraySection';
+import { PrepareSection } from '../components/guest/PrepareSection';
 import { StoriesSection } from '../components/guest/StoriesSection';
+import { freshAgain, kept, useOnline, useSavedCopyAt } from '../services/guest/offline';
+import { timeAgo } from '../lib/geo';
 import { CountBadge } from '../components/ui/CountBadge';
 import { PrismMark, PrismWord } from '../components/ui/PrismMark';
 import { SampleBadge } from '../components/ui/SampleBadge';
@@ -50,7 +61,7 @@ const GuestMap = lazy(() => import('../components/guest/GuestMap'));
  * two more screens (Merch, Feedback) inside More. Each screen has its own address, so the
  * phone's back button, shared links and reloads all land where they should.
  */
-type Screen = 'map' | 'news' | 'stories' | 'give' | 'more' | 'merch' | 'feedback';
+type Screen = 'map' | 'news' | 'stories' | 'give' | 'more' | 'merch' | 'feedback' | 'hotlines' | 'prepare' | 'alerts' | 'pray';
 type Tab = 'map' | 'stories' | 'give' | 'merch' | 'more';
 
 const TABS: { id: Tab; label: string; icon: LucideIcon }[] = [
@@ -70,15 +81,30 @@ const SCREENS: Record<Screen, { title: string; tab: Tab; section: string }> = {
   more: { title: 'More', tab: 'more', section: 'more' },
   merch: { title: 'Merch', tab: 'merch', section: 'merch' },
   feedback: { title: 'Feedback', tab: 'more', section: 'feedback' },
+  hotlines: { title: 'Hotlines', tab: 'more', section: 'hotlines' },
+  prepare: { title: 'Be prepared', tab: 'more', section: 'prepare' },
+  alerts: { title: 'Alerts', tab: 'more', section: 'alerts' },
+  pray: { title: 'Pray with us', tab: 'more', section: 'pray' },
 };
-/** Wide screens: the portal's own sidebar, in two groups (phones use the tabs, with Disaster News and Feedback under More). */
+/** Screens reached from More on phones: they get a way back, and a reading width. */
+const SUB: ReadonlySet<Screen> = new Set(['news', 'feedback', 'hotlines', 'prepare', 'alerts', 'pray']);
+/** Wide screens: the portal's own sidebar, in three groups (phones use the tabs, with the rest under More). */
 const SIDE: { group: string; items: { id: Screen; label: string; icon: LucideIcon }[] }[] = [
   {
-    group: 'Explore',
+    group: 'Stay safe',
     items: [
       { id: 'map', label: 'Live Map', icon: MapIcon },
       { id: 'news', label: 'Disaster News', icon: Siren },
+      { id: 'hotlines', label: 'Hotlines', icon: Phone },
+      { id: 'prepare', label: 'Be prepared', icon: ShieldCheck },
+      { id: 'alerts', label: 'Alerts', icon: BellRing },
+    ],
+  },
+  {
+    group: 'Stories and prayer',
+    items: [
       { id: 'stories', label: 'PHILReads', icon: BookOpen },
+      { id: 'pray', label: 'Pray with us', icon: HeartHandshake },
     ],
   },
   {
@@ -301,8 +327,14 @@ function MoreRow({ to, href, icon: Icon, title, note, dot }: { to?: string; href
 function MoreScreen({ live }: { live: boolean }) {
   return (
     <div className="flex max-w-xl flex-col gap-6">
-      <ul className="divide-y divide-line/70 overflow-hidden rounded-2xl border border-line bg-surface">
+      <ul className="divide-y divide-line/70 overflow-hidden rounded-2xl border border-line bg-surface" aria-label="Stay safe">
         <MoreRow to="/guest/news" icon={Siren} title="Disaster News" note="PHILRADS announcements, typhoons, floods and earthquakes" dot={live} />
+        <MoreRow to="/guest/hotlines" icon={Phone} title="Hotlines" note="Emergency numbers, one tap to call" />
+        <MoreRow to="/guest/prepare" icon={ShieldCheck} title="Be prepared" note="Go bag, family plan, and what to do in a disaster" />
+        <MoreRow to="/guest/alerts" icon={BellRing} title="Alerts" note="Notifications for typhoons near you and urgent news" />
+      </ul>
+      <ul className="divide-y divide-line/70 overflow-hidden rounded-2xl border border-line bg-surface" aria-label="Stay close">
+        <MoreRow to="/guest/pray" icon={HeartHandshake} title="Pray with us" note="This week’s prayer points" />
         <MoreRow to="/guest/feedback" icon={MessageSquareHeart} title="Feedback" note="Say thanks, tell us a need, or offer to volunteer" />
       </ul>
       <ul className="divide-y divide-line/70 overflow-hidden rounded-2xl border border-line bg-surface">
@@ -453,18 +485,37 @@ export function GuestPage() {
   const screen: Screen = isScreen(param) ? param : 'map';
   const meta = SCREENS[screen];
 
-  // Everything loads once, so moving between tabs is instant.
-  const overview = useAsyncData(useCallback(() => guestService.overview(), []));
-  const feed = useAsyncData(useCallback(() => guestService.hazards(), []));
-  const stories = useAsyncData(useCallback(() => guestService.stories(), []));
-  const notes = useAsyncData(useCallback(() => guestService.announcements(), []));
-  const facebook = useAsyncData(useCallback(() => guestService.facebook(), []));
-  const drives = useAsyncData(useCallback(() => guestService.drives(), []));
-  const merch = useAsyncData(useCallback(() => guestService.merch(), []));
+  // Everything loads once, so moving between tabs is instant; each keeps a copy on the phone for when the signal goes.
+  const overview = useAsyncData(useCallback(() => kept('overview', () => guestService.overview()), []));
+  const feed = useAsyncData(useCallback(() => kept('hazards', () => guestService.hazards()), []));
+  const stories = useAsyncData(useCallback(() => kept('stories', () => guestService.stories()), []));
+  const notes = useAsyncData(useCallback(() => kept('announcements', () => guestService.announcements()), []));
+  const facebook = useAsyncData(useCallback(() => kept('facebook', () => guestService.facebook(), (f) => !f.posts.length), []));
+  const drives = useAsyncData(useCallback(() => kept('drives', () => guestService.drives()), []));
+  const merch = useAsyncData(useCallback(() => kept('merch', () => guestService.merch()), []));
+  const hotlines = useAsyncData(useCallback(() => kept('hotlines', () => guestService.hotlines()), []));
+  const prayers = useAsyncData(useCallback(() => kept('prayers', () => guestService.prayers()), []));
+
+  // Back online after showing saved copies: load everything afresh.
+  const online = useOnline();
+  const savedAt = useSavedCopyAt();
+  const wasOnline = useRef(online);
+  useEffect(() => {
+    if (online && !wasOnline.current && savedAt) {
+      freshAgain();
+      for (const d of [overview, feed, stories, notes, facebook, drives, merch, hotlines, prayers]) d.reload();
+    }
+    wasOnline.current = online;
+  }, [online]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [layers, setLayers] = useState({ work: true, places: true, hazards: true });
   const [pick, setPick] = useState<GuestPick>(null);
   const [focus, setFocus] = useState<{ lat: number; lng: number; key: number } | null>(null);
+  const [me, setMe] = useState<Me | null>(null);
+  const showMe = useCallback((m: Me | null) => {
+    setMe(m);
+    if (m) setFocus({ ...m, key: Date.now() });
+  }, []);
   const hazards = feed.data?.hazards ?? [];
   // News has something now: an alert happening, or an urgent PHILRADS announcement (a dot, as portal news gets).
   const live = hazards.some((h) => h.current) || (notes.data ?? []).some((a) => a.level === 'urgent');
@@ -474,7 +525,7 @@ export function GuestPage() {
   const onPick = useCallback((p: GuestPick) => setPick(p), []);
 
   // First visit only, and not over a shared link to a drive or story.
-  const [welcome, setWelcome] = useState(() => !welcomedBefore() && screen === 'map' && !location.hash && !search.get('story'));
+  const [welcome, setWelcome] = useState(() => !welcomedBefore() && screen === 'map' && !location.hash && !search.get('story') && !search.get('drive'));
   const closeWelcome = useCallback(() => {
     setWelcome(false);
     try {
@@ -502,13 +553,15 @@ export function GuestPage() {
     if (screen !== 'map') setFocus(null);
   }, [screen]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Arriving on a shared drive link: go to it once the drives are in.
+  // Arriving on a shared drive or prayer link: go to it once the list is in.
+  const driveParam = search.get('drive');
   useEffect(() => {
-    if (screen === 'give' && drives.status === 'success' && location.hash.startsWith('#drive-')) {
-      const t = setTimeout(() => go(location.hash.slice(1)), 150);
+    const target = screen === 'give' && drives.status === 'success' ? (driveParam ? `drive-${driveParam}` : location.hash.startsWith('#drive-') ? location.hash.slice(1) : null) : screen === 'pray' && prayers.status === 'success' && location.hash.startsWith('#prayer-') ? location.hash.slice(1) : null;
+    if (target) {
+      const t = setTimeout(() => go(target), 150);
       return () => clearTimeout(t);
     }
-  }, [drives.status, screen, location.hash]);
+  }, [drives.status, prayers.status, screen, location.hash, driveParam]);
 
   const legacy = screen === 'map' ? legacyTarget(location.hash, search) : null;
   if (legacy) return <Navigate to={legacy} replace />;
@@ -532,7 +585,7 @@ export function GuestPage() {
   };
 
   const sample = guestService.source === 'mock';
-  const sub = screen === 'news' || screen === 'feedback';
+  const sub = SUB.has(screen);
   const about = search.get('about');
 
   const hazardsShown = layers.hazards ? (pick?.type === 'hazard' && !recent.some((h) => h.id === pick.id) ? [...recent, ...hazards.filter((h) => h.id === pick.id)] : recent) : [];
@@ -567,11 +620,21 @@ export function GuestPage() {
             </div>
           ) : (
             <Suspense fallback={<div className="skeleton h-full w-full rounded-none" />}>
-              <GuestMap sites={layers.work ? overview.data?.sites ?? [] : []} places={layers.places ? overview.data?.places ?? [] : []} hazards={hazardsShown} pick={pick} onPick={onPick} focus={focus} />
+              <GuestMap sites={layers.work ? overview.data?.sites ?? [] : []} places={layers.places ? overview.data?.places ?? [] : []} hazards={hazardsShown} pick={pick} onPick={onPick} focus={focus} me={me} />
             </Suspense>
           )}
         </div>
         <div className="flex flex-col gap-3 xl:col-start-2 xl:row-start-2">
+          <NearMe
+            places={overview.data?.places ?? []}
+            me={me}
+            onMe={showMe}
+            onShow={(p) => {
+              setLayers((l) => ({ ...l, places: true }));
+              setPick({ type: 'place', id: p.id });
+              setFocus({ lat: p.lat, lng: p.lng, key: Date.now() });
+            }}
+          />
           <Picked pick={pick} overview={overview.data} hazards={hazards} onClose={() => setPick(null)} />
           {!pick && <p className="hidden text-sm text-muted xl:block">Press a dot, a place or a hazard on the map to see what it is.</p>}
           {layers.work && programsShown.length > 0 && (
@@ -592,11 +655,15 @@ export function GuestPage() {
   else if (screen === 'stories') body = <StoriesSection stories={stories} onRetry={stories.reload} />;
   else if (screen === 'give') body = <DrivesSection drives={drives} onRetry={drives.reload} />;
   else if (screen === 'merch') body = <MerchSection merch={merch} onRetry={merch.reload} />;
+  else if (screen === 'hotlines') body = <HotlinesSection hotlines={hotlines} onRetry={hotlines.reload} />;
+  else if (screen === 'prepare') body = <PrepareSection />;
+  else if (screen === 'alerts') body = <AlertsSection />;
+  else if (screen === 'pray') body = <PraySection prayers={prayers} onRetry={prayers.reload} />;
   else if (screen === 'feedback') body = <FeedbackSection key={about ?? ''} initialKind={isFeedbackKind(about) ? about : undefined} />;
   else body = <MoreScreen live={live} />;
 
   // Reading pages keep a comfortable line length; drives and merch use the width.
-  const measure = screen === 'news' || screen === 'stories' || screen === 'feedback' ? 'max-w-3xl' : '';
+  const measure = SUB.has(screen) || screen === 'stories' ? 'max-w-3xl' : '';
 
   return (
     <div className="min-h-dvh">
@@ -640,6 +707,15 @@ export function GuestPage() {
             </div>
             {sample && <SampleBadge />}
           </div>
+          {(!online || savedAt) && (
+            <p role="status" className="mb-5 flex items-start gap-2.5 rounded-xl border border-status-low/40 bg-status-low/10 px-4 py-3 text-sm text-ink">
+              <CloudOff className="mt-0.5 h-4 w-4 shrink-0 text-status-low" aria-hidden />
+              <span>
+                {online ? 'PHILRADS can’t be reached right now.' : 'You’re offline.'}{' '}
+                {savedAt ? `Showing what was saved ${timeAgo(savedAt)}.` : 'What you’ve opened stays on screen.'} Hotlines and Be prepared work without a signal.
+              </span>
+            </p>
+          )}
           {/* Keyed by screen so each one fades in, as portal pages do. */}
           <div key={screen} className={`animate-fade-in ${measure}`}>
             {body}
