@@ -1,6 +1,6 @@
-import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Activity, BellRing, BookOpen, ChevronRight, Flame, HandCoins, HeartHandshake, Lock, MapPin, Megaphone, MessageCircle, Mountain, Newspaper, Phone, Plus, ShieldCheck, Shirt, Siren, Sparkles, Sun, TrendingUp, Waves, Wind, type LucideIcon } from 'lucide-react';
+import { Activity, BellRing, BookOpen, ChevronLeft, ChevronRight, Flame, HandCoins, HeartHandshake, Lock, MapPin, Megaphone, MessageCircle, Mountain, Newspaper, Phone, Plus, ShieldCheck, Shirt, Siren, Sparkles, Sun, TrendingUp, Waves, Wind, type LucideIcon } from 'lucide-react';
 import { forumService } from '../../services';
 import { useAuth } from '../auth/AuthProvider';
 import { useGuestAccount } from '../../services/guest/account';
@@ -156,6 +156,51 @@ const KIND_ICON: Record<HazardKind, LucideIcon> = { typhoon: Wind, flood: Waves,
 /** A row that scrolls sideways, edge to edge, snapping to each item. */
 const stripCls = 'flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden';
 
+/**
+ * A sideways row. Touch screens swipe it; with a mouse, arrows at each end move it a screenful
+ * (each shows only when there is more that way).
+ */
+function ScrollRow({ label, className, children }: { label: string; className: string; children: ReactNode }) {
+  const row = useRef<HTMLUListElement>(null);
+  const [ends, setEnds] = useState({ start: true, end: true });
+  const measure = useCallback(() => {
+    const el = row.current;
+    if (el) setEnds({ start: el.scrollLeft <= 4, end: el.scrollLeft + el.clientWidth >= el.scrollWidth - 4 });
+  }, []);
+  useEffect(() => {
+    const el = row.current;
+    if (!el) return;
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [measure, children]);
+  const move = (dir: 1 | -1) => {
+    const el = row.current;
+    if (el) el.scrollBy({ left: dir * el.clientWidth * 0.85, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  };
+  const arrow = (dir: 1 | -1, hidden: boolean) => (
+    <button
+      type="button"
+      onClick={() => move(dir)}
+      tabIndex={-1}
+      aria-hidden
+      className={`absolute top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-line bg-surface-raised/95 text-ink shadow-lg shadow-black/30 transition-opacity hover:bg-surface-raised [@media(hover:hover)]:grid ${dir < 0 ? 'left-2' : 'right-2'} ${hidden ? 'pointer-events-none opacity-0' : 'opacity-100'}`}
+    >
+      {dir < 0 ? <ChevronLeft className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
+    </button>
+  );
+  return (
+    <div className="relative">
+      <ul ref={row} aria-label={label} onScroll={measure} className={`${stripCls} ${className}`}>
+        {children}
+      </ul>
+      {arrow(-1, ends.start)}
+      {arrow(1, ends.end)}
+    </div>
+  );
+}
+
 function StripHead({ title, icon: Icon, to, more }: { title: string; icon: LucideIcon; to: string; more: string }) {
   return (
     <div className="flex items-center justify-between px-4 pt-2 sm:px-5">
@@ -193,7 +238,7 @@ function NewsStrip({ hazards, notes, facebook }: { hazards: Hazard[]; notes: Gue
   return (
     <section aria-label="Disaster News" className="-mx-4 border-t border-line/70 sm:-mx-6">
       <StripHead title="Disaster News" icon={Siren} to="/guest/news" more="All news" />
-      <ul className={`${stripCls} scroll-px-2 px-2 pb-3 sm:scroll-px-3 sm:px-3`}>
+      <ScrollRow label="Latest news" className="scroll-px-2 px-2 pb-3 sm:scroll-px-3 sm:px-3">
         {items.map((i) => {
           const body = (
             <>
@@ -227,7 +272,7 @@ function NewsStrip({ hazards, notes, facebook }: { hazards: Hazard[]; notes: Gue
             </li>
           );
         })}
-      </ul>
+      </ScrollRow>
     </section>
   );
 }
@@ -239,7 +284,7 @@ function MerchStrip({ merch }: { merch: MerchItem[] }) {
   return (
     <section aria-label="Merch">
       <StripHead title="Merch" icon={Shirt} to="/guest/merch" more="Shop" />
-      <ul className={`${stripCls} scroll-px-4 gap-3 px-4 pb-4 pt-1 sm:scroll-px-5 sm:px-5`}>
+      <ScrollRow label="Merch" className="scroll-px-4 gap-3 px-4 pb-4 pt-1 sm:scroll-px-5 sm:px-5">
         {list.map((m) => (
           <li key={m.id} className="w-36 shrink-0 snap-start sm:w-40">
             <Link to="/guest/merch" className="group flex flex-col">
@@ -249,7 +294,7 @@ function MerchStrip({ merch }: { merch: MerchItem[] }) {
             </Link>
           </li>
         ))}
-      </ul>
+      </ScrollRow>
     </section>
   );
 }
