@@ -1107,6 +1107,17 @@
 dialog[data-closing]::backdrop {
   animation: exit-fade 200ms ease-in forwards;
 }
+/* Behind any open modal: the page is blurred and stays put (scrolling stays inside the modal). */
+dialog::backdrop {
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+html:has(dialog:modal) {
+  overflow: hidden;
+}
+dialog:modal {
+  overscroll-behavior: contain;
+}
 dialog[data-closing] {
   pointer-events: none;
 }
