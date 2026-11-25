@@ -31,6 +31,8 @@ export interface ForumPost {
   pinned: boolean;
   createdAt: string;
   author: ForumAuthor;
+  /** The post's picture (a web address), if it has one. */
+  image: string | null;
   voted: boolean;
   mine: boolean;
   /** Only its author and staff see a hidden or deleted post. */
@@ -79,7 +81,8 @@ export interface ForumService {
   feed(topic: string | null, sort: ForumSort, offset?: number): Promise<ForumPost[]>;
   post(id: string): Promise<ForumPost | null>;
   comments(postId: string): Promise<ForumComment[]>;
-  createPost(topic: string, title: string, body: string): Promise<string>;
+  /** `picture` is already shrunk (shrinkPicture). */
+  createPost(topic: string, title: string, body: string, picture?: Blob | null): Promise<string>;
   comment(postId: string, parentId: string | null, body: string): Promise<string>;
   /** Upvote, or take it back. Returns the new count. */
   vote(kind: ForumKind, id: string, on: boolean): Promise<number>;
@@ -109,6 +112,7 @@ const toPost = (r: Row): ForumPost => ({
   pinned: Boolean(r.pinned),
   createdAt: r.created_at as string,
   author: author(r),
+  image: null,
   voted: Boolean(r.voted),
   mine: Boolean(r.mine),
   hidden: Boolean(r.hidden),
@@ -128,11 +132,41 @@ const toComment = (r: Row): ForumComment => ({
 });
 
 /** The database's own words ("Sign in to take part", "You've posted a lot this hour…"). */
+/** Pictures people pick are often huge phone photos: this makes one at most 1600 px across, as WebP (or JPEG where WebP can't be made). */
+export async function shrinkPicture(file: File): Promise<Blob> {
+  if (!/^image\/(jpeg|png|webp|heic|heif|gif)$/.test(file.type)) throw new Error('Choose a photo (JPG, PNG or WebP).');
+  if (file.size > 25 * 1024 * 1024) throw new Error('That picture is too big. Choose one under 25 MB.');
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const i = new Image();
+    i.onload = () => resolve(i);
+    i.onerror = () => reject(new Error('That picture couldn’t be read. Try another.'));
+    i.src = URL.createObjectURL(file);
+  });
+  try {
+    const k = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(img.naturalWidth * k));
+    c.height = Math.max(1, Math.round(img.naturalHeight * k));
+    const ctx = c.getContext('2d')!;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, 0, 0, c.width, c.height);
+    const as = (type: string) => new Promise<Blob | null>((r) => c.toBlob(r, type, 0.82));
+    const webp = await as('image/webp');
+    const blob = webp?.type === 'image/webp' ? webp : await as('image/jpeg');
+    if (!blob) throw new Error('That picture couldn’t be read. Try another.');
+    if (blob.size > 2 * 1024 * 1024) throw new Error('That picture is too big. Try another.');
+    return blob;
+  } finally {
+    URL.revokeObjectURL(img.src);
+  }
+}
+
 const fail = (error: { message: string } | null) => {
   if (error) throw new Error(error.message || 'That didn’t work. Try again.');
 };
 
 export function createSupabaseForumService(client: SupabaseClient): ForumService {
+  const withImage = (r: Row): ForumPost => ({ ...toPost(r), image: r.image_path ? client.storage.from('forum-media').getPublicUrl(r.image_path as string).data.publicUrl : null });
   return {
     source: 'supabase',
     async topics() {
@@ -143,21 +177,33 @@ export function createSupabaseForumService(client: SupabaseClient): ForumService
     async feed(topic, sort, offset = 0) {
       const { data, error } = await client.rpc('forum_feed', { p_topic: topic, p_sort: sort, p_limit: FORUM_PAGE, p_offset: offset });
       fail(error);
-      return ((data ?? []) as Row[]).map(toPost);
+      return ((data ?? []) as Row[]).map(withImage);
     },
     async post(id) {
       const { data, error } = await client.rpc('forum_post', { p_id: id });
       fail(error);
       const r = ((data ?? []) as Row[])[0];
-      return r ? toPost(r) : null;
+      return r ? withImage(r) : null;
     },
     async comments(postId) {
       const { data, error } = await client.rpc('forum_comments_of', { p_post: postId });
       fail(error);
       return ((data ?? []) as Row[]).map(toComment);
     },
-    async createPost(topic, title, body) {
-      const { data, error } = await client.rpc('forum_create_post', { p_topic: topic, p_title: title, p_body: body });
+    async createPost(topic, title, body, picture) {
+      let path: string | null = null;
+      if (picture) {
+        const { data: who } = await client.auth.getUser();
+        if (!who.user) throw new Error('Sign in to post');
+        path = `${who.user.id}/${crypto.randomUUID()}.${picture.type === 'image/webp' ? 'webp' : picture.type === 'image/png' ? 'png' : 'jpg'}`;
+        const up = await client.storage.from('forum-media').upload(path, picture, { contentType: picture.type, cacheControl: '31536000', upsert: false });
+        if (up.error) {
+          console.error('[forum] upload', up.error);
+          throw new Error('The picture didn’t upload. Check the connection and try again.');
+        }
+      }
+      const { data, error } = await client.rpc('forum_create_post', { p_topic: topic, p_title: title, p_body: body, p_image: path });
+      if (error && path) await client.storage.from('forum-media').remove([path]);
       fail(error);
       return data as string;
     },
@@ -218,7 +264,8 @@ const TOPICS: ForumTopic[] = [
   { key: 'fundraising', name: 'Fundraising', description: 'Fundraisers, and ideas to raise more.', staffOnly: false },
 ];
 
-interface MockPost extends Omit<ForumPost, 'voted' | 'mine'> {
+interface MockPost extends Omit<ForumPost, 'voted' | 'mine' | 'image'> {
+  image?: string | null;
   voters: Set<string>;
 }
 interface MockComment extends Omit<ForumComment, 'voted' | 'mine'> {
@@ -276,7 +323,7 @@ export function createMockForumService(): ForumService {
   };
   const wait = () => new Promise((r) => setTimeout(r, 120));
   const uid = () => me()?.id ?? '';
-  const out = (p: MockPost): ForumPost => ({ ...p, voted: p.voters.has(uid()), mine: p.author.id === uid(), score: p.voters.size });
+  const out = (p: MockPost): ForumPost => ({ ...p, image: p.image ?? null, voted: p.voters.has(uid()), mine: p.author.id === uid(), score: p.voters.size });
   const live = (p: MockPost) => !p.hidden && !p.deleted;
 
   return {
@@ -321,7 +368,7 @@ export function createMockForumService(): ForumService {
           deleted: c.deleted,
         }));
     },
-    async createPost(topic, title, body) {
+    async createPost(topic, title, body, picture) {
       const a = need();
       const t = TOPICS.find((x) => x.key === topic);
       if (!t) throw new Error('Choose a topic');
@@ -329,7 +376,7 @@ export function createMockForumService(): ForumService {
       if (title.trim().length < 3) throw new Error('Give your post a title');
       await wait();
       const id = `p-${Date.now()}`;
-      db.posts.unshift({ id, topic, title: title.trim(), body: body.trim(), score: 0, commentCount: 0, pinned: false, createdAt: new Date().toISOString(), author: a, hidden: false, deleted: false, voters: new Set() });
+      db.posts.unshift({ id, topic, title: title.trim(), body: body.trim(), image: picture ? URL.createObjectURL(picture) : null, score: 0, commentCount: 0, pinned: false, createdAt: new Date().toISOString(), author: a, hidden: false, deleted: false, voters: new Set() });
       return id;
     },
     async comment(postId, parentId, body) {

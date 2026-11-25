@@ -152,7 +152,7 @@ export function MerchSection({ merch, onRetry }: { merch: AsyncState<MerchItem[]
   const [ordering, setOrdering] = useState<MerchItem | null>(null);
   const list = merch.data ?? [];
   return (
-    <GuestSection id="merch" title="Merch" lead="Shirts and everyday things with the PHILRADS mark. What we earn from them goes into relief work.">
+    <GuestSection id="merch" title="Merch" lead="Every sale goes to relief work.">
       {merch.status === 'loading' ? (
         <RowsLoading rows={2} />
       ) : merch.status === 'error' ? (

@@ -201,7 +201,7 @@ export function PrepareSection() {
   const ticked = list?.some((i) => ticks.has(i.id));
 
   return (
-    <GuestSection id="prepare" title="Be prepared" lead="Get ready before the next typhoon, flood or earthquake. Your ticks are saved on this phone, and this page works without a signal.">
+    <GuestSection id="prepare" title="Be prepared" lead="Ready before the next disaster. Works offline.">
       <div role="tablist" aria-label="Guides" className="mb-5 flex flex-wrap gap-2">
         {GUIDES.map((g) => (
           <button key={g.key} type="button" role="tab" aria-selected={guide === g.key} aria-pressed={guide === g.key} className="chip min-h-9" onClick={() => setGuide(g.key)}>

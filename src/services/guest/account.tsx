@@ -26,7 +26,7 @@ export type GuestPatch = Partial<Pick<GuestMe, 'name' | 'bio' | 'avatar' | 'colo
 
 export interface Here {
   /** Signed-in guests here now (you first), as they chose to be shown. */
-  people: { id: string; name: string; initials: string; color: string | null; avatar: string | null; me: boolean }[];
+  people: { id: string; name: string; initials: string; color: string | null; avatar: string | null; bio: string; me: boolean }[];
   /** Everyone on the guest page now, signed in or not. */
   count: number;
 }
@@ -75,9 +75,9 @@ const write = (key: string, v: unknown) => {
 };
 
 const SAMPLE_HERE: Here['people'] = [
-  { id: 's-1', name: 'Joy', initials: 'J', color: '#3f8f5b', avatar: null, me: false },
-  { id: 's-2', name: 'Marco', initials: 'M', color: '#3c5fa8', avatar: null, me: false },
-  { id: 's-3', name: 'Liza', initials: 'L', color: '#a03f7a', avatar: null, me: false },
+  { id: 's-1', name: 'Joy', initials: 'J', color: '#3f8f5b', avatar: null, bio: 'From Tacloban. Praying for the families in Cagayan.', me: false },
+  { id: 's-2', name: 'Marco', initials: 'M', color: '#3c5fa8', avatar: null, bio: 'Rice mill in Nueva Ecija. Happy to help with deliveries.', me: false },
+  { id: 's-3', name: 'Liza', initials: 'L', color: '#a03f7a', avatar: null, bio: '', me: false },
 ];
 
 export function GuestAccountProvider({ children }: { children: ReactNode }) {
@@ -182,7 +182,7 @@ function useHere(sample: boolean, me: GuestMe | null, shown: boolean): Here {
     channelRef.current = channel;
     channel
       .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState<{ guest?: { id: string; name: string; color: string | null; avatar: string | null } }>();
+        const state = channel.presenceState<{ guest?: { id: string; name: string; color: string | null; avatar: string | null; bio?: string } }>();
         const seen = new Map<string, Here['people'][number]>();
         for (const metas of Object.values(state))
           for (const m of metas)
@@ -193,6 +193,7 @@ function useHere(sample: boolean, me: GuestMe | null, shown: boolean): Here {
                 initials: initialsOf(m.guest.name),
                 color: typeof m.guest.color === 'string' && /^#[0-9a-f]{6}$/i.test(m.guest.color) ? m.guest.color : null,
                 avatar: typeof m.guest.avatar === 'string' && m.guest.avatar.startsWith('data:image/') ? m.guest.avatar : null,
+                bio: typeof m.guest.bio === 'string' ? m.guest.bio.slice(0, 160) : '',
                 me: false,
               });
         setHere({ people: [...seen.values()], count: Math.max(1, Object.keys(state).length) });
@@ -205,7 +206,7 @@ function useHere(sample: boolean, me: GuestMe | null, shown: boolean): Here {
   }, [sample]);
 
   // Share who you are (or just that someone is here).
-  const payload = me && shown ? { guest: { id: me.id, name: me.name, color: me.color, avatar: me.avatar && me.avatar.length < 40_000 ? me.avatar : null } } : { guest: null };
+  const payload = me && shown ? { guest: { id: me.id, name: me.name, color: me.color, avatar: me.avatar && me.avatar.length < 40_000 ? me.avatar : null, bio: me.bio.slice(0, 160) } } : { guest: null };
   const sig = JSON.stringify(payload);
   useEffect(() => {
     const channel = channelRef.current;
@@ -224,7 +225,7 @@ function useHere(sample: boolean, me: GuestMe | null, shown: boolean): Here {
   }, [sig]);
 
   if (sample) {
-    const people = [...(me && shown ? [{ id: me.id, name: me.name, initials: me.initials, color: me.color, avatar: me.avatar, me: true }] : []), ...SAMPLE_HERE];
+    const people = [...(me && shown ? [{ id: me.id, name: me.name, initials: me.initials, color: me.color, avatar: me.avatar, bio: me.bio, me: true }] : []), ...SAMPLE_HERE];
     return { people, count: people.length + 4 };
   }
   const people = here.people.map((p) => ({ ...p, me: p.id === myId }));

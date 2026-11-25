@@ -1,5 +1,38 @@
 [
   {
+    "id": "2026-11-25.7",
+    "version": "1.17.0",
+    "date": "2026-11-25",
+    "title": "Pictures in the community, and news up top",
+    "items": [
+      {
+        "icon": "camera",
+        "title": "Post a picture",
+        "body": "Guests can add a picture to a community post. It shows whole, never cropped.",
+        "guestPath": "/guest"
+      },
+      {
+        "icon": "bell-ring",
+        "title": "News first",
+        "body": "Disaster News runs across the top of the guest home, with each post's picture and headline, and has its own tab on phones. The Live Map moved under More. Merch shows as a row you swipe through.",
+        "path": "/guest-admin",
+        "guestPath": "/guest/news"
+      },
+      {
+        "icon": "user",
+        "title": "Guest profiles like staff profiles",
+        "body": "Guest profiles now look and work like yours: a live preview card, any colour, light or dark, and a bar to save. Tap someone in Who's here to see their card. Badges are coming.",
+        "guestPath": "/guest/me"
+      },
+      {
+        "icon": "toggle-right",
+        "title": "Fold the guest menu",
+        "body": "On a computer, the guest page's menu folds to icons, as the portal's does.",
+        "guestPath": "/guest/more"
+      }
+    ]
+  },
+  {
     "id": "2026-11-25.6",
     "version": "1.16.0",
     "date": "2026-11-25",

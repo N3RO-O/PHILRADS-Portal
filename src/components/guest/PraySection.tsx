@@ -99,7 +99,7 @@ export function PraySection({ prayers, onRetry }: { prayers: AsyncState<GuestPra
     <GuestSection
       id="pray"
       title="Pray with us"
-      lead="Join us in praying for the families going through a disaster, and for the people serving them."
+      lead="For families in disasters, and those serving them."
     >
       {prayers.status === 'loading' ? (
         <RowsLoading rows={2} />

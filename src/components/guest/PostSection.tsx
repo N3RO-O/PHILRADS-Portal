@@ -313,6 +313,11 @@ export function PostSection() {
           {post.title}
         </h1>
         {post.body && <p className="whitespace-pre-wrap break-words text-base leading-relaxed text-ink">{post.body}</p>}
+        {post.image && (
+          <a href={post.image} target="_blank" rel="noopener noreferrer" className="self-start" aria-label="Open the picture full size">
+            <img src={post.image} alt="" className="max-h-[40rem] w-auto max-w-full rounded-xl bg-surface-sunken" />
+          </a>
+        )}
         <div className="-ml-2 flex flex-wrap items-center">
           <Upvote count={post.score} on={post.voted} label={post.title} onToggle={() => needIn('Sign in to upvote', () => void votePost())} />
           <span className="inline-flex h-8 items-center gap-1.5 px-2.5 text-xs font-semibold text-ink-soft">

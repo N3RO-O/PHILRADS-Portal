@@ -68,7 +68,7 @@ export function FeedbackSection({ initialKind }: { initialKind?: FeedbackKind })
   };
 
   return (
-    <GuestSection id="feedback" title="Feedback" lead="Tell us how we did, what your community needs, or how you'd like to help. Your name is optional.">
+    <GuestSection id="feedback" title="Feedback" lead="Thanks, needs or offers to help. Your name is optional.">
       {sent ? (
         <div role="status" className="flex flex-col items-start gap-3 rounded-2xl bg-surface-sunken p-5">
           <SuccessTick className="h-10 w-10" />

@@ -139,7 +139,7 @@ export function DrivesSection({ drives, onRetry }: { drives: AsyncState<Donation
   const reported = done.filter((d) => d.report).sort((a, b) => (b.reportedAt ?? '').localeCompare(a.reportedAt ?? ''));
   const quiet = done.filter((d) => !d.report);
   return (
-    <GuestSection id="drives" title="Fundraising" lead="Each fundraiser says what it's for and how close it is. Staff update the totals as gifts are counted.">
+    <GuestSection id="drives" title="Fundraising" lead="Every gift is counted here.">
       {drives.status === 'loading' ? (
         <RowsLoading rows={2} />
       ) : drives.status === 'error' ? (

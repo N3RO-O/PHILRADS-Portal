@@ -46,7 +46,7 @@ export function HotlinesSection({ hotlines, onRetry }: { hotlines: AsyncState<Gu
   const anyLocal = list.some((h) => h.area);
 
   return (
-    <GuestSection id="hotlines" title="Hotlines" lead="Numbers to call in an emergency. Tap one to call. In danger right now? Call 911.">
+    <GuestSection id="hotlines" title="Hotlines" lead="Tap to call. In danger now? Call 911.">
       {hotlines.status === 'loading' ? (
         <RowsLoading />
       ) : hotlines.status === 'error' && !list.length ? (

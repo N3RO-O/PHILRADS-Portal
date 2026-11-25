@@ -197,7 +197,7 @@ export function NewsSection({
     <GuestSection
       id="news"
       title="Disaster News"
-      lead="Announcements and posts from PHILRADS, and typhoons, floods, earthquakes and volcanoes affecting the Philippines from international alert systems. Always follow the official advisories below."
+      lead="From PHILRADS and global alert systems. Follow official advisories."
       aside={
         <Link to="/guest/alerts" className="chip min-h-9 shrink-0 gap-1.5">
           <BellRing className="h-4 w-4" aria-hidden /> Get alerts

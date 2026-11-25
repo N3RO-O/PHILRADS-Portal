@@ -5,6 +5,7 @@ import {
   BellRing,
   BookOpen,
   ChevronRight,
+  ChevronsLeft,
   CloudOff,
   ExternalLink,
   HandCoins,
@@ -53,6 +54,7 @@ import { PrismMark, PrismWord } from '../components/ui/PrismMark';
 import { SampleBadge } from '../components/ui/SampleBadge';
 import { SlidingPill } from '../components/ui/SlidingPill';
 import { NavTip, useNavTip } from '../components/ui/NavTip';
+import { railLabel } from '../components/layout/NavItems';
 import { useMarkNewSeenOnVisit, useNewHere, type NewThing } from '../lib/newHere';
 import { useBackdropClose } from '../components/ui/Sheet';
 import { useAsyncData } from '../hooks/useAsyncData';
@@ -74,11 +76,11 @@ const GuestMap = lazy(() => import('../components/guest/GuestMap'));
  * phone's back button, shared links and reloads all land where they should.
  */
 type Screen = 'home' | 'post' | 'me' | 'map' | 'news' | 'stories' | 'give' | 'more' | 'merch' | 'feedback' | 'hotlines' | 'prepare' | 'alerts' | 'pray';
-type Tab = 'home' | 'map' | 'give' | 'merch' | 'more';
+type Tab = 'home' | 'news' | 'give' | 'merch' | 'more';
 
 const TABS: { id: Tab; label: string; icon: LucideIcon }[] = [
   { id: 'home', label: 'Home', icon: House },
-  { id: 'map', label: 'Map', icon: MapIcon },
+  { id: 'news', label: 'News', icon: Siren },
   { id: 'give', label: 'Give', icon: HandCoins },
   { id: 'merch', label: 'Merch', icon: Shirt },
   { id: 'more', label: 'More', icon: LayoutGrid },
@@ -89,8 +91,8 @@ const SCREENS: Record<Screen, { title: string; tab: Tab; section: string }> = {
   home: { title: 'Community', tab: 'home', section: 'home' },
   post: { title: 'Post', tab: 'home', section: 'post' },
   me: { title: 'Your profile', tab: 'more', section: 'me' },
-  map: { title: 'Live Map', tab: 'map', section: 'map' },
-  news: { title: 'Disaster News', tab: 'more', section: 'news' },
+  map: { title: 'Live Map', tab: 'more', section: 'map' },
+  news: { title: 'Disaster News', tab: 'news', section: 'news' },
   stories: { title: 'PHILReads', tab: 'more', section: 'stories' },
   give: { title: 'Fundraising', tab: 'give', section: 'drives' },
   more: { title: 'More', tab: 'more', section: 'more' },
@@ -102,7 +104,7 @@ const SCREENS: Record<Screen, { title: string; tab: Tab; section: string }> = {
   pray: { title: 'Pray with us', tab: 'more', section: 'pray' },
 };
 /** Screens reached from More on phones: they get a way back, and a reading width. */
-const SUB: ReadonlySet<Screen> = new Set(['news', 'feedback', 'hotlines', 'prepare', 'alerts', 'pray', 'stories', 'me']);
+const SUB: ReadonlySet<Screen> = new Set(['map', 'feedback', 'hotlines', 'prepare', 'alerts', 'pray', 'stories', 'me']);
 /** Wide screens: the portal's own sidebar, in three groups (phones use the tabs, with the rest under More). */
 const SIDE: { group: string; items: { id: Screen; label: string; icon: LucideIcon }[] }[] = [
   { group: 'Home', items: [{ id: 'home', label: 'Home', icon: House }] },
@@ -352,26 +354,29 @@ function MoreRow({ to, href, icon: Icon, title, note, dot: live }: { to?: string
 }
 
 /** Disaster News, Feedback and the ways out: the More tab (phones; wide screens have them in the sidebar). */
-function MoreScreen({ live }: { live: boolean }) {
+function MoreScreen() {
+  const list = 'divide-y divide-line/70 border-y border-line/70';
   return (
-    <div className="flex max-w-xl flex-col gap-6">
-      <ul className="divide-y divide-line/70 overflow-hidden rounded-2xl border border-line bg-surface" aria-label="Stay safe">
-        <MoreRow to="/guest/news" icon={Siren} title="Disaster News" note="PHILRADS announcements, typhoons, floods and earthquakes" dot={live} />
-        <MoreRow to="/guest/hotlines" icon={Phone} title="Hotlines" note="Emergency numbers, one tap to call" />
-        <MoreRow to="/guest/prepare" icon={ShieldCheck} title="Be prepared" note="Go bag, family plan, and what to do in a disaster" />
-        <MoreRow to="/guest/alerts" icon={BellRing} title="Alerts" note="Notifications for typhoons near you and urgent news" />
+    <div className="-mx-4 flex max-w-xl flex-col gap-6 sm:mx-0">
+      <ul className={list} aria-label="Stay safe">
+        <MoreRow to="/guest/map" icon={MapIcon} title="Live Map" note="Our sites and hazards near you" />
+        <MoreRow to="/guest/hotlines" icon={Phone} title="Hotlines" note="Tap to call" />
+        <MoreRow to="/guest/prepare" icon={ShieldCheck} title="Be prepared" note="Go bag and family plan" />
+        <MoreRow to="/guest/alerts" icon={BellRing} title="Alerts" note="Typhoon and urgent news alerts" />
       </ul>
-      <ul className="divide-y divide-line/70 overflow-hidden rounded-2xl border border-line bg-surface" aria-label="Stay close">
+      <ul className={list} aria-label="Stay close">
         <MoreRow to="/guest/stories" icon={BookOpen} title="PHILReads" note="Stories from our responses" />
         <MoreRow to="/guest/pray" icon={HeartHandshake} title="Pray with us" note="This week’s prayer points" />
-        <MoreRow to="/guest/feedback" icon={MessageSquareHeart} title="Feedback" note="Say thanks, tell us a need, or offer to volunteer" />
+        <MoreRow to="/guest/feedback" icon={MessageSquareHeart} title="Feedback" note="Thanks, needs, volunteering" />
       </ul>
-      <ul className="divide-y divide-line/70 overflow-hidden rounded-2xl border border-line bg-surface">
-        <MoreRow to="/guest/me" icon={UserRound} title="Your profile" note="Your name and picture, and Who’s here" />
-        <MoreRow href="https://philrads.org/" icon={ExternalLink} title="philrads.org" note="Philippine Relief and Development Services, Inc." />
-        <MoreRow to="/" icon={LogIn} title="Staff sign-in" note="For PHILRADS staff with an account" />
+      <ul className={list}>
+        <MoreRow to="/guest/me" icon={UserRound} title="Your profile" note="Name and picture" />
+        <MoreRow href="https://philrads.org/" icon={ExternalLink} title="philrads.org" note="Our website" />
+        <MoreRow to="/" icon={LogIn} title="Staff sign-in" note="For PHILRADS staff" />
       </ul>
-      <Emergency />
+      <div className="px-4 sm:px-0">
+        <Emergency />
+      </div>
     </div>
   );
 }
@@ -435,7 +440,30 @@ function AccountButton() {
  * Wide screens: the same sidebar as the staff portal (fixed, burgundy highlight that glides between
  * pages), with the guest pages in two groups and the emergency number at the foot.
  */
-function GuestSidebar({ screen, live, onWelcome }: { screen: Screen; live: boolean; onWelcome: () => void }) {
+const SIDEBAR_KEY = 'philrads.guest.sidebar.v1';
+/** Wide screens: whether the sidebar is open (it remembers, as the portal's does). */
+function useSidebarOpen() {
+  const [expanded, setExpanded] = useState(() => {
+    try {
+      return localStorage.getItem(SIDEBAR_KEY) !== '0';
+    } catch {
+      return true;
+    }
+  });
+  const toggle = useCallback(() => {
+    setExpanded((e) => {
+      try {
+        localStorage.setItem(SIDEBAR_KEY, e ? '0' : '1');
+      } catch {
+        /* it opens again next time */
+      }
+      return !e;
+    });
+  }, []);
+  return [expanded, toggle] as const;
+}
+
+function GuestSidebar({ screen, live, onWelcome, expanded, onToggle }: { screen: Screen; live: boolean; onWelcome: () => void; expanded: boolean; onToggle: () => void }) {
   const news = useNewHere('guest');
   const [search] = useSearchParams();
   const topic = screen === 'home' ? search.get('t') : null;
@@ -443,11 +471,13 @@ function GuestSidebar({ screen, live, onWelcome }: { screen: Screen; live: boole
   return (
     <aside
       aria-label="Guest navigation"
-      className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col overflow-hidden border-r border-line/70 bg-page bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0)_40%)] lg:flex"
+      className={`fixed inset-y-0 left-0 z-40 hidden flex-col overflow-hidden border-r border-line/70 bg-page bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0)_40%)] transition-[width] duration-[260ms] ease-glide lg:flex ${
+        expanded ? 'w-64' : 'w-[4.5rem]'
+      }`}
     >
       <button type="button" onClick={onWelcome} className="flex h-16 shrink-0 items-center gap-3 pl-[1.125rem] text-left" aria-label="Show the welcome">
         <PrismMark className="h-9 w-9 shrink-0 text-ink" />
-        <span className="flex min-w-0 flex-col leading-tight" aria-hidden>
+        <span className={`flex min-w-0 flex-col leading-tight ${railLabel(expanded)}`} aria-hidden>
           <PrismWord className="font-display text-base tracking-[0.06em] text-ink" />
           <span className="text-[0.5625rem] font-semibold uppercase tracking-[0.2em] text-muted">Guest</span>
         </span>
@@ -465,9 +495,9 @@ function GuestSidebar({ screen, live, onWelcome }: { screen: Screen; live: boole
                   key={item.id}
                   to={pathOf(item.id)}
                   aria-current={on ? 'page' : undefined}
-                  onPointerEnter={show(undefined, fresh)}
+                  onPointerEnter={show(expanded ? undefined : item.label, fresh)}
                   onPointerLeave={hide}
-                  onFocus={show(undefined, fresh)}
+                  onFocus={show(expanded ? undefined : item.label, fresh)}
                   onBlur={hide}
                   onClick={hide}
                   className={`relative z-10 flex h-10 shrink-0 items-center gap-3 rounded-xl px-3 text-sm transition-colors ${
@@ -478,21 +508,27 @@ function GuestSidebar({ screen, live, onWelcome }: { screen: Screen; live: boole
                     <item.icon className="h-5 w-5" aria-hidden />
                     {((item.id === 'news' && live) || fresh.length > 0) && <CountBadge tone="new" />}
                   </span>
-                  <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                  <span className={`min-w-0 flex-1 truncate ${railLabel(expanded)}`}>{item.label}</span>
                   {item.id === 'news' && live && <span className="sr-only">(new alerts)</span>}
                   {fresh.length > 0 && <span className="sr-only">(new)</span>}
                 </Link>
               );
             })}
             {/* The community's topics, under Home, as a forum lists them. */}
+            {/* Folded, the topics fold away too (the rows shrink to nothing, smoothly). */}
             {g.group === 'Home' && (
-              <div role="group" aria-label="Topics" className="mt-1 flex flex-col gap-0.5">
+              <div
+                className={`grid transition-[grid-template-rows,opacity] duration-[260ms] ease-glide ${expanded ? 'grid-rows-[1fr] opacity-100' : 'pointer-events-none grid-rows-[0fr] opacity-0'}`}
+                aria-hidden={!expanded}
+              >
+              <div role="group" aria-label="Topics" className="mt-1 flex min-h-0 flex-col gap-0.5 overflow-hidden">
                 {DEFAULT_TOPICS.map((t) => {
                   const on = topic === t.key;
                   return (
                     <Link
                       key={t.key}
                       to={`/guest?t=${t.key}`}
+                      tabIndex={expanded ? undefined : -1}
                       aria-current={on ? 'page' : undefined}
                       className={`relative z-10 flex h-9 shrink-0 items-center gap-3 rounded-xl pl-[1.375rem] pr-3 text-sm transition-colors ${on ? 'font-semibold text-cloud' : 'font-medium text-ink-soft hover:bg-ink/[0.04] hover:text-ink'}`}
                     >
@@ -502,21 +538,35 @@ function GuestSidebar({ screen, live, onWelcome }: { screen: Screen; live: boole
                   );
                 })}
               </div>
+              </div>
             )}
           </div>
         ))}
       </nav>
       <NavTip tip={tip} />
       <div className="flex shrink-0 flex-col gap-1 border-t border-line/70 px-3 py-3">
-        <a href="tel:911" className="flex h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium text-ink-soft transition-colors hover:bg-ink/[0.04] hover:text-ink">
-          <Phone className="h-5 w-5 shrink-0 text-status-out" aria-hidden /> Emergency: call 911
+        <a href="tel:911" title={expanded ? undefined : 'Emergency: call 911'} className="flex h-10 items-center gap-3 overflow-hidden rounded-xl px-3 text-sm font-medium text-ink-soft transition-colors hover:bg-ink/[0.04] hover:text-ink">
+          <Phone className="h-5 w-5 shrink-0 text-status-out" aria-hidden /> <span className={railLabel(expanded)}>Emergency: call 911</span>
         </a>
-        <a href="https://philrads.org/" target="_blank" rel="noopener noreferrer" className="flex h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium text-ink-soft transition-colors hover:bg-ink/[0.04] hover:text-ink">
-          <ExternalLink className="h-5 w-5 shrink-0" aria-hidden /> philrads.org
+        <a href="https://philrads.org/" target="_blank" rel="noopener noreferrer" title={expanded ? undefined : 'philrads.org'} className="flex h-10 items-center gap-3 overflow-hidden rounded-xl px-3 text-sm font-medium text-ink-soft transition-colors hover:bg-ink/[0.04] hover:text-ink">
+          <ExternalLink className="h-5 w-5 shrink-0" aria-hidden /> <span className={railLabel(expanded)}>philrads.org</span>
         </a>
-        <Link to="/" className="flex h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium text-ink-soft transition-colors hover:bg-ink/[0.04] hover:text-ink">
-          <LogIn className="h-5 w-5 shrink-0" aria-hidden /> Staff sign-in
+        <Link to="/" title={expanded ? undefined : 'Staff sign-in'} className="flex h-10 items-center gap-3 overflow-hidden rounded-xl px-3 text-sm font-medium text-ink-soft transition-colors hover:bg-ink/[0.04] hover:text-ink">
+          <LogIn className="h-5 w-5 shrink-0" aria-hidden /> <span className={railLabel(expanded)}>Staff sign-in</span>
         </Link>
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={expanded}
+          aria-label={expanded ? 'Collapse sidebar' : 'Expand sidebar'}
+          title={expanded ? 'Collapse sidebar' : 'Expand sidebar'}
+          className="flex h-10 w-full items-center gap-3 overflow-hidden rounded-xl px-3 text-sm font-medium text-ink-soft transition-colors hover:bg-ink/[0.04] hover:text-ink"
+        >
+          <ChevronsLeft className={`h-5 w-5 shrink-0 transition-transform duration-[260ms] ease-glide ${expanded ? '' : 'rotate-180'}`} aria-hidden />
+          <span className={railLabel(expanded)} aria-hidden>
+            Collapse
+          </span>
+        </button>
       </div>
     </aside>
   );
@@ -567,11 +617,11 @@ function GuestTabBar({ tab, live, onPress }: { tab: Tab; live: boolean; onPress:
               <span className="relative grid h-8 w-14 place-items-center">
                 <span className="gnav-ind gloss absolute inset-0 rounded-full" data-on={on} aria-hidden />
                 <t.icon className={`relative h-5 w-5 transition-colors duration-300 ${on ? 'text-cloud' : 'text-ink-soft'}`} strokeWidth={on ? 2.25 : 1.75} aria-hidden />
-                {((t.id === 'more' && live) || newUnder(news, t.id).length > 0) && <CountBadge tone="new" className="!bottom-[60%] !left-[62%]" />}
+                {((t.id === 'news' && live) || newUnder(news, t.id).length > 0) && <CountBadge tone="new" className="!bottom-[60%] !left-[62%]" />}
               </span>
               <span className={`text-[0.6875rem] leading-none transition-colors duration-300 ${on ? 'font-semibold text-ink' : 'font-medium text-ink-soft'}`}>{t.label}</span>
-              {t.id === 'more' && live && <span className="sr-only">(new alerts in Disaster News)</span>}
-              {!(t.id === 'more' && live) && newUnder(news, t.id).length > 0 && <span className="sr-only">(new)</span>}
+              {t.id === 'news' && live && <span className="sr-only">(something is happening now)</span>}
+              {!(t.id === 'news' && live) && newUnder(news, t.id).length > 0 && <span className="sr-only">(new)</span>}
             </Link>
           );
         })}
@@ -625,6 +675,7 @@ function GuestScreens() {
     wasOnline.current = online;
   }, [online]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const [sideOpen, toggleSide] = useSidebarOpen();
   const [layers, setLayers] = useState({ work: true, places: true, hazards: true });
   const [pick, setPick] = useState<GuestPick>(null);
   const [focus, setFocus] = useState<{ lat: number; lng: number; key: number } | null>(null);
@@ -712,12 +763,13 @@ function GuestScreens() {
   if (screen === 'home')
     body = (
       <CommunitySection
-        overview={overview.data}
         hazards={hazards}
         notes={notes.data ?? []}
         stories={stories.data ?? []}
         drives={drives.data ?? []}
         prayers={prayers.data ?? []}
+        facebook={facebook.data?.posts ?? []}
+        merch={merch.data ?? []}
       />
     );
   else if (screen === 'post') body = <PostSection />;
@@ -791,18 +843,18 @@ function GuestScreens() {
   else if (screen === 'alerts') body = <AlertsSection />;
   else if (screen === 'pray') body = <PraySection prayers={prayers} onRetry={prayers.reload} />;
   else if (screen === 'feedback') body = <FeedbackSection key={about ?? ''} initialKind={isFeedbackKind(about) ? about : undefined} />;
-  else body = <MoreScreen live={live} />;
+  else body = <MoreScreen />;
 
   // Reading pages keep a comfortable line length; drives and merch use the width.
-  const measure = SUB.has(screen) || screen === 'stories' || screen === 'post' ? 'max-w-3xl' : '';
+  const measure = (SUB.has(screen) && screen !== 'map' && screen !== 'me') || screen === 'news' || screen === 'stories' || screen === 'post' ? 'max-w-3xl' : '';
 
   return (
     <div className="min-h-dvh">
       <a href="#main" className="sr-only z-50 rounded-xl bg-uplift px-4 py-2 font-semibold text-onaccent focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
         Skip to main content
       </a>
-      <GuestSidebar screen={screen} live={live} onWelcome={() => setWelcome(true)} />
-      <div className="flex min-h-dvh flex-col lg:pl-64">
+      <GuestSidebar screen={screen} live={live} onWelcome={() => setWelcome(true)} expanded={sideOpen} onToggle={toggleSide} />
+      <div className={`flex min-h-dvh flex-col transition-[padding] duration-[260ms] ease-glide ${sideOpen ? 'lg:pl-64' : 'lg:pl-[4.5rem]'}`}>
         {/* The top bar, as in the portal: on phones the mark (or a way back), and Sign in on the right. */}
         <header className="sticky top-0 z-30 border-b border-ink/[0.05] bg-page">
           <div className="flex h-16 items-center gap-2 px-4 sm:gap-3 sm:px-6">

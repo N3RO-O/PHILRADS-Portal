@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useGuestAccount } from '../../services/guest/account';
+import { useGuestAccount, type Here } from '../../services/guest/account';
 import { Avatar } from '../ui/Avatar';
+import { Dialog } from '../ui/Dialog';
 import { Sheet } from '../ui/Sheet';
+import { GuestCard } from './ProfileSection';
 import { SignInPrompt } from './SignInPrompt';
 
 const hereText = (n: number) => (n === 1 ? '1 here' : `${n.toLocaleString('en-PH')} here`);
@@ -28,6 +30,7 @@ export function Faces({ max = 3, size = 'sm' as const }: { max?: number; size?: 
 export function WhoIsHere() {
   const { here, unlocked, me, shown } = useGuestAccount();
   const [open, setOpen] = useState(false);
+  const [person, setPerson] = useState<Here['people'][number] | null>(null);
   const others = here.count - here.people.length;
   return (
     <>
@@ -48,17 +51,23 @@ export function WhoIsHere() {
         ) : (
           <div className="flex flex-col gap-4">
             {here.people.length > 0 && (
-              <ul className="divide-y divide-line/70 overflow-hidden rounded-2xl border border-line bg-surface">
+              <ul className="-mx-2 flex flex-col">
                 {here.people.map((p) => (
-                  <li key={p.id} className="flex items-center gap-3 px-4 py-3">
-                    <span className="relative">
-                      <Avatar initials={p.initials} src={p.avatar} color={p.color} size="md" />
-                      <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-status-in ring-2 ring-surface" aria-hidden />
-                    </span>
-                    <span className="min-w-0 flex-1 truncate font-semibold text-ink">
-                      {p.name}
-                      {p.me && <span className="ml-1.5 font-normal text-muted">(you)</span>}
-                    </span>
+                  <li key={p.id}>
+                    {/* Tap someone for their card, as staff open a colleague in the Active list. */}
+                    <button type="button" onClick={() => setPerson(p)} className="flex w-full items-center gap-3 rounded-xl px-2 py-2.5 text-left transition-colors hover:bg-ink/[0.04]">
+                      <span className="relative shrink-0">
+                        <Avatar initials={p.initials} src={p.avatar} color={p.color} size="md" />
+                        <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-status-in ring-2 ring-surface" aria-hidden />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-semibold text-ink">
+                          {p.name}
+                          {p.me && <span className="ml-1.5 font-normal text-muted">(you)</span>}
+                        </span>
+                        {p.bio && <span className="block truncate text-xs text-muted">{p.bio}</span>}
+                      </span>
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -78,6 +87,14 @@ export function WhoIsHere() {
           </div>
         )}
       </Sheet>
+      <Dialog open={person !== null} title={person ? person.name : ''} onClose={() => setPerson(null)}>
+        {person && <GuestCard person={person} here />}
+        {person?.me && (
+          <Link to="/guest/me" onClick={() => (setPerson(null), setOpen(false))} className="btn-primary mt-4 w-full">
+            Edit your profile
+          </Link>
+        )}
+      </Dialog>
     </>
   );
 }

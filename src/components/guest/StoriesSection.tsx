@@ -52,7 +52,7 @@ export function StoriesSection({ stories, onRetry }: { stories: AsyncState<Guest
   const openLocked = open ? locked(open) : false;
 
   return (
-    <GuestSection id="stories" title="PHILReads" lead="Stories and updates from our responses, written by the people who were there.">
+    <GuestSection id="stories" title="PHILReads" lead="Stories from our responses.">
       {stories.status === 'loading' ? (
         <RowsLoading rows={2} />
       ) : stories.status === 'error' ? (

@@ -1,12 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { BellRing, BookOpen, Flame, HandCoins, HeartHandshake, Lock, MapPin, MessageCircle, Phone, Plus, ShieldCheck, Siren, Sparkles, TrendingUp, type LucideIcon } from 'lucide-react';
+import { Activity, BellRing, BookOpen, ChevronRight, Flame, HandCoins, HeartHandshake, Lock, MapPin, Megaphone, MessageCircle, Mountain, Newspaper, Phone, Plus, ShieldCheck, Shirt, Siren, Sparkles, Sun, TrendingUp, Waves, Wind, type LucideIcon } from 'lucide-react';
 import { forumService } from '../../services';
 import { useAuth } from '../auth/AuthProvider';
 import { useGuestAccount } from '../../services/guest/account';
-import { amount, type DonationDrive, type GuestAnnouncement, type GuestOverview, type GuestPrayer, type GuestStory } from '../../services/guest/guestService';
+import { amount, peso, type DonationDrive, type GuestAnnouncement, type GuestPrayer, type GuestStory, type MerchItem } from '../../services/guest/guestService';
 import { FORUM_PAGE, type ForumPost, type ForumSort, type ForumTopic } from '../../services/guest/forum';
-import type { Hazard } from '../../services/guest/hazards';
+import type { Hazard, HazardKind } from '../../services/guest/hazards';
+import type { FacebookPost } from '../../services/guest/facebook';
+import { timeAgo } from '../../lib/geo';
 import { formatNumber } from '../../lib/format';
 import { Avatar } from '../ui/Avatar';
 import { PrismMark } from '../ui/PrismMark';
@@ -33,62 +35,42 @@ type Item =
 const OFFICIAL_TOPIC: Record<Exclude<Item['type'], 'post'>, string> = { story: 'stories', prayer: 'prayer', drive: 'fundraising', note: 'updates' };
 const topicOf = (i: Item) => (i.type === 'post' ? i.post.topic : OFFICIAL_TOPIC[i.type]);
 
+/** Where the merch carousel sits in the feed. */
+const MERCH_AFTER = 4;
+
 const rowCls = 'relative flex flex-col gap-2 px-4 py-4 transition-colors hover:bg-ink/[0.025] sm:px-5';
 
-/** The community's front: its banner and name, who's here, and the two things to do. */
-function Banner({ totals, onCreate }: { totals: GuestOverview['totals'] | undefined; onCreate: () => void }) {
-  const { here, me } = useGuestAccount();
-  const people = totals ? totals.individuals || totals.households * 4 : 0;
+/** The community's front: its banner, its name, who's here, and the two things to do. */
+function Banner({ onCreate }: { onCreate: () => void }) {
+  const { here } = useGuestAccount();
   return (
     <header className="-mx-4 sm:-mx-6">
       <div className="relative h-24 overflow-hidden sm:h-32 lg:h-40">
         <img src="/brand/sign-in-red-1280.webp" alt="" className="h-full w-full object-cover object-[center_40%]" />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(28,10,14,0.15),rgba(28,10,14,0.7))]" aria-hidden />
       </div>
-      <div className="px-4 sm:px-6">
-        <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
-          <span className="-mt-8 grid h-16 w-16 shrink-0 place-items-center rounded-full bg-burgundy-600 ring-4 ring-page sm:-mt-10 sm:h-20 sm:w-20" aria-hidden>
-            <PrismMark className="h-10 w-10 text-cloud sm:h-12 sm:w-12" />
-          </span>
-          <div className="min-w-0 flex-1 pt-3">
-            <h1 id="guest-title" className="text-2xl font-bold leading-tight tracking-tight text-ink sm:text-[1.75rem]">
-              PHILRADS Community
-            </h1>
-            <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm text-muted">
-              <span>Relief, prayer and help after disasters</span>
-              <span aria-hidden>·</span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-status-in" aria-hidden />
-                <span className="tabular-nums">{formatNumber(here.count)}</span> here now
-              </span>
-            </p>
-          </div>
-          <div className="flex gap-2 pb-0.5">
-            <button type="button" className="btn-primary" onClick={onCreate}>
-              <Plus className="h-4 w-4" aria-hidden /> Create post
-            </button>
-            <Link to="/guest/give" className="btn border border-line bg-surface text-ink hover:bg-surface-raised">
-              <HandCoins className="h-4 w-4" aria-hidden /> Give
-            </Link>
-          </div>
+      <div className="flex flex-wrap items-end gap-x-4 gap-y-3 px-4 pb-3 sm:px-6">
+        <span className="relative z-10 -mt-8 grid h-16 w-16 shrink-0 place-items-center rounded-full bg-burgundy-600 ring-4 ring-page sm:-mt-10 sm:h-20 sm:w-20" aria-hidden>
+          <PrismMark className="h-10 w-10 text-cloud sm:h-12 sm:w-12" />
+        </span>
+        <div className="min-w-0 flex-1 pt-3">
+          <h1 id="guest-title" className="text-[1.375rem] font-bold leading-tight tracking-tight text-ink sm:text-[1.75rem]">
+            PHILRADS Community
+          </h1>
+          <p className="mt-0.5 inline-flex items-center gap-1.5 whitespace-nowrap text-sm text-muted">
+            <span className="h-2 w-2 rounded-full bg-status-in" aria-hidden />
+            <span className="tabular-nums">{`${formatNumber(here.count)} here now`}</span>
+          </p>
         </div>
-        <p className="mt-3 max-w-[70ch] text-sm leading-relaxed text-ink-soft">
-          {me ? `Welcome back, ${me.name}. ` : ''}
-          Philippine Relief and Development Services brings relief to families after typhoons, floods and earthquakes, and stays to help them rebuild.
-          {totals && totals.activities > 0 && (
-            <>
-              {' '}
-              {totals.since ? `Since ${totals.since}: ` : ''}
-              <strong className="font-semibold text-ink">{formatNumber(totals.activities)} activities</strong> in <strong className="font-semibold text-ink">{formatNumber(totals.places)} places</strong>
-              {people > 0 && (
-                <>
-                  , <strong className="font-semibold text-ink">{formatNumber(people)} people</strong> reached
-                </>
-              )}
-              .
-            </>
-          )}
-        </p>
+        {/* Phones: the buttons get their own row, so the name never gets squeezed. */}
+        <div className="flex w-full gap-2 pb-0.5 sm:w-auto [&>*]:flex-1 sm:[&>*]:flex-none">
+          <button type="button" className="btn-primary" onClick={onCreate}>
+            <Plus className="h-4 w-4" aria-hidden /> Post
+          </button>
+          <Link to="/guest/give" className="btn border border-line bg-surface text-ink hover:bg-surface-raised">
+            <HandCoins className="h-4 w-4" aria-hidden /> Give
+          </Link>
+        </div>
       </div>
     </header>
   );
@@ -165,29 +147,109 @@ function ComposeRow({ onCreate }: { onCreate: () => void }) {
   return (
     <button type="button" onClick={onCreate} className="flex w-full items-center gap-3 border-b border-line/70 px-4 py-3 text-left transition-colors hover:bg-ink/[0.025] sm:px-5">
       {me ? <Avatar initials={me.initials} src={me.avatar} color={me.color} size="sm" ring="ring-0" /> : <span className="grid h-8 w-8 place-items-center rounded-full bg-surface-sunken text-muted" aria-hidden><Plus className="h-4 w-4" /></span>}
-      <span className="flex-1 text-sm text-muted">Share something with the community…</span>
+      <span className="flex-1 text-sm text-muted">Share something…</span>
     </button>
   );
 }
 
-/** Happening now: urgent PHILRADS news and hazards, as rows with a coloured edge. */
-function RightNow({ hazards, notes }: { hazards: Hazard[]; notes: GuestAnnouncement[] }) {
-  const urgent = notes.filter((n) => n.level === 'urgent').slice(0, 1);
-  const now = hazards.filter((h) => h.current).sort((a, b) => (a.level === 'red' ? -1 : b.level === 'red' ? 1 : 0)).slice(0, 2 - urgent.length);
-  if (!urgent.length && !now.length) return null;
-  const row = (key: string, red: boolean, label: string, title: string) => (
-    <Link key={key} to="/guest/news" className={`flex items-center gap-3 border-b border-l-4 border-b-line/70 px-4 py-3 transition-colors hover:bg-ink/[0.025] sm:px-5 ${red ? 'border-l-status-out' : 'border-l-status-low'}`}>
-      <Siren className={`h-5 w-5 shrink-0 ${red ? 'text-status-out' : 'text-status-low'}`} aria-hidden />
-      <span className="min-w-0 flex-1">
-        <span className={`block text-xs font-semibold ${red ? 'text-status-out' : 'text-status-low'}`}>{label}</span>
-        <span className="block truncate font-semibold text-ink">{title}</span>
-      </span>
-    </Link>
-  );
+const KIND_ICON: Record<HazardKind, LucideIcon> = { typhoon: Wind, flood: Waves, earthquake: Activity, volcano: Mountain, drought: Sun, wildfire: Flame };
+/** A row that scrolls sideways, edge to edge, snapping to each item. */
+const stripCls = 'flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden';
+
+function StripHead({ title, icon: Icon, to, more }: { title: string; icon: LucideIcon; to: string; more: string }) {
   return (
-    <section aria-label="Happening now">
-      {urgent.map((n) => row(n.id, true, 'From PHILRADS, urgent', n.title))}
-      {now.map((h) => row(h.id, h.level === 'red', 'Happening now', h.title))}
+    <div className="flex items-center justify-between px-4 pt-2 sm:px-5">
+      <h2 className="inline-flex items-center gap-2 text-[0.8125rem] font-bold text-ink">
+        <Icon className="h-4 w-4 text-ink-soft" aria-hidden /> {title}
+      </h2>
+      <Link to={to} className="inline-flex h-9 items-center gap-0.5 text-xs font-semibold text-uplift hover:underline">
+        {more} <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+      </Link>
+    </div>
+  );
+}
+
+/** A Facebook post's headline: its first line that has words. */
+const headline = (text: string) => text.split(/\r?\n/).find((l) => l.trim())?.trim() ?? text;
+
+type NewsItem = { key: string; tone: 'red' | 'orange' | 'plain'; label: string; title: string; at: string | null; icon: LucideIcon; image?: string | null; to?: string; href?: string };
+
+/** Disaster News across the top of home: urgent PHILRADS news and hazards first, then the latest posts. */
+function NewsStrip({ hazards, notes, facebook }: { hazards: Hazard[]; notes: GuestAnnouncement[]; facebook: FacebookPost[] }) {
+  const items = useMemo<NewsItem[]>(() => {
+    const urgent = notes.filter((n) => n.level === 'urgent');
+    const rest = notes.filter((n) => n.level !== 'urgent');
+    const now = hazards.filter((h) => h.current).sort((a, b) => (a.level === 'red' ? -1 : b.level === 'red' ? 1 : 0));
+    return [
+      ...urgent.map((n): NewsItem => ({ key: `n-${n.id}`, tone: 'red', label: 'Urgent', title: n.title, at: n.publishedAt, icon: Megaphone, to: '/guest/news' })),
+      ...now.map((h): NewsItem => ({ key: `h-${h.id}`, tone: h.level === 'red' ? 'red' : 'orange', label: h.level === 'red' ? 'Red alert' : h.level === 'orange' ? 'Orange alert' : 'Alert', title: h.title, at: h.from, icon: KIND_ICON[h.kind], to: '/guest/news' })),
+      ...rest.slice(0, 3).map((n): NewsItem => ({ key: `n-${n.id}`, tone: 'plain', label: 'PHILRADS', title: n.title, at: n.publishedAt, icon: Megaphone, to: '/guest/news' })),
+      ...facebook.slice(0, 6).map((p): NewsItem => ({ key: `f-${p.id}`, tone: 'plain', label: 'Facebook', title: headline(p.text), at: p.postedAt, icon: Newspaper, image: p.image, href: p.url })),
+    ].slice(0, 10);
+  }, [hazards, notes, facebook]);
+  if (!items.length) return null;
+  const toneCls = { red: 'text-status-out', orange: 'text-status-low', plain: 'text-muted' } as const;
+  const panelCls = { red: 'bg-status-out/15 text-status-out', orange: 'bg-status-low/15 text-status-low', plain: 'bg-burgundy-500/15 text-ink-soft' } as const;
+  return (
+    <section aria-label="Disaster News" className="-mx-4 border-t border-line/70 sm:-mx-6">
+      <StripHead title="Disaster News" icon={Siren} to="/guest/news" more="All news" />
+      <ul className={`${stripCls} scroll-px-2 px-2 pb-3 sm:scroll-px-3 sm:px-3`}>
+        {items.map((i) => {
+          const body = (
+            <>
+              {/* The post's own picture; without one, a panel in the item's colour with its icon. */}
+              {i.image ? (
+                <img src={i.image} alt="" loading="lazy" className="aspect-[16/10] w-full rounded-lg bg-surface-sunken object-cover" />
+              ) : (
+                <span className={`grid aspect-[16/10] w-full place-items-center rounded-lg ${panelCls[i.tone]}`} aria-hidden>
+                  <i.icon className="h-8 w-8" />
+                </span>
+              )}
+              <span className={`mt-2 flex items-center gap-1.5 text-[0.6875rem] font-semibold ${toneCls[i.tone]}`}>
+                {i.label}
+                {i.at && <span className="font-medium text-muted">· {timeAgo(i.at)}</span>}
+              </span>
+              <span className="mt-0.5 line-clamp-3 text-sm font-semibold leading-snug text-ink">{i.title}</span>
+            </>
+          );
+          const cls = 'flex w-56 flex-col px-2 py-1 transition-opacity hover:opacity-90 sm:w-60';
+          return (
+            <li key={i.key} className="flex shrink-0 snap-start">
+              {i.href ? (
+                <a href={i.href} target="_blank" rel="noopener noreferrer" className={cls}>
+                  {body}
+                </a>
+              ) : (
+                <Link to={i.to ?? '/guest/news'} className={cls}>
+                  {body}
+                </Link>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+/** Merch, as a carousel in the feed. */
+function MerchStrip({ merch }: { merch: MerchItem[] }) {
+  const list = merch.filter((m) => m.inStock).slice(0, 10);
+  if (!list.length) return null;
+  return (
+    <section aria-label="Merch">
+      <StripHead title="Merch" icon={Shirt} to="/guest/merch" more="Shop" />
+      <ul className={`${stripCls} scroll-px-4 gap-3 px-4 pb-4 pt-1 sm:scroll-px-5 sm:px-5`}>
+        {list.map((m) => (
+          <li key={m.id} className="w-36 shrink-0 snap-start sm:w-40">
+            <Link to="/guest/merch" className="group flex flex-col">
+              <Picture src={m.imageUrl} alt={m.name} icon={Shirt} className="aspect-square w-full rounded-xl transition-opacity group-hover:opacity-90" />
+              <span className="mt-2 truncate text-sm font-semibold text-ink">{m.name}</span>
+              <span className="text-xs tabular-nums text-ink-soft">{m.price !== null ? peso(m.price) : 'Ask for the price'}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
@@ -202,7 +264,9 @@ function PostRow({ post, topicName, onVote, needIn }: { post: ForumPost; topicNa
           {post.title}
         </Link>
       </h2>
-      {post.body && <p className="line-clamp-3 whitespace-pre-line text-sm leading-relaxed text-ink-soft">{post.body}</p>}
+      {post.body && <p className={`${post.image ? 'line-clamp-2' : 'line-clamp-3'} whitespace-pre-line text-sm leading-relaxed text-ink-soft`}>{post.body}</p>}
+      {/* The whole picture, never cropped: people post photos with words on them. */}
+      {post.image && <img src={post.image} alt="" loading="lazy" className="max-h-[28rem] w-auto max-w-full self-start rounded-xl bg-surface-sunken" />}
       <div className="-ml-2 flex items-center gap-1">
         <Upvote count={post.score} on={post.voted} label={post.title} onToggle={() => needIn('Sign in to upvote', () => onVote(post))} />
         <Link to={to} className="relative z-10 inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold text-ink-soft transition-colors hover:bg-ink/[0.06] hover:text-ink">
@@ -312,23 +376,21 @@ function RailLink({ to, icon: Icon, label }: { to: string; icon: LucideIcon; lab
 }
 
 /** Beside the feed: joining, the fundraiser to finish, staying safe, and the community's rules. */
-function Rail({ drives, prayers }: { drives: DonationDrive[]; prayers: GuestPrayer[] }) {
+function Rail({ drives }: { drives: DonationDrive[] }) {
   const { unlocked, here } = useGuestAccount();
   const featured = [...drives.filter((d) => d.status === 'open')].sort((a, b) => b.raised / b.goal - a.raised / a.goal)[0];
-  const prayed = prayers.reduce((n, p) => n + p.prayedCount, 0);
   return (
     <aside aria-label="About the community" className="border-t border-line/70 xl:border-l xl:border-t-0">
       {!unlocked && (
-        <RailSection title="Join the community">
+        <RailSection title="Join">
           <div className="flex items-center gap-3">
             <Faces max={4} />
             <p className="text-sm text-ink-soft">
               <span className="font-semibold tabular-nums text-ink">{formatNumber(here.count)}</span> here now
             </p>
           </div>
-          <p className="mt-3 text-sm text-ink-soft">Post, comment and upvote, read every story, pray with us, and see where the gifts went.</p>
           <GoogleButton className="mt-4 w-full" />
-          <p className="mt-2 text-xs text-muted">Free. We only use your name and picture, and never post for you.</p>
+          <p className="mt-2 text-xs text-muted">Free. We never post for you.</p>
         </RailSection>
       )}
       {featured && (
@@ -349,21 +411,20 @@ function Rail({ drives, prayers }: { drives: DonationDrive[]; prayers: GuestPray
       )}
       <RailSection title="Stay safe">
         <ul className="flex flex-col">
-          <RailLink to="/guest/map" icon={MapPin} label="Nearest PHILRADS site" />
-          <RailLink to="/guest/hotlines" icon={Phone} label="Emergency hotlines" />
+          <RailLink to="/guest/map" icon={MapPin} label="Nearest site" />
+          <RailLink to="/guest/hotlines" icon={Phone} label="Hotlines" />
           <RailLink to="/guest/prepare" icon={ShieldCheck} label="Be prepared" />
-          <RailLink to="/guest/alerts" icon={BellRing} label="Typhoon alerts" />
-          <RailLink to="/guest/pray" icon={HeartHandshake} label={prayed ? `Pray with us (${formatNumber(prayed)} prayers)` : 'Pray with us'} />
+          <RailLink to="/guest/alerts" icon={BellRing} label="Alerts" />
+          <RailLink to="/guest/pray" icon={HeartHandshake} label="Pray with us" />
         </ul>
       </RailSection>
-      <RailSection title="Community rules">
-        <ol className="flex list-decimal flex-col gap-2 pl-4 text-sm text-ink-soft marker:text-muted">
-          <li>Be kind. People here may have just lost a home.</li>
-          <li>Keep others safe: no addresses, phone numbers or photos of people without asking.</li>
-          <li>Give through PHILRADS fundraisers, never to a person’s account.</li>
-          <li>Only post what you know is true.</li>
+      <RailSection title="Rules">
+        <ol className="flex list-decimal flex-col gap-1.5 pl-4 text-sm text-ink-soft marker:text-muted">
+          <li>Be kind.</li>
+          <li>No addresses, numbers or photos of people without asking.</li>
+          <li>Give only through PHILRADS.</li>
+          <li>Post only what’s true.</li>
         </ol>
-        <p className="mt-3 text-xs text-muted">PHILRADS staff may hide posts that break these. Three reports hide a post until staff look.</p>
       </RailSection>
     </aside>
   );
@@ -375,19 +436,21 @@ function Rail({ drives, prayers }: { drives: DonationDrive[]; prayers: GuestPray
  * it on phones): joining, the fundraiser to finish, staying safe, and the rules.
  */
 export function CommunitySection({
-  overview,
   hazards,
   notes,
   stories,
   drives,
   prayers,
+  facebook,
+  merch,
 }: {
-  overview: GuestOverview | undefined;
   hazards: Hazard[];
   notes: GuestAnnouncement[];
   stories: GuestStory[];
   drives: DonationDrive[];
   prayers: GuestPrayer[];
+  facebook: FacebookPost[];
+  merch: MerchItem[];
 }) {
   const [search] = useSearchParams();
   const { can } = useAuth();
@@ -463,7 +526,8 @@ export function CommunitySection({
 
   return (
     <div>
-      <Banner totals={overview?.totals} onCreate={create} />
+      <Banner onCreate={create} />
+      {!topic && <NewsStrip hazards={hazards} notes={notes} facebook={facebook} />}
       <TopicBar topics={topics} topic={topic} sort={sort} />
       <div className="-mx-4 grid sm:-mx-6 xl:grid-cols-[minmax(0,1fr)_21rem]">
         <section aria-label={topicNow ? `${topicNow.name} posts` : 'Posts'} className="min-w-0">
@@ -475,7 +539,6 @@ export function CommunitySection({
           )}
           <SortBar sort={sort} topic={topic} />
           <ComposeRow onCreate={create} />
-          {!topic && <RightNow hazards={hazards} notes={notes} />}
           {feed.status === 'error' && (
             <div className="flex flex-col items-start gap-3 border-b border-line/70 px-4 py-6 sm:px-5">
               <p className="text-sm text-ink-soft">{feed.error}</p>
@@ -496,13 +559,12 @@ export function CommunitySection({
             </ul>
           ) : (
             <div className={`divide-y divide-line/70 border-b border-line/70 transition-opacity ${feed.status === 'loading' ? 'opacity-60' : ''}`}>
-              {items.map((i) =>
-                i.type === 'post' ? (
-                  <PostRow key={`p-${i.post.id}`} post={i.post} topicName={topicName(i.post.topic)} onVote={(p) => void vote(p)} needIn={needIn} />
-                ) : (
-                  <OfficialRow key={`${i.type}-${i.type === 'story' ? i.story.id : i.type === 'prayer' ? i.prayer.id : i.type === 'drive' ? i.drive.id : i.note.id}`} item={i} />
-                ),
-              )}
+              {items.map((i, n) => (
+                <Fragment key={i.type === 'post' ? `p-${i.post.id}` : `${i.type}-${i.type === 'story' ? i.story.id : i.type === 'prayer' ? i.prayer.id : i.type === 'drive' ? i.drive.id : i.note.id}`}>
+                  {i.type === 'post' ? <PostRow post={i.post} topicName={topicName(i.post.topic)} onVote={(p) => void vote(p)} needIn={needIn} /> : <OfficialRow item={i} />}
+                  {!topic && n === Math.min(MERCH_AFTER, items.length) - 1 && <MerchStrip merch={merch} />}
+                </Fragment>
+              ))}
               {feed.status === 'ok' && !items.length && (
                 <div className="flex flex-col items-start gap-3 px-4 py-8 sm:px-5">
                   <p className="font-semibold text-ink">Nothing here yet</p>
@@ -520,7 +582,7 @@ export function CommunitySection({
             </div>
           )}
         </section>
-        <Rail drives={drives} prayers={prayers} />
+        <Rail drives={drives} />
       </div>
       <ComposerSheet key={`${composing}-${topic ?? ''}`} open={composing} onClose={() => setComposing(false)} topics={topics} topic={topic} canPostUpdates={staff && can('guest.manage')} />
       {prompt}

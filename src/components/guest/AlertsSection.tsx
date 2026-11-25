@@ -110,7 +110,7 @@ export function AlertsSection() {
   };
 
   return (
-    <GuestSection id="alerts" title="Alerts" lead={`Get a notification on this phone when PHILRADS posts something urgent, and when a typhoon comes within about ${ALERT_RADIUS_KM} km of the regions you follow.`}>
+    <GuestSection id="alerts" title="Alerts" lead={`Urgent news, and typhoons within ${ALERT_RADIUS_KM} km of where you follow.`}>
       <div className="flex flex-col gap-6">
         <div className={`flex items-center gap-3 rounded-2xl border px-4 py-3.5 transition-colors duration-300 ${on ? 'border-status-in/40 bg-status-in/10' : 'border-line bg-surface'}`}>
           {on ? <BellRing className="h-5 w-5 shrink-0 text-status-in" aria-hidden /> : <BellOff className="h-5 w-5 shrink-0 text-muted" aria-hidden />}

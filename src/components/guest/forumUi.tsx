@@ -1,9 +1,9 @@
-import { useCallback, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowBigUp, BadgeCheck, Pin } from 'lucide-react';
+import { ArrowBigUp, BadgeCheck, ImagePlus, Pin, X } from 'lucide-react';
 import { forumService } from '../../services';
 import { useGuestAccount } from '../../services/guest/account';
-import { FORUM_BODY_MAX, FORUM_TITLE_MAX, type ForumAuthor, type ForumKind, type ForumTopic } from '../../services/guest/forum';
+import { FORUM_BODY_MAX, FORUM_TITLE_MAX, shrinkPicture, type ForumAuthor, type ForumKind, type ForumTopic } from '../../services/guest/forum';
 import { initialsOf } from '../../lib/format';
 import { timeAgo } from '../../lib/geo';
 import { Avatar } from '../ui/Avatar';
@@ -229,7 +229,28 @@ export function ComposerSheet({ open, onClose, topics, topic: initial, canPostUp
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const dirty = Boolean(title.trim() || body.trim());
+  const [picture, setPicture] = useState<{ blob: Blob; url: string } | null>(null);
+  const [shrinking, setShrinking] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const dirty = Boolean(title.trim() || body.trim() || picture);
+  useEffect(() => () => {
+    if (picture) URL.revokeObjectURL(picture.url);
+  }, [picture]);
+
+  const pick = async (file: File | undefined) => {
+    if (fileInput.current) fileInput.current.value = '';
+    if (!file) return;
+    setShrinking(true);
+    setError(null);
+    try {
+      const blob = await shrinkPicture(file);
+      setPicture({ blob, url: URL.createObjectURL(blob) });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'That picture couldn’t be read. Try another.');
+    } finally {
+      setShrinking(false);
+    }
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -240,9 +261,10 @@ export function ComposerSheet({ open, onClose, topics, topic: initial, canPostUp
     setBusy(true);
     setError(null);
     try {
-      const id = await forumService.createPost(topic, title, body);
+      const id = await forumService.createPost(topic, title, body, picture?.blob ?? null);
       setTitle('');
       setBody('');
+      setPicture(null);
       onClose();
       navigate(`/guest/post?id=${encodeURIComponent(id)}`);
     } catch (err) {
@@ -253,9 +275,9 @@ export function ComposerSheet({ open, onClose, topics, topic: initial, canPostUp
   };
 
   return (
-    <Sheet open={open} onClose={onClose} title="Create a post" subtitle="Everyone on the guest page can read it. Be kind; staff may hide posts that aren’t." dirty={dirty}>
+    <Sheet open={open} onClose={onClose} title="Create a post" subtitle="Everyone here can read it." dirty={dirty}>
       {status !== 'in' ? (
-        <SignInPrompt compact title="Sign in to post" body="Sign in with Google to post, comment and upvote. Free, and we never post for you." />
+        <SignInPrompt compact title="Sign in to post" body="Free. We never post for you." />
       ) : (
         <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
           <fieldset>
@@ -279,11 +301,27 @@ export function ComposerSheet({ open, onClose, topics, topic: initial, canPostUp
             <span className="text-sm font-semibold text-ink">
               More <span className="font-normal text-muted">(optional)</span>
             </span>
-            <textarea className="field min-h-[9rem] resize-y py-2.5" value={body} maxLength={FORUM_BODY_MAX} onChange={(e) => setBody(e.target.value)} placeholder="Tell the community more." />
+            <textarea className="field min-h-[7rem] resize-y py-2.5" value={body} maxLength={FORUM_BODY_MAX} onChange={(e) => setBody(e.target.value)} placeholder="Tell us more." />
           </label>
-          <p className="text-xs text-muted">Don’t share anyone’s address or phone number. To give money, use a PHILRADS fundraiser, never a person’s account.</p>
+          {picture ? (
+            <div className="relative self-start">
+              <img src={picture.url} alt="Your picture" className="max-h-64 max-w-full rounded-xl" />
+              <button type="button" onClick={() => setPicture(null)} className="absolute right-2 top-2 grid h-9 w-9 place-items-center rounded-full bg-black/60 text-white hover:bg-black/75" aria-label="Remove the picture">
+                <X className="h-4 w-4" aria-hidden />
+              </button>
+            </div>
+          ) : (
+            <button type="button" className="chip gap-1.5 self-start" onClick={() => fileInput.current?.click()} disabled={shrinking}>
+              <ImagePlus className="h-4 w-4" aria-hidden />
+              <BusyLabel busy={shrinking} busyText="Getting it ready…">
+                Add a picture
+              </BusyLabel>
+            </button>
+          )}
+          <input ref={fileInput} type="file" accept="image/*" className="sr-only" tabIndex={-1} onChange={(e) => void pick(e.target.files?.[0])} />
+          <p className="text-xs text-muted">No addresses, numbers or photos of people without asking.</p>
           {error && <p role="alert" className="text-sm text-status-out">{error}</p>}
-          <button type="submit" className="btn-primary self-start" disabled={busy || !topic}>
+          <button type="submit" className="btn-primary self-start" disabled={busy || shrinking || !topic}>
             <BusyLabel busy={busy} busyText="Posting…">
               Post
             </BusyLabel>
