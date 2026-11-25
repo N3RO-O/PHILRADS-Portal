@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { BookOpen, ExternalLink, HandCoins, HeartHandshake, ImagePlus, Inbox, Mail, Megaphone, Phone, Plus, Shirt, Star, Trash2, type LucideIcon } from 'lucide-react';
+import { ArrowRight, BookOpen, HandCoins, HeartHandshake, ImagePlus, Inbox, Mail, Megaphone, Phone, Plus, Shirt, Star, Trash2, type LucideIcon } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
 import { Picture } from '../components/guest/guestUi';
 import { BusyLabel } from '../components/ui/BusyLabel';
@@ -44,7 +44,7 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'hotlines', label: 'Hotlines' },
   { key: 'stories', label: 'PHILReads' },
   { key: 'prayer', label: 'Prayer' },
-  { key: 'drives', label: 'Drives' },
+  { key: 'drives', label: 'Fundraising' },
   { key: 'merch', label: 'Merch' },
 ];
 
@@ -459,7 +459,7 @@ const blankDrive = (): DriveDraft => ({ title: '', summary: '', impactNote: '', 
 const DRIVE_STATUS: { key: DriveStatus; label: string; note: string }[] = [
   { key: 'draft', label: 'Draft', note: 'Only staff can see it.' },
   { key: 'open', label: 'Open', note: 'Shown to guests with its progress.' },
-  { key: 'closed', label: 'Closed', note: 'Listed under Completed drives.' },
+  { key: 'closed', label: 'Closed', note: 'Listed under Completed fundraisers.' },
 ];
 
 function DriveEditor({ draft, onClose, onSaved }: { draft: DriveDraft | null; onClose: () => void; onSaved: () => void }) {
@@ -480,13 +480,13 @@ function DriveEditor({ draft, onClose, onSaved }: { draft: DriveDraft | null; on
   const ed = useEditor<DriveDraft>(guestService.saveDrive, guestService.removeDrive, onSaved);
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    if (!d.title.trim()) return ed.setError('Give the drive a title.');
+    if (!d.title.trim()) return ed.setError('Give the fundraiser a title.');
     if (!(d.goal > 0)) return ed.setError('Set a goal above zero.');
     if (d.raised < 0) return ed.setError('The amount raised can’t be below zero.');
     if (!money && !d.unit.trim()) return ed.setError('Say what is being collected, like “family packs”.');
     if (d.endsOn && d.startsOn && d.endsOn < d.startsOn) return ed.setError('The end date is before the start date.');
-    if (d.status === 'open' && !d.howToGive?.trim()) return ed.setError('Add how to give before opening the drive.');
-    if (d.report?.trim() && d.status !== 'closed') return ed.setError('Close the drive before posting where the gifts went.');
+    if (d.status === 'open' && !d.howToGive?.trim()) return ed.setError('Add how to give before opening the fundraiser.');
+    if (d.report?.trim() && d.status !== 'closed') return ed.setError('Close the fundraiser before posting where the gifts went.');
     void ed.run({ ...d, unit: money ? 'PHP' : d.unit });
   };
   const numberField = (v: number | null, on: (n: number | null) => void, label: string, note?: string) => (
@@ -507,9 +507,9 @@ function DriveEditor({ draft, onClose, onSaved }: { draft: DriveDraft | null; on
       open={!!draft}
       onClose={onClose}
       dirty={dirty}
-      title={draft?.id ? 'Edit drive' : 'New donation drive'}
+      title={draft?.id ? 'Edit fundraiser' : 'New fundraiser'}
       subtitle="Guests see the goal, the amount so far and how to give."
-      footer={<EditorFooter form="drive-form" busy={ed.busy} error={ed.error} onDelete={d.id ? () => ed.del(d.id!) : undefined} what="drive" />}
+      footer={<EditorFooter form="drive-form" busy={ed.busy} error={ed.error} onDelete={d.id ? () => ed.del(d.id!) : undefined} what="fundraiser" />}
     >
       <form id="drive-form" onSubmit={submit} noValidate className="flex flex-col gap-4">
         <Field label="Title">
@@ -567,7 +567,7 @@ function DriveEditor({ draft, onClose, onSaved }: { draft: DriveDraft | null; on
             <legend className="sr-only">Where the gifts went</legend>
             <div>
               <p className="text-sm font-semibold text-ink">Where the gifts went</p>
-              <p className="text-xs text-muted">Shown on the finished drive, so donors see what their gift did.</p>
+              <p className="text-xs text-muted">Shown on the finished fundraiser, so donors see what their gift did.</p>
             </div>
             <Field label="What the gifts did">
               <textarea className="field min-h-28 font-normal leading-relaxed" value={d.report ?? ''} onChange={(e) => set({ report: e.target.value })} maxLength={2000} placeholder="Your gifts bought 640 roofing sheets…" />
@@ -853,7 +853,7 @@ const State = ({ on, children }: { on: boolean; children: ReactNode }) => (
 );
 
 /**
- * Guest page (guest.manage): the stories, donation drives and merch guests see, and the messages
+ * Guest page (guest.manage): the stories, fundraisers and merch guests see, and the messages
  * they send. Opened from the Admin group and from guest-message notifications (?tab=inbox).
  */
 export function GuestAdminPage() {
@@ -906,8 +906,9 @@ export function GuestAdminPage() {
         </div>
         <div className="flex items-center gap-2">
           {guestService.source === 'mock' && <SampleBadge />}
-          <Link to="/guest" target="_blank" className="link text-sm">
-            Open the guest page <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+          {/* In the app itself (a new tab would leave the installed app for the browser). */}
+          <Link to="/guest" className="link text-sm">
+            Open the guest page <ArrowRight className="h-3.5 w-3.5" aria-hidden />
           </Link>
         </div>
       </div>
@@ -1018,10 +1019,10 @@ export function GuestAdminPage() {
         <ListTab<DonationDrive>
           load={loaders.drives}
           reloadKey={reload}
-          newLabel="New drive"
+          newLabel="New fundraiser"
           onNew={() => setDrive(blankDrive())}
           onEdit={(d) => setDrive({ ...d, summary: d.summary ?? '', impactNote: d.impactNote ?? '', howToGive: d.howToGive ?? '', report: d.report ?? '' })}
-          empty={{ icon: HandCoins, title: 'No drives yet', body: 'Start one when there is a need: say what it’s for, the goal and how to give.' }}
+          empty={{ icon: HandCoins, title: 'No fundraisers yet', body: 'Start one when there is a need: say what it’s for, the goal and how to give.' }}
           row={(d) => (
             <>
               <span className="min-w-0 flex-1">

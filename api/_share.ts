@@ -1,7 +1,7 @@
 /**
  * Share cards: what Facebook, Messenger, WhatsApp, X and others show when someone shares a guest
  * link. vercel.json sends only those link-preview robots here (by their user agent); people get the
- * app as usual. A story or drive gets its own title, words and cover picture; every other guest
+ * app as usual. A story or fundraiser gets its own title, words and cover picture; every other guest
  * page gets its name and the PHILRADS card.
  *
  * Reads with the public (anon) key, so it can only see what any guest can see.
@@ -13,7 +13,7 @@ const SCREENS: Record<string, { title: string; text: string }> = {
   '': { title: 'Live Map', text: 'See where Philippine Relief and Development Services is helping, what is happening now, and how you can help.' },
   news: { title: 'Disaster News', text: 'PHILRADS announcements, and typhoons, floods and earthquakes affecting the Philippines now.' },
   stories: { title: 'PHILReads', text: 'Stories from the field: the families PHILRADS serves and the people who serve them.' },
-  give: { title: 'Donation Drives', text: 'Give to a PHILRADS relief drive, and see where earlier gifts went.' },
+  give: { title: 'Fundraising', text: 'Give to a PHILRADS relief fundraiser, and see where earlier gifts went.' },
   merch: { title: 'Merch', text: 'PHILRADS shirts and more. Every purchase supports relief work.' },
   hotlines: { title: 'Emergency hotlines', text: 'Emergency numbers in the Philippines, one tap to call.' },
   prepare: { title: 'Be prepared', text: 'Go bag and family plan checklists, and what to do before, during and after a typhoon, flood or earthquake.' },

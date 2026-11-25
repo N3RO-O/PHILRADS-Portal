@@ -117,7 +117,7 @@ function DriveReport({ d }: { d: DonationDrive }) {
 }
 
 /**
- * Donation Drives: what each drive is for, how close it is to its goal, what a gift does, and how
+ * Fundraising: what each fundraiser is for, how close it is to its goal, what a gift does, and how
  * to give. Finished drives stay listed underneath, so donors can see their gift reached its goal.
  */
 export function DrivesSection({ drives, onRetry }: { drives: AsyncState<DonationDrive[]>; onRetry: () => void }) {
@@ -128,7 +128,7 @@ export function DrivesSection({ drives, onRetry }: { drives: AsyncState<Donation
   const reported = done.filter((d) => d.report).sort((a, b) => (b.reportedAt ?? '').localeCompare(a.reportedAt ?? ''));
   const quiet = done.filter((d) => !d.report);
   return (
-    <GuestSection id="drives" title="Donation Drives" lead="Each drive says what it's for and how close it is. Staff update the totals as gifts are counted.">
+    <GuestSection id="drives" title="Fundraising" lead="Each fundraiser says what it's for and how close it is. Staff update the totals as gifts are counted.">
       {drives.status === 'loading' ? (
         <RowsLoading rows={2} />
       ) : drives.status === 'error' ? (
@@ -149,7 +149,7 @@ export function DrivesSection({ drives, onRetry }: { drives: AsyncState<Donation
           {reported.length > 0 && (
             <div className="mt-8">
               <h3 className="text-sm font-semibold text-ink">What your gifts did</h3>
-              <p className="mt-0.5 text-sm text-ink-soft">Drives that finished, and what they made possible.</p>
+              <p className="mt-0.5 text-sm text-ink-soft">Fundraisers that finished, and what they made possible.</p>
               <div className="mt-3 grid gap-4 xl:grid-cols-2">
                 {reported.map((d) => (
                   <DriveReport key={d.id} d={d} />
@@ -161,7 +161,7 @@ export function DrivesSection({ drives, onRetry }: { drives: AsyncState<Donation
             <div className="mt-6">
               <button type="button" className="flex min-h-10 items-center gap-1.5 text-sm font-semibold text-ink-soft hover:text-ink" onClick={() => setShowDone((s) => !s)} aria-expanded={showDone}>
                 <ChevronDown className={`h-4 w-4 transition-transform ${showDone ? 'rotate-180' : ''}`} aria-hidden />
-                {reported.length ? 'Other completed drives' : 'Completed drives'} ({quiet.length})
+                {reported.length ? 'Other completed fundraisers' : 'Completed fundraisers'} ({quiet.length})
               </button>
               {showDone && (
                 <ul className="mt-3 divide-y divide-line/70">

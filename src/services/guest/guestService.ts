@@ -453,7 +453,7 @@ function seed(): SampleStore {
         donorCount: 214,
         startsOn: isoDaysFromNow(-12),
         endsOn: isoDaysFromNow(18),
-        howToGive: 'GCash: 0917 000 0000 (sample)\nBank transfer: Sample Bank, account 0000-0000-00 (sample)\nPlease add "Catanduanes" to the note so your gift goes to this drive.',
+        howToGive: 'GCash: 0917 000 0000 (sample)\nBank transfer: Sample Bank, account 0000-0000-00 (sample)\nPlease add "Catanduanes" to the note so your gift goes to this fundraiser.',
         coverUrl: null,
         status: 'open',
         raisedUpdatedAt: ago(1),
@@ -923,7 +923,7 @@ export function createSupabaseGuestService(client: SupabaseClient): GuestService
       const rows = await list('guest_announcements', toAnnouncement, (q) => q.select('*').eq('is_published', true).order('published_at', { ascending: false }).limit(30), 'the announcements');
       return rows.filter((a) => isLive(a)).sort(byImportance);
     },
-    drives: () => list('donation_drives', toDrive, (q) => q.select('*').in('status', ['open', 'closed']).order('ends_on', { ascending: false, nullsFirst: true }).limit(40), 'the donation drives'),
+    drives: () => list('donation_drives', toDrive, (q) => q.select('*').in('status', ['open', 'closed']).order('ends_on', { ascending: false, nullsFirst: true }).limit(40), 'the fundraisers'),
     merch: () => list('merch_items', toMerch, (q) => q.select('*').eq('is_listed', true).order('sort_order').limit(60), 'the merch'),
     async send(d) {
       checkMessage(d);
@@ -982,15 +982,15 @@ export function createSupabaseGuestService(client: SupabaseClient): GuestService
       return saveRow('guest_announcements', d.id, fromAnnouncement(d), toAnnouncement, 'announcement');
     },
     removeAnnouncement: (id) => removeRow('guest_announcements', id, 'announcement'),
-    allDrives: () => list('donation_drives', toDrive, (q) => q.select('*').order('created_at', { ascending: false }).limit(200), 'the donation drives'),
+    allDrives: () => list('donation_drives', toDrive, (q) => q.select('*').order('created_at', { ascending: false }).limit(200), 'the fundraisers'),
     saveDrive: async (d) => {
       checkDrive(d);
       // Dated when the report is first written; cleared if it is taken away.
       const prev = d.id && d.report?.trim() ? (await client.from('donation_drives').select('reported_at').eq('id', d.id).maybeSingle()).data : null;
       const reported_at = d.report?.trim() ? (prev?.reported_at as string | null) ?? new Date().toISOString() : null;
-      return saveRow('donation_drives', d.id, { ...fromDrive(d), reported_at }, toDrive, 'drive');
+      return saveRow('donation_drives', d.id, { ...fromDrive(d), reported_at }, toDrive, 'fundraiser');
     },
-    removeDrive: (id) => removeRow('donation_drives', id, 'drive'),
+    removeDrive: (id) => removeRow('donation_drives', id, 'fundraiser'),
     allMerch: () => list('merch_items', toMerch, (q) => q.select('*').order('sort_order').limit(200), 'the merch'),
     saveMerch: (d) => saveRow('merch_items', d.id, fromMerch(d), toMerch, 'item'),
     removeMerch: (id) => removeRow('merch_items', id, 'item'),

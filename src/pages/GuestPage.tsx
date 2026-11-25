@@ -77,7 +77,7 @@ const SCREENS: Record<Screen, { title: string; tab: Tab; section: string }> = {
   map: { title: 'Live Map', tab: 'map', section: 'map' },
   news: { title: 'Disaster News', tab: 'more', section: 'news' },
   stories: { title: 'PHILReads', tab: 'stories', section: 'stories' },
-  give: { title: 'Donation Drives', tab: 'give', section: 'drives' },
+  give: { title: 'Fundraising', tab: 'give', section: 'drives' },
   more: { title: 'More', tab: 'more', section: 'more' },
   merch: { title: 'Merch', tab: 'merch', section: 'merch' },
   feedback: { title: 'Feedback', tab: 'more', section: 'feedback' },
@@ -110,7 +110,7 @@ const SIDE: { group: string; items: { id: Screen; label: string; icon: LucideIco
   {
     group: 'Ways to help',
     items: [
-      { id: 'give', label: 'Donation Drives', icon: HandCoins },
+      { id: 'give', label: 'Fundraising', icon: HandCoins },
       { id: 'merch', label: 'Merch', icon: Shirt },
       { id: 'feedback', label: 'Feedback', icon: MessageSquareHeart },
     ],
@@ -475,7 +475,7 @@ function GuestTabBar({ tab, live, onPress }: { tab: Tab; live: boolean; onPress:
 /**
  * The guest door from the sign-in screen: no account, nothing private. Where PHILRADS works and
  * what is happening now (Live Map, Disaster News), its stories (PHILReads), and ways to help
- * (Donation Drives, Merch, Feedback). Staff edit the content on the Guest page in the portal.
+ * (Fundraising, Merch, Feedback). Staff edit the content on the Guest page in the portal.
  */
 export function GuestPage() {
   const { screen: param = 'map' } = useParams();

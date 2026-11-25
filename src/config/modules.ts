@@ -161,7 +161,7 @@ export const MODULES: ModuleConfig[] = [
     path: '/guest-admin',
     icon: Globe,
     group: 'Admin',
-    summary: 'What visitors see without an account: stories, donation drives and merch, and the messages guests send.',
+    summary: 'What visitors see without an account: stories, fundraising and merch, and the messages guests send.',
     plannedScope: [],
     permission: 'guest.manage',
   },
