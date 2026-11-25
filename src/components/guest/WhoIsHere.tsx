@@ -47,7 +47,7 @@ export function WhoIsHere() {
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} title="Who’s here" subtitle={`${hereText(here.count)} on the PHILRADS guest page right now`}>
         {!unlocked ? (
-          <SignInPrompt compact title="See who’s here" body="Sign in with Google to see the names and pictures of other guests here now, and to be seen yourself." />
+          <SignInPrompt compact title="See who’s here" body="Sign in to see the names and pictures of other guests here now, and to be seen yourself." />
         ) : (
           <div className="flex flex-col gap-4">
             {here.people.length > 0 && (

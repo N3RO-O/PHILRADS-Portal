@@ -135,7 +135,7 @@ export function ActionButton({ children, onClick, label }: { children: ReactNode
 
 /**
  * Taking part needs an account: anything that writes asks this first. Signed out, it opens a small
- * sheet with the Google button instead.
+ * sheet with the sign-in button instead.
  */
 export function useJoinPrompt() {
   const { status } = useGuestAccount();
@@ -149,7 +149,7 @@ export function useJoinPrompt() {
   );
   const prompt = (
     <Sheet open={asking !== null} onClose={() => setAsking(null)} title="Join the conversation">
-      <SignInPrompt compact title={asking ?? ''} body="Sign in with Google to post, comment and upvote. Free, and we never post for you." />
+      <SignInPrompt compact title={asking ?? ''} body="Sign in to post, comment and upvote. It’s free." />
     </Sheet>
   );
   return { needIn, prompt };
@@ -277,7 +277,7 @@ export function ComposerSheet({ open, onClose, topics, topic: initial, canPostUp
   return (
     <Sheet open={open} onClose={onClose} title="Create a post" subtitle="Everyone here can read it." dirty={dirty}>
       {status !== 'in' ? (
-        <SignInPrompt compact title="Sign in to post" body="Free. We never post for you." />
+        <SignInPrompt compact title="Sign in to post" body="It’s free. We’ll email you a code." />
       ) : (
         <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
           <fieldset>

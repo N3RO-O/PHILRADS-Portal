@@ -105,7 +105,7 @@ export function ProfileSection() {
   if (status !== 'in' || !me)
     return (
       <GuestSection id="me" title="Your profile">
-        <SignInPrompt title="Make it yours" body="Sign in with Google to choose your name and picture." />
+        <SignInPrompt title="Make it yours" body="Sign in to choose your name and picture." />
       </GuestSection>
     );
   return <ProfileForm key={me.id} me={me} />;

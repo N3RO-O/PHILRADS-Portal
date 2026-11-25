@@ -32,7 +32,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     );
   }
   if (state.status === 'signed-out') return <SignInPage />;
-  // Guests who signed in with Google have the guest page, never the staff portal.
+  // Guest accounts (signed in on the guest page) have the guest page, never the staff portal.
   if (state.status === 'signed-in' && state.profile?.roleKey === 'guest') return <Navigate to="/guest" replace />;
   if (needsPassword) return <SetPasswordPage />;
   if (state.status === 'signed-in' && (!state.profile || !state.profile.isActive)) {

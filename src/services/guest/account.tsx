@@ -5,14 +5,15 @@ import { initialsOf } from '../../lib/format';
 import { guestService } from '..';
 
 /**
- * Guest accounts: a guest may sign in with Google to read every story, pray with us and see
+ * Guest accounts: a guest signs in with a code sent to their email (as volunteers do in the
+ * portal; a new email makes a guest account) to read every story, pray with us and see
  * where a fundraiser's gifts went, to set up a profile, and to see who else is here.
  *
  * A guest's account is a profile with role 'guest' that is never active, so it never reaches
  * staff data (see supabase/migrations/20261128000000_guest_accounts.sql). Staff who open the
  * guest page while signed in see everything too, but aren't listed in "Who's here".
  *
- * Sample mode keeps a made-up guest on this device, so the page can be tried without Google.
+ * Sample mode keeps a made-up guest on this device, so the page can be tried without email.
  */
 export interface GuestMe {
   id: string;
@@ -39,7 +40,10 @@ interface GuestAccount {
   staff: boolean;
   /** Full stories, prayer and gift reports are open. */
   unlocked: boolean;
-  signIn: () => Promise<string | null>;
+  /** Email a 6-digit code (and a link) to this address. Returns a problem to show, or null. */
+  sendCode: (email: string) => Promise<string | null>;
+  /** Sign in with the code from the email. Returns a problem to show, or null. */
+  verifyCode: (email: string, code: string) => Promise<string | null>;
   signOut: () => Promise<void>;
   save: (p: GuestPatch) => Promise<void>;
   /** Whether others see you in "Who's here" (kept on this device). */
@@ -100,20 +104,41 @@ export function GuestAccountProvider({ children }: { children: ReactNode }) {
       : null;
   const status: GuestAccount['status'] = sample ? (mock ? 'in' : 'out') : state.status === 'loading' ? 'loading' : me || staff ? 'in' : 'out';
 
-  const signIn = useCallback(async (): Promise<string | null> => {
-    if (sample) {
-      const m: GuestMe = { id: 'sample-guest', name: 'Guest', bio: '', avatar: null, color: '#2f7f8f', initials: 'G' };
-      write(MOCK_KEY, m);
-      setMock(m);
-      return null;
-    }
-    if (!supabase) return 'Sign-in isn’t available right now.';
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${window.location.origin}${window.location.pathname}${window.location.search}`, queryParams: { prompt: 'select_account' } },
-    });
-    return error ? 'Google sign-in isn’t available right now. Try again later.' : null;
-  }, [sample]);
+  const sendCode = useCallback(
+    async (email: string): Promise<string | null> => {
+      if (sample) return null;
+      if (!supabase) return 'Sign-in isn’t available right now.';
+      // A new email makes a guest account (supabase/migrations/20261201000000_guest_email_signin.sql);
+      // the link in the email comes back to this page.
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { shouldCreateUser: true, emailRedirectTo: `${window.location.origin}${window.location.pathname}${window.location.search}` },
+      });
+      if (!error) return null;
+      console.error('[guest] send code', error);
+      if (error.status === 429 || /rate|seconds/i.test(error.message)) return 'A code was sent a moment ago. Wait a minute, then try again.';
+      if (/signups? not allowed/i.test(error.message)) return 'New guest accounts can’t be made right now. Try again later.';
+      return 'The code could not be sent. Please try again in a few minutes.';
+    },
+    [sample],
+  );
+
+  const verifyCode = useCallback(
+    async (email: string, code: string): Promise<string | null> => {
+      if (sample) {
+        const m: GuestMe = { id: 'sample-guest', name: 'Guest', bio: '', avatar: null, color: '#2f7f8f', initials: 'G' };
+        write(MOCK_KEY, m);
+        setMock(m);
+        return null;
+      }
+      if (!supabase) return 'Sign-in isn’t available right now.';
+      const { error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' });
+      if (!error) return null;
+      console.error('[guest] verify code', error);
+      return /expired|invalid/i.test(error.message) ? 'That code is wrong or has expired. Check the latest email, or send a new code.' : 'Sign-in failed. Please try again.';
+    },
+    [sample],
+  );
 
   const signOut = useCallback(async () => {
     if (sample) {
@@ -159,8 +184,8 @@ export function GuestAccountProvider({ children }: { children: ReactNode }) {
   const here = useHere(sample, me, shown);
 
   const value = useMemo<GuestAccount>(
-    () => ({ status, me, staff, unlocked: status === 'in', signIn, signOut, save, shown, setShown, here }),
-    [status, me, staff, signIn, signOut, save, shown, setShown, here],
+    () => ({ status, me, staff, unlocked: status === 'in', sendCode, verifyCode, signOut, save, shown, setShown, here }),
+    [status, me, staff, sendCode, verifyCode, signOut, save, shown, setShown, here],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

@@ -107,7 +107,7 @@ export function PraySection({ prayers, onRetry }: { prayers: AsyncState<GuestPra
         <SectionError message={prayers.error.message} onRetry={onRetry} />
       ) : list.length && !unlocked ? (
         <div className="flex flex-col gap-4">
-          <SignInPrompt title="Pray with us" body={`Sign in with Google to read this week’s ${list.length === 1 ? 'prayer point' : `${list.length} prayer points`} and add your prayer to the count.`} />
+          <SignInPrompt title="Pray with us" body={`Sign in to read this week’s ${list.length === 1 ? 'prayer point' : `${list.length} prayer points`} and add your prayer to the count.`} />
           <ul className="divide-y divide-line/70 border-y border-line/70" aria-label="This week’s prayer points">
             {list.map((p) => (
               <li key={p.id} className="flex items-center gap-3 py-4">

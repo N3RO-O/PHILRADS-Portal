@@ -103,7 +103,7 @@ function DriveReport({ d }: { d: DonationDrive }) {
           <SignInPrompt
             compact
             title="See where the gifts went"
-            body={`Sign in with Google to read the report${d.reportPhotos.length ? ` and see ${d.reportPhotos.length === 1 ? 'the photo' : `all ${d.reportPhotos.length} photos`}` : ''}.`}
+            body={`Sign in to read the report${d.reportPhotos.length ? ` and see ${d.reportPhotos.length === 1 ? 'the photo' : `all ${d.reportPhotos.length} photos`}` : ''}.`}
           />
         ) : (
           <p className="whitespace-pre-line text-sm leading-relaxed text-ink-soft">{d.report}</p>

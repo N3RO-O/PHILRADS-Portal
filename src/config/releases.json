@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-25.8",
+    "version": "1.17.1",
+    "date": "2026-11-25",
+    "title": "Guests sign in with an email code",
+    "items": [
+      {
+        "icon": "key-round",
+        "title": "Sign in with an email code",
+        "body": "Guests sign in the way volunteers do: type your email, then the 6-digit code we send. A new email makes a free guest account. Google sign-in is gone.",
+        "guestPath": "/guest"
+      }
+    ]
+  },
+  {
     "id": "2026-11-25.7",
     "version": "1.17.0",
     "date": "2026-11-25",

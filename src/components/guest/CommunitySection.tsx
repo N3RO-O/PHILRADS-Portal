@@ -14,7 +14,7 @@ import { Avatar } from '../ui/Avatar';
 import { PrismMark } from '../ui/PrismMark';
 import { Picture, ShareButton } from './guestUi';
 import { ActionButton, Byline, ComposerSheet, DEFAULT_TOPICS, TopicTag, Upvote, topicColor, useJoinPrompt } from './forumUi';
-import { GoogleButton } from './SignInPrompt';
+import { SignInButton } from './SignInPrompt';
 import { OPEN_STORIES } from './StoriesSection';
 import { Faces } from './WhoIsHere';
 
@@ -434,7 +434,7 @@ function Rail({ drives }: { drives: DonationDrive[] }) {
               <span className="font-semibold tabular-nums text-ink">{formatNumber(here.count)}</span> here now
             </p>
           </div>
-          <GoogleButton className="mt-4 w-full" />
+          <SignInButton className="mt-4 w-full" />
           <p className="mt-2 text-xs text-muted">Free. We never post for you.</p>
         </RailSection>
       )}

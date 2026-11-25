@@ -42,7 +42,7 @@ import { NewsSection } from '../components/guest/NewsSection';
 import { PraySection } from '../components/guest/PraySection';
 import { PrepareSection } from '../components/guest/PrepareSection';
 import { ProfileSection } from '../components/guest/ProfileSection';
-import { GoogleG } from '../components/guest/SignInPrompt';
+import { SignInButton } from '../components/guest/SignInPrompt';
 import { WhoIsHere } from '../components/guest/WhoIsHere';
 import { Avatar } from '../components/ui/Avatar';
 import { GuestAccountProvider, useGuestAccount } from '../services/guest/account';
@@ -396,10 +396,9 @@ function Emergency() {
   );
 }
 
-/** The top bar's account button: "Sign in" with Google, or your picture (your profile). */
+/** The top bar's account button: "Sign in" (an emailed code), or your picture (your profile). */
 function AccountButton() {
-  const { status, me, staff, signIn } = useGuestAccount();
-  const [busy, setBusy] = useState(false);
+  const { status, me, staff } = useGuestAccount();
   if (status === 'loading') return <span className="h-9 w-9" aria-hidden />;
   if (me)
     return (
@@ -417,23 +416,7 @@ function AccountButton() {
         </span>
       </Link>
     );
-  return (
-    <button
-      type="button"
-      className="tap group grid place-items-center disabled:opacity-60"
-      disabled={busy}
-      onClick={async () => {
-        setBusy(true);
-        const e = await signIn();
-        setBusy(false);
-        if (e) window.alert(e);
-      }}
-    >
-      <span className="inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full border border-line px-3 text-xs font-semibold text-ink-soft transition-colors group-hover:border-ink-mute group-hover:text-ink">
-        <GoogleG className="h-4 w-4" /> {busy ? 'Opening…' : 'Sign in'}
-      </span>
-    </button>
-  );
+  return <SignInButton variant="pill" />;
 }
 
 /**

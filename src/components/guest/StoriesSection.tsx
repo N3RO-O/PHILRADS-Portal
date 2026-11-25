@@ -99,7 +99,7 @@ export function StoriesSection({ stories, onRetry }: { stories: AsyncState<Guest
           )}
           {!unlocked && list.length > OPEN_STORIES && (
             <div className="mt-6">
-              <SignInPrompt title="Read every story" body={`Sign in with Google to read all ${list.length} stories from our responses. It’s free, and we never post for you.`} />
+              <SignInPrompt title="Read every story" body={`Sign in to read all ${list.length} stories from our responses. It’s free.`} />
             </div>
           )}
         </>
@@ -126,7 +126,7 @@ export function StoriesSection({ stories, onRetry }: { stories: AsyncState<Guest
             </div>
             {openLocked ? (
               <div className="mt-5">
-                <SignInPrompt compact title="Keep reading" body="Sign in with Google to read the rest of this story, and every other one." />
+                <SignInPrompt compact title="Keep reading" body="Sign in to read the rest of this story, and every other one." />
               </div>
             ) : (
               open.authorName && <p className="mt-6 text-sm text-muted">Written by {open.authorName}</p>
