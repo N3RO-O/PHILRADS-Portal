@@ -50,6 +50,8 @@ import { CountBadge } from '../components/ui/CountBadge';
 import { PrismMark, PrismWord } from '../components/ui/PrismMark';
 import { SampleBadge } from '../components/ui/SampleBadge';
 import { SlidingPill } from '../components/ui/SlidingPill';
+import { NavTip, useNavTip } from '../components/ui/NavTip';
+import { useMarkNewSeenOnVisit, useNewHere, type NewThing } from '../lib/newHere';
 import { useBackdropClose } from '../components/ui/Sheet';
 import { useAsyncData } from '../hooks/useAsyncData';
 import { closeDialog, openDialog } from '../lib/dialogMotion';
@@ -130,6 +132,9 @@ const SIDE: { group: string; items: { id: Screen; label: string; icon: LucideIco
 
 const isScreen = (s: string): s is Screen => Object.prototype.hasOwnProperty.call(SCREENS, s);
 const pathOf = (s: Screen) => (s === 'home' ? '/guest' : `/guest/${s}`);
+/** What's new on a guest screen, or on any screen under a tab (src/lib/newHere.ts). */
+const newOn = (news: NewThing[], s: Screen) => news.filter((n) => n.path === pathOf(s));
+const newUnder = (news: NewThing[], t: Tab) => (Object.keys(SCREENS) as Screen[]).filter((s) => SCREENS[s].tab === t).flatMap((s) => newOn(news, s));
 
 /** Links from before the tabs (/guest#drives, /guest#drive-…, /guest?story=…) still land in the right place. */
 function legacyTarget(hash: string, search: URLSearchParams): string | null {
@@ -266,9 +271,15 @@ function WelcomeDialog({ open, onClose }: { open: boolean; onClose: () => void }
         onClose();
       }}
       {...backdrop.handlers}
-      className="motion-pop w-[min(26rem,calc(100vw-2rem))] animate-pop-in overflow-hidden rounded-3xl bg-transparent p-0 shadow-2xl shadow-black/60 backdrop:animate-fade-in backdrop:bg-black/60"
+      className="motion-pop max-h-[calc(100dvh-1.5rem)] w-[min(26rem,calc(100vw-2rem))] animate-pop-in overflow-y-auto overflow-x-hidden rounded-3xl bg-transparent p-0 shadow-2xl shadow-black/60 backdrop:animate-fade-in backdrop:bg-black/60"
     >
-      <PrismHero className="pb-6 pt-10">
+      <div className="relative aspect-[4/3] max-h-[34dvh] min-h-[11rem] w-full bg-[#2a2326] bg-cover bg-[center_25%]" style={{ backgroundImage: 'url(/media/welcome-cat-still.webp)' }}>
+        <picture>
+          <source media="(prefers-reduced-motion: reduce)" srcSet="/media/welcome-cat-still.webp" />
+          <img src="/media/welcome-cat.webp" alt="A black cat standing up, grinning and clapping" width={326} height={480} className="h-full w-full object-cover object-[center_25%]" />
+        </picture>
+      </div>
+      <PrismHero className="pb-6 pt-6">
         <h2 id="guest-welcome-title" className="mt-2 font-display text-[1.75rem] leading-[1.1] tracking-[-0.01em]">
           Welcome, guest
         </h2>
@@ -292,7 +303,7 @@ function WelcomeDialog({ open, onClose }: { open: boolean; onClose: () => void }
         type="button"
         onClick={onClose}
         aria-label="Close the welcome"
-        className="tap absolute right-2.5 top-2.5 z-10 grid h-10 w-10 place-items-center rounded-full text-cloud/85 hover:bg-white/10 hover:text-cloud"
+        className="tap absolute right-2.5 top-2.5 z-10 grid h-10 w-10 place-items-center rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-black/55"
       >
         <X className="h-5 w-5" aria-hidden />
       </button>
@@ -301,7 +312,9 @@ function WelcomeDialog({ open, onClose }: { open: boolean; onClose: () => void }
 }
 
 /** A row on the More screen. */
-function MoreRow({ to, href, icon: Icon, title, note, dot }: { to?: string; href?: string; icon: LucideIcon; title: string; note: string; dot?: boolean }) {
+function MoreRow({ to, href, icon: Icon, title, note, dot: live }: { to?: string; href?: string; icon: LucideIcon; title: string; note: string; dot?: boolean }) {
+  const fresh = useNewHere('guest').some((n) => n.path === to);
+  const dot = live || fresh;
   const body = (
     <>
       <span className="icon-chip relative rounded-xl bg-surface-sunken">
@@ -311,7 +324,8 @@ function MoreRow({ to, href, icon: Icon, title, note, dot }: { to?: string; href
       <span className="min-w-0 flex-1">
         <span className="block font-semibold text-ink">
           {title}
-          {dot && <span className="sr-only"> (something is happening now)</span>}
+          {live && <span className="sr-only"> (something is happening now)</span>}
+          {fresh && !live && <span className="sr-only"> (new)</span>}
         </span>
         <span className="block text-xs text-muted">{note}</span>
       </span>
@@ -413,6 +427,8 @@ function AccountButton() {
  * pages), with the guest pages in two groups and the emergency number at the foot.
  */
 function GuestSidebar({ screen, live, onWelcome }: { screen: Screen; live: boolean; onWelcome: () => void }) {
+  const news = useNewHere('guest');
+  const { tip, show, hide } = useNavTip();
   return (
     <aside
       aria-label="Guest navigation"
@@ -432,27 +448,35 @@ function GuestSidebar({ screen, live, onWelcome }: { screen: Screen; live: boole
             {gi > 0 && <hr className="mx-2 my-2 border-line/70" aria-hidden />}
             {g.items.map((item) => {
               const on = screen === item.id;
+              const fresh = newOn(news, item.id);
               return (
                 <Link
                   key={item.id}
                   to={pathOf(item.id)}
                   aria-current={on ? 'page' : undefined}
+                  onPointerEnter={show(undefined, fresh)}
+                  onPointerLeave={hide}
+                  onFocus={show(undefined, fresh)}
+                  onBlur={hide}
+                  onClick={hide}
                   className={`relative z-10 flex h-10 shrink-0 items-center gap-3 rounded-xl px-3 text-sm transition-colors ${
                     on ? 'font-semibold text-cloud' : 'font-medium text-ink-soft hover:bg-ink/[0.04] hover:text-ink'
                   }`}
                 >
                   <span className="relative shrink-0">
                     <item.icon className="h-5 w-5" aria-hidden />
-                    {item.id === 'news' && live && <CountBadge tone="new" />}
+                    {((item.id === 'news' && live) || fresh.length > 0) && <CountBadge tone="new" />}
                   </span>
                   <span className="min-w-0 flex-1 truncate">{item.label}</span>
                   {item.id === 'news' && live && <span className="sr-only">(new alerts)</span>}
+                  {fresh.length > 0 && <span className="sr-only">(new)</span>}
                 </Link>
               );
             })}
           </div>
         ))}
       </nav>
+      <NavTip tip={tip} />
       <div className="flex shrink-0 flex-col gap-1 border-t border-line/70 px-3 py-3">
         <a href="tel:911" className="flex h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium text-ink-soft transition-colors hover:bg-ink/[0.04] hover:text-ink">
           <Phone className="h-5 w-5 shrink-0 text-status-out" aria-hidden /> Emergency: call 911
@@ -473,6 +497,7 @@ function GuestSidebar({ screen, live, onWelcome }: { screen: Screen; live: boole
  * the portal's burgundy, which opens out from the middle when you choose it.
  */
 function GuestTabBar({ tab, live, onPress }: { tab: Tab; live: boolean; onPress: (t: Tab) => (e: MouseEvent) => void }) {
+  const news = useNewHere('guest');
   return (
     <nav aria-label="Guest" className="fixed inset-x-0 bottom-0 z-30 border-t border-line/70 bg-page pb-[env(safe-area-inset-bottom)] lg:hidden">
       <div className="mx-auto flex max-w-lg px-1">
@@ -491,12 +516,14 @@ function GuestTabBar({ tab, live, onPress }: { tab: Tab; live: boolean; onPress:
                 {/* The page-coloured collar lifts it off the bar (a ring would fight .gloss's own shadow). */}
                 <span className="-mt-7 rounded-full bg-page p-1">
                   <span
-                    className={`gloss grid h-14 w-14 place-items-center rounded-full bg-burgundy-500 transition-transform duration-300 ease-glide group-active:scale-95 ${on ? 'scale-105' : ''}`}
+                    className={`gloss relative grid h-14 w-14 place-items-center rounded-full bg-burgundy-500 transition-transform duration-300 ease-glide group-active:scale-95 ${on ? 'scale-105' : ''}`}
                   >
                     <t.icon className="h-6 w-6 text-cloud" strokeWidth={on ? 2.25 : 2} aria-hidden />
+                    {newUnder(news, t.id).length > 0 && <CountBadge tone="new" className="!bottom-[66%] !left-[66%]" />}
                   </span>
                 </span>
                 <span className="text-[0.6875rem] font-semibold leading-none text-ink">{t.label}</span>
+                {newUnder(news, t.id).length > 0 && <span className="sr-only">(new)</span>}
               </Link>
             );
           return (
@@ -510,10 +537,11 @@ function GuestTabBar({ tab, live, onPress }: { tab: Tab; live: boolean; onPress:
               <span className="relative grid h-8 w-14 place-items-center">
                 <span className="gnav-ind gloss absolute inset-0 rounded-full" data-on={on} aria-hidden />
                 <t.icon className={`relative h-5 w-5 transition-colors duration-300 ${on ? 'text-cloud' : 'text-ink-soft'}`} strokeWidth={on ? 2.25 : 1.75} aria-hidden />
-                {t.id === 'more' && live && <CountBadge tone="new" className="!bottom-[60%] !left-[62%]" />}
+                {((t.id === 'more' && live) || newUnder(news, t.id).length > 0) && <CountBadge tone="new" className="!bottom-[60%] !left-[62%]" />}
               </span>
               <span className={`text-[0.6875rem] leading-none transition-colors duration-300 ${on ? 'font-semibold text-ink' : 'font-medium text-ink-soft'}`}>{t.label}</span>
               {t.id === 'more' && live && <span className="sr-only">(new alerts in Disaster News)</span>}
+              {!(t.id === 'more' && live) && newUnder(news, t.id).length > 0 && <span className="sr-only">(new)</span>}
             </Link>
           );
         })}
@@ -537,6 +565,7 @@ export function GuestPage() {
 
 function GuestScreens() {
   const { screen: param = 'home' } = useParams();
+  useMarkNewSeenOnVisit('guest');
   const location = useLocation();
   const [search] = useSearchParams();
   const navigate = useNavigate();

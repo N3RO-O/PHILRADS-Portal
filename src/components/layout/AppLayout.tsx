@@ -21,6 +21,7 @@ import { ActivePanel } from './ActivePanel';
 import { BreakNudge } from './BreakNudge';
 import { Welcomer } from '../onboarding/Welcomer';
 import { PullToRefresh } from '../ui/PullToRefresh';
+import { useMarkNewSeenOnVisit } from '../../lib/newHere';
 
 export interface LayoutContext {
   search: string;
@@ -56,6 +57,7 @@ export function AppLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [search, setSearch] = useState('');
   const location = useLocation();
+  useMarkNewSeenOnVisit('staff');
   const current = moduleForPath(location.pathname);
   const { can, profile } = useAuth();
   // A page this person's role doesn't include (a volunteer opening /inventory from an old link): go to Tasks.

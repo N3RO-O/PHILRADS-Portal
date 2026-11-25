@@ -15,6 +15,8 @@ export interface ReleaseItem {
   body: string;
   /** Where to see it. */
   path?: string;
+  /** Where guests see it, on the guest page (marks it new in the guest navigation). */
+  guestPath?: string;
   /** Shown only to people with this permission. */
   permission?: string;
 }

@@ -56,10 +56,10 @@ export function Welcomer() {
       className="popover max-h-[calc(100dvh-1.5rem)] w-[min(26rem,calc(100vw-2rem))] animate-pop-in overflow-y-auto overflow-x-hidden p-0 text-ink backdrop:animate-fade-in backdrop:bg-black/70 backdrop:backdrop-blur-[2px]"
     >
       {/* The clip, as if from an old home video: REC light, the date and time in the corner, faint scan lines. */}
-      <div className="welcome-tape relative aspect-[4/3] max-h-[48dvh] min-h-[13rem] w-full overflow-hidden bg-[#111] bg-cover bg-center" style={{ backgroundImage: 'url(/media/welcome-dance-still.webp)' }}>
+      <div className="welcome-tape relative aspect-[4/3] max-h-[48dvh] min-h-[13rem] w-full overflow-hidden bg-[#111] bg-cover bg-[center_25%]" style={{ backgroundImage: 'url(/media/welcome-cat-still.webp)' }}>
         <picture>
-          <source media="(prefers-reduced-motion: reduce)" srcSet="/media/welcome-dance-still.webp" />
-          <img src="/media/welcome-dance.webp" alt="A kid in sunglasses dancing" width={400} height={300} className="h-full w-full object-cover" />
+          <source media="(prefers-reduced-motion: reduce)" srcSet="/media/welcome-cat-still.webp" />
+          <img src="/media/welcome-cat.webp" alt="A black cat standing up, grinning and clapping" width={326} height={480} className="h-full w-full object-cover object-[center_25%]" />
         </picture>
         <span aria-hidden className="welcome-scan pointer-events-none absolute inset-0" />
         <span aria-hidden className="absolute left-3 top-2.5 flex items-center gap-1.5 font-mono text-[0.6875rem] font-bold tracking-widest text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.8)]">

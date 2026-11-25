@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-11-25.5",
+    "version": "1.15.0",
+    "date": "2026-11-25",
+    "title": "See what's new where it is",
+    "items": [
+      {
+        "icon": "circle-dot",
+        "title": "Yellow dots for what's new",
+        "body": "After an update, a yellow dot marks each page in the menu that changed. Point at it to see what's new; the dot goes once you've seen it or opened the page. Guests see the same in their menu."
+      },
+      {
+        "icon": "sparkles",
+        "title": "A new welcome",
+        "body": "The welcome now has a clapping cat, for staff and for guests."
+      }
+    ]
+  },
+  {
     "id": "2026-11-25.4",
     "version": "1.14.0",
     "date": "2026-11-25",
@@ -8,17 +26,22 @@
       {
         "icon": "sun",
         "title": "A guest home page",
-        "body": "The guest page now opens on a home page: what PHILRADS is doing right now, the fundraiser closest to its goal, the latest stories, merch, and quick links to the nearest site, hotlines and being prepared. The Live Map has its own tab."
+        "body": "The guest page now opens on a home page: what PHILRADS is doing right now, the fundraiser closest to its goal, the latest stories, merch, and quick links to the nearest site, hotlines and being prepared. The Live Map has its own tab.",
+        "path": "/guest-admin",
+        "guestPath": "/guest"
       },
       {
         "icon": "key-round",
         "title": "Guests can sign in with Google",
-        "body": "Guests can sign in with their Google account to read every story, pray with us, and see where a fundraiser's gifts went. Before they sign in they see a preview. Guest accounts can never open the staff portal and don't appear on the Staff page."
+        "body": "Guests can sign in with their Google account to read every story, pray with us, and see where a fundraiser's gifts went. Before they sign in they see a preview. Guest accounts can never open the staff portal and don't appear on the Staff page.",
+        "path": "/guest-admin",
+        "guestPath": "/guest/stories"
       },
       {
         "icon": "user",
         "title": "Guest profiles",
-        "body": "A signed-in guest can choose the name others see, a picture or a colour, and a line about themselves."
+        "body": "A signed-in guest can choose the name others see, a picture or a colour, and a line about themselves.",
+        "guestPath": "/guest/me"
       },
       {
         "icon": "users",
@@ -36,32 +59,41 @@
       {
         "icon": "map",
         "title": "Find the nearest site",
-        "body": "On the guest Live Map, Find the nearest site shows the three PHILRADS sites closest to the guest, how far each is, and directions. Their location stays on their phone."
+        "body": "On the guest Live Map, Find the nearest site shows the three PHILRADS sites closest to the guest, how far each is, and directions. Their location stays on their phone.",
+        "guestPath": "/guest/map"
       },
       {
         "icon": "life-buoy",
         "title": "Emergency hotlines",
-        "body": "A new Hotlines page lists numbers to call in an emergency, one tap to call: 911, the Red Cross, NDRRMC, PAGASA and PHIVOLCS to start. Staff with guest access add local disaster offices on the Guest page, under Hotlines."
+        "body": "A new Hotlines page lists numbers to call in an emergency, one tap to call: 911, the Red Cross, NDRRMC, PAGASA and PHIVOLCS to start. Staff with guest access add local disaster offices on the Guest page, under Hotlines.",
+        "path": "/guest-admin",
+        "guestPath": "/guest/hotlines"
       },
       {
         "icon": "list-checks",
         "title": "Be prepared",
-        "body": "Go bag and family plan checklists guests can tick off on their phone, and what to do before, during and after a typhoon, a flood and an earthquake."
+        "body": "Go bag and family plan checklists guests can tick off on their phone, and what to do before, during and after a typhoon, a flood and an earthquake.",
+        "guestPath": "/guest/prepare"
       },
       {
         "icon": "bell-ring",
         "title": "Alerts for guests",
-        "body": "Guests can turn on phone notifications for PHILRADS's urgent announcements, and for typhoons coming near the regions they choose. No sign-up: turning alerts off removes their phone from the list."
+        "body": "Guests can turn on phone notifications for PHILRADS's urgent announcements, and for typhoons coming near the regions they choose. No sign-up: turning alerts off removes their phone from the list.",
+        "guestPath": "/guest/alerts"
       },
       {
         "icon": "sparkles",
         "title": "Pray with us",
-        "body": "Staff post prayer points on the Guest page, under Prayer. Guests press I prayed, and everyone sees how many have prayed."
+        "body": "Staff post prayer points on the Guest page, under Prayer. Guests press I prayed, and everyone sees how many have prayed.",
+        "path": "/guest-admin",
+        "guestPath": "/guest/pray"
       },
       {
         "icon": "gift",
         "title": "Where the gifts went",
-        "body": "Donation Drives are now called Fundraising. When a fundraiser is closed, staff can write what it did, how many families it reached, and add up to six photos. Guests see it on the fundraiser, ready to share."
+        "body": "Donation Drives are now called Fundraising. When a fundraiser is closed, staff can write what it did, how many families it reached, and add up to six photos. Guests see it on the fundraiser, ready to share.",
+        "path": "/guest-admin",
+        "guestPath": "/guest/give"
       },
       {
         "icon": "smartphone",

@@ -2,6 +2,11 @@ import { useEffect, useRef } from 'react';
 import { Menu } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useOnboarding } from '../onboarding/OnboardingProvider';
+import { useAuth } from '../auth/AuthProvider';
+import { CountBadge } from '../ui/CountBadge';
+import { MODULES, moduleOpenTo } from '../../config/modules';
+import type { PermissionKey } from '../../config/permissions';
+import { isUnder, useNewHere } from '../../lib/newHere';
 import { PrismMark, PrismWord } from '../ui/PrismMark';
 import { ActiveFaces } from './ActiveFaces';
 import { GlobalSearch } from './GlobalSearch';
@@ -24,6 +29,11 @@ const isApple = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(
 const SHORTCUT_LABEL = isApple ? '⌘K' : 'Ctrl K';
 
 export function TopBar({ search, onSearch, menuOpen, onOpenMenu, hideMobileSearch = false, activeShown = false, onToggleActive }: TopBarProps) {
+  const { can, profile } = useAuth();
+  // Something new in a page the drawer lists: the menu button carries the same yellow dot.
+  const somethingNew = useNewHere('staff', (p) => can(p as PermissionKey)).some((n) =>
+    MODULES.some((m) => !m.hidden && moduleOpenTo(m, profile?.roleKey, can) && isUnder(n.path, m.path)),
+  );
   const desktopInput = useRef<HTMLInputElement>(null);
   const mobileInput = useRef<HTMLInputElement>(null);
 
@@ -56,8 +66,11 @@ export function TopBar({ search, onSearch, menuOpen, onOpenMenu, hideMobileSearc
   return (
     <header className="sticky top-0 z-30 border-b border-ink/[0.05] bg-page">
       <div className="flex h-16 items-center gap-2 px-4 sm:gap-3 sm:px-6">
-        <button type="button" className="icon-btn lg:hidden" onClick={onOpenMenu} aria-label="Open navigation" aria-expanded={menuOpen}>
-          <Menu className="h-5 w-5" aria-hidden />
+        <button type="button" className="icon-btn lg:hidden" onClick={onOpenMenu} aria-label={somethingNew ? 'Open navigation (something new)' : 'Open navigation'} aria-expanded={menuOpen}>
+          <span className="relative">
+            <Menu className="h-5 w-5" aria-hidden />
+            {somethingNew && <CountBadge tone="new" />}
+          </span>
         </button>
         <Link to="/" className="flex items-center gap-2 lg:hidden" aria-label="PRISM home">
           <PrismMark className="h-8 w-8 text-ink" />

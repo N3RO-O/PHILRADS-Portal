@@ -1,8 +1,12 @@
-import { useEffect, useState, type FocusEvent, type PointerEvent } from 'react';
+import { useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { MODULES, NAV_GROUPS, moduleOpenTo } from '../../config/modules';
 import { useAuth } from '../auth/AuthProvider';
 import { SlidingPill } from '../ui/SlidingPill';
+import { CountBadge } from '../ui/CountBadge';
+import { NavTip, useNavTip } from '../ui/NavTip';
+import { isUnder, useNewHere } from '../../lib/newHere';
+import type { PermissionKey } from '../../config/permissions';
 
 /**
  * Words beside an icon in the sidebar: always there, faded out when folded. They fade quickly as it
@@ -24,25 +28,18 @@ interface NavItemsProps {
  * from the old page to the new one, so the eye follows it. Collapsed: icons
  * only, active icon yellow with an indicator bar, and a label on hover or keyboard focus. The label
  * floats (fixed) beside the rail, so the navigation can scroll without clipping it. Modules not built
- * yet carry a "Soon" tag.
+ * yet carry a "Soon" tag. A page a recent update changed carries a yellow dot, and its hover label
+ * says what's new with a tiny "!" (src/lib/newHere.ts).
  */
 export function NavItems({ expanded, onNavigate, rail = false }: NavItemsProps) {
   const { can, profile } = useAuth();
   const visible = MODULES.filter((m) => !m.hidden && moduleOpenTo(m, profile?.roleKey, can));
-  const [tip, setTip] = useState<{ label: string; top: number; left: number } | null>(null);
-  const showTip = (label: string) => (e: PointerEvent<HTMLElement> | FocusEvent<HTMLElement>) => {
-    if (expanded) return;
-    const r = e.currentTarget.getBoundingClientRect();
-    setTip({ label, top: r.top + r.height / 2, left: r.right + 16 });
-  };
-  const hideTip = () => setTip(null);
-  // Scrolling the rail (or collapsing it) moves the links away from the label.
-  useEffect(() => {
-    if (!tip) return;
-    window.addEventListener('scroll', hideTip, true);
-    return () => window.removeEventListener('scroll', hideTip, true);
-  }, [tip]);
-  useEffect(hideTip, [expanded]);
+  const news = useNewHere('staff', (p) => can(p as PermissionKey));
+  const { tip, show, hide: hideTip } = useNavTip();
+  // Folded, the label names the page; open, it only appears to say what's new.
+  const showTip = (label: string, fresh: typeof news) => show(expanded ? undefined : label, fresh);
+  // Collapsing the rail moves the links away from the label.
+  useEffect(hideTip, [expanded, hideTip]);
   return (
     <>
       {/* The active highlight, behind the links (the nav around this is relative). */}
@@ -50,7 +47,10 @@ export function NavItems({ expanded, onNavigate, rail = false }: NavItemsProps) 
       {NAV_GROUPS.filter((group) => visible.some((m) => m.group === group)).map((group, gi) => (
         <div key={group} role="group" aria-label={group} className="flex flex-col gap-1">
           {gi > 0 && <hr className="mx-2 my-2 border-line/70" aria-hidden />}
-          {visible.filter((m) => m.group === group).map((m) => (
+          {visible.filter((m) => m.group === group).map((m) => {
+            const fresh = news.filter((n) => isUnder(n.path, m.path));
+            const label = m.soon ? `${m.label} · Soon` : m.label;
+            return (
             <NavLink
               key={m.id}
               to={m.path}
@@ -59,11 +59,11 @@ export function NavItems({ expanded, onNavigate, rail = false }: NavItemsProps) 
                 hideTip();
                 onNavigate?.();
               }}
-              onPointerEnter={showTip(m.soon ? `${m.label} · Soon` : m.label)}
+              onPointerEnter={showTip(label, fresh)}
               onPointerLeave={hideTip}
-              onFocus={showTip(m.soon ? `${m.label} · Soon` : m.label)}
+              onFocus={showTip(label, fresh)}
               onBlur={hideTip}
-              aria-label={expanded ? undefined : m.soon ? `${m.label} (coming soon)` : m.label}
+              aria-label={expanded ? undefined : `${m.label}${m.soon ? ' (coming soon)' : ''}${fresh.length ? ' (new)' : ''}`}
               className={({ isActive }) =>
                 `group relative z-10 flex h-10 shrink-0 items-center gap-3 rounded-xl text-sm transition-colors ${
                   rail ? 'overflow-hidden pl-[0.875rem] pr-3' : expanded ? 'px-3' : 'justify-center'
@@ -77,7 +77,11 @@ export function NavItems({ expanded, onNavigate, rail = false }: NavItemsProps) 
             >
               {() => (
                 <>
-                  <m.icon className="h-5 w-5 shrink-0" aria-hidden />
+                  <span className="relative shrink-0">
+                    <m.icon className="h-5 w-5" aria-hidden />
+                    {fresh.length > 0 && <CountBadge tone="new" />}
+                  </span>
+                  {expanded && fresh.length > 0 && <span className="sr-only">(new)</span>}
                   {rail ? (
                     <>
                       <span className={`min-w-0 flex-1 ${railLabel(expanded)}`}>{m.label}</span>
@@ -96,18 +100,11 @@ export function NavItems({ expanded, onNavigate, rail = false }: NavItemsProps) 
                 </>
               )}
             </NavLink>
-          ))}
+            );
+          })}
         </div>
       ))}
-      {tip && (
-        <span
-          aria-hidden
-          style={{ top: tip.top, left: tip.left }}
-          className="pointer-events-none fixed z-50 -translate-y-1/2 animate-fade-in whitespace-nowrap rounded-lg border border-line bg-surface-raised px-3 py-1.5 text-xs font-semibold text-ink shadow-xl shadow-black/40"
-        >
-          {tip.label}
-        </span>
-      )}
+      <NavTip tip={tip} />
     </>
   );
 }
