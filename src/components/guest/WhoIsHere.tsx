@@ -31,13 +31,16 @@ export function WhoIsHere() {
   const others = here.count - here.people.length;
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className="chip min-h-9 gap-2 pl-2" aria-label={`Who’s here: ${hereText(here.count)}`}>
-        <span className="relative grid h-2.5 w-2.5 place-items-center" aria-hidden>
-          <span className="absolute inset-0 animate-ping rounded-full bg-status-in/60 motion-reduce:animate-none" />
-          <span className="relative h-2 w-2 rounded-full bg-status-in" />
+      {/* The press area is the bar's full height on phones; the pill inside matches the avatar beside it. */}
+      <button type="button" onClick={() => setOpen(true)} className="tap group grid place-items-center" aria-label={`Who’s here: ${hereText(here.count)}`}>
+        <span className="inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-full border border-line pl-2.5 pr-3 text-xs font-semibold text-ink-soft transition-colors group-hover:border-ink-mute group-hover:text-ink">
+          <span className="relative grid h-2.5 w-2.5 place-items-center" aria-hidden>
+            <span className="absolute inset-0 animate-ping rounded-full bg-status-in/60 motion-reduce:animate-none" />
+            <span className="relative h-2 w-2 rounded-full bg-status-in" />
+          </span>
+          {unlocked && <Faces size="xs" />}
+          <span className="tabular-nums">{hereText(here.count)}</span>
         </span>
-        {unlocked && <Faces size="xs" />}
-        <span className="tabular-nums">{hereText(here.count)}</span>
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} title="Who’s here" subtitle={`${hereText(here.count)} on the PHILRADS guest page right now`}>
         {!unlocked ? (

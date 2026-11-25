@@ -1,5 +1,32 @@
 [
   {
+    "id": "2026-11-25.6",
+    "version": "1.16.0",
+    "date": "2026-11-25",
+    "title": "A community on the guest page",
+    "items": [
+      {
+        "icon": "messages",
+        "title": "The PHILRADS Community",
+        "body": "The guest page now opens on a community. Signed-in guests can post, comment, reply and upvote under topics: stories, prayer, needs and offers, questions and fundraising. Staff posts in Updates are marked and can be pinned. Stories, prayers and fundraisers show in the same feed.",
+        "path": "/guest-admin",
+        "guestPath": "/guest"
+      },
+      {
+        "icon": "lock",
+        "title": "Reports and hiding",
+        "body": "Posts show at once. Anyone signed in can report a post or comment, and three reports hide it until staff look. Staff see what was reported in the new Community tab on the Guest page admin, and can hide, show again, pin and unpin.",
+        "path": "/guest-admin"
+      },
+      {
+        "icon": "palette",
+        "title": "Guest pages run edge to edge",
+        "body": "The guest pages drop their boxes for full-width rows, like a forum, and the top bar on phones lines up.",
+        "guestPath": "/guest/give"
+      }
+    ]
+  },
+  {
     "id": "2026-11-25.5",
     "version": "1.15.0",
     "date": "2026-11-25",

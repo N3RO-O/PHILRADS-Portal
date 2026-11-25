@@ -44,9 +44,9 @@ function Progress({ d }: { d: DonationDrive }) {
 function OpenDrive({ d }: { d: DonationDrive }) {
   const [giving, setGiving] = useState(false);
   return (
-    <article id={`drive-${d.id}`} className="scroll-mt-24 overflow-hidden rounded-2xl border border-line bg-surface">
-      {d.coverUrl && <Picture src={d.coverUrl} alt="" icon={HandCoins} className="aspect-[21/9] w-full" />}
-      <div className="flex flex-col gap-4 p-5">
+    <article id={`drive-${d.id}`} className="flex scroll-mt-24 flex-col gap-4 py-6 first:pt-0">
+      {d.coverUrl && <Picture src={d.coverUrl} alt="" icon={HandCoins} className="aspect-[21/9] w-full rounded-xl" />}
+      <div className="flex flex-col gap-4">
         <div>
           <h3 className="text-lg font-semibold leading-snug text-ink">{d.title}</h3>
           {d.summary && <p className="mt-1 text-sm text-ink-soft">{d.summary}</p>}
@@ -85,8 +85,8 @@ function OpenDrive({ d }: { d: DonationDrive }) {
 function DriveReport({ d }: { d: DonationDrive }) {
   const { unlocked } = useGuestAccount();
   return (
-    <article id={`drive-${d.id}`} className="scroll-mt-24 overflow-hidden rounded-2xl border border-line bg-surface">
-      <div className="flex flex-col gap-3 p-5">
+    <article id={`drive-${d.id}`} className="scroll-mt-24 py-5 first:pt-0">
+      <div className="flex flex-col gap-3">
         <div>
           <h4 className="text-base font-semibold leading-snug text-ink">{d.title}</h4>
           <p className="mt-0.5 flex flex-wrap gap-x-3 gap-y-1 text-xs tabular-nums text-muted">
@@ -147,7 +147,7 @@ export function DrivesSection({ drives, onRetry }: { drives: AsyncState<Donation
       ) : (
         <>
           {open.length ? (
-            <div className="grid gap-4 xl:grid-cols-2">
+            <div className="divide-y divide-line/70 border-b border-line/70">
               {open.map((d) => (
                 <OpenDrive key={d.id} d={d} />
               ))}
@@ -161,7 +161,7 @@ export function DrivesSection({ drives, onRetry }: { drives: AsyncState<Donation
             <div className="mt-8">
               <h3 className="text-sm font-semibold text-ink">What your gifts did</h3>
               <p className="mt-0.5 text-sm text-ink-soft">Fundraisers that finished, and what they made possible.</p>
-              <div className="mt-3 grid gap-4 xl:grid-cols-2">
+              <div className="mt-3 divide-y divide-line/70 border-y border-line/70">
                 {reported.map((d) => (
                   <DriveReport key={d.id} d={d} />
                 ))}

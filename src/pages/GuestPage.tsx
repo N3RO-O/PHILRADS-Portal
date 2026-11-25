@@ -31,7 +31,9 @@ import { DrivesSection } from '../components/guest/DrivesSection';
 import { FeedbackSection, isFeedbackKind } from '../components/guest/FeedbackSection';
 import type { GuestPick } from '../components/guest/GuestMap';
 import { SectionError } from '../components/guest/guestUi';
-import { HomeSection } from '../components/guest/HomeSection';
+import { CommunitySection } from '../components/guest/CommunitySection';
+import { PostSection } from '../components/guest/PostSection';
+import { DEFAULT_TOPICS, topicColor } from '../components/guest/forumUi';
 import { HotlinesSection } from '../components/guest/HotlinesSection';
 import { MerchSection } from '../components/guest/MerchSection';
 import { NearMe, type Me } from '../components/guest/NearMe';
@@ -71,7 +73,7 @@ const GuestMap = lazy(() => import('../components/guest/GuestMap'));
  * two more screens (Merch, Feedback) inside More. Each screen has its own address, so the
  * phone's back button, shared links and reloads all land where they should.
  */
-type Screen = 'home' | 'me' | 'map' | 'news' | 'stories' | 'give' | 'more' | 'merch' | 'feedback' | 'hotlines' | 'prepare' | 'alerts' | 'pray';
+type Screen = 'home' | 'post' | 'me' | 'map' | 'news' | 'stories' | 'give' | 'more' | 'merch' | 'feedback' | 'hotlines' | 'prepare' | 'alerts' | 'pray';
 type Tab = 'home' | 'map' | 'give' | 'merch' | 'more';
 
 const TABS: { id: Tab; label: string; icon: LucideIcon }[] = [
@@ -84,7 +86,8 @@ const TABS: { id: Tab; label: string; icon: LucideIcon }[] = [
 
 /** Each screen's title, its tab, and the id of the section whose big title the app bar watches. */
 const SCREENS: Record<Screen, { title: string; tab: Tab; section: string }> = {
-  home: { title: 'Home', tab: 'home', section: 'home' },
+  home: { title: 'Community', tab: 'home', section: 'home' },
+  post: { title: 'Post', tab: 'home', section: 'post' },
   me: { title: 'Your profile', tab: 'more', section: 'me' },
   map: { title: 'Live Map', tab: 'map', section: 'map' },
   news: { title: 'Disaster News', tab: 'more', section: 'news' },
@@ -395,20 +398,24 @@ function AccountButton() {
   if (status === 'loading') return <span className="h-9 w-9" aria-hidden />;
   if (me)
     return (
-      <Link to="/guest/me" className="tap rounded-full" aria-label={`Your profile (${me.name})`}>
-        <Avatar initials={me.initials} src={me.avatar} color={me.color} size="sm" />
+      <Link to="/guest/me" className="tap grid place-items-center" aria-label={`Your profile (${me.name})`}>
+        <span className="grid h-9 w-9 place-items-center">
+          <Avatar initials={me.initials} src={me.avatar} color={me.color} size="sm" />
+        </span>
       </Link>
     );
   if (staff)
     return (
-      <Link to="/" className="chip gap-1.5">
-        <LogIn className="h-4 w-4" aria-hidden /> Portal
+      <Link to="/" className="tap group grid place-items-center">
+        <span className="inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full border border-line px-3 text-xs font-semibold text-ink-soft transition-colors group-hover:border-ink-mute group-hover:text-ink">
+          <LogIn className="h-4 w-4" aria-hidden /> Portal
+        </span>
       </Link>
     );
   return (
     <button
       type="button"
-      className="chip gap-1.5"
+      className="tap group grid place-items-center disabled:opacity-60"
       disabled={busy}
       onClick={async () => {
         setBusy(true);
@@ -417,7 +424,9 @@ function AccountButton() {
         if (e) window.alert(e);
       }}
     >
-      <GoogleG className="h-4 w-4" /> {busy ? 'Opening…' : 'Sign in'}
+      <span className="inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full border border-line px-3 text-xs font-semibold text-ink-soft transition-colors group-hover:border-ink-mute group-hover:text-ink">
+        <GoogleG className="h-4 w-4" /> {busy ? 'Opening…' : 'Sign in'}
+      </span>
     </button>
   );
 }
@@ -428,6 +437,8 @@ function AccountButton() {
  */
 function GuestSidebar({ screen, live, onWelcome }: { screen: Screen; live: boolean; onWelcome: () => void }) {
   const news = useNewHere('guest');
+  const [search] = useSearchParams();
+  const topic = screen === 'home' ? search.get('t') : null;
   const { tip, show, hide } = useNavTip();
   return (
     <aside
@@ -447,7 +458,7 @@ function GuestSidebar({ screen, live, onWelcome }: { screen: Screen; live: boole
           <div key={g.group} role="group" aria-label={g.group} className="flex flex-col gap-1">
             {gi > 0 && <hr className="mx-2 my-2 border-line/70" aria-hidden />}
             {g.items.map((item) => {
-              const on = screen === item.id;
+              const on = (screen === item.id || (item.id === 'home' && screen === 'post')) && !(item.id === 'home' && topic);
               const fresh = newOn(news, item.id);
               return (
                 <Link
@@ -473,6 +484,25 @@ function GuestSidebar({ screen, live, onWelcome }: { screen: Screen; live: boole
                 </Link>
               );
             })}
+            {/* The community's topics, under Home, as a forum lists them. */}
+            {g.group === 'Home' && (
+              <div role="group" aria-label="Topics" className="mt-1 flex flex-col gap-0.5">
+                {DEFAULT_TOPICS.map((t) => {
+                  const on = topic === t.key;
+                  return (
+                    <Link
+                      key={t.key}
+                      to={`/guest?t=${t.key}`}
+                      aria-current={on ? 'page' : undefined}
+                      className={`relative z-10 flex h-9 shrink-0 items-center gap-3 rounded-xl pl-[1.375rem] pr-3 text-sm transition-colors ${on ? 'font-semibold text-cloud' : 'font-medium text-ink-soft hover:bg-ink/[0.04] hover:text-ink'}`}
+                    >
+                      <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: topicColor(t.key) }} aria-hidden />
+                      <span className="min-w-0 flex-1 truncate">{t.name}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
           </div>
         ))}
       </nav>
@@ -631,8 +661,9 @@ function GuestScreens() {
     return () => window.removeEventListener('scroll', save);
   }, []);
   useEffect(() => {
-    document.title = `${meta.title} · PRISM Guest`;
-  }, [meta.title]);
+    // A post names itself once it loads (PostSection).
+    if (screen !== 'post') document.title = `${meta.title} · PRISM Guest`;
+  }, [meta.title, screen]);
   useLayoutEffect(() => {
     shown.current = screen;
     if (!location.hash) window.scrollTo({ top: scrolls.current.get(screen) ?? 0, behavior: 'instant' });
@@ -680,16 +711,16 @@ function GuestScreens() {
   let body: ReactNode;
   if (screen === 'home')
     body = (
-      <HomeSection
+      <CommunitySection
         overview={overview.data}
         hazards={hazards}
         notes={notes.data ?? []}
         stories={stories.data ?? []}
         drives={drives.data ?? []}
         prayers={prayers.data ?? []}
-        merch={merch.data ?? []}
       />
     );
+  else if (screen === 'post') body = <PostSection />;
   else if (screen === 'me') body = <ProfileSection />;
   else if (screen === 'map')
     body = (
@@ -763,7 +794,7 @@ function GuestScreens() {
   else body = <MoreScreen live={live} />;
 
   // Reading pages keep a comfortable line length; drives and merch use the width.
-  const measure = SUB.has(screen) || screen === 'stories' ? 'max-w-3xl' : '';
+  const measure = SUB.has(screen) || screen === 'stories' || screen === 'post' ? 'max-w-3xl' : '';
 
   return (
     <div className="min-h-dvh">
@@ -783,7 +814,8 @@ function GuestScreens() {
             <button type="button" onClick={() => setWelcome(true)} className="flex items-center gap-2 lg:hidden" aria-label="Show the welcome">
               <PrismMark className="h-8 w-8 text-ink" />
               <PrismWord className="font-display text-sm tracking-[0.06em] text-ink" />
-              <span className="text-[0.6875rem] font-semibold text-muted">Guest</span>
+              {/* With the back arrow there, small phones drop the word so the bar still fits. */}
+              <span className={`text-[0.6875rem] font-semibold text-muted ${sub ? 'hidden min-[25rem]:inline' : ''}`}>Guest</span>
             </button>
             <div className="ml-auto flex items-center gap-2">
               <Link to="/guest/feedback?about=volunteer" className="chip hidden gap-1.5 sm:inline-flex">
@@ -794,9 +826,10 @@ function GuestScreens() {
             </div>
           </div>
         </header>
-        <main id="main" className="mx-auto w-full max-w-[100rem] flex-1 px-4 pb-10 sm:px-6" style={{ viewTransitionName: 'page' }}>
-          <div className={screen === 'home' ? 'flex justify-end pb-3 pt-3 empty:hidden' : 'flex flex-wrap items-end justify-between gap-3 pb-6 pt-3'}>
-            {screen !== 'home' && (
+        <main id="main" className="relative mx-auto w-full max-w-[100rem] flex-1 px-4 pb-10 sm:px-6" style={{ viewTransitionName: 'page' }}>
+          {/* Home opens on its banner, flush under the bar: the Sample tag sits on the banner's corner. */}
+          <div className={screen === 'home' ? 'pointer-events-none absolute right-4 top-3 z-10 empty:hidden sm:right-6' : screen === 'post' ? 'flex justify-end pt-3 empty:hidden' : 'flex flex-wrap items-end justify-between gap-3 pb-6 pt-3'}>
+            {screen !== 'home' && screen !== 'post' && (
             <div className="min-w-0">
               <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-muted">
                 PHILRADS <span aria-hidden className="mx-1 text-ink-mute/50">/</span> <span className="text-ink-soft">{sub ? 'More' : 'Guest'}</span>

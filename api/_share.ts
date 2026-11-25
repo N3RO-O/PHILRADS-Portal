@@ -10,7 +10,8 @@
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const SCREENS: Record<string, { title: string; text: string }> = {
-  '': { title: 'PRISM Guest', text: 'See where Philippine Relief and Development Services is helping, what is happening now, and how you can help.' },
+  '': { title: 'PHILRADS Community', text: 'Relief, prayer and help after disasters in the Philippines: news, stories and a community from Philippine Relief and Development Services.' },
+  post: { title: 'PHILRADS Community', text: 'A post in the PHILRADS Community: relief, prayer and help after disasters in the Philippines.' },
   map: { title: 'Live Map', text: 'A live map of where PHILRADS has worked, its relief sites near you, and hazards affecting the Philippines now.' },
   news: { title: 'Disaster News', text: 'PHILRADS announcements, and typhoons, floods and earthquakes affecting the Philippines now.' },
   stories: { title: 'PHILReads', text: 'Stories from the field: the families PHILRADS serves and the people who serve them.' },

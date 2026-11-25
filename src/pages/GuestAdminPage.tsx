@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowRight, BookOpen, HandCoins, HeartHandshake, ImagePlus, Inbox, Mail, Megaphone, Phone, Plus, Shirt, Star, Trash2, type LucideIcon } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
 import { Picture } from '../components/guest/guestUi';
+import { CommunityReview } from '../components/guest/CommunityReview';
 import { BusyLabel } from '../components/ui/BusyLabel';
 import { EmptyState, LoadError, Skeleton } from '../components/ui/Card';
 import { SampleBadge } from '../components/ui/SampleBadge';
@@ -37,9 +38,10 @@ import {
   type StoryDraft,
 } from '../services/guest/guestService';
 
-type Tab = 'inbox' | 'news' | 'hotlines' | 'stories' | 'prayer' | 'drives' | 'merch';
+type Tab = 'inbox' | 'community' | 'news' | 'hotlines' | 'stories' | 'prayer' | 'drives' | 'merch';
 const TABS: { key: Tab; label: string }[] = [
   { key: 'inbox', label: 'Messages' },
+  { key: 'community', label: 'Community' },
   { key: 'news', label: 'News' },
   { key: 'hotlines', label: 'Hotlines' },
   { key: 'stories', label: 'PHILReads' },
@@ -914,6 +916,7 @@ export function GuestAdminPage() {
       </div>
 
       {tab === 'inbox' && <InboxTab />}
+      {tab === 'community' && <CommunityReview />}
       {tab === 'news' && (
         <>
           <p className="text-sm text-ink-soft">Your announcements sit above the typhoon, flood and earthquake alerts, which keep coming in from GDACS and USGS on their own.</p>

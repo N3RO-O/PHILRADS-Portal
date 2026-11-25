@@ -27,6 +27,7 @@ import { createSupabaseTasksService, mockTasksService } from './tasks/tasksServi
 import { createSupabaseTaskExtras, mockTaskExtras, type TaskExtrasService } from './tasks/taskExtras';
 import { createSupabaseReflections, mockReflections, type ReflectionsService } from './verse/reflectionsService';
 import { createMockGuestService, createSupabaseGuestService, type GuestOverview, type GuestService } from './guest/guestService';
+import { createMockForumService, createSupabaseForumService, type ForumService } from './guest/forum';
 
 export type { DashboardService } from './dashboard/types';
 export { driveUploadService, DriveNotConfiguredError } from './googleDrive';
@@ -114,3 +115,6 @@ async function sampleGuestOverview(): Promise<GuestOverview> {
 
 /** Guest pages (no account): the map, Disaster News, PHILReads, drives, merch and messages; edited by guest.manage. */
 export const guestService: GuestService = live ? createSupabaseGuestService(live) : createMockGuestService(sampleGuestOverview);
+
+/** The guest community (forum): posts, comments, upvotes and reports; moderated by guest.manage. */
+export const forumService: ForumService = live ? createSupabaseForumService(live) : createMockForumService();

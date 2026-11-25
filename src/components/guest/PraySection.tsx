@@ -47,7 +47,7 @@ function PrayerCard({ p, prayed, onPrayed }: { p: GuestPrayer; prayed: boolean; 
     }
   };
   return (
-    <li id={`prayer-${p.id}`} className="scroll-mt-24 rounded-2xl border border-line bg-surface p-5">
+    <li id={`prayer-${p.id}`} className="scroll-mt-24 py-5 first:pt-0">
       <h3 className="font-serif text-lg font-semibold leading-snug text-ink">{p.title}</h3>
       <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
         {p.area && (
@@ -108,9 +108,9 @@ export function PraySection({ prayers, onRetry }: { prayers: AsyncState<GuestPra
       ) : list.length && !unlocked ? (
         <div className="flex flex-col gap-4">
           <SignInPrompt title="Pray with us" body={`Sign in with Google to read this week’s ${list.length === 1 ? 'prayer point' : `${list.length} prayer points`} and add your prayer to the count.`} />
-          <ul className="flex flex-col gap-2" aria-label="This week’s prayer points">
+          <ul className="divide-y divide-line/70 border-y border-line/70" aria-label="This week’s prayer points">
             {list.map((p) => (
-              <li key={p.id} className="flex items-center gap-3 rounded-2xl border border-line bg-surface px-5 py-4">
+              <li key={p.id} className="flex items-center gap-3 py-4">
                 <span className="min-w-0 flex-1">
                   <span className="block font-serif text-lg font-semibold leading-snug text-ink">{p.title}</span>
                   {p.area && <span className="mt-0.5 block text-xs text-muted">{p.area}</span>}
@@ -121,7 +121,7 @@ export function PraySection({ prayers, onRetry }: { prayers: AsyncState<GuestPra
           </ul>
         </div>
       ) : list.length ? (
-        <ul className="flex flex-col gap-4">
+        <ul className="divide-y divide-line/70 border-b border-line/70">
           {list.map((p) => (
             <PrayerCard key={p.id} p={p} prayed={prayed.has(p.id)} onPrayed={mark} />
           ))}
