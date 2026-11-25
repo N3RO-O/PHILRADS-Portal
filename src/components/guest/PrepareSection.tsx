@@ -213,7 +213,7 @@ export function PrepareSection() {
         {guide === 'bag' && <p className="mb-4 text-sm text-ink-soft">One bag by the door with what your family needs for three days if you have to leave quickly.</p>}
         {guide === 'plan' && (
           <p className="mb-4 text-sm text-ink-soft">
-            Agree on these together, before anything happens. The <Link to="/guest" className="font-semibold text-uplift hover:underline">Live Map</Link> shows PHILRADS sites near you.
+            Agree on these together, before anything happens. The <Link to="/guest/map" className="font-semibold text-uplift hover:underline">Live Map</Link> shows PHILRADS sites near you.
           </p>
         )}
         {list ? <Checklist items={list} ticks={ticks} onTick={tick} what={guide === 'bag' ? 'Go bag' : 'Family plan'} /> : <Steps guide={guide as 'typhoon' | 'flood' | 'earthquake'} />}

@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { Navigate } from 'react-router-dom';
 import { RefreshCw } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import { SetPasswordPage } from '../../pages/SetPasswordPage';
@@ -31,6 +32,8 @@ export function AuthGate({ children }: { children: ReactNode }) {
     );
   }
   if (state.status === 'signed-out') return <SignInPage />;
+  // Guests who signed in with Google have the guest page, never the staff portal.
+  if (state.status === 'signed-in' && state.profile?.roleKey === 'guest') return <Navigate to="/guest" replace />;
   if (needsPassword) return <SetPasswordPage />;
   if (state.status === 'signed-in' && (!state.profile || !state.profile.isActive)) {
     // The profile couldn't be read (often an old copy of the portal after an update), which is

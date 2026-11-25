@@ -318,7 +318,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       can: (permission) => granted.has(permission),
       setDemoRole: state.status === 'demo' ? setDemoRole : undefined,
       // Volunteers sign in with an emailed code, so an invite doesn't ask them for a password.
-      needsPassword: state.status === 'signed-in' && needsPassword && state.profile?.roleKey !== 'volunteer',
+      needsPassword: state.status === 'signed-in' && needsPassword && state.profile?.roleKey !== 'volunteer' && state.profile?.roleKey !== 'guest',
       signIn,
       sendCode,
       verifyCode,

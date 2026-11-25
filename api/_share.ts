@@ -10,7 +10,8 @@
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const SCREENS: Record<string, { title: string; text: string }> = {
-  '': { title: 'Live Map', text: 'See where Philippine Relief and Development Services is helping, what is happening now, and how you can help.' },
+  '': { title: 'PRISM Guest', text: 'See where Philippine Relief and Development Services is helping, what is happening now, and how you can help.' },
+  map: { title: 'Live Map', text: 'A live map of where PHILRADS has worked, its relief sites near you, and hazards affecting the Philippines now.' },
   news: { title: 'Disaster News', text: 'PHILRADS announcements, and typhoons, floods and earthquakes affecting the Philippines now.' },
   stories: { title: 'PHILReads', text: 'Stories from the field: the families PHILRADS serves and the people who serve them.' },
   give: { title: 'Fundraising', text: 'Give to a PHILRADS relief fundraiser, and see where earlier gifts went.' },
@@ -20,6 +21,7 @@ const SCREENS: Record<string, { title: string; text: string }> = {
   alerts: { title: 'Alerts', text: 'Get a notification when a typhoon comes near the regions you follow.' },
   pray: { title: 'Pray with us', text: 'This week’s prayer points from PHILRADS, for families going through a disaster and the people serving them.' },
   feedback: { title: 'Feedback', text: 'Say thanks, tell PHILRADS about a need, or offer to volunteer.' },
+  me: { title: 'PRISM Guest', text: 'See where Philippine Relief and Development Services is helping, and how you can help.' },
   more: { title: 'PRISM Guest', text: 'See where Philippine Relief and Development Services is helping, and how you can help.' },
 };
 

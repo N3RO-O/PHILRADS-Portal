@@ -1,5 +1,7 @@
 import { useSearchParams } from 'react-router-dom';
-import { BookOpen, MapPin } from 'lucide-react';
+import { BookOpen, Lock, MapPin } from 'lucide-react';
+import { useGuestAccount } from '../../services/guest/account';
+import { SignInPrompt } from './SignInPrompt';
 import { STORY_KINDS, type GuestStory } from '../../services/guest/guestService';
 import { formatShortInstant } from '../../lib/format';
 import type { AsyncState } from '../../hooks/useAsyncData';
@@ -26,6 +28,9 @@ function Byline({ s }: { s: GuestStory }) {
   );
 }
 
+/** Stories open to everyone: the newest few. The rest are for guests who signed in. */
+export const OPEN_STORIES = 2;
+
 /** PHILReads: stories and field updates by the PHILRADS team, read in the serif. */
 export function StoriesSection({ stories, onRetry }: { stories: AsyncState<GuestStory[]>; onRetry: () => void }) {
   const [params, setParams] = useSearchParams();
@@ -42,6 +47,9 @@ export function StoriesSection({ stories, onRetry }: { stories: AsyncState<Guest
       { replace: !id, preventScrollReset: true },
     );
   const [lead, ...rest] = list;
+  const { unlocked } = useGuestAccount();
+  const locked = (s: GuestStory) => !unlocked && list.indexOf(s) >= OPEN_STORIES;
+  const openLocked = open ? locked(open) : false;
 
   return (
     <GuestSection id="stories" title="PHILReads" lead="Stories and updates from our responses, written by the people who were there.">
@@ -74,8 +82,13 @@ export function StoriesSection({ stories, onRetry }: { stories: AsyncState<Guest
                         {s.title}
                       </span>
                       {s.summary && <span className="mt-0.5 block font-serif text-[0.975rem] leading-snug text-ink-soft">{s.summary}</span>}
-                      <span className="mt-1.5 block">
+                      <span className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
                         <Byline s={s} />
+                        {locked(s) && (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-ink-soft">
+                            <Lock className="h-3 w-3" aria-hidden /> Sign in to read
+                          </span>
+                        )}
                       </span>
                     </span>
                     {s.coverUrl && <Picture src={s.coverUrl} alt="" icon={BookOpen} className="h-20 w-24 shrink-0 rounded-xl" />}
@@ -83,6 +96,11 @@ export function StoriesSection({ stories, onRetry }: { stories: AsyncState<Guest
                 </li>
               ))}
             </ul>
+          )}
+          {!unlocked && list.length > OPEN_STORIES && (
+            <div className="mt-6">
+              <SignInPrompt title="Read every story" body={`Sign in with Google to read all ${list.length} stories from our responses. It’s free, and we never post for you.`} />
+            </div>
           )}
         </>
       )}
@@ -98,14 +116,21 @@ export function StoriesSection({ stories, onRetry }: { stories: AsyncState<Guest
           <article className="mx-auto max-w-[34rem]">
             {open.coverUrl && <Picture src={open.coverUrl} alt="" icon={BookOpen} className="mb-5 aspect-[16/10] w-full rounded-2xl" />}
             {open.summary && <p className="mb-5 font-serif text-[1.1875rem] italic leading-relaxed text-ink-soft">{open.summary}</p>}
-            <div className="guest-prose font-serif text-[1.125rem] leading-[1.7] text-ink">
-              {paragraphs(open.body).map((p, i) => (
+            <div className={`guest-prose font-serif text-[1.125rem] leading-[1.7] text-ink ${openLocked ? 'relative max-h-48 overflow-hidden' : ''}`}>
+              {(openLocked ? paragraphs(open.body).slice(0, 1) : paragraphs(open.body)).map((p, i) => (
                 <p key={i} className="whitespace-pre-line">
                   {p}
                 </p>
               ))}
+              {openLocked && <span className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-surface to-transparent" aria-hidden />}
             </div>
-            {open.authorName && <p className="mt-6 text-sm text-muted">Written by {open.authorName}</p>}
+            {openLocked ? (
+              <div className="mt-5">
+                <SignInPrompt compact title="Keep reading" body="Sign in with Google to read the rest of this story, and every other one." />
+              </div>
+            ) : (
+              open.authorName && <p className="mt-6 text-sm text-muted">Written by {open.authorName}</p>
+            )}
           </article>
         )}
       </Sheet>

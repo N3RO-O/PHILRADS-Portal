@@ -3,6 +3,8 @@ import { ChevronDown, HandCoins, HeartHandshake, Users } from 'lucide-react';
 import { amount, daysLeft, type DonationDrive } from '../../services/guest/guestService';
 import { formatShortDate, formatShortInstant } from '../../lib/format';
 import type { AsyncState } from '../../hooks/useAsyncData';
+import { useGuestAccount } from '../../services/guest/account';
+import { SignInPrompt } from './SignInPrompt';
 import { CopyButton, GuestSection, Picture, RowsLoading, SectionError, ShareButton } from './guestUi';
 
 const pct = (d: DonationDrive) => Math.min(100, Math.round((d.raised / d.goal) * 100));
@@ -81,6 +83,7 @@ function OpenDrive({ d }: { d: DonationDrive }) {
 
 /** A finished drive's report: what the gifts did, in words, a number and photos. */
 function DriveReport({ d }: { d: DonationDrive }) {
+  const { unlocked } = useGuestAccount();
   return (
     <article id={`drive-${d.id}`} className="scroll-mt-24 overflow-hidden rounded-2xl border border-line bg-surface">
       <div className="flex flex-col gap-3 p-5">
@@ -96,8 +99,16 @@ function DriveReport({ d }: { d: DonationDrive }) {
             {d.endsOn && <span>Closed {formatShortDate(d.endsOn)}</span>}
           </p>
         </div>
-        <p className="whitespace-pre-line text-sm leading-relaxed text-ink-soft">{d.report}</p>
-        {d.reportPhotos.length > 0 && (
+        {!unlocked ? (
+          <SignInPrompt
+            compact
+            title="See where the gifts went"
+            body={`Sign in with Google to read the report${d.reportPhotos.length ? ` and see ${d.reportPhotos.length === 1 ? 'the photo' : `all ${d.reportPhotos.length} photos`}` : ''}.`}
+          />
+        ) : (
+          <p className="whitespace-pre-line text-sm leading-relaxed text-ink-soft">{d.report}</p>
+        )}
+        {unlocked && d.reportPhotos.length > 0 && (
           <ul className={`grid gap-2 ${d.reportPhotos.length === 1 ? 'grid-cols-1' : d.reportPhotos.length === 2 || d.reportPhotos.length === 4 ? 'grid-cols-2' : 'grid-cols-3'}`}>
             {d.reportPhotos.map((src, i) => (
               <li key={src}>

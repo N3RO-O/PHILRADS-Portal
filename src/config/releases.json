@@ -1,5 +1,33 @@
 [
   {
+    "id": "2026-11-25.4",
+    "version": "1.14.0",
+    "date": "2026-11-25",
+    "title": "A front page for guests, and guest sign-in with Google",
+    "items": [
+      {
+        "icon": "sun",
+        "title": "A guest home page",
+        "body": "The guest page now opens on a home page: what PHILRADS is doing right now, the fundraiser closest to its goal, the latest stories, merch, and quick links to the nearest site, hotlines and being prepared. The Live Map has its own tab."
+      },
+      {
+        "icon": "key-round",
+        "title": "Guests can sign in with Google",
+        "body": "Guests can sign in with their Google account to read every story, pray with us, and see where a fundraiser's gifts went. Before they sign in they see a preview. Guest accounts can never open the staff portal and don't appear on the Staff page."
+      },
+      {
+        "icon": "user",
+        "title": "Guest profiles",
+        "body": "A signed-in guest can choose the name others see, a picture or a colour, and a line about themselves."
+      },
+      {
+        "icon": "users",
+        "title": "Who's here",
+        "body": "Like Who's online in the portal, the guest page shows how many people have it open right now. Signed-in guests also see each other's names and pictures, and can hide themselves."
+      }
+    ]
+  },
+  {
     "id": "2026-11-25.3",
     "version": "1.13.0",
     "date": "2026-11-25",

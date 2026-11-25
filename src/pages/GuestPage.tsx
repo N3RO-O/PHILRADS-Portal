@@ -10,6 +10,7 @@ import {
   HandCoins,
   HandHeart,
   HeartHandshake,
+  House,
   LayoutGrid,
   LogIn,
   Map as MapIcon,
@@ -18,6 +19,7 @@ import {
   Navigation,
   Phone,
   ShieldCheck,
+  UserRound,
   Shirt,
   Siren,
   X,
@@ -29,12 +31,18 @@ import { DrivesSection } from '../components/guest/DrivesSection';
 import { FeedbackSection, isFeedbackKind } from '../components/guest/FeedbackSection';
 import type { GuestPick } from '../components/guest/GuestMap';
 import { SectionError } from '../components/guest/guestUi';
+import { HomeSection } from '../components/guest/HomeSection';
 import { HotlinesSection } from '../components/guest/HotlinesSection';
 import { MerchSection } from '../components/guest/MerchSection';
 import { NearMe, type Me } from '../components/guest/NearMe';
 import { NewsSection } from '../components/guest/NewsSection';
 import { PraySection } from '../components/guest/PraySection';
 import { PrepareSection } from '../components/guest/PrepareSection';
+import { ProfileSection } from '../components/guest/ProfileSection';
+import { GoogleG } from '../components/guest/SignInPrompt';
+import { WhoIsHere } from '../components/guest/WhoIsHere';
+import { Avatar } from '../components/ui/Avatar';
+import { GuestAccountProvider, useGuestAccount } from '../services/guest/account';
 import { StoriesSection } from '../components/guest/StoriesSection';
 import { freshAgain, kept, useOnline, useSavedCopyAt } from '../services/guest/offline';
 import { timeAgo } from '../lib/geo';
@@ -61,12 +69,12 @@ const GuestMap = lazy(() => import('../components/guest/GuestMap'));
  * two more screens (Merch, Feedback) inside More. Each screen has its own address, so the
  * phone's back button, shared links and reloads all land where they should.
  */
-type Screen = 'map' | 'news' | 'stories' | 'give' | 'more' | 'merch' | 'feedback' | 'hotlines' | 'prepare' | 'alerts' | 'pray';
-type Tab = 'map' | 'stories' | 'give' | 'merch' | 'more';
+type Screen = 'home' | 'me' | 'map' | 'news' | 'stories' | 'give' | 'more' | 'merch' | 'feedback' | 'hotlines' | 'prepare' | 'alerts' | 'pray';
+type Tab = 'home' | 'map' | 'give' | 'merch' | 'more';
 
 const TABS: { id: Tab; label: string; icon: LucideIcon }[] = [
+  { id: 'home', label: 'Home', icon: House },
   { id: 'map', label: 'Map', icon: MapIcon },
-  { id: 'stories', label: 'Stories', icon: BookOpen },
   { id: 'give', label: 'Give', icon: HandCoins },
   { id: 'merch', label: 'Merch', icon: Shirt },
   { id: 'more', label: 'More', icon: LayoutGrid },
@@ -74,9 +82,11 @@ const TABS: { id: Tab; label: string; icon: LucideIcon }[] = [
 
 /** Each screen's title, its tab, and the id of the section whose big title the app bar watches. */
 const SCREENS: Record<Screen, { title: string; tab: Tab; section: string }> = {
+  home: { title: 'Home', tab: 'home', section: 'home' },
+  me: { title: 'Your profile', tab: 'more', section: 'me' },
   map: { title: 'Live Map', tab: 'map', section: 'map' },
   news: { title: 'Disaster News', tab: 'more', section: 'news' },
-  stories: { title: 'PHILReads', tab: 'stories', section: 'stories' },
+  stories: { title: 'PHILReads', tab: 'more', section: 'stories' },
   give: { title: 'Fundraising', tab: 'give', section: 'drives' },
   more: { title: 'More', tab: 'more', section: 'more' },
   merch: { title: 'Merch', tab: 'merch', section: 'merch' },
@@ -87,9 +97,10 @@ const SCREENS: Record<Screen, { title: string; tab: Tab; section: string }> = {
   pray: { title: 'Pray with us', tab: 'more', section: 'pray' },
 };
 /** Screens reached from More on phones: they get a way back, and a reading width. */
-const SUB: ReadonlySet<Screen> = new Set(['news', 'feedback', 'hotlines', 'prepare', 'alerts', 'pray']);
+const SUB: ReadonlySet<Screen> = new Set(['news', 'feedback', 'hotlines', 'prepare', 'alerts', 'pray', 'stories', 'me']);
 /** Wide screens: the portal's own sidebar, in three groups (phones use the tabs, with the rest under More). */
 const SIDE: { group: string; items: { id: Screen; label: string; icon: LucideIcon }[] }[] = [
+  { group: 'Home', items: [{ id: 'home', label: 'Home', icon: House }] },
   {
     group: 'Stay safe',
     items: [
@@ -118,7 +129,7 @@ const SIDE: { group: string; items: { id: Screen; label: string; icon: LucideIco
 ];
 
 const isScreen = (s: string): s is Screen => Object.prototype.hasOwnProperty.call(SCREENS, s);
-const pathOf = (s: Screen) => (s === 'map' ? '/guest' : `/guest/${s}`);
+const pathOf = (s: Screen) => (s === 'home' ? '/guest' : `/guest/${s}`);
 
 /** Links from before the tabs (/guest#drives, /guest#drive-…, /guest?story=…) still land in the right place. */
 function legacyTarget(hash: string, search: URLSearchParams): string | null {
@@ -334,10 +345,12 @@ function MoreScreen({ live }: { live: boolean }) {
         <MoreRow to="/guest/alerts" icon={BellRing} title="Alerts" note="Notifications for typhoons near you and urgent news" />
       </ul>
       <ul className="divide-y divide-line/70 overflow-hidden rounded-2xl border border-line bg-surface" aria-label="Stay close">
+        <MoreRow to="/guest/stories" icon={BookOpen} title="PHILReads" note="Stories from our responses" />
         <MoreRow to="/guest/pray" icon={HeartHandshake} title="Pray with us" note="This week’s prayer points" />
         <MoreRow to="/guest/feedback" icon={MessageSquareHeart} title="Feedback" note="Say thanks, tell us a need, or offer to volunteer" />
       </ul>
       <ul className="divide-y divide-line/70 overflow-hidden rounded-2xl border border-line bg-surface">
+        <MoreRow to="/guest/me" icon={UserRound} title="Your profile" note="Your name and picture, and Who’s here" />
         <MoreRow href="https://philrads.org/" icon={ExternalLink} title="philrads.org" note="Philippine Relief and Development Services, Inc." />
         <MoreRow to="/" icon={LogIn} title="Staff sign-in" note="For PHILRADS staff with an account" />
       </ul>
@@ -358,6 +371,40 @@ function Emergency() {
         .
       </span>
     </p>
+  );
+}
+
+/** The top bar's account button: "Sign in" with Google, or your picture (your profile). */
+function AccountButton() {
+  const { status, me, staff, signIn } = useGuestAccount();
+  const [busy, setBusy] = useState(false);
+  if (status === 'loading') return <span className="h-9 w-9" aria-hidden />;
+  if (me)
+    return (
+      <Link to="/guest/me" className="tap rounded-full" aria-label={`Your profile (${me.name})`}>
+        <Avatar initials={me.initials} src={me.avatar} color={me.color} size="sm" />
+      </Link>
+    );
+  if (staff)
+    return (
+      <Link to="/" className="chip gap-1.5">
+        <LogIn className="h-4 w-4" aria-hidden /> Portal
+      </Link>
+    );
+  return (
+    <button
+      type="button"
+      className="chip gap-1.5"
+      disabled={busy}
+      onClick={async () => {
+        setBusy(true);
+        const e = await signIn();
+        setBusy(false);
+        if (e) window.alert(e);
+      }}
+    >
+      <GoogleG className="h-4 w-4" /> {busy ? 'Opening…' : 'Sign in'}
+    </button>
   );
 }
 
@@ -413,6 +460,9 @@ function GuestSidebar({ screen, live, onWelcome }: { screen: Screen; live: boole
         <a href="https://philrads.org/" target="_blank" rel="noopener noreferrer" className="flex h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium text-ink-soft transition-colors hover:bg-ink/[0.04] hover:text-ink">
           <ExternalLink className="h-5 w-5 shrink-0" aria-hidden /> philrads.org
         </a>
+        <Link to="/" className="flex h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium text-ink-soft transition-colors hover:bg-ink/[0.04] hover:text-ink">
+          <LogIn className="h-5 w-5 shrink-0" aria-hidden /> Staff sign-in
+        </Link>
       </div>
     </aside>
   );
@@ -478,11 +528,19 @@ function GuestTabBar({ tab, live, onPress }: { tab: Tab; live: boolean; onPress:
  * (Fundraising, Merch, Feedback). Staff edit the content on the Guest page in the portal.
  */
 export function GuestPage() {
-  const { screen: param = 'map' } = useParams();
+  return (
+    <GuestAccountProvider>
+      <GuestScreens />
+    </GuestAccountProvider>
+  );
+}
+
+function GuestScreens() {
+  const { screen: param = 'home' } = useParams();
   const location = useLocation();
   const [search] = useSearchParams();
   const navigate = useNavigate();
-  const screen: Screen = isScreen(param) ? param : 'map';
+  const screen: Screen = isScreen(param) ? param : 'home';
   const meta = SCREENS[screen];
 
   // Everything loads once, so moving between tabs is instant; each keeps a copy on the phone for when the signal goes.
@@ -525,7 +583,7 @@ export function GuestPage() {
   const onPick = useCallback((p: GuestPick) => setPick(p), []);
 
   // First visit only, and not over a shared link to a drive or story.
-  const [welcome, setWelcome] = useState(() => !welcomedBefore() && screen === 'map' && !location.hash && !search.get('story') && !search.get('drive'));
+  const [welcome, setWelcome] = useState(() => !welcomedBefore() && screen === 'home' && !location.hash && !search.get('story') && !search.get('drive'));
   const closeWelcome = useCallback(() => {
     setWelcome(false);
     try {
@@ -563,7 +621,7 @@ export function GuestPage() {
     }
   }, [drives.status, prayers.status, screen, location.hash, driveParam]);
 
-  const legacy = screen === 'map' ? legacyTarget(location.hash, search) : null;
+  const legacy = screen === 'home' ? legacyTarget(location.hash, search) : null;
   if (legacy) return <Navigate to={legacy} replace />;
   if (!isScreen(param)) return <Navigate to="/guest" replace />;
 
@@ -571,7 +629,7 @@ export function GuestPage() {
     setLayers((l) => ({ ...l, hazards: true }));
     setPick({ type: 'hazard', id: h.id });
     scrolls.current.set('map', 0);
-    navigate('/guest');
+    navigate('/guest/map');
     // After the map screen is up, so its fly-to sees the new place.
     setTimeout(() => setFocus({ lat: h.lat, lng: h.lng, key: Date.now() }), 0);
   };
@@ -591,7 +649,20 @@ export function GuestPage() {
   const hazardsShown = layers.hazards ? (pick?.type === 'hazard' && !recent.some((h) => h.id === pick.id) ? [...recent, ...hazards.filter((h) => h.id === pick.id)] : recent) : [];
 
   let body: ReactNode;
-  if (screen === 'map')
+  if (screen === 'home')
+    body = (
+      <HomeSection
+        overview={overview.data}
+        hazards={hazards}
+        notes={notes.data ?? []}
+        stories={stories.data ?? []}
+        drives={drives.data ?? []}
+        prayers={prayers.data ?? []}
+        merch={merch.data ?? []}
+      />
+    );
+  else if (screen === 'me') body = <ProfileSection />;
+  else if (screen === 'map')
     body = (
       <section aria-labelledby="guest-title" className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem] xl:gap-x-8">
         {/* Phones: what it shows, the map, then what you pressed. Wide (1280+): the map on the left, the rest beside it. */}
@@ -689,14 +760,14 @@ export function GuestPage() {
               <Link to="/guest/feedback?about=volunteer" className="chip hidden gap-1.5 sm:inline-flex">
                 <HandHeart className="h-4 w-4" aria-hidden /> Volunteer
               </Link>
-              <Link to="/" className="chip gap-1.5">
-                <LogIn className="h-4 w-4" aria-hidden /> Sign in
-              </Link>
+              <WhoIsHere />
+              <AccountButton />
             </div>
           </div>
         </header>
         <main id="main" className="mx-auto w-full max-w-[100rem] flex-1 px-4 pb-10 sm:px-6" style={{ viewTransitionName: 'page' }}>
-          <div className="flex flex-wrap items-end justify-between gap-3 pb-6 pt-3">
+          <div className={screen === 'home' ? 'flex justify-end pb-3 pt-3 empty:hidden' : 'flex flex-wrap items-end justify-between gap-3 pb-6 pt-3'}>
+            {screen !== 'home' && (
             <div className="min-w-0">
               <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-muted">
                 PHILRADS <span aria-hidden className="mx-1 text-ink-mute/50">/</span> <span className="text-ink-soft">{sub ? 'More' : 'Guest'}</span>
@@ -705,6 +776,7 @@ export function GuestPage() {
                 {meta.title}
               </h1>
             </div>
+            )}
             {sample && <SampleBadge />}
           </div>
           {(!online || savedAt) && (
