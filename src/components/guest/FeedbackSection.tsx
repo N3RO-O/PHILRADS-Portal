@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { Lock, Star } from 'lucide-react';
 import { guestService } from '../../services';
 import { GuestRuleError, MESSAGE_MAX, type MessageKind } from '../../services/guest/guestService';
@@ -190,7 +191,12 @@ export function FeedbackSection({ initialKind }: { initialKind?: FeedbackKind })
             </button>
             <p className="flex items-center gap-1.5 text-xs text-muted">
               <Lock className="h-3.5 w-3.5" aria-hidden />
-              Only PHILRADS coordinators and administrators read messages. Nothing is posted publicly.
+              <span>
+                Only PHILRADS coordinators and administrators read messages. Nothing is posted publicly.{' '}
+                <Link to="/guest/privacy" className="font-semibold text-ink-soft underline underline-offset-2 hover:text-ink">
+                  Privacy
+                </Link>
+              </span>
             </p>
           </div>
         </form>

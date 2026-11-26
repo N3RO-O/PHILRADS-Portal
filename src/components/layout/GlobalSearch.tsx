@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type RefObject } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChartColumn, CornerDownLeft, FolderKanban, Library, LayoutGrid, Search, SquareCheckBig, UserRound, type LucideIcon } from 'lucide-react';
+import { ChartColumn, CornerDownLeft, FolderKanban, Library, LayoutGrid, Package, Search, SquareCheckBig, UserRound, type LucideIcon } from 'lucide-react';
 import { MODULES, moduleOpenTo } from '../../config/modules';
 import { useAuth } from '../auth/AuthProvider';
-import { activitiesService, projectsService, resourcesService, tasksService } from '../../services';
+import { activitiesService, inventoryStore, projectsService, resourcesService, tasksService } from '../../services';
 import { siteKey } from '../../services/activities/types';
 
-type Kind = 'page' | 'person' | 'task' | 'project' | 'resource' | 'record';
+type Kind = 'page' | 'person' | 'task' | 'project' | 'resource' | 'record' | 'stock';
 interface Hit {
   kind: Kind;
   id: string;
@@ -23,12 +23,13 @@ const GROUPS: { kind: Kind; label: string; icon: LucideIcon }[] = [
   { kind: 'task', label: 'Tasks', icon: SquareCheckBig },
   { kind: 'project', label: 'Projects', icon: FolderKanban },
   { kind: 'record', label: 'Statistics', icon: ChartColumn },
+  { kind: 'stock', label: 'Inventory', icon: Package },
   { kind: 'resource', label: 'Resources', icon: Library },
 ];
 const PER_GROUP = 4;
 
 /** What the placeholder cycles through, one word at a time. */
-const HINTS = ['tasks', 'people', 'projects', 'places', 'donors', 'resources'];
+const HINTS = ['tasks', 'people', 'projects', 'places', 'donors', 'relief goods', 'resources'];
 
 /**
  * Everything the portal can find, loaded the first time the search box is used. Each source is
@@ -49,13 +50,22 @@ function useSearchIndex(enabled: boolean) {
       hay: `${m.label} ${m.group} ${m.summary}`.toLowerCase(),
     }));
     const safe = <T,>(p: Promise<T>) => p.catch(() => null);
+    // Stock items from the IMS snapshot (the one the Inventory page already loaded, else a fresh read).
+    const stock = async () => {
+      if (!inventoryStore.getState().snapshot && profile) {
+        await inventoryStore.start({ id: profile.id, name: profile.displayName });
+        inventoryStore.stop();
+      }
+      return inventoryStore.getState().snapshot?.items ?? null;
+    };
     void Promise.all([
       safe(projectsService.people()),
       safe(tasksService.list()),
       safe(projectsService.list()),
       safe(resourcesService.list()),
       can('map.read') ? safe(activitiesService.list()) : Promise.resolve(null),
-    ]).then(([people, tasks, projects, resources, records]) => {
+      can('inventory.read') ? safe(stock()) : Promise.resolve(null),
+    ]).then(([people, tasks, projects, resources, records, items]) => {
       if (!live) return;
       const all: Hit[] = [...pages];
       for (const p of people ?? []) all.push({ kind: 'person', id: p.id, title: p.name, sub: 'Profile', to: `/profile/${p.id}`, hay: p.name.toLowerCase() });
@@ -73,12 +83,21 @@ function useSearchIndex(enabled: boolean) {
           to: a.lat !== null && a.lng !== null ? `/live-map?site=${siteKey({ lat: a.lat, lng: a.lng })}` : '/statistics',
           hay: `${a.activity} ${a.site} ${a.response ?? ''} ${a.donors ?? ''} ${a.partner ?? ''} ${a.year}`.toLowerCase(),
         });
+      for (const it of items ?? [])
+        all.push({
+          kind: 'stock',
+          id: it.id,
+          title: it.name,
+          sub: it.category || 'Stock item',
+          to: `/inventory?q=${encodeURIComponent(it.name)}`,
+          hay: `${it.name} ${it.sku} ${it.barcode ?? ''} ${it.category}`.toLowerCase(),
+        });
       setHits(all);
     });
     return () => {
       live = false;
     };
-  }, [enabled, hits, can]);
+  }, [enabled, hits, can, profile]);
   return hits;
 }
 
@@ -91,7 +110,7 @@ interface Props {
 }
 
 /**
- * "Search anything": pages, people, tasks, projects, statistics and resources in one box, grouped,
+ * "Search anything": pages, people, tasks, projects, statistics, stock items and resources in one box, grouped,
  * with arrow keys and Enter. The placeholder rolls through what can be found.
  */
 export function GlobalSearch({ value, onChange, inputRef, shortcut, className = '' }: Props) {

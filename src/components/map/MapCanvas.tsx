@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { Circle, MapContainer, Marker, Pane, TileLayer, Tooltip, useMap, useMapEvents, type MarkerProps } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import '../../lib/leafletA11y';
 import { Building2, Crosshair, HandHeart, House, LifeBuoy, Truck, Warehouse, type LucideIcon } from 'lucide-react';
 import { PH_CENTER, PH_ZOOM, type LatLng } from '../../lib/geo';
 import { initialsOf } from '../../lib/format';

@@ -42,7 +42,11 @@ export function WhoIsHere() {
             <span className="relative h-2 w-2 rounded-full bg-status-in" />
           </span>
           {unlocked && <Faces size="xs" />}
-          <span className="tabular-nums">{hereText(here.count)}</span>
+          {/* The narrowest phones show just the number, so the bar fits. */}
+          <span className="tabular-nums">
+            {here.count.toLocaleString('en-PH')}
+            <span className="hidden min-[360px]:inline"> here</span>
+          </span>
         </span>
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} title="Who’s here" subtitle={`${hereText(here.count)} on the PHILRADS guest page right now`}>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import '../../lib/leafletA11y';
 import { CircleMarker, MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
 import { programMeta } from '../../services/activities/types';
 import type { GuestPlace, GuestSite } from '../../services/guest/guestService';
@@ -24,13 +25,15 @@ function hazardIcon(h: Hazard, on: boolean) {
   });
 }
 
+/** A place's diamond stays small, but the area you can press around it is 32 px, big enough for a finger. */
+const PLACE_HIT = 32;
 function placeIcon(p: GuestPlace, on: boolean) {
   const size = on ? 18 : 13;
   return L.divIcon({
     className: 'map-pin',
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-    html: `<span class="gm-place" style="--c:${kindMeta(p.kind).color};width:${size}px;height:${size}px"></span>`,
+    iconSize: [PLACE_HIT, PLACE_HIT],
+    iconAnchor: [PLACE_HIT / 2, PLACE_HIT / 2],
+    html: `<span style="display:grid;place-items:center;width:${PLACE_HIT}px;height:${PLACE_HIT}px"><span class="gm-place" style="--c:${kindMeta(p.kind).color};width:${size}px;height:${size}px"></span></span>`,
   });
 }
 
@@ -115,7 +118,7 @@ export default function GuestMap({
         );
       })}
       {places.map((p) => (
-        <Marker key={p.id} position={[p.lat, p.lng]} icon={placeIcon(p, pick?.type === 'place' && pick.id === p.id)} eventHandlers={handlers.place(p.id)} title={p.name} keyboard />
+        <Marker key={p.id} position={[p.lat, p.lng]} icon={placeIcon(p, pick?.type === 'place' && pick.id === p.id)} eventHandlers={handlers.place(p.id)} title={p.name} alt={`${p.name}, ${kindMeta(p.kind).label}`} keyboard />
       ))}
       {hazards.map((h) => (
         <Marker
@@ -124,6 +127,7 @@ export default function GuestMap({
           icon={hazardIcon(h, pick?.type === 'hazard' && pick.id === h.id)}
           eventHandlers={handlers.hazard(h.id)}
           title={h.title}
+          alt={`${h.title}, ${h.level} alert${h.current ? ', happening now' : ''}`}
           zIndexOffset={1000}
           keyboard
         />

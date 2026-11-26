@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ChevronDown, HandCoins, HeartHandshake, Users } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ChevronDown, ExternalLink, HandCoins, HandHeart, HeartHandshake, Users } from 'lucide-react';
 import { amount, daysLeft, type DonationDrive } from '../../services/guest/guestService';
 import { formatShortDate, formatShortInstant } from '../../lib/format';
 import type { AsyncState } from '../../hooks/useAsyncData';
@@ -153,9 +154,23 @@ export function DrivesSection({ drives, onRetry }: { drives: AsyncState<Donation
               ))}
             </div>
           ) : (
-            <p className="rounded-xl bg-surface-sunken px-4 py-3 text-sm text-ink-soft">
-              No drive is open right now. When a disaster strikes, new drives appear here first.
-            </p>
+            // No fundraiser open: still a way to give, and a way to help that isn't money.
+            <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface-sunken p-5">
+              <div>
+                <p className="font-semibold text-ink">No fundraiser is open right now</p>
+                <p className="mt-1 text-sm text-ink-soft">When a disaster strikes, new fundraisers appear here first. You can still support PHILRADS’s ongoing relief and development work.</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <a href="https://philrads.org/" target="_blank" rel="noopener noreferrer" className="btn-primary">
+                  <HandCoins className="h-4 w-4" aria-hidden /> Give on philrads.org
+                  <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+                  <span className="sr-only">(opens in a new tab)</span>
+                </a>
+                <Link to="/guest/feedback?about=volunteer" className="btn border border-line bg-surface text-ink hover:bg-surface-raised">
+                  <HandHeart className="h-4 w-4" aria-hidden /> Volunteer
+                </Link>
+              </div>
+            </div>
           )}
           {reported.length > 0 && (
             <div className="mt-8">

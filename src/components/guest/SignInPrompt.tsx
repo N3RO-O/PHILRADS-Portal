@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { Lock, LogIn } from 'lucide-react';
 import { z } from 'zod';
 import { useGuestAccount } from '../../services/guest/account';
@@ -16,7 +17,7 @@ const OFFLINE = 'You are offline. Signing in needs an internet connection.';
  * Guest sign-in, as volunteers sign in to the portal: an email, then the 6-digit code sent to it
  * (it checks itself when the last digit is in). The email's link signs in too.
  */
-function EmailCodeForm({ open }: { open: boolean }) {
+function EmailCodeForm({ open, onLeave }: { open: boolean; onLeave: () => void }) {
   const { sendCode, verifyCode } = useGuestAccount();
   const online = useOnlineStatus();
   const id = useId();
@@ -90,7 +91,12 @@ function EmailCodeForm({ open }: { open: boolean }) {
             We sent a 6-digit code to <span className="font-semibold text-ink">{sentTo}</span>. Enter it here, or tap the link in the email.
           </>
         ) : (
-          'No password needed. We’ll email you a 6-digit code. New here? This makes your free guest account.'
+          <>
+            No password needed. We’ll email you a 6-digit code. New here? This makes your free guest account.{' '}
+            <Link to="/guest/privacy" onClick={onLeave} className="font-semibold text-ink underline underline-offset-2">
+              Privacy
+            </Link>
+          </>
         )}
       </p>
       {sentTo ? (
@@ -163,9 +169,13 @@ export function SignInButton({ label = 'Sign in', className = '', variant = 'pri
   return (
     <>
       {variant === 'pill' ? (
-        <button type="button" className={`tap group grid place-items-center ${className}`} onClick={() => setOpen(true)}>
-          <span className="inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full border border-line px-3 text-xs font-semibold text-ink-soft transition-colors group-hover:border-ink-mute group-hover:text-ink">
-            <LogIn className="h-4 w-4" aria-hidden /> {label}
+        <button type="button" className={`tap group grid place-items-center ${className}`} onClick={() => setOpen(true)} aria-label={label}>
+          {/* The narrowest phones (under 360 px) show just the icon, so the bar fits. */}
+          <span className="inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full border border-line px-2.5 text-xs font-semibold text-ink-soft transition-colors group-hover:border-ink-mute group-hover:text-ink min-[360px]:px-3">
+            <LogIn className="h-4 w-4" aria-hidden />
+            <span className="hidden min-[360px]:inline" aria-hidden>
+              {label}
+            </span>
           </span>
         </button>
       ) : (
@@ -174,7 +184,7 @@ export function SignInButton({ label = 'Sign in', className = '', variant = 'pri
         </button>
       )}
       <Dialog open={open} title="Sign in" onClose={() => setOpen(false)}>
-        <EmailCodeForm open={open} />
+        <EmailCodeForm open={open} onLeave={() => setOpen(false)} />
       </Dialog>
     </>
   );

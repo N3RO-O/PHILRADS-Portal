@@ -289,7 +289,7 @@ export function StaffPage() {
                           {!m.archivedAt && (
                             <button
                               type="button"
-                              className="mt-0.5 inline-flex max-w-full items-center gap-1.5 rounded-md text-xs text-ink-soft hover:text-ink disabled:opacity-50"
+                              className="-ml-1 inline-flex min-h-7 max-w-full items-center gap-1.5 rounded-md px-1 text-xs text-ink-soft hover:bg-ink/[0.04] hover:text-ink disabled:opacity-50"
                               onClick={() => setPositionFor(m)}
                               disabled={busy || !online}
                               aria-label={`Position for ${m.name}: ${m.position || roleLabel(m.roleKey)}. Change it`}

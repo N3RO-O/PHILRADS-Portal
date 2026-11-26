@@ -4,6 +4,9 @@ import { dueLabel, LIST_META, parseQuickAdd } from '../../lib/tasks';
 import type { TaskDraft, TaskList, WorkSetting } from '../../services/tasks/types';
 import { LIST_STYLE } from './taskMeta';
 
+/** The longest task title tasksService accepts. */
+const TITLE_MAX = 200;
+
 interface Props {
   today: string;
   /** Defaults from the view being looked at (a list, Field/Office, Today). */
@@ -39,7 +42,7 @@ export function QuickAdd({ today, defaults, onAdd, onMore, disabled }: Props) {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!parsed.title || busy) return;
+    if (!parsed.title || busy || parsed.title.length > TITLE_MAX) return;
     setBusy(true);
     const ok = await onAdd(draft());
     setBusy(false);
@@ -50,6 +53,8 @@ export function QuickAdd({ today, defaults, onAdd, onMore, disabled }: Props) {
   const due = dueLabel(d, today);
   const style = LIST_STYLE[d.list];
   const typed = text.trim().length > 0;
+  // The box allows 300 so dates, #lists and @places fit; the title itself must stay at 200 or under (tasksService).
+  const over = parsed.title.length - TITLE_MAX;
 
   return (
     <form onSubmit={(e) => void submit(e)} className="flex flex-col gap-2">
@@ -77,13 +82,18 @@ export function QuickAdd({ today, defaults, onAdd, onMore, disabled }: Props) {
           <SlidersHorizontal className="h-4 w-4" aria-hidden />
           <span className="sr-only sm:not-sr-only">Details</span>
         </button>
-        <button type="submit" className="btn-primary shrink-0 px-4" disabled={disabled || busy || !parsed.title} aria-busy={busy || undefined}>
+        <button type="submit" className="btn-primary shrink-0 px-4" disabled={disabled || busy || !parsed.title || over > 0} aria-busy={busy || undefined}>
           {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Plus className="h-4 w-4" aria-hidden />}
           <span className="sr-only sm:not-sr-only">Add task</span>
         </button>
       </div>
       {typed && (
         <p id={`${uid}-hint`} className="flex flex-wrap items-center gap-1.5 text-xs" aria-live="polite">
+          {over > 0 && (
+            <span className="basis-full font-semibold text-status-out">
+              The title is {over} character{over === 1 ? '' : 's'} too long. Keep it to {TITLE_MAX}, or add details with Details.
+            </span>
+          )}
           <span className={`badge gap-1 border-transparent ${style.soft} ${style.text}`}>
             <style.icon className="h-3 w-3" aria-hidden /> {LIST_META[d.list].label}
           </span>

@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { Minus, Plus, Shirt } from 'lucide-react';
 import { guestService } from '../../services';
 import { GuestRuleError, peso, type MerchItem } from '../../services/guest/guestService';
@@ -133,7 +134,10 @@ function OrderSheet({ item, onClose }: { item: MerchItem | null; onClose: () => 
                 data-autofocus
               />
               <span id="contact-note" className="text-xs font-normal text-muted">
-                So the team can reply. Only PHILRADS staff see it.
+                So the team can reply. Only PHILRADS staff see it.{' '}
+                <Link to="/guest/privacy" className="font-semibold underline underline-offset-2 hover:text-ink">
+                  Privacy
+                </Link>
               </span>
             </label>
             <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">

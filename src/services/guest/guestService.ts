@@ -325,11 +325,23 @@ function checkDrive(d: DriveDraft) {
   if (d.reportReached !== null && (d.reportReached < 0 || !Number.isFinite(d.reportReached))) throw new GuestRuleError('The number reached can’t be below zero.');
 }
 
+/**
+ * A way the team can reply: an email address, or a phone number of 7 to 15 digits (a leading +,
+ * spaces, dashes, dots and brackets are fine). The database checks the same (submit_guest_message).
+ */
+export function contactProblem(value: string | null | undefined, required: boolean): string | null {
+  const v = (value ?? '').trim();
+  if (!v) return required ? 'Add a phone number or email so we can reply.' : null;
+  if (v.includes('@')) return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v) ? null : 'Check the email address for typos.';
+  return /^\+?[0-9]{7,15}$/.test(v.replace(/[\s().-]/g, '')) ? null : 'Enter a phone number, like 0917 123 4567, or an email address.';
+}
+
 function checkMessage(d: GuestMessageDraft) {
   const msg = d.message.trim();
   if (msg.length < 2) throw new GuestRuleError('Write a message first.');
   if (msg.length > MESSAGE_MAX) throw new GuestRuleError('Keep the message under 2,000 characters.');
-  if ((d.kind === 'order' || d.kind === 'volunteer') && (d.contact ?? '').trim().length < 5) throw new GuestRuleError('Add a phone number or email so we can reply.');
+  const contact = contactProblem(d.contact, d.kind === 'order' || d.kind === 'volunteer');
+  if (contact) throw new GuestRuleError(contact);
 }
 
 // ───────────────────────── Sample data ─────────────────────────
@@ -941,7 +953,8 @@ export function createSupabaseGuestService(client: SupabaseClient): GuestService
       if (error) fail('send', error, 'Your message could not be sent. Check the connection and try again.');
     },
     hazards: loadHazards,
-    hotlines: async () => (await list('guest_hotlines', toHotline, (q) => q.select('*').eq('is_listed', true).limit(300), 'the hotlines')).sort(byHotline),
+    // Only the public columns: signed-out visitors can't read who added a number (created_by).
+    hotlines: async () => (await list('guest_hotlines', toHotline, (q) => q.select('id, name, number, note, area, sort_order, is_listed').eq('is_listed', true).limit(300), 'the hotlines')).sort(byHotline),
     prayers: () => list('guest_prayers', toPrayer, (q) => q.select('*').eq('is_published', true).order('published_at', { ascending: false }).limit(30), 'the prayer points'),
     async pray(id) {
       const { data, error } = await client.rpc('guest_pray', { p_id: id });

@@ -13,7 +13,9 @@ import {
   HeartHandshake,
   House,
   LayoutGrid,
+  Lock,
   LogIn,
+  Mail,
   Map as MapIcon,
   MapPin,
   MessageSquareHeart,
@@ -41,6 +43,7 @@ import { NearMe, type Me } from '../components/guest/NearMe';
 import { NewsSection } from '../components/guest/NewsSection';
 import { PraySection } from '../components/guest/PraySection';
 import { PrepareSection } from '../components/guest/PrepareSection';
+import { PHILRADS_EMAIL, PrivacySection } from '../components/guest/PrivacySection';
 import { ProfileSection } from '../components/guest/ProfileSection';
 import { SignInButton } from '../components/guest/SignInPrompt';
 import { WhoIsHere } from '../components/guest/WhoIsHere';
@@ -75,7 +78,7 @@ const GuestMap = lazy(() => import('../components/guest/GuestMap'));
  * two more screens (Merch, Feedback) inside More. Each screen has its own address, so the
  * phone's back button, shared links and reloads all land where they should.
  */
-type Screen = 'home' | 'post' | 'me' | 'map' | 'news' | 'stories' | 'give' | 'more' | 'merch' | 'feedback' | 'hotlines' | 'prepare' | 'alerts' | 'pray';
+type Screen = 'home' | 'post' | 'me' | 'map' | 'news' | 'stories' | 'give' | 'more' | 'merch' | 'feedback' | 'hotlines' | 'prepare' | 'alerts' | 'pray' | 'privacy';
 type Tab = 'home' | 'news' | 'give' | 'merch' | 'more';
 
 const TABS: { id: Tab; label: string; icon: LucideIcon }[] = [
@@ -102,9 +105,10 @@ const SCREENS: Record<Screen, { title: string; tab: Tab; section: string }> = {
   prepare: { title: 'Be prepared', tab: 'more', section: 'prepare' },
   alerts: { title: 'Alerts', tab: 'more', section: 'alerts' },
   pray: { title: 'Pray with us', tab: 'more', section: 'pray' },
+  privacy: { title: 'Privacy', tab: 'more', section: 'privacy' },
 };
 /** Screens reached from More on phones: they get a way back, and a reading width. */
-const SUB: ReadonlySet<Screen> = new Set(['map', 'feedback', 'hotlines', 'prepare', 'alerts', 'pray', 'stories', 'me']);
+const SUB: ReadonlySet<Screen> = new Set(['map', 'feedback', 'hotlines', 'prepare', 'alerts', 'pray', 'stories', 'me', 'privacy']);
 /** Wide screens: the portal's own sidebar, in three groups (phones use the tabs, with the rest under More). */
 const SIDE: { group: string; items: { id: Screen; label: string; icon: LucideIcon }[] }[] = [
   { group: 'Home', items: [{ id: 'home', label: 'Home', icon: House }] },
@@ -257,14 +261,17 @@ const welcomedBefore = () => {
  * Closing it (the X, Escape, a tap outside, or "Look around") is remembered on this device; the
  * mark in the app bar opens it again.
  */
-function WelcomeDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+function WelcomeDialog({ open, onClose, driveOpen }: { open: boolean; onClose: () => void; driveOpen: boolean }) {
   const ref = useRef<HTMLDialogElement>(null);
   const backdrop = useBackdropClose(ref, onClose);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    if (open) openDialog(el);
-    else closeDialog(el);
+    if (open) {
+      openDialog(el);
+      // Focus lands on the first button; on a short screen that scrolled the top (logo, picture) out of view.
+      requestAnimationFrame(() => (el.scrollTop = 0));
+    } else closeDialog(el);
   }, [open]);
   return (
     <dialog
@@ -278,7 +285,8 @@ function WelcomeDialog({ open, onClose }: { open: boolean; onClose: () => void }
       {...backdrop.handlers}
       className="motion-pop max-h-[calc(100dvh-1.5rem)] w-[min(26rem,calc(100vw-2rem))] animate-pop-in overflow-y-auto overflow-x-hidden rounded-3xl bg-transparent p-0 shadow-2xl shadow-black/60 backdrop:animate-fade-in backdrop:bg-black/60"
     >
-      <div className="relative aspect-[4/3] max-h-[34dvh] min-h-[11rem] w-full bg-[#2a2326] bg-cover bg-[center_25%]" style={{ backgroundImage: 'url(/media/welcome-cat-still.webp)' }}>
+      {/* Short screens (under 720 px tall) skip the picture, so the whole card fits without scrolling. */}
+      <div className="relative aspect-[4/3] max-h-[34dvh] min-h-[11rem] w-full bg-[#2a2326] bg-cover bg-[center_25%] [@media(max-height:45rem)]:hidden" style={{ backgroundImage: 'url(/media/welcome-cat-still.webp)' }}>
         <picture>
           <source media="(prefers-reduced-motion: reduce)" srcSet="/media/welcome-cat-still.webp" />
           <img src="/media/welcome-cat.webp" alt="A black cat standing up, grinning and clapping" width={326} height={480} className="h-full w-full object-cover object-[center_25%]" />
@@ -293,7 +301,7 @@ function WelcomeDialog({ open, onClose }: { open: boolean; onClose: () => void }
         </p>
         <div className="mt-2 flex flex-wrap justify-center gap-2">
           <Link to="/guest/give" onClick={onClose} className="btn-primary">
-            <HandCoins className="h-4 w-4" aria-hidden /> Give your donation
+            <HandCoins className="h-4 w-4" aria-hidden /> {driveOpen ? 'Give your donation' : 'Ways to give'}
           </Link>
           <Link to="/guest/feedback?about=volunteer" onClick={onClose} className="btn border border-white/25 bg-white/10 text-cloud hover:bg-white/15">
             <HandHeart className="h-4 w-4" aria-hidden /> Volunteer
@@ -334,14 +342,14 @@ function MoreRow({ to, href, icon: Icon, title, note, dot: live }: { to?: string
         </span>
         <span className="block text-xs text-muted">{note}</span>
       </span>
-      {href ? <ExternalLink className="h-4 w-4 shrink-0 text-muted" aria-hidden /> : <ChevronRight className="h-5 w-5 shrink-0 text-muted" aria-hidden />}
+      {href?.startsWith('http') ? <ExternalLink className="h-4 w-4 shrink-0 text-muted" aria-hidden /> : <ChevronRight className="h-5 w-5 shrink-0 text-muted" aria-hidden />}
     </>
   );
   const cls = 'tap flex items-center gap-3.5 px-4 py-3 transition-colors hover:bg-surface-raised';
   return (
     <li>
       {href ? (
-        <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>
+        <a href={href} {...(href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})} className={cls}>
           {body}
         </a>
       ) : (
@@ -372,6 +380,8 @@ function MoreScreen() {
       <ul className={list}>
         <MoreRow to="/guest/me" icon={UserRound} title="Your profile" note="Name and picture" />
         <MoreRow href="https://philrads.org/" icon={ExternalLink} title="philrads.org" note="Our website" />
+        <MoreRow href={`mailto:${PHILRADS_EMAIL}`} icon={Mail} title="Email PHILRADS" note={PHILRADS_EMAIL} />
+        <MoreRow to="/guest/privacy" icon={Lock} title="Privacy" note="What we keep and who sees it" />
         <MoreRow to="/" icon={LogIn} title="Staff sign-in" note="For PHILRADS staff" />
       </ul>
       <div className="px-4 sm:px-0">
@@ -381,18 +391,40 @@ function MoreScreen() {
   );
 }
 
+/** The emergency line: one big row that calls 911, with the number written out in case the phone can't dial from here. */
 function Emergency() {
   return (
-    <p className="flex items-center gap-2 text-sm text-ink-soft">
-      <Phone className="h-4 w-4 text-status-out" aria-hidden />
-      <span>
-        In an emergency, call{' '}
-        <a href="tel:911" className="font-semibold text-ink underline underline-offset-2">
-          911
-        </a>
-        .
+    <a
+      href="tel:911"
+      className="tap flex min-h-14 items-center gap-3.5 rounded-2xl border border-status-out/40 bg-status-out/10 px-4 py-3 transition-colors hover:bg-status-out/15"
+    >
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-status-out/15 text-status-out">
+        <Phone className="h-5 w-5" aria-hidden />
       </span>
-    </p>
+      <span className="min-w-0 flex-1">
+        <span className="block font-semibold text-ink">Emergency? Call 911</span>
+        <span className="block text-xs text-ink-soft">Police, fire and ambulance, free from any phone</span>
+      </span>
+      <span className="shrink-0 font-display text-xl font-bold tabular-nums text-status-out" aria-hidden>
+        911
+      </span>
+    </a>
+  );
+}
+
+/** An address under /guest that isn't one of its screens: say so, and show the way back. */
+function GuestNotFound() {
+  return (
+    <section aria-labelledby="guest-missing" className="flex max-w-xl flex-col items-start gap-4 py-10">
+      <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-muted">Page not found</p>
+      <h1 id="guest-missing" className="text-2xl font-bold leading-tight tracking-tight text-ink sm:text-[1.75rem]">
+        This page isn’t here
+      </h1>
+      <p className="text-ink-soft">The link may be old or mistyped. Everything on the guest site is a tap away from the home page.</p>
+      <Link to="/guest" className="btn-primary">
+        <House className="h-4 w-4" aria-hidden /> Go to the guest home
+      </Link>
+    </section>
   );
 }
 
@@ -632,6 +664,8 @@ function GuestScreens() {
   const location = useLocation();
   const [search] = useSearchParams();
   const navigate = useNavigate();
+  // An address that isn't a screen shows "not found" inside the guest frame, on the Home tab.
+  const missing = !isScreen(param);
   const screen: Screen = isScreen(param) ? param : 'home';
   const meta = SCREENS[screen];
 
@@ -676,7 +710,7 @@ function GuestScreens() {
   const onPick = useCallback((p: GuestPick) => setPick(p), []);
 
   // First visit only, and not over a shared link to a drive or story.
-  const [welcome, setWelcome] = useState(() => !welcomedBefore() && screen === 'home' && !location.hash && !search.get('story') && !search.get('drive'));
+  const [welcome, setWelcome] = useState(() => !welcomedBefore() && !missing && screen === 'home' && !location.hash && !search.get('story') && !search.get('drive'));
   const closeWelcome = useCallback(() => {
     setWelcome(false);
     try {
@@ -696,8 +730,8 @@ function GuestScreens() {
   }, []);
   useEffect(() => {
     // A post names itself once it loads (PostSection).
-    if (screen !== 'post') document.title = `${meta.title} · PRISM Guest`;
-  }, [meta.title, screen]);
+    if (screen !== 'post') document.title = `${missing ? 'Page not found' : meta.title} · PRISM Guest`;
+  }, [meta.title, screen, missing]);
   useLayoutEffect(() => {
     shown.current = screen;
     if (!location.hash) window.scrollTo({ top: scrolls.current.get(screen) ?? 0, behavior: 'instant' });
@@ -717,7 +751,6 @@ function GuestScreens() {
 
   const legacy = screen === 'home' ? legacyTarget(location.hash, search) : null;
   if (legacy) return <Navigate to={legacy} replace />;
-  if (!isScreen(param)) return <Navigate to="/guest" replace />;
 
   const showHazard = (h: Hazard) => {
     setLayers((l) => ({ ...l, hazards: true }));
@@ -743,7 +776,8 @@ function GuestScreens() {
   const hazardsShown = layers.hazards ? (pick?.type === 'hazard' && !recent.some((h) => h.id === pick.id) ? [...recent, ...hazards.filter((h) => h.id === pick.id)] : recent) : [];
 
   let body: ReactNode;
-  if (screen === 'home')
+  if (missing) body = <GuestNotFound />;
+  else if (screen === 'home')
     body = (
       <CommunitySection
         hazards={hazards}
@@ -825,6 +859,7 @@ function GuestScreens() {
   else if (screen === 'prepare') body = <PrepareSection />;
   else if (screen === 'alerts') body = <AlertsSection />;
   else if (screen === 'pray') body = <PraySection prayers={prayers} onRetry={prayers.reload} />;
+  else if (screen === 'privacy') body = <PrivacySection />;
   else if (screen === 'feedback') body = <FeedbackSection key={about ?? ''} initialKind={isFeedbackKind(about) ? about : undefined} />;
   else body = <MoreScreen />;
 
@@ -849,8 +884,8 @@ function GuestScreens() {
             <button type="button" onClick={() => setWelcome(true)} className="flex items-center gap-2 lg:hidden" aria-label="Show the welcome">
               <PrismMark className="h-8 w-8 text-ink" />
               <PrismWord className="font-display text-sm tracking-[0.06em] text-ink" />
-              {/* With the back arrow there, small phones drop the word so the bar still fits. */}
-              <span className={`text-[0.6875rem] font-semibold text-muted ${sub ? 'hidden min-[25rem]:inline' : ''}`}>Guest</span>
+              {/* Small phones drop the word so the bar still fits (sooner with the back arrow there). */}
+              <span className={`hidden text-[0.6875rem] font-semibold text-muted ${sub ? 'min-[400px]:inline' : 'min-[360px]:inline'}`}>Guest</span>
             </button>
             <div className="ml-auto flex items-center gap-2">
               <Link to="/guest/feedback?about=volunteer" className="chip hidden gap-1.5 sm:inline-flex">
@@ -892,14 +927,19 @@ function GuestScreens() {
         </main>
         <footer className="app-footer flex flex-wrap items-center justify-between gap-2 border-t border-line/50 px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-4 text-xs text-muted sm:px-6 lg:pb-4">
           <span>Philippine Relief and Development Services, Inc. · PRISM Guest</span>
-          <a href="https://philrads.org/" target="_blank" rel="noopener noreferrer" className="font-semibold text-uplift hover:underline">
-            philrads.org
-          </a>
+          <span className="flex items-center gap-1">
+            <Link to="/guest/privacy" className="inline-flex min-h-11 items-center px-2 font-semibold text-ink-soft hover:text-ink hover:underline">
+              Privacy
+            </Link>
+            <a href="https://philrads.org/" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center px-2 font-semibold text-uplift hover:underline">
+              philrads.org
+            </a>
+          </span>
         </footer>
       </div>
 
       <GuestTabBar tab={meta.tab} live={live} onPress={tabPress} />
-      <WelcomeDialog open={welcome} onClose={closeWelcome} />
+      <WelcomeDialog open={welcome} onClose={closeWelcome} driveOpen={(drives.data ?? []).some((d) => d.status === 'open')} />
     </div>
   );
 }

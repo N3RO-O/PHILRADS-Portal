@@ -1,5 +1,55 @@
 [
   {
+    "id": "2026-11-26.1",
+    "version": "1.17.2",
+    "date": "2026-11-26",
+    "title": "Fixes from testing the guest site",
+    "items": [
+      {
+        "icon": "life-buoy",
+        "title": "Call 911 in one tap",
+        "body": "The emergency row under More is now one big button that calls 911, with what it is for underneath.",
+        "guestPath": "/guest/more"
+      },
+      {
+        "icon": "lock",
+        "title": "A privacy page for guests",
+        "body": "Guests can read what the site keeps, why, and who sees it, with PHILRADS's address and email. It is linked from More, the page footer, sign-in and every form that asks for a phone or email.",
+        "guestPath": "/guest/privacy"
+      },
+      {
+        "icon": "gift",
+        "title": "Ways to give, even between fundraisers",
+        "body": "When no fundraiser is open, Give shows how to give on philrads.org or offer to volunteer, instead of an empty page.",
+        "guestPath": "/guest/give"
+      },
+      {
+        "icon": "messages",
+        "title": "Phone or email, checked",
+        "body": "Feedback, volunteering and merch orders now check the phone number or email before sending, so the team can reply.",
+        "guestPath": "/guest/feedback"
+      },
+      {
+        "icon": "smartphone",
+        "title": "Fits small phones",
+        "body": "The guest header, the welcome and the map pins fit phones as narrow as 320 pixels, and a mistyped guest address says the page isn't there instead of jumping home. Map pins also have names for screen readers.",
+        "guestPath": "/guest"
+      },
+      {
+        "icon": "search",
+        "title": "Search finds stock",
+        "body": "Search anything now finds relief goods from the IMS and opens Inventory on that item.",
+        "path": "/inventory"
+      },
+      {
+        "icon": "list-checks",
+        "title": "Long task titles",
+        "body": "Quick add says when a task title is over 200 characters, instead of failing quietly.",
+        "path": "/tasks"
+      }
+    ]
+  },
+  {
     "id": "2026-11-25.8",
     "version": "1.17.1",
     "date": "2026-11-25",
