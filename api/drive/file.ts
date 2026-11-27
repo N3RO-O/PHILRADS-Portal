@@ -5,7 +5,7 @@
  * - view: photos as a large image; videos and PDFs streamed (seeking works: byte ranges are passed on)
  * - download: the original file
  */
-import { accessToken, config, connection, drive, json, rest, verify } from '../_drive.js';
+import { accessToken, config, connection, drive, json, rest, THUMB_CACHE, verify } from '../_drive.js';
 
 export async function GET(request: Request) {
   const c = config();
@@ -33,7 +33,7 @@ export async function GET(request: Request) {
     const size = kind === 'thumb' ? 's480' : 's2000';
     const img = await fetch(meta.thumbnailLink.replace(/=s\d+(-[a-z0-9-]*)?$/i, `=${size}`), { headers: { Authorization: `Bearer ${token}` } });
     if (!img.ok) return new Response(null, { status: 404, headers: privately });
-    return new Response(img.body, { status: 200, headers: { 'Content-Type': img.headers.get('content-type') ?? 'image/jpeg', ...privately } });
+    return new Response(img.body, { status: 200, headers: { 'Content-Type': img.headers.get('content-type') ?? 'image/jpeg', ...(kind === 'thumb' ? THUMB_CACHE : privately) } });
   }
 
   // The file itself, streamed; a Range request (video seeking) is passed straight to Google.

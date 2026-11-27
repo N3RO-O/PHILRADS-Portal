@@ -262,7 +262,7 @@ export function PostSection() {
   };
 
   const back = (
-    <Link to="/guest" className="hit inline-flex items-center gap-1.5 text-sm font-semibold text-ink-soft hover:text-ink">
+    <Link to="/guest" className="tap-link inline-flex items-center gap-1.5 text-sm font-semibold text-ink-soft hover:text-ink">
       <ArrowLeft className="h-4 w-4" aria-hidden /> Community
     </Link>
   );

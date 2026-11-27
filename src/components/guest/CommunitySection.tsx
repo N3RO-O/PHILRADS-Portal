@@ -101,9 +101,20 @@ function TopicBar({ topics, topic, sort }: { topics: ForumTopic[]; topic: string
       </Link>
     );
   };
+  const { ref: row, ends, measure } = useScrollEnds<HTMLDivElement>(topics);
+  // The chosen topic stays in view, even when it is far along the row.
+  useEffect(() => {
+    // Only the row moves (scrollIntoView could scroll the page too).
+    const el = row.current;
+    const on = el?.querySelector<HTMLElement>('[aria-current="page"]');
+    if (!el || !on) return;
+    const left = on.offsetLeft;
+    if (left < el.scrollLeft || left + on.offsetWidth > el.scrollLeft + el.clientWidth) el.scrollLeft = left - 40;
+  }, [row, topic, topics]);
   return (
     <nav aria-label="Topics" className="-mx-4 mt-4 border-b border-line/70 px-4 sm:-mx-6 sm:px-6">
-      <div className="flex gap-5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {/* The row fades out at an edge with more topics past it, so it reads as something to swipe. */}
+      <div ref={row} onScroll={measure} style={edgeFade(ends)} className="relative flex gap-5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {tab(null, 'All')}
         {topics.map((t) => tab(t.key, t.name))}
       </div>
@@ -153,6 +164,32 @@ function ComposeRow({ onCreate }: { onCreate: () => void }) {
 }
 
 const KIND_ICON: Record<HazardKind, LucideIcon> = { typhoon: Wind, flood: Waves, earthquake: Activity, volcano: Mountain, drought: Sun, wildfire: Flame };
+/** Whether a sideways row is scrolled to its start and to its end (re-measured on resize and when `content` changes). */
+function useScrollEnds<T extends HTMLElement>(content: unknown) {
+  const ref = useRef<T>(null);
+  const [ends, setEnds] = useState({ start: true, end: true });
+  const measure = useCallback(() => {
+    const el = ref.current;
+    if (el) setEnds({ start: el.scrollLeft <= 4, end: el.scrollLeft + el.clientWidth >= el.scrollWidth - 4 });
+  }, []);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [measure, content]);
+  return { ref, ends, measure };
+}
+
+/** A soft fade at each end of a row that has more past it. */
+function edgeFade({ start, end }: { start: boolean; end: boolean }) {
+  if (start && end) return undefined;
+  const mask = `linear-gradient(to right, ${start ? '#000' : 'transparent'}, #000 2.5rem, #000 calc(100% - 2.5rem), ${end ? '#000' : 'transparent'})`;
+  return { maskImage: mask, WebkitMaskImage: mask };
+}
+
 /** A row that scrolls sideways, edge to edge, snapping to each item. */
 const stripCls = 'flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden';
 
@@ -161,20 +198,7 @@ const stripCls = 'flex snap-x snap-mandatory overflow-x-auto overscroll-x-contai
  * (each shows only when there is more that way).
  */
 function ScrollRow({ label, className, children }: { label: string; className: string; children: ReactNode }) {
-  const row = useRef<HTMLUListElement>(null);
-  const [ends, setEnds] = useState({ start: true, end: true });
-  const measure = useCallback(() => {
-    const el = row.current;
-    if (el) setEnds({ start: el.scrollLeft <= 4, end: el.scrollLeft + el.clientWidth >= el.scrollWidth - 4 });
-  }, []);
-  useEffect(() => {
-    const el = row.current;
-    if (!el) return;
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [measure, children]);
+  const { ref: row, ends, measure } = useScrollEnds<HTMLUListElement>(children);
   const move = (dir: 1 | -1) => {
     const el = row.current;
     if (el) el.scrollBy({ left: dir * el.clientWidth * 0.85, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });

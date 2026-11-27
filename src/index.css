@@ -256,7 +256,15 @@
   }
   /* Small text actions on touch screens: the press area reaches past the text (about 36 px tall)
      without moving anything around it. */
+  /* Small text links on the guest site: at least 24 px tall with a mouse, 44 px on touch screens
+     (a real box, so the press area is what the eye and tools see). */
+  .tap-link {
+    @apply inline-flex min-h-6 items-center;
+  }
   @media (pointer: coarse) {
+    .tap-link {
+      min-height: 2.75rem;
+    }
     .hit {
       position: relative;
     }

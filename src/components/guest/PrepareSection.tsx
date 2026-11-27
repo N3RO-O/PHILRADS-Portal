@@ -218,7 +218,7 @@ export function PrepareSection() {
         )}
         {list ? <Checklist items={list} ticks={ticks} onTick={tick} what={guide === 'bag' ? 'Go bag' : 'Family plan'} /> : <Steps guide={guide as 'typhoon' | 'flood' | 'earthquake'} />}
         {list && ticked && (
-          <button type="button" className="hit mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-ink" onClick={() => setTicks((t) => new Set([...t].filter((id) => !list.some((i) => i.id === id))))}>
+          <button type="button" className="tap-link mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-ink" onClick={() => setTicks((t) => new Set([...t].filter((id) => !list.some((i) => i.id === id))))}>
             <RotateCcw className="h-3.5 w-3.5" aria-hidden /> Untick all
           </button>
         )}

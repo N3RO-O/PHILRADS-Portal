@@ -10,7 +10,7 @@
  *
  * One endpoint for both: the Hobby plan allows 12 functions.
  */
-import { accessToken, caller, can, config, connection, drive, json, rest, sign, verify, type Config } from '../_drive.js';
+import { accessToken, caller, can, config, connection, drive, json, linkExpiry, rest, sign, THUMB_CACHE, verify, type Config } from '../_drive.js';
 
 const FOLDER = 'application/vnd.google-apps.folder';
 const GOOGLE_ID = /^[A-Za-z0-9_-]{10,}$/;
@@ -108,7 +108,7 @@ export async function POST(request: Request) {
     pageToken = r.nextPageToken;
   }
 
-  const exp = Math.floor(Date.now() / 1000) + 2 * 3600;
+  const exp = linkExpiry();
   const link = (id: string, kind: string) => `/api/drive/folder?${new URLSearchParams({ r: resource, id, kind, exp: String(exp), sig: sign(c, `folder.${resource}.${id}.${kind}.${exp}`) })}`;
   return json(200, {
     path,
@@ -159,7 +159,7 @@ export async function GET(request: Request) {
     const size = kind === 'thumb' ? 's480' : 's2000';
     const img = await fetch(meta.thumbnailLink.replace(/=s\d+(-[a-z0-9-]*)?$/i, `=${size}`), { headers: { Authorization: `Bearer ${token}` } });
     if (!img.ok) return new Response(null, { status: 404, headers: privately });
-    return new Response(img.body, { status: 200, headers: { 'Content-Type': img.headers.get('content-type') ?? 'image/jpeg', ...privately } });
+    return new Response(img.body, { status: 200, headers: { 'Content-Type': img.headers.get('content-type') ?? 'image/jpeg', ...(kind === 'thumb' ? THUMB_CACHE : privately) } });
   }
 
   const exported = EXPORT[meta.mimeType];

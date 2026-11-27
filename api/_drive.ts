@@ -139,6 +139,15 @@ export function decrypt(c: Config, sealed: string): string {
   return Buffer.concat([decipher.update(body), decipher.final()]).toString('utf8');
 }
 
+/**
+ * When a file link stops working: two to three hours from now, on the hour. Every link made in the
+ * same hour is the same URL, so the browser can reuse the thumbnail it already loaded.
+ */
+export const linkExpiry = () => Math.ceil((Date.now() / 1000 + 2 * 3600) / 3600) * 3600;
+
+/** Thumbnails are cached for as long as their link can work. */
+export const THUMB_CACHE = { 'Cache-Control': 'private, max-age=10800' };
+
 export const sign = (c: Config, payload: string) => createHmac('sha256', keyFor(c, 'sign')).update(payload).digest('base64url');
 
 export function verify(c: Config, payload: string, signature: string): boolean {

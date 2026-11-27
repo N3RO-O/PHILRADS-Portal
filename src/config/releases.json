@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-11-27.3",
+    "version": "1.17.5",
+    "date": "2026-11-27",
+    "title": "Quicker pictures, easier taps",
+    "items": [
+      {
+        "icon": "folder",
+        "title": "Documentation pictures load faster",
+        "body": "Pictures you have already seen in Documentation now come straight from your device instead of Google Drive, and a soft shimmer shows while a new one loads instead of an empty box.",
+        "path": "/documentation"
+      },
+      {
+        "icon": "smartphone",
+        "title": "Easier to tap on the guest site",
+        "body": "Small links like Show on map and See all on Facebook are bigger to tap on phones. The topics row on Home fades at the edge to show it scrolls, and on narrow phones a hotline's number moves under its name."
+      }
+    ]
+  },
+  {
     "id": "2026-11-27.2",
     "version": "1.17.4",
     "date": "2026-11-27",

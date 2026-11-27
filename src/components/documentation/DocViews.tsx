@@ -228,15 +228,28 @@ const duration = (ms: number | null) => (ms ? `${Math.floor(ms / 60000)}:${Strin
 const kindLabel = (doc: DocFile) =>
   doc.mimeType === 'application/pdf' ? 'PDF' : doc.mimeType.startsWith('image/') ? 'Photo' : doc.mimeType.startsWith('video/') ? 'Video' : (doc.fileName?.split('.').pop()?.toUpperCase() ?? 'File');
 
-/** A file's picture, or its kind's icon while there's none. */
+/** A file's picture (a shimmer while Drive draws it), or its kind's icon when there's none. */
 function Thumb({ doc, thumb, className, icon = 'h-8 w-8', badges = false }: { doc: DocFile; thumb: string | undefined; className: string; icon?: string; badges?: boolean }) {
   const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const Icon = iconFor(doc);
   const isVideo = doc.mimeType.startsWith('video/');
   return (
     <span className={`relative block shrink-0 overflow-hidden bg-surface-sunken ${className}`}>
       {thumb && !failed ? (
-        <img src={thumb} alt="" loading="lazy" draggable={false} onError={() => setFailed(true)} className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]" />
+        <>
+          <img
+            src={thumb}
+            alt=""
+            loading="lazy"
+            draggable={false}
+            onLoad={() => setLoaded(true)}
+            onError={() => setFailed(true)}
+            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+          />
+          {/* Over the picture, not under a hidden one: Chrome never lazy-loads an image that is fully transparent. */}
+          {!loaded && <span className="skeleton absolute inset-0 !rounded-none" aria-hidden />}
+        </>
       ) : thumb === undefined && !failed ? (
         <span className="skeleton absolute inset-0 !rounded-none" />
       ) : (

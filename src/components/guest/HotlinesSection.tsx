@@ -9,8 +9,9 @@ const dial = (n: string) => n.replace(/[^\d+]/g, '');
 
 function HotlineRow({ h }: { h: GuestHotline }) {
   return (
-    <li className="flex items-center gap-3 px-4 py-3">
-      <span className="min-w-0 flex-1">
+    // On a narrow phone the number moves under the name instead of squeezing it onto three lines.
+    <li className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
+      <span className="min-w-[9rem] flex-1">
         <span className="block font-semibold text-ink">{h.name}</span>
         {h.note && <span className="block text-xs text-muted">{h.note}</span>}
       </span>
