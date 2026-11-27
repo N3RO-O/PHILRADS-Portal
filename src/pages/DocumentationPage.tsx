@@ -713,7 +713,9 @@ function UploadQueuePanel({ items }: { items: QueuedUpload[] }) {
             <div className="flex items-center gap-2 text-xs">
               <span className="min-w-0 flex-1 truncate font-medium">{i.meta.title}</span>
               <span className={`shrink-0 tabular-nums ${i.status === 'failed' ? 'text-status-out' : i.status === 'done' ? 'text-status-in' : 'text-muted'}`}>
-                {i.status === 'uploading'
+                {i.status === 'uploading' && i.preparing
+                  ? 'Making it smaller…'
+                  : i.status === 'uploading'
                   ? `${Math.round(i.progress * 100)}% of ${formatBytes(i.file.size)}`
                   : i.status === 'waiting'
                     ? 'Waiting'

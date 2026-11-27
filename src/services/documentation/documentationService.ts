@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { DataSource, DocumentCategory } from '../../types';
+import { canShrink, shrinkPhoto } from '../../lib/shrinkPhoto';
 
 /**
  * Documentation: field photos, videos and reports. Files live in the PHILRADS Google Drive folder
@@ -63,6 +64,8 @@ export type DocPatch = Partial<Pick<DocFile, 'title' | 'category' | 'notes' | 't
 
 export interface UploadOptions {
   onProgress?: (fraction: number) => void;
+  /** Google has every byte; only the portal's own record is left to write. */
+  onSent?: () => void;
   signal?: AbortSignal;
 }
 
@@ -245,6 +248,7 @@ export function createSupabaseDocumentationService(client: SupabaseClient): Docu
         }
       }
       options.onProgress?.(1);
+      options.onSent?.();
       return (await api<{ documentId: string }>('complete', { sessionId, fileId })).documentId;
     },
     async update(id, p) {
@@ -393,6 +397,10 @@ export interface QueuedUpload {
   key: string;
   file: File;
   meta: UploadMeta;
+  /** A photo still to be made smaller before it goes (see lib/shrinkPhoto). */
+  shrink: boolean;
+  /** Making the photo smaller, before any bytes go. */
+  preparing: boolean;
   progress: number;
   status: 'waiting' | 'uploading' | 'done' | 'failed' | 'cancelled';
   error: string | null;
@@ -402,7 +410,9 @@ export interface QueuedUpload {
 /**
  * Uploads in progress, kept outside the page so they carry on while staff look around the portal.
  * Four at a time for photos and documents (a batch of photos is mostly waiting on round trips, not
- * the signal), two when a big video is going; each can be cancelled or retried.
+ * the signal), two when a big video is going; each can be cancelled or retried. A file stops
+ * counting once Google has all of it, so the next one starts while the portal writes its record.
+ * Photos are made smaller just before they go, unless the uploader kept the originals.
  */
 const BIG = 50 * 1024 * 1024;
 export function createUploadQueue(service: DocumentationService) {
@@ -415,19 +425,34 @@ export function createUploadQueue(service: DocumentationService) {
     emit();
   };
 
+  /** Files still sending bytes (the ones that use the signal). */
+  const sending = new Set<string>();
   const pump = () => {
     for (;;) {
       const next = items.find((i) => i.status === 'waiting');
       if (!next) return;
-      const going = items.filter((i) => i.status === 'uploading');
+      const going = items.filter((i) => sending.has(i.key));
       if (going.length >= (next.file.size > BIG || going.some((i) => i.file.size > BIG) ? 2 : 4)) return;
       const ctl = new AbortController();
       controllers.set(next.key, ctl);
-      patch(next.key, { status: 'uploading', progress: 0, error: null });
+      sending.add(next.key);
+      patch(next.key, { status: 'uploading', progress: 0, error: null, preparing: next.shrink });
       let last = 0;
-      service
-        .upload(next.file, next.meta, {
+      const sent = () => {
+        if (sending.delete(next.key)) pump();
+      };
+      const ready: Promise<File> = next.shrink
+        ? shrinkPhoto(next.file).then((file) => {
+            if (ctl.signal.aborted) throw new DOMException('Cancelled', 'AbortError');
+            // Kept for a retry, so a photo is only ever made smaller once.
+            patch(next.key, { file, shrink: false, preparing: false });
+            return file;
+          })
+        : Promise.resolve(next.file);
+      ready
+        .then((file) => service.upload(file, next.meta, {
           signal: ctl.signal,
+          onSent: sent,
           onProgress: (f) => {
             // Redraw at most every 2%.
             if (f - last >= 0.02 || f === 1) {
@@ -435,21 +460,36 @@ export function createUploadQueue(service: DocumentationService) {
               patch(next.key, { progress: f });
             }
           },
-        })
+        }))
         .then((documentId) => patch(next.key, { status: 'done', progress: 1, documentId }))
         .catch((e: unknown) =>
-          patch(next.key, e instanceof DOMException && e.name === 'AbortError' ? { status: 'cancelled' } : { status: 'failed', error: e instanceof Error ? e.message : 'The upload failed.' }),
+          patch(next.key, e instanceof DOMException && e.name === 'AbortError' ? { status: 'cancelled', preparing: false } : { status: 'failed', preparing: false, error: e instanceof Error ? e.message : 'The upload failed.' }),
         )
         .finally(() => {
           controllers.delete(next.key);
+          sent();
           pump();
         });
     }
   };
 
   return {
-    add(entries: { file: File; meta: UploadMeta }[]) {
-      items = [...items, ...entries.map((e) => ({ key: crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`, ...e, progress: 0, status: 'waiting' as const, error: null, documentId: null }))];
+    /** `keepOriginal`: send photos exactly as taken instead of making them smaller. */
+    add(entries: { file: File; meta: UploadMeta; keepOriginal?: boolean }[]) {
+      items = [
+        ...items,
+        ...entries.map(({ file, meta, keepOriginal }) => ({
+          key: crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`,
+          file,
+          meta,
+          shrink: !keepOriginal && canShrink(file),
+          preparing: false,
+          progress: 0,
+          status: 'waiting' as const,
+          error: null,
+          documentId: null,
+        })),
+      ];
       emit();
       pump();
     },

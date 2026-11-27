@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-27.4",
+    "version": "1.17.6",
+    "date": "2026-11-27",
+    "title": "Faster photo uploads",
+    "items": [
+      {
+        "icon": "folder",
+        "title": "Photos upload about 4 times faster",
+        "body": "In Documentation, photos are now made smaller on your phone before they upload (2,560 px, still sharp for reports and prints). Need the camera's original file? Turn on Keep original quality when you upload. Videos and documents are sent as they are, and the next file starts as soon as one has finished sending.",
+        "path": "/documentation"
+      }
+    ]
+  },
+  {
     "id": "2026-11-27.3",
     "version": "1.17.5",
     "date": "2026-11-27",

@@ -1,6 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { FileText, Film, ImagePlus, Upload, X } from 'lucide-react';
 import { formatBytes } from '../../lib/format';
+import { canShrink, PHOTO_LONG_SIDE } from '../../lib/shrinkPhoto';
 import { categoryFor, titleFor, type UploadMeta } from '../../services/documentation/documentationService';
 import { CATEGORY_FILES, categoryMismatch, validateUploadFile } from '../../services/googleDrive';
 import { DOCUMENT_CATEGORIES, type DocumentCategory } from '../../types';
@@ -22,7 +23,7 @@ interface Picked {
 interface Props {
   open: boolean;
   onClose: () => void;
-  onUpload: (entries: { file: File; meta: UploadMeta }[]) => void;
+  onUpload: (entries: { file: File; meta: UploadMeta; keepOriginal?: boolean }[]) => void;
   events: TagOption[];
   places: TagOption[];
   projects: TagOption[];
@@ -44,6 +45,8 @@ export function UploadSheet({ open, onClose, onUpload, events, places, projects,
   const [placeId, setPlaceId] = useState('');
   const [projectId, setProjectId] = useState('');
   const [notes, setNotes] = useState('');
+  /** Send photos exactly as taken (slower) instead of making them smaller first. */
+  const [keepOriginal, setKeepOriginal] = useState(false);
 
   // Previews made for this visit, freed when the sheet closes (or the page goes away).
   const previews = useRef<string[]>([]);
@@ -65,6 +68,7 @@ export function UploadSheet({ open, onClose, onUpload, events, places, projects,
     setPlaceId('');
     setProjectId(initialProjectId ?? '');
     setNotes('');
+    setKeepOriginal(false);
   }, [open, today, initialProjectId]);
 
   const add = (files: FileList | null) => {
@@ -86,6 +90,7 @@ export function UploadSheet({ open, onClose, onUpload, events, places, projects,
   const ok = picked.filter((p) => !problem(p));
   const leftOut = picked.length - ok.length;
   const total = useMemo(() => ok.reduce((s, p) => s + p.file.size, 0), [ok]);
+  const photos = ok.filter((p) => canShrink(p.file)).length;
   // Every upload says what it documents: a response, a project or a place (at least one).
   const forWhat = Boolean(eventId || projectId || placeId);
   const submit = () => {
@@ -94,6 +99,7 @@ export function UploadSheet({ open, onClose, onUpload, events, places, projects,
     onUpload(
       ok.map((p) => ({
         file: p.file,
+        keepOriginal,
         meta: { title: p.title.trim() || titleFor(p.file.name), category, notes: notes.trim(), takenOn: takenOn || null, imsEventId: event?.id ?? null, imsEventName: event?.name ?? null, mapPlaceId: placeId || null, projectId: projectId || null },
       })),
     );
@@ -112,7 +118,7 @@ export function UploadSheet({ open, onClose, onUpload, events, places, projects,
           {ok.length && !forWhat
             ? 'Choose the response, project or place'
             : ok.length
-            ? `Upload ${ok.length} file${ok.length === 1 ? '' : 's'} (${formatBytes(total)})${leftOut ? `, ${leftOut} left out` : ''}`
+            ? `Upload ${ok.length} file${ok.length === 1 ? '' : 's'}${photos && !keepOriginal ? '' : ` (${formatBytes(total)})`}${leftOut ? `, ${leftOut} left out` : ''}`
             : picked.length
               ? 'None of these fit this category'
               : 'Choose files first'}
@@ -178,6 +184,20 @@ export function UploadSheet({ open, onClose, onUpload, events, places, projects,
               </li>
             ))}
           </ul>
+        )}
+
+        {photos > 0 && (
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-line/70 p-3" htmlFor={`${uid}-original`}>
+            <input id={`${uid}-original`} type="checkbox" className="mt-0.5 h-5 w-5 shrink-0 accent-uplift" checked={keepOriginal} onChange={(e) => setKeepOriginal(e.target.checked)} />
+            <span className="flex flex-col gap-0.5">
+              <span className="text-sm font-semibold text-ink">Keep original quality</span>
+              <span className="text-xs text-muted">
+                {keepOriginal
+                  ? 'Photos are sent exactly as taken, with the camera’s details. Slower on mobile data.'
+                  : `Photos are made smaller first (${PHOTO_LONG_SIDE.toLocaleString()} px, sharp for reports and prints), so they upload about 4 times faster.`}
+              </span>
+            </span>
+          </label>
         )}
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
