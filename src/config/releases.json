@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026-11-27.1",
+    "version": "1.17.3",
+    "date": "2026-11-27",
+    "title": "PDF previews in Documentation",
+    "items": [
+      {
+        "icon": "folder",
+        "title": "See PDFs before you download",
+        "body": "Opening a PDF in Documentation now shows it in the viewer. Before, the preview stayed blank and you had to download the file to read it.",
+        "path": "/documentation"
+      },
+      {
+        "icon": "lock",
+        "title": "Safer pages",
+        "body": "PRISM now tells your browser exactly which sites the portal may load from, so a bad link or injected script can't run in it. Nothing changes in how you use it."
+      }
+    ]
+  },
+  {
     "id": "2026-11-26.1",
     "version": "1.17.2",
     "date": "2026-11-26",
