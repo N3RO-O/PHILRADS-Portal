@@ -595,7 +595,13 @@ function DriveEditor({ draft, onClose, onSaved }: { draft: DriveDraft | null; on
 
 // ───────────────────────── Merch ─────────────────────────
 
-const blankMerch = (order: number): MerchDraft => ({ name: '', description: '', price: null, sizes: [], imageUrl: null, inStock: true, isListed: false, sortOrder: order });
+const blankMerch = (order: number): MerchDraft => ({ name: '', description: '', price: null, sizes: [], imageUrl: null, inStock: true, isListed: false, sortOrder: order, driveId: null, driveShare: null, stockLeft: null });
+
+/** A number typed into a field: digits (and a dot when `decimal`), or null when empty. */
+const numberFrom = (t: string, decimal = true) => {
+  const v = t.replace(decimal ? /[^\d.]/g : /\D/g, '');
+  return v === '' ? null : Number(v);
+};
 
 function MerchEditor({ draft, onClose, onSaved }: { draft: MerchDraft | null; onClose: () => void; onSaved: () => void }) {
   const [d, setD] = useState<MerchDraft>(() => blankMerch(0));
@@ -613,12 +619,20 @@ function MerchEditor({ draft, onClose, onSaved }: { draft: MerchDraft | null; on
     setDirty(true);
   };
   const ed = useEditor<MerchDraft>(guestService.saveMerch, guestService.removeMerch, onSaved);
+  // Peso fundraisers that are open or being prepared (and the one it supports now, even if closed).
+  const [drives, setDrives] = useState<DonationDrive[]>([]);
+  useEffect(() => {
+    if (draft) guestService.allDrives().then(setDrives, () => setDrives([]));
+  }, [draft]);
+  const choices = drives.filter((x) => x.unit.toUpperCase() === 'PHP' && (x.status !== 'closed' || x.id === d.driveId));
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (!d.name.trim()) return ed.setError('Give the item a name.');
     const list = sizes.split(',').map((x) => x.trim()).filter(Boolean);
     if (list.length > 12) return ed.setError('Up to 12 sizes.');
-    void ed.run({ ...d, sizes: list });
+    if (d.driveId && (d.driveShare === null || d.driveShare <= 0)) return ed.setError('Say how much of each sale goes to the fundraiser.');
+    if (d.driveId && d.price !== null && d.driveShare !== null && d.driveShare > d.price) return ed.setError('The amount for the fundraiser can’t be more than the price.');
+    void ed.run({ ...d, sizes: list, driveShare: d.driveId ? d.driveShare : null });
   };
   return (
     <Sheet
@@ -661,7 +675,29 @@ function MerchEditor({ draft, onClose, onSaved }: { draft: MerchDraft | null; on
           </Field>
         </div>
         <ImageField label="Photo" value={d.imageUrl} onChange={(imageUrl) => set({ imageUrl })} icon={Shirt} />
-        <SwitchRow label="In stock" note={d.inStock ? 'Guests can ask to order it.' : 'Shown as out of stock.'} checked={d.inStock} onChange={(inStock) => set({ inStock })} />
+        <fieldset className="flex flex-col gap-4 rounded-xl border border-line p-4">
+          <legend className="px-1 text-sm font-semibold text-ink">For a cause</legend>
+          <Field label="Each sale supports" note={choices.length ? 'Guests see this on the item and on the fundraiser.' : 'Open a fundraiser in pesos first (Fundraising tab) to link merch to it.'}>
+            <select className="field font-normal" value={d.driveId ?? ''} onChange={(e) => set({ driveId: e.target.value || null })}>
+              <option value="">No fundraiser</option>
+              {choices.map((x) => (
+                <option key={x.id} value={x.id}>
+                  {x.title}
+                  {x.status === 'draft' ? ' (draft)' : x.status === 'closed' ? ' (closed)' : ''}
+                </option>
+              ))}
+            </select>
+          </Field>
+          {d.driveId && (
+            <Field label="Goes to the fundraiser (₱ per item)" note="Added to the fundraiser when you mark an order paid in the Inbox. The rest of the price covers making the item.">
+              <input className="field font-normal tabular-nums" inputMode="decimal" value={d.driveShare === null ? '' : String(d.driveShare)} onChange={(e) => set({ driveShare: numberFrom(e.target.value) })} placeholder={d.price ? `Up to ${d.price}` : 'e.g. 150'} />
+            </Field>
+          )}
+        </fieldset>
+        <Field label="How many are left (optional)" note="Guests see how many are left and can’t order more. Goes down when you mark an order paid. Leave empty not to count.">
+          <input className="field font-normal tabular-nums" inputMode="numeric" value={d.stockLeft === null ? '' : String(d.stockLeft)} onChange={(e) => set({ stockLeft: numberFrom(e.target.value, false) })} />
+        </Field>
+        <SwitchRow label="In stock" note={!d.inStock ? 'Shown as out of stock.' : d.stockLeft === 0 ? 'None left: shown as out of stock.' : 'Guests can ask to order it.'} checked={d.inStock} onChange={(inStock) => set({ inStock })} />
         <SwitchRow label="Shown to guests" note={d.isListed ? 'Listed under Merch.' : 'Hidden from the guest page.'} checked={d.isListed} onChange={(isListed) => set({ isListed })} />
       </form>
     </Sheet>
@@ -670,7 +706,13 @@ function MerchEditor({ draft, onClose, onSaved }: { draft: MerchDraft | null; on
 
 // ───────────────────────── Messages ─────────────────────────
 
-function MessageRow({ m, onMark, onDelete }: { m: GuestMessage; onMark: (s: MessageStatus) => void; onDelete: () => Promise<void> }) {
+function MessageRow({ m, onMark, onPaid, onDelete }: { m: GuestMessage; onMark: (s: MessageStatus) => void; onPaid: (paid: boolean) => Promise<void>; onDelete: () => Promise<void> }) {
+  const [paying, setPaying] = useState(false);
+  const paid = async (v: boolean) => {
+    setPaying(true);
+    await onPaid(v);
+    setPaying(false);
+  };
   const isMail = m.contact?.includes('@');
   return (
     <li className={`flex flex-col gap-2 rounded-2xl border p-4 ${m.status === 'new' ? 'border-uplift/40 bg-surface' : 'border-line bg-surface'}`}>
@@ -688,10 +730,27 @@ function MessageRow({ m, onMark, onDelete }: { m: GuestMessage; onMark: (s: Mess
         )}
       </p>
       {m.kind === 'order' && (
-        <p className="text-sm font-semibold text-ink">
-          {m.quantity ?? 1} × {m.merchName ?? 'an item no longer listed'}
-          {m.merchSize ? `, size ${m.merchSize}` : ''}
-        </p>
+        <div className="flex flex-col gap-1">
+          <p className="text-sm font-semibold text-ink">
+            {m.quantity ?? 1} × {m.merchName ?? 'an item no longer listed'}
+            {m.merchSize ? `, size ${m.merchSize}` : ''}
+          </p>
+          {m.paidAt ? (
+            <p className="flex items-center gap-1.5 text-xs font-semibold text-status-in">
+              <HandCoins className="h-3.5 w-3.5" aria-hidden />
+              Paid {formatDateTime(m.paidAt)}
+              {m.paidDriveTitle && m.paidAmount ? `: ₱${m.paidAmount.toLocaleString('en-PH')} added to ${m.paidDriveTitle}` : ''}
+            </p>
+          ) : (
+            m.merchDriveTitle &&
+            m.merchShare !== null && (
+              <p className="flex items-center gap-1.5 text-xs text-ink-soft">
+                <HandCoins className="h-3.5 w-3.5 text-uplift" aria-hidden />
+                Supports {m.merchDriveTitle}: ₱{(m.merchShare * (m.quantity ?? 1)).toLocaleString('en-PH')} goes to it when paid
+              </p>
+            )
+          )}
+        </div>
       )}
       <p className="whitespace-pre-line text-sm leading-relaxed text-ink">{m.message}</p>
       <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-soft">
@@ -705,6 +764,16 @@ function MessageRow({ m, onMark, onDelete }: { m: GuestMessage; onMark: (s: Mess
         )}
       </p>
       <div className="mt-1 flex flex-wrap gap-2">
+        {m.kind === 'order' &&
+          (m.paidAt ? (
+            <button type="button" className="chip" disabled={paying} onClick={() => void paid(false)}>
+              Undo paid
+            </button>
+          ) : (
+            <button type="button" className="chip gap-1.5 border-status-in/50 text-status-in" disabled={paying} onClick={() => void paid(true)}>
+              <HandCoins className="h-3.5 w-3.5" aria-hidden /> Mark paid
+            </button>
+          ))}
         {m.status !== 'done' && (
           <button type="button" className="chip" onClick={() => onMark('done')}>
             Mark done
@@ -747,6 +816,16 @@ function InboxTab() {
       data.refresh();
     }
   };
+  const setPaid = async (m: GuestMessage, paid: boolean) => {
+    setError(null);
+    try {
+      await guestService.setOrderPaid(m.id, paid);
+      // The amounts come back from the database; reload to show them.
+      data.refresh();
+    } catch (e) {
+      setError(errorText(e, 'Could not update the order.'));
+    }
+  };
   const remove = async (m: GuestMessage) => {
     setError(null);
     try {
@@ -782,7 +861,7 @@ function InboxTab() {
       {list.length ? (
         <ul className="flex flex-col gap-3">
           {list.map((m) => (
-            <MessageRow key={m.id} m={m} onMark={(s) => void mark(m, s)} onDelete={() => remove(m)} />
+            <MessageRow key={m.id} m={m} onMark={(s) => void mark(m, s)} onPaid={(v) => setPaid(m, v)} onDelete={() => remove(m)} />
           ))}
         </ul>
       ) : (
@@ -1055,7 +1134,8 @@ export function GuestAdminPage() {
                 <span className="block truncate font-semibold text-ink">{m.name}</span>
                 <span className="block truncate text-xs text-muted">
                   {m.price !== null ? `₱${m.price.toLocaleString('en-PH')}` : 'No price'}
-                  {m.inStock ? '' : ', out of stock'}
+                  {!m.inStock || m.stockLeft === 0 ? ', out of stock' : m.stockLeft !== null ? `, ${m.stockLeft} left` : ''}
+                  {m.driveId && m.driveShare ? `, ₱${m.driveShare.toLocaleString('en-PH')} each to a fundraiser` : ''}
                 </span>
               </span>
               <State on={m.isListed}>{m.isListed ? 'Shown' : 'Hidden'}</State>

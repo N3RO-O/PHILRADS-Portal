@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, ExternalLink, HandCoins, HandHeart, HeartHandshake, Users } from 'lucide-react';
-import { amount, daysLeft, type DonationDrive } from '../../services/guest/guestService';
+import { ChevronDown, ExternalLink, HandCoins, HandHeart, HeartHandshake, Shirt, Users } from 'lucide-react';
+import { amount, daysLeft, peso, type DonationDrive, type MerchItem } from '../../services/guest/guestService';
 import { formatShortDate, formatShortInstant } from '../../lib/format';
 import type { AsyncState } from '../../hooks/useAsyncData';
 import { useGuestAccount } from '../../services/guest/account';
 import { SignInPrompt } from './SignInPrompt';
+import { MerchCard, OrderSheet } from './MerchSection';
 import { CopyButton, GuestSection, Picture, RowsLoading, SectionError, ShareButton } from './guestUi';
 
 const pct = (d: DonationDrive) => Math.min(100, Math.round((d.raised / d.goal) * 100));
@@ -34,6 +35,7 @@ function Progress({ d }: { d: DonationDrive }) {
       </div>
       <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
         {d.donorCount !== null && d.donorCount > 0 && <span>{d.donorCount.toLocaleString('en-PH')} donors</span>}
+        {d.merchSold > 0 && <span>{d.merchSold.toLocaleString('en-PH')} merch sold for it</span>}
         {d.status === 'open' && left !== null && <span>{left === 0 ? 'Last day' : `${left} day${left === 1 ? '' : 's'} left`}</span>}
         {d.status === 'open' && d.endsOn && left === null && <span>Ended {formatShortDate(d.endsOn)}</span>}
         {d.raisedUpdatedAt && <span>Updated {formatShortInstant(d.raisedUpdatedAt)}</span>}
@@ -42,8 +44,10 @@ function Progress({ d }: { d: DonationDrive }) {
   );
 }
 
-function OpenDrive({ d }: { d: DonationDrive }) {
+function OpenDrive({ d, merch, onOrder }: { d: DonationDrive; merch: MerchItem[]; onOrder: (m: MerchItem) => void }) {
   const [giving, setGiving] = useState(false);
+  // Items whose sales go to this fundraiser.
+  const wear = merch.filter((m) => m.driveId === d.id && m.driveShare);
   return (
     <article id={`drive-${d.id}`} className="flex scroll-mt-24 flex-col gap-4 py-6 first:pt-0">
       {d.coverUrl && <Picture src={d.coverUrl} alt="" icon={HandCoins} className="aspect-[21/9] w-full rounded-xl" />}
@@ -75,6 +79,21 @@ function OpenDrive({ d }: { d: DonationDrive }) {
               <CopyButton text={d.howToGive} label="Copy the details" />
               <span className="text-xs text-muted">Give only through the details shown here, and keep your receipt.</span>
             </div>
+          </div>
+        )}
+        {wear.length > 0 && (
+          <div className="rounded-2xl border border-line p-4">
+            <h4 className="flex items-center gap-2 text-sm font-semibold text-ink">
+              <Shirt className="h-4 w-4 text-uplift" aria-hidden /> Wear the cause
+            </h4>
+            <p className="mt-0.5 text-sm text-ink-soft">
+              {wear.length === 1 ? `${peso(wear[0].driveShare ?? 0)} of every sale goes to this fundraiser.` : 'Part of every sale goes to this fundraiser.'}
+            </p>
+            <ul className="mt-3 grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3">
+              {wear.map((m) => (
+                <MerchCard key={m.id} m={m} cause={d} onOrder={() => onOrder(m)} showCause={wear.length > 1} />
+              ))}
+            </ul>
           </div>
         )}
       </div>
@@ -132,8 +151,9 @@ function DriveReport({ d }: { d: DonationDrive }) {
  * Fundraising: what each fundraiser is for, how close it is to its goal, what a gift does, and how
  * to give. Finished drives stay listed underneath, so donors can see their gift reached its goal.
  */
-export function DrivesSection({ drives, onRetry }: { drives: AsyncState<DonationDrive[]>; onRetry: () => void }) {
+export function DrivesSection({ drives, merch, onRetry }: { drives: AsyncState<DonationDrive[]>; merch: MerchItem[]; onRetry: () => void }) {
   const [showDone, setShowDone] = useState(false);
+  const [ordering, setOrdering] = useState<MerchItem | null>(null);
   const list = drives.data ?? [];
   const open = list.filter((d) => d.status === 'open');
   const done = list.filter((d) => d.status === 'closed');
@@ -150,7 +170,7 @@ export function DrivesSection({ drives, onRetry }: { drives: AsyncState<Donation
           {open.length ? (
             <div className="divide-y divide-line/70 border-b border-line/70">
               {open.map((d) => (
-                <OpenDrive key={d.id} d={d} />
+                <OpenDrive key={d.id} d={d} merch={merch} onOrder={setOrdering} />
               ))}
             </div>
           ) : (
@@ -166,6 +186,11 @@ export function DrivesSection({ drives, onRetry }: { drives: AsyncState<Donation
                   <ExternalLink className="h-3.5 w-3.5" aria-hidden />
                   <span className="sr-only">(opens in a new tab)</span>
                 </a>
+                {merch.length > 0 && (
+                  <Link to="/guest/merch" className="btn border border-line bg-surface text-ink hover:bg-surface-raised">
+                    <Shirt className="h-4 w-4" aria-hidden /> Shop merch
+                  </Link>
+                )}
                 <Link to="/guest/feedback?about=volunteer" className="btn border border-line bg-surface text-ink hover:bg-surface-raised">
                   <HandHeart className="h-4 w-4" aria-hidden /> Volunteer
                 </Link>
@@ -208,6 +233,7 @@ export function DrivesSection({ drives, onRetry }: { drives: AsyncState<Donation
           )}
         </>
       )}
+      <OrderSheet item={ordering} cause={ordering ? list.find((d) => d.id === ordering.driveId) ?? null : null} onClose={() => setOrdering(null)} />
     </GuestSection>
   );
 }

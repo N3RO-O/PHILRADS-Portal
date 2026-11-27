@@ -50,6 +50,8 @@ interface GuestAccount {
   shown: boolean;
   setShown: (v: boolean) => void;
   here: Here;
+  /** Who a merch order comes from when signed in: the account's name and email (null signed out). */
+  orderAs: { name: string; email: string | null } | null;
 }
 
 const Ctx = createContext<GuestAccount | null>(null);
@@ -183,9 +185,26 @@ export function GuestAccountProvider({ children }: { children: ReactNode }) {
 
   const here = useHere(sample, me, shown);
 
+  // The account's email, for the merch order form (orders go out with the account's own details).
+  const [email, setEmail] = useState<string | null>(null);
+  const userId = profile?.id ?? null;
+  useEffect(() => {
+    if (sample || !userId || !supabase) return setEmail(null);
+    let live = true;
+    void supabase.auth.getSession().then(({ data }) => live && setEmail(data.session?.user.email ?? null));
+    return () => {
+      live = false;
+    };
+  }, [sample, userId]);
+  const orderName = sample ? mock?.name : profile ? profile.fullName?.trim() || profile.displayName : undefined;
+  const orderAs = useMemo(
+    () => (status === 'in' && orderName ? { name: orderName, email: sample ? 'guest@example.com' : email } : null),
+    [status, orderName, sample, email],
+  );
+
   const value = useMemo<GuestAccount>(
-    () => ({ status, me, staff, unlocked: status === 'in', sendCode, verifyCode, signOut, save, shown, setShown, here }),
-    [status, me, staff, sendCode, verifyCode, signOut, save, shown, setShown, here],
+    () => ({ status, me, staff, unlocked: status === 'in', sendCode, verifyCode, signOut, save, shown, setShown, here, orderAs }),
+    [status, me, staff, sendCode, verifyCode, signOut, save, shown, setShown, here, orderAs],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

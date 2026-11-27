@@ -862,8 +862,8 @@ function GuestScreens() {
     );
   else if (screen === 'news') body = <NewsSection feed={feed} notes={notes.data ?? []} facebook={facebook.data ?? null} onRetry={feed.reload} onShow={showHazard} />;
   else if (screen === 'stories') body = <StoriesSection stories={stories} onRetry={stories.reload} />;
-  else if (screen === 'give') body = <DrivesSection drives={drives} onRetry={drives.reload} />;
-  else if (screen === 'merch') body = <MerchSection merch={merch} onRetry={merch.reload} />;
+  else if (screen === 'give') body = <DrivesSection drives={drives} merch={merch.data ?? []} onRetry={drives.reload} />;
+  else if (screen === 'merch') body = <MerchSection merch={merch} drives={drives.data ?? []} onRetry={merch.reload} />;
   else if (screen === 'hotlines') body = <HotlinesSection hotlines={hotlines} onRetry={hotlines.reload} />;
   else if (screen === 'prepare') body = <PrepareSection />;
   else if (screen === 'alerts') body = <AlertsSection />;

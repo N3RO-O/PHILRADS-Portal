@@ -117,8 +117,10 @@ export interface DonationDrive {
   /** Families (or people) reached, as staff count them. */
   reportReached: number | null;
   reportedAt: string | null;
+  /** Merch items sold for this fundraiser (counted when the team marks an order paid). */
+  merchSold: number;
 }
-export type DriveDraft = Omit<DonationDrive, 'id' | 'raisedUpdatedAt' | 'reportedAt'> & { id?: string };
+export type DriveDraft = Omit<DonationDrive, 'id' | 'raisedUpdatedAt' | 'reportedAt' | 'merchSold'> & { id?: string };
 
 /** An emergency number on the Hotlines screen. No area: nationwide. */
 export interface GuestHotline {
@@ -163,6 +165,11 @@ export interface MerchItem {
   inStock: boolean;
   isListed: boolean;
   sortOrder: number;
+  /** The fundraiser each sale supports, and how much of each sale goes to it (in pesos). */
+  driveId: string | null;
+  driveShare: number | null;
+  /** How many are left; null when the team doesn't count them. */
+  stockLeft: number | null;
 }
 export type MerchDraft = Omit<MerchItem, 'id'> & { id?: string };
 
@@ -201,9 +208,23 @@ export interface GuestMessage {
   merchName: string | null;
   merchSize: string | null;
   quantity: number | null;
+  /** An order for an item that supports a fundraiser: which one, and pesos per item. */
+  merchDriveTitle: string | null;
+  merchShare: number | null;
+  /** When the team marked the order paid, and what that added to which fundraiser. */
+  paidAt: string | null;
+  paidAmount: number | null;
+  paidDriveTitle: string | null;
   status: MessageStatus;
   handledBy: string | null;
   createdAt: string;
+}
+
+/** What marking an order paid (or undoing it) changed on its fundraiser. */
+export interface PaidResult {
+  driveId: string | null;
+  amount: number;
+  items: number;
 }
 
 export const MESSAGE_MAX = 2000;
@@ -257,6 +278,8 @@ export interface GuestService {
   removeMerch(id: string): Promise<void>;
   inbox(): Promise<GuestMessage[]>;
   markMessage(id: string, status: MessageStatus): Promise<void>;
+  /** A merch order was paid (or that was a mistake): its share goes onto (or comes off) its fundraiser. */
+  setOrderPaid(id: string, paid: boolean): Promise<PaidResult>;
   removeMessage(id: string): Promise<void>;
   /** A picture for a story, drive or item: returns its public address. */
   uploadImage(file: File): Promise<string>;
@@ -473,6 +496,7 @@ function seed(): SampleStore {
         reportPhotos: [],
         reportReached: null,
         reportedAt: null,
+        merchSold: 37,
       },
       {
         id: 'dr2',
@@ -493,6 +517,7 @@ function seed(): SampleStore {
         reportPhotos: [],
         reportReached: null,
         reportedAt: null,
+        merchSold: 0,
       },
       {
         id: 'dr3',
@@ -514,20 +539,25 @@ function seed(): SampleStore {
         reportPhotos: [],
         reportReached: 96,
         reportedAt: '2024-11-20T08:00:00Z',
+        merchSold: 0,
       },
     ],
     merch: [
-      { id: 'm1', name: 'PHILRADS shirt', description: 'Soft cotton shirt with the PHILRADS mark. Every shirt helps pay for relief packs.', price: 450, sizes: ['S', 'M', 'L', 'XL', '2XL'], imageUrl: null, inStock: true, isListed: true, sortOrder: 0 },
-      { id: 'm2', name: 'Volunteer cap', description: 'The cap our volunteers wear in the field.', price: 300, sizes: [], imageUrl: null, inStock: true, isListed: true, sortOrder: 1 },
-      { id: 'm3', name: 'Tumbler', description: 'Keeps water cold for a full day out.', price: 550, sizes: [], imageUrl: null, inStock: false, isListed: true, sortOrder: 2 },
-      { id: 'm4', name: 'Tote bag', description: 'Canvas bag, printed by a livelihood group we support.', price: 250, sizes: [], imageUrl: null, inStock: true, isListed: true, sortOrder: 3 },
+      { id: 'm1', name: 'PHILRADS shirt', description: 'Soft cotton shirt with the PHILRADS mark. Every shirt helps pay for relief packs.', price: 450, sizes: ['S', 'M', 'L', 'XL', '2XL'], imageUrl: null, inStock: true, isListed: true, sortOrder: 0, driveId: 'dr1', driveShare: 150, stockLeft: 24 },
+      { id: 'm2', name: 'Volunteer cap', description: 'The cap our volunteers wear in the field.', price: 300, sizes: [], imageUrl: null, inStock: true, isListed: true, sortOrder: 1, driveId: null, driveShare: null, stockLeft: 3 },
+      { id: 'm3', name: 'Tumbler', description: 'Keeps water cold for a full day out.', price: 550, sizes: [], imageUrl: null, inStock: false, isListed: true, sortOrder: 2, driveId: null, driveShare: null, stockLeft: 0 },
+      { id: 'm4', name: 'Tote bag', description: 'Canvas bag, printed by a livelihood group we support.', price: 250, sizes: [], imageUrl: null, inStock: true, isListed: true, sortOrder: 3, driveId: null, driveShare: null, stockLeft: null },
     ],
     messages: [
-      { id: 'g1', kind: 'need', message: 'Our barangay still has no clean water after the flood. About 60 families. (sample)', rating: null, community: 'Brgy. Sample, Rizal', name: 'Ana', contact: '0917 000 0001', merchName: null, merchSize: null, quantity: null, status: 'new', handledBy: null, createdAt: ago(0.2) },
-      { id: 'g2', kind: 'thanks', message: 'Thank you for the food packs last week. (sample)', rating: 5, community: 'Virac', name: null, contact: null, merchName: null, merchSize: null, quantity: null, status: 'seen', handledBy: null, createdAt: ago(2) },
+      { id: 'g1', kind: 'need', message: 'Our barangay still has no clean water after the flood. About 60 families. (sample)', rating: null, community: 'Brgy. Sample, Rizal', name: 'Ana', contact: '0917 000 0001', merchName: null, merchSize: null, quantity: null, merchDriveTitle: null, merchShare: null, paidAt: null, paidAmount: null, paidDriveTitle: null, status: 'new', handledBy: null, createdAt: ago(0.2) },
+      { id: 'g2', kind: 'thanks', message: 'Thank you for the food packs last week. (sample)', rating: 5, community: 'Virac', name: null, contact: null, merchName: null, merchSize: null, quantity: null, merchDriveTitle: null, merchShare: null, paidAt: null, paidAmount: null, paidDriveTitle: null, status: 'seen', handledBy: null, createdAt: ago(2) },
+      { id: 'g3', kind: 'order', message: 'Pick-up at the office on Saturday if possible. (sample)', rating: null, community: null, name: 'Mara', contact: '0917 000 0003', merchName: 'PHILRADS shirt', merchSize: 'M', quantity: 2, merchDriveTitle: 'Family food packs for Catanduanes', merchShare: 150, paidAt: null, paidAmount: null, paidDriveTitle: null, merchId: 'm1', status: 'new', handledBy: null, createdAt: ago(0.5) } as GuestMessage,
     ],
   };
 }
+
+/** A sample-mode order, with what the real database keeps alongside it. */
+type SampleOrder = GuestMessage & { merchId?: string | null; paidDriveId?: string | null; paidItems?: number; paidFromStock?: number };
 
 function load(): SampleStore {
   try {
@@ -536,8 +566,9 @@ function load(): SampleStore {
     if (raw) {
       const fresh = seed();
       const old = JSON.parse(raw) as Partial<SampleStore>;
-      const drives = (old.drives ?? fresh.drives).map((d) => Object.assign({ report: null, reportPhotos: [], reportReached: null, reportedAt: null }, fresh.drives.find((f) => f.id === d.id), d) as DonationDrive);
-      return { announcements: fresh.announcements, hotlines: fresh.hotlines, prayers: fresh.prayers, ...old, drives } as SampleStore;
+      const drives = (old.drives ?? fresh.drives).map((d) => Object.assign({ report: null, reportPhotos: [], reportReached: null, reportedAt: null, merchSold: 0 }, fresh.drives.find((f) => f.id === d.id), d) as DonationDrive);
+      const merch = (old.merch ?? fresh.merch).map((m) => Object.assign({ driveId: null, driveShare: null, stockLeft: null }, fresh.merch.find((f) => f.id === m.id), m) as MerchItem);
+      return { announcements: fresh.announcements, hotlines: fresh.hotlines, prayers: fresh.prayers, ...old, drives, merch } as SampleStore;
     }
   } catch {
     /* fall through to the sample */
@@ -572,6 +603,9 @@ export function createMockGuestService(overview: () => Promise<GuestOverview>): 
     async send(d) {
       checkMessage(d);
       const item = d.merchId ? store.merch.find((m) => m.id === d.merchId) : null;
+      if (d.kind === 'order' && item && (!item.inStock || item.stockLeft === 0)) throw new GuestRuleError('That item is out of stock.');
+      if (d.kind === 'order' && item?.stockLeft != null && (d.quantity ?? 1) > item.stockLeft)
+        throw new GuestRuleError(`Only ${item.stockLeft} left. Choose ${item.stockLeft} or fewer.`);
       store.messages.unshift({
         id: newId(),
         kind: d.kind,
@@ -583,10 +617,17 @@ export function createMockGuestService(overview: () => Promise<GuestOverview>): 
         merchName: item?.name ?? null,
         merchSize: d.merchSize || null,
         quantity: d.kind === 'order' ? d.quantity ?? 1 : null,
+        merchDriveTitle: (item?.driveId && store.drives.find((x) => x.id === item.driveId)?.title) || null,
+        merchShare: item?.driveId ? item.driveShare : null,
+        paidAt: null,
+        paidAmount: null,
+        paidDriveTitle: null,
+        // Kept so sample mode can mark it paid like the real one.
+        merchId: item?.id ?? null,
         status: 'new',
         handledBy: null,
         createdAt: new Date().toISOString(),
-      });
+      } as SampleOrder);
       commit();
       await wait(null, 500);
     },
@@ -689,7 +730,7 @@ export function createMockGuestService(overview: () => Promise<GuestOverview>): 
       const prev = d.id ? store.drives.find((x) => x.id === d.id) : undefined;
       const moved = !prev || prev.raised !== d.raised || prev.donorCount !== d.donorCount;
       const reportedAt = d.report?.trim() ? prev?.reportedAt ?? new Date().toISOString() : null;
-      const drive: DonationDrive = { ...d, id: d.id ?? newId(), raisedUpdatedAt: moved ? new Date().toISOString() : prev!.raisedUpdatedAt, reportedAt };
+      const drive: DonationDrive = { ...d, id: d.id ?? newId(), raisedUpdatedAt: moved ? new Date().toISOString() : prev!.raisedUpdatedAt, reportedAt, merchSold: prev?.merchSold ?? 0 };
       upsert(store.drives, drive);
       commit();
       return wait(drive);
@@ -713,6 +754,38 @@ export function createMockGuestService(overview: () => Promise<GuestOverview>): 
     async markMessage(id, status) {
       store.messages = store.messages.map((m) => (m.id === id ? { ...m, status } : m));
       commit();
+    },
+    async setOrderPaid(id, paid) {
+      const m = store.messages.find((x) => x.id === id) as SampleOrder | undefined;
+      if (!m || m.kind !== 'order') throw new GuestRuleError('That order wasn\u2019t found.');
+      const touch = (driveId: string | null | undefined, amount: number, items: number) => {
+        const d = store.drives.find((x) => x.id === driveId);
+        if (!d) return;
+        d.raised = Math.max(0, d.raised + amount);
+        d.merchSold = Math.max(0, (d.merchSold ?? 0) + items);
+        d.raisedUpdatedAt = new Date().toISOString();
+      };
+      if (paid) {
+        if (m.paidAt) return wait({ driveId: m.paidDriveId ?? null, amount: m.paidAmount ?? 0, items: m.paidItems ?? 0 });
+        const item = store.merch.find((x) => x.id === m.merchId);
+        const drive = item?.driveId ? store.drives.find((x) => x.id === item.driveId) : undefined;
+        const items = m.quantity ?? 1;
+        const amount = drive && drive.unit.toUpperCase() === 'PHP' ? (item?.driveShare ?? 0) * items : 0;
+        touch(drive?.id, amount, items);
+        const fromStock = item && item.stockLeft !== null ? Math.min(items, item.stockLeft) : 0;
+        if (item && item.stockLeft !== null) item.stockLeft -= fromStock;
+        Object.assign(m, { paidFromStock: fromStock, paidAt: new Date().toISOString(), paidAmount: amount, paidItems: items, paidDriveId: drive?.id ?? null, paidDriveTitle: drive?.title ?? null, status: 'done' });
+        commit();
+        return wait({ driveId: drive?.id ?? null, amount, items });
+      }
+      if (!m.paidAt) return wait({ driveId: null, amount: 0, items: 0 });
+      const undo = { driveId: m.paidDriveId ?? null, amount: -(m.paidAmount ?? 0), items: -(m.paidItems ?? 0) };
+      touch(m.paidDriveId, undo.amount, undo.items);
+      const item = store.merch.find((x) => x.id === m.merchId);
+      if (item && item.stockLeft !== null) item.stockLeft += m.paidFromStock ?? 0;
+      Object.assign(m, { paidFromStock: 0, paidAt: null, paidAmount: null, paidItems: 0, paidDriveId: null, paidDriveTitle: null });
+      commit();
+      return wait(undo);
     },
     async removeMessage(id) {
       store.messages = store.messages.filter((m) => m.id !== id);
@@ -814,6 +887,7 @@ const toDrive = (r: Row): DonationDrive => ({
   reportPhotos: (r.report_photos as string[] | null) ?? [],
   reportReached: n(r.report_reached),
   reportedAt: s(r.reported_at),
+  merchSold: Number(r.merch_sold ?? 0),
 });
 const fromDrive = (d: DriveDraft) => ({
   title: d.title.trim(),
@@ -875,6 +949,9 @@ const toMerch = (r: Row): MerchItem => ({
   inStock: Boolean(r.in_stock),
   isListed: Boolean(r.is_listed),
   sortOrder: Number(r.sort_order ?? 0),
+  driveId: s(r.drive_id),
+  driveShare: n(r.drive_share),
+  stockLeft: n(r.stock_left),
 });
 const fromMerch = (d: MerchDraft) => ({
   name: d.name.trim(),
@@ -885,6 +962,9 @@ const fromMerch = (d: MerchDraft) => ({
   in_stock: d.inStock,
   is_listed: d.isListed,
   sort_order: d.sortOrder,
+  drive_id: d.driveId,
+  drive_share: d.driveId ? d.driveShare : null,
+  stock_left: d.stockLeft,
 });
 
 /** The database's own words for a broken rule (raised by submit_guest_message), or a plain fallback. */
@@ -1021,13 +1101,20 @@ export function createSupabaseGuestService(client: SupabaseClient): GuestService
           merchName: s((r.merch as Row | null)?.name),
           merchSize: s(r.merch_size),
           quantity: n(r.quantity),
+          merchDriveTitle: s(((r.merch as Row | null)?.drive as Row | null)?.title),
+          merchShare: n((r.merch as Row | null)?.drive_share),
+          paidAt: s(r.paid_at),
+          paidAmount: n(r.paid_amount),
+          paidDriveTitle: s((r.paid_drive as Row | null)?.title),
           status: r.status as MessageStatus,
           handledBy: s((r.handler as Row | null)?.full_name),
           createdAt: String(r.created_at),
         }),
         (q) =>
           q
-            .select('id, kind, message, rating, community, name, contact, merch_size, quantity, status, created_at, merch:merch_items(name), handler:profiles!guest_messages_handled_by_fkey(full_name)')
+            .select(
+              'id, kind, message, rating, community, name, contact, merch_size, quantity, status, created_at, paid_at, paid_amount, merch:merch_items(name, drive_share, drive:donation_drives(title)), paid_drive:donation_drives!guest_messages_paid_drive_id_fkey(title), handler:profiles!guest_messages_handled_by_fkey(full_name)',
+            )
             .order('created_at', { ascending: false })
             .limit(300),
         'the messages',
@@ -1039,6 +1126,12 @@ export function createSupabaseGuestService(client: SupabaseClient): GuestService
         .update({ status, handled_by: status === 'new' ? null : me.user?.id ?? null, handled_at: status === 'new' ? null : new Date().toISOString() })
         .eq('id', id);
       if (error) fail('mark', error, 'Could not update the message. Check the connection and try again.');
+    },
+    async setOrderPaid(id, paid) {
+      const { data, error } = await client.rpc('set_merch_order_paid', { p_message: id, p_paid: paid });
+      if (error) fail('paid', error, 'Could not update the order. Check the connection and try again.');
+      const r = (data ?? {}) as { driveId?: string | null; amount?: number | string; items?: number };
+      return { driveId: r.driveId ?? null, amount: Number(r.amount ?? 0), items: Number(r.items ?? 0) };
     },
     removeMessage: (id) => removeRow('guest_messages', id, 'message'),
     async uploadImage(file) {

@@ -1,5 +1,30 @@
 [
   {
+    "id": "2026-11-27.5",
+    "version": "1.18.0",
+    "date": "2026-11-27",
+    "title": "Merch for a cause",
+    "items": [
+      {
+        "icon": "gift",
+        "title": "Link merch to a fundraiser",
+        "body": "In Guest page, Merch, choose the fundraiser an item supports and how much of each sale goes to it. Guests see it on the item and in a Wear the cause row on the fundraiser.",
+        "path": "/guest-admin?tab=merch"
+      },
+      {
+        "icon": "list-checks",
+        "title": "Mark paid moves the progress bar",
+        "body": "In the Inbox, Mark paid on a merch order adds its share to the fundraiser, counts the items sold and takes them off what is left in stock. Undo paid puts it all back.",
+        "path": "/guest-admin?tab=inbox"
+      },
+      {
+        "icon": "lock",
+        "title": "Orders need a sign-in, and show stock left",
+        "body": "Guests sign in to order, and the order comes with their account's name and email. Items can show how many are left, and guests can't order more than that."
+      }
+    ]
+  },
+  {
     "id": "2026-11-27.4",
     "version": "1.17.6",
     "date": "2026-11-27",

@@ -34,8 +34,9 @@ export function PrivacySection() {
 
         <Part title="Feedback, volunteering and merch orders">
           <p>
-            We keep what you write, and the name, community, phone number or email you choose to give. A name and contact are optional except for volunteering and orders, where we need a way to reply.
+            We keep what you write, and the name, community, phone number or email you choose to give. A name and contact are optional except for volunteering, where we need a way to reply.
           </p>
+          <p>Ordering merch needs a sign-in: the order is sent with your account’s name and email, so the team can reply about payment and pick-up or delivery.</p>
           <p>Only PHILRADS coordinators and administrators read these messages. Nothing you send here is posted publicly.</p>
           <p>To stop one connection flooding the inbox, we keep a scrambled code made from your internet address with each message. It can’t be turned back into the address.</p>
         </Part>
