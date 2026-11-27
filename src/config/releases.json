@@ -3,8 +3,14 @@
     "id": "2026-11-27.1",
     "version": "1.17.3",
     "date": "2026-11-27",
-    "title": "PDF previews in Documentation",
+    "title": "Download several files, and PDF previews",
     "items": [
+      {
+        "icon": "folder",
+        "title": "Download several files at once",
+        "body": "In Documentation, choose Select files (or press and hold a file), tick the ones you want and tap Download. Everyone can download; only document managers can delete. Your browser may ask once to allow several downloads.",
+        "path": "/documentation"
+      },
       {
         "icon": "folder",
         "title": "See PDFs before you download",
@@ -15,6 +21,12 @@
         "icon": "lock",
         "title": "Safer pages",
         "body": "PRISM now tells your browser exactly which sites the portal may load from, so a bad link or injected script can't run in it. Nothing changes in how you use it."
+      },
+      {
+        "icon": "sparkles",
+        "title": "A tidier welcome",
+        "body": "The guest welcome shows the whole picture and fits on a phone screen without scrolling.",
+        "guestPath": "/guest"
       }
     ]
   },

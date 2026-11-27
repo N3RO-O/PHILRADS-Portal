@@ -283,22 +283,31 @@ function WelcomeDialog({ open, onClose, driveOpen }: { open: boolean; onClose: (
         onClose();
       }}
       {...backdrop.handlers}
-      className="motion-pop max-h-[calc(100dvh-1.5rem)] w-[min(26rem,calc(100vw-2rem))] animate-pop-in overflow-y-auto overflow-x-hidden rounded-3xl bg-transparent p-0 shadow-2xl shadow-black/60 backdrop:animate-fade-in backdrop:bg-black/60"
+      className="motion-pop max-h-[calc(100dvh-1.5rem)] w-[min(26rem,calc(100vw-2rem))] animate-pop-in overflow-hidden rounded-3xl open:flex open:flex-col bg-transparent p-0 shadow-2xl shadow-black/60 backdrop:animate-fade-in backdrop:bg-black/60"
     >
-      {/* Short screens (under 720 px tall) skip the picture, so the whole card fits without scrolling. */}
-      <div className="relative aspect-[4/3] max-h-[34dvh] min-h-[11rem] w-full bg-[#2a2326] bg-cover bg-[center_25%] [@media(max-height:45rem)]:hidden" style={{ backgroundImage: 'url(/media/welcome-cat-still.webp)' }}>
-        <picture>
+      {/* The card never scrolls: the picture takes the height left after the words and buttons, shown whole
+          (never cropped) with a blurred copy filling the sides. Short screens (under 720 px tall) skip it. */}
+      <div
+        className="relative min-h-0 w-full shrink overflow-hidden bg-[#2a2326] [@media(max-height:45rem)]:hidden"
+        // As tall as the picture at full width (326 x 480), at most 55% of the screen; it shrinks so the card fits.
+        style={{ flexBasis: 'min(55dvh, calc(min(26rem, 100vw - 2rem) * 480 / 326))' }}
+      >
+        <div className="absolute inset-0 scale-110 bg-cover bg-center opacity-60 blur-xl" style={{ backgroundImage: 'url(/media/welcome-cat-still.webp)' }} aria-hidden />
+        <picture className="absolute inset-0 block">
           <source media="(prefers-reduced-motion: reduce)" srcSet="/media/welcome-cat-still.webp" />
-          <img src="/media/welcome-cat.webp" alt="A black cat standing up, grinning and clapping" width={326} height={480} className="h-full w-full object-cover object-[center_25%]" />
+          <img
+            src="/media/welcome-cat.webp"
+            alt="A black cat standing up, grinning and clapping"
+            width={326}
+            height={480}
+            className="block h-full w-full object-contain"
+          />
         </picture>
       </div>
-      <PrismHero className="pb-6 pt-6">
+      <PrismHero className="shrink-0 pb-6 pt-6">
         <h2 id="guest-welcome-title" className="mt-2 font-display text-[1.75rem] leading-[1.1] tracking-[-0.01em]">
           Welcome, guest
         </h2>
-        <p className="max-w-md text-[0.975rem] leading-relaxed text-cloud/85">
-          See where Philippine Relief and Development Services is helping, what is happening now, and how you can help.
-        </p>
         <div className="mt-2 flex flex-wrap justify-center gap-2">
           <Link to="/guest/give" onClick={onClose} className="btn-primary">
             <HandCoins className="h-4 w-4" aria-hidden /> {driveOpen ? 'Give your donation' : 'Ways to give'}

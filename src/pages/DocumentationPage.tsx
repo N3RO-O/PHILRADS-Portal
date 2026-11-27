@@ -1,6 +1,6 @@
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import { Fab } from '../components/ui/Fab';
-import { AlertTriangle, CheckCircle2, CheckSquare, CloudUpload, FolderCog, HardDrive, Image as ImageIcon, Link2, Loader2, RotateCw, Search, Trash2, Upload, X } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, CheckSquare, CloudUpload, Download, FolderCog, HardDrive, Image as ImageIcon, Link2, Loader2, RotateCw, Search, Trash2, Upload, X } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../components/auth/AuthProvider';
 import { DetailsHeader, DocItem, DocSidePane, useDocViewPrefs, VIEW_LIST, ViewMenu, type MenuAction } from '../components/documentation/DocViews';
@@ -87,7 +87,7 @@ export function DocumentationPage() {
     documentationService.sync().then((n) => n > 0 && void load(), () => undefined);
   }, [load]);
 
-  // Administrators: select several files and delete them (in Google Drive too).
+  // Select several files to download them; document managers can also delete them (in Google Drive too).
   const [selecting, setSelecting] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
@@ -129,6 +129,31 @@ export function DocumentationPage() {
   const { leaving, leave } = useLeaving();
   const listBox = useRef<HTMLDivElement>(null);
   useFlip(listBox, (docs ?? []).map((d) => d.id).join());
+  const [downloading, setDownloading] = useState(false);
+  const sample = documentationService.source === 'mock';
+  /** One file after another (a short gap, so the browser keeps up); it may ask once to allow several downloads. */
+  const downloadSelected = async () => {
+    const chosen = (docs ?? []).filter((d) => selected.has(d.id));
+    const ready = chosen.filter((d) => links[d.id]?.download);
+    if (!ready.length || sample) return;
+    setDownloading(true);
+    for (const d of ready) {
+      const a = document.createElement('a');
+      a.href = links[d.id]!.download;
+      a.download = d.fileName ?? d.title;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      await new Promise((r) => setTimeout(r, 700));
+    }
+    setDownloading(false);
+    const missing = chosen.length - ready.length;
+    setToast(
+      missing
+        ? { text: `Downloaded ${ready.length} of ${chosen.length}. ${missing === 1 ? 'One file’s link wasn’t ready' : `${missing} files’ links weren’t ready`}; try again in a moment.`, error: true }
+        : { text: `Downloading ${ready.length} file${ready.length === 1 ? '' : 's'}. If your browser asks, allow several downloads.` },
+    );
+  };
   const deleteSelected = async () => {
     const ids = [...selected];
     if (!ids.length) return;
@@ -256,10 +281,10 @@ export function DocumentationPage() {
 
   /** Click: open (or show in the pane). Shift-click: select a range. Ctrl/⌘-click: add or remove one. */
   const onItemClick = (d: DocFile, e: MouseEvent) => {
-    const many = canManage && (e.shiftKey || e.ctrlKey || e.metaKey);
+    const many = e.shiftKey || e.ctrlKey || e.metaKey;
     if (many || selecting) {
       if (!selecting) setSelecting(true);
-      if (e.shiftKey && canManage) {
+      if (e.shiftKey) {
         const ids = shown.map((x) => x.id);
         const from = ids.indexOf(anchor ?? focusId ?? d.id);
         const to = ids.indexOf(d.id);
@@ -299,7 +324,7 @@ export function DocumentationPage() {
   const ready = Boolean(status?.connected) && !status?.lastError;
 
   const menuActions: MenuAction[] = [
-    ...(canManage && all.length > 0
+    ...(all.length > 0
       ? [{ label: selecting ? 'Stop selecting' : 'Select files', icon: CheckSquare, onClick: () => (selecting ? stopSelecting() : setSelecting(true)) }]
       : []),
     ...(isAdmin && status?.connected && !status.lastError
@@ -407,7 +432,7 @@ export function DocumentationPage() {
                           focused={paneOn && focusId === d.id}
                           onClick={(e) => onItemClick(d, e)}
                           onDoubleClick={() => !selecting && setOpenId(d.id)}
-                          onLongPress={canManage ? () => holdToSelect(d.id) : undefined}
+                          onLongPress={() => holdToSelect(d.id)}
                           compact={paneOn}
                         />
                       </LeavingRow>
@@ -452,11 +477,25 @@ export function DocumentationPage() {
               </>
             )}
           </button>
-          <button type="button" className="btn-primary min-h-10 bg-status-out px-4 text-xs text-white" onClick={() => void deleteSelected()} disabled={!selected.size || deleting} aria-busy={deleting || undefined}>
-            {deleting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Trash2 className="h-4 w-4" aria-hidden />} <span>
-              Delete<span className="hidden sm:inline"> selected</span>
+          <button
+            type="button"
+            className={`${canManage ? 'btn-ghost' : 'btn-primary'} min-h-10 px-4 text-xs`}
+            onClick={() => void downloadSelected()}
+            disabled={!selected.size || downloading || sample}
+            aria-busy={downloading || undefined}
+            title={sample ? 'Sample files can’t be downloaded' : undefined}
+          >
+            {downloading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Download className="h-4 w-4" aria-hidden />} <span>
+              Download<span className="hidden sm:inline"> selected</span>
             </span>
           </button>
+          {canManage && (
+            <button type="button" className="btn-primary min-h-10 bg-status-out px-4 text-xs text-white" onClick={() => void deleteSelected()} disabled={!selected.size || deleting} aria-busy={deleting || undefined}>
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Trash2 className="h-4 w-4" aria-hidden />} <span>
+                Delete<span className="hidden sm:inline"> selected</span>
+              </span>
+            </button>
+          )}
         </div>
       )}
 
