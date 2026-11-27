@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-27.2",
+    "version": "1.17.4",
+    "date": "2026-11-27",
+    "title": "Tidier buttons",
+    "items": [
+      {
+        "icon": "sparkles",
+        "title": "Button labels stay neat",
+        "body": "A button label that has to fit on two lines is now centred with even lines, and icons keep their size. In a Documentation file, Edit details is now just Edit, so Download file fits on one line.",
+        "path": "/documentation"
+      }
+    ]
+  },
+  {
     "id": "2026-11-27.1",
     "version": "1.17.3",
     "date": "2026-11-27",

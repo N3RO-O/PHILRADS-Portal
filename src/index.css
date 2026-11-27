@@ -232,7 +232,8 @@
     @apply inline-grid h-10 w-10 shrink-0 place-items-center rounded-xl text-ink-soft transition-colors hover:bg-surface-raised hover:text-ink disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn {
-    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
+    /* A label that has to wrap stays centred with even lines, and the icon never squashes. */
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 text-center text-sm font-semibold leading-tight transition [text-wrap:balance] disabled:cursor-not-allowed disabled:opacity-50 [&>svg]:shrink-0;
   }
   .btn-primary {
     @apply btn;
@@ -248,7 +249,7 @@
     @apply inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-[0.6875rem] font-semibold tabular-nums;
   }
   .chip {
-    @apply inline-flex min-h-8 items-center rounded-lg border border-line px-3 text-xs font-semibold text-ink-soft transition-colors hover:border-ink-mute hover:text-ink aria-pressed:border-burgundy-400 aria-pressed:bg-burgundy-500 aria-pressed:text-cloud;
+    @apply inline-flex min-h-8 items-center rounded-lg border border-line px-3 text-center text-xs font-semibold leading-tight [text-wrap:balance] [&>svg]:shrink-0 text-ink-soft transition-colors hover:border-ink-mute hover:text-ink aria-pressed:border-burgundy-400 aria-pressed:bg-burgundy-500 aria-pressed:text-cloud;
   }
   .link {
     @apply inline-flex items-center gap-1 text-xs font-semibold text-uplift hover:underline;

@@ -79,8 +79,8 @@ export function DocViewer({ doc, links, canEdit, events, places, onClose, onSave
                 {busy === 'remove' ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Trash2 className="h-4 w-4" aria-hidden />}
                 <span className="sr-only">Delete (also in Google Drive)</span>
               </button>
-              <button type="button" className="btn-ghost px-3" onClick={() => setEditing(true)}>
-                <Pencil className="h-4 w-4" aria-hidden /> Edit details
+              <button type="button" className="btn-ghost px-3" onClick={() => setEditing(true)} aria-label="Edit details">
+                <Pencil className="h-4 w-4" aria-hidden /> Edit
               </button>
             </>
           )}
